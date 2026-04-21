@@ -1,27 +1,12 @@
 name: Data refresh
 
-# Runs at:
-#   - 12 AM, 2 AM, 8 AM ET (overnight checkpoints)
-#   - Every 15 min from 9 AM ET through 11:45 PM ET (covers every game's
-#     "4 hours before first pitch" pregame window, plus in-progress hours)
-#   - Manual trigger always available from Actions tab.
-#
-# All times below are in UTC. Conversion assumes EDT (UTC-4, ~Mar-Nov).
-# During EST (Nov-Mar) triggers shift +1 hour in ET, which is outside the
-# main MLB season so it doesn't matter much.
-
 on:
   schedule:
-    # Every 15 min during MLB game-window hours.
-    # 16:00 UTC (noon ET) through 03:45 UTC next day (11:45pm ET).
-    # Scripts themselves early-exit if no game is within 4 hours, so the off-peak
-    # runs only cost ~30s to spin up, check schedule, and exit.
     - cron: "*/15 16-23 * * *"
     - cron: "*/15 0-3 * * *"
-    # Overnight anchors for ump stat refresh (UmpScorecards updates daily)
-    - cron: "0 4 * * *"     # 12 AM ET
-    - cron: "0 6 * * *"     # 2 AM ET
-    - cron: "0 12 * * *"    # 8 AM ET
+    - cron: "0 4 * * *"
+    - cron: "0 6 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -49,6 +34,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install deps for enrichment scripts
+        run: pip install requests beautifulsoup4 unidecode
 
       - name: Refresh umpire stats
         run: python scripts/refresh_umps.py
@@ -80,11 +68,39 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      - name: Enrich pitcher_stats with xFIP / Stuff+ / Pitching+
+        run: |
+          python scripts/refresh_pitcher_stats_enrich.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
+        continue-on-error: true
+
+      - name: Enrich hitters with projected OPS
+        run: |
+          python scripts/refresh_hitter_stats_enrich.py data/hitters.json > /tmp/h.json && mv /tmp/h.json data/hitters.json || true
+        continue-on-error: true
+
       - name: Refresh betting odds (ActionNetwork scrape)
         run: python scripts/refresh_odds.py
         continue-on-error: true
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
+        run: |
+          if [ ! -s data/odds.json ] || ! python -c "import json; d=json.load(open('data/odds.json')); exit(0 if d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) else 1)" 2>/dev/null; then
+            echo "Primary odds empty - trying multi-source fallback"
+            python scripts/refresh_odds_multi.py > data/odds.json || true
+          fi
+        continue-on-error: true
+
+      - name: Odds fallback - The Odds API (if ODDS_API_KEY set and still empty)
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          if [ -n "$ODDS_API_KEY" ] && { [ ! -s data/odds.json ] || ! python -c "import json; d=json.load(open('data/odds.json')); exit(0 if d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) else 1)" 2>/dev/null; }; then
+            echo "Still empty - using The Odds API"
+            python scripts/refresh_odds_oddsapi.py > data/odds.json || true
+          fi
+        continue-on-error: true
 
       - name: Refresh park factors + BP daily weather
         run: python scripts/refresh_park_data.py
