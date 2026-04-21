@@ -1336,17 +1336,25 @@ function renderLineupsTab() {
     return;
   }
 
-  let posted = 0;
+  let confirmed = 0, projected = 0;
   const total = CURRENT_GAMES.length;
   for (const g of CURRENT_GAMES) {
     const lg = lineupsForGame(g);
     if (!lg) continue;
-    const ap = lg.lineups?.away?.players?.length || 0;
-    const hp = lg.lineups?.home?.players?.length || 0;
-    if (ap >= 8 && hp >= 8) posted++;
+    const aw = lg.lineups?.away;
+    const ho = lg.lineups?.home;
+    const ap = aw?.players?.length || 0;
+    const hp = ho?.players?.length || 0;
+    if (ap < 8 || hp < 8) continue;
+    const isLive = aw?.source === "MLB batting order"
+                 && ho?.source === "MLB batting order";
+    const bothConfirmed = (aw?.status || "").toLowerCase() === "confirmed"
+                       && (ho?.status || "").toLowerCase() === "confirmed";
+    if (isLive && bothConfirmed) confirmed++;
+    else projected++;
   }
   sumEl.innerHTML = `<div class="lu-summary">
-    <div><b>${posted}</b> of ${total} matchups have both lineups posted</div>
+    <div><b>${confirmed}</b> confirmed · <b>${projected}</b> projected · <b>${total - confirmed - projected}</b> awaiting (of ${total})</div>
     <div>Data generated ${LINEUPS?.generated_at?.slice(0,16).replace('T',' ') || '—'} UTC · refresh page for latest</div>
   </div>`;
 
@@ -1479,11 +1487,15 @@ function renderLineupTable(side, opts={}) {
   }
 
   const statusLabel = (side.status || "").toUpperCase();
-  // Heuristic: if the static JSON claims CONFIRMED but this wasn't from the
-  // MLB live feed, treat as PROJECTED (stale carry-over) unless the source
-  // is literally "MLB batting order".
+  // "CONFIRMED" = MLB-posted lineup (green)
+  // "PROJECTED" / "EXPECTED" = Rotowire / other projection (red — not yet official)
+  // "TBD" = nothing posted
   const isLiveConfirmed = side.source === "MLB batting order";
-  const effStatus = statusLabel === "CONFIRMED" && !isLiveConfirmed ? "PROJECTED" : statusLabel;
+  let effStatus;
+  if (statusLabel === "CONFIRMED" && isLiveConfirmed) effStatus = "CONFIRMED";
+  else if (statusLabel === "CONFIRMED")               effStatus = "PROJECTED";
+  else if (statusLabel === "EXPECTED")                effStatus = "PROJECTED";
+  else                                                effStatus = statusLabel || "TBD";
   const pillCls = effStatus === "CONFIRMED" ? "lu-confirmed"
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
@@ -1881,10 +1893,11 @@ function renderSPBox(name, teamAbbrStr) {
       ${stat("xERA", s.xera, xeraCls)}
       ${stat("K-BB%", s.k_bb_pct, kbbCls, "%")}
     </div>
-    ${(s.stuff_plus != null || s.pitching_plus != null) ? `
+    ${(s.stuff_plus != null || s.pitching_plus != null || s.bot_era != null) ? `
       <div class="m-sp-plus">
         ${s.stuff_plus != null ? `<span class="plus-chip ${stuffCls}" title="Stuff+ (pitch grade · 100 = MLB avg)">Stuff+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
         ${s.pitching_plus != null ? `<span class="plus-chip ${pitchingCls}" title="Pitching+ (overall grade · 100 = MLB avg)">Pitching+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+        ${s.bot_era != null ? `<span class="plus-chip ${tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false)}" title="FG Pitcher Bot ERA (lower = better)">botERA <b>${s.bot_era.toFixed(2)}</b></span>` : ''}
       </div>` : ''}
     <div class="m-sp-sub">
       ${primary.label === "xFIP" && s.fip_proj != null ? `pFIP ${s.fip_proj} · ` : ''}

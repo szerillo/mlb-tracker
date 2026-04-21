@@ -106,11 +106,24 @@ def live_fetch_fg(season: int) -> Dict[str, dict]:
         if not k:
             continue
         e = {}
-        for src, dst in [("xFIP", "xfip"), ("sp_stuff", "stuff_plus"),
-                         ("sp_location", "location_plus"),
-                         ("sp_pitching", "pitching_plus"), ("IP", "ip")]:
+        # Standard metrics
+        field_map = [
+            ("xFIP", "xfip"),
+            ("sp_stuff", "stuff_plus"),
+            ("sp_location", "location_plus"),
+            ("sp_pitching", "pitching_plus"),
+            ("IP", "ip"),
+            # FG Pitcher Bot model — names have drifted, cover the aliases
+            ("botERA", "bot_era"),
+            ("botOverall", "bot_era"),
+            ("pb_overall", "bot_era"),
+            ("pb_era", "bot_era"),
+            ("pb_stuff", "bot_stuff"),
+            ("botStf", "bot_stuff"),
+        ]
+        for src, dst in field_map:
             v = r.get(src)
-            if v is not None:
+            if v is not None and dst not in e:
                 e[dst] = v
         if e:
             out[k] = e

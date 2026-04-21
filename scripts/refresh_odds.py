@@ -107,19 +107,33 @@ def main():
 
     games_out = []
     for g in games:
-        away = g["teams"][0]["full_name"]
-        home = g["teams"][1]["full_name"]
+        an_t0 = g["teams"][0]["full_name"]
+        an_t1 = g["teams"][1]["full_name"]
+        # Default assumption: AN team[0] = away, team[1] = home
+        away, home = an_t0, an_t1
         pk = team_to_pk.get((away, home))
-        # Fallback: try reversing (ActionNetwork sometimes has home-first)
+        # If not found, AN has teams flipped relative to MLB — swap orientation
+        # AND swap the side-specific market lookups so ml_away still points at
+        # the team WE call "away" (not AN's "away"). This fixes the classic
+        # "both teams show positive ML" bug.
+        swapped = False
         if pk is None:
-            pk = team_to_pk.get((home, away))
+            pk = team_to_pk.get((an_t1, an_t0))
             if pk:
-                away, home = home, away  # correct orientation
+                away, home = an_t1, an_t0
+                swapped = True
 
-        ml_away = best_market(g, "moneyline", side="away")
-        ml_home = best_market(g, "moneyline", side="home")
-        sp_away = best_market(g, "spread", side="away")
-        sp_home = best_market(g, "spread", side="home")
+        # Pull ML/RL from AN. If we swapped, AN's "away" is our "home" and vice versa.
+        if swapped:
+            ml_away = best_market(g, "moneyline", side="home")
+            ml_home = best_market(g, "moneyline", side="away")
+            sp_away = best_market(g, "spread", side="home")
+            sp_home = best_market(g, "spread", side="away")
+        else:
+            ml_away = best_market(g, "moneyline", side="away")
+            ml_home = best_market(g, "moneyline", side="home")
+            sp_away = best_market(g, "spread", side="away")
+            sp_home = best_market(g, "spread", side="home")
         tot_over = best_market(g, "total", side="over")
         tot_under = best_market(g, "total", side="under")
 

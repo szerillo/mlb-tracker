@@ -134,6 +134,16 @@ $('run').onclick = async () => {
     if (!Array.isArray(arr)) { log('FG response shape unexpected', 'err'); return; }
 
     const enrichment = {};
+    // First row logs the available model keys so we can spot new fields
+    if (arr.length) {
+      const keys = Object.keys(arr[0]);
+      const botKeys = keys.filter(k => /^bot|^pb_|^sp_/i.test(k));
+      log(`Bot/pb/sp keys in response: ${botKeys.join(', ') || '(none)'}`, 'warn');
+    }
+    const pick = (r, candidates) => {
+      for (const k of candidates) if (r[k] != null) return r[k];
+      return null;
+    };
     for (const r of arr) {
       const k = normName(r.PlayerName || r.Name);
       if (!k) continue;
@@ -143,9 +153,19 @@ $('run').onclick = async () => {
       if (r.sp_location != null) e.location_plus = r.sp_location;
       if (r.sp_pitching != null) e.pitching_plus = r.sp_pitching;
       if (r.IP          != null) e.ip            = r.IP;
+      // Pitcher Bot: try common key names; FG occasionally renames
+      const bot_era = pick(r, ['botERA', 'botOverall', 'pb_overall', 'pb_era']);
+      if (bot_era != null) e.bot_era = bot_era;
+      const bot_stuff = pick(r, ['botStf', 'pb_stuff', 'BotStuff']);
+      if (bot_stuff != null) e.bot_stuff = bot_stuff;
       if (Object.keys(e).length) enrichment[k] = e;
     }
-    log(`Got ${Object.keys(enrichment).length} pitchers`, 'ok');
+    const withBot = Object.values(enrichment).filter(v => v.bot_era != null).length;
+    log(`Got ${Object.keys(enrichment).length} pitchers (${withBot} with botERA)`,
+        withBot > 0 ? 'ok' : 'warn');
+    if (withBot === 0) {
+      log('No botERA found in type=36. Try type=30 or open Pitcher Bot leaderboard and retry.', 'warn');
+    }
 
     const payload = {
       generated_at: new Date().toISOString(),
