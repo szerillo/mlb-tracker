@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
 """
-Enrich data/hitters.json with projected OPS (and ISO, if available) from
-Fangraphs' batter projection leaderboard.
+Enrich data/hitters.json with:
+    1. Projected OPS / ISO / PA from Fangraphs ATC projections.
+    2. Savant sprint speed + percentile + sprint_elite flag (80th pct+).
 
-Output adds per-hitter:
-    ops           — projected OPS (float, e.g. 0.842)
-    iso           — projected ISO (optional, slugging-minus-AVG proxy)
-    pa            — projected PA (for sample-size sanity)
-
-The front-end already has a thresholds.ops tier built in (.900/.800/.700/.650).
-Once this script runs, the OPS column on the Lineups tab lights up.
+Savant is NOT Cloudflare-protected so that fetch is reliable. The FG call
+frequently fails from GitHub Actions runners due to Cloudflare interstitial
+— the script continues gracefully, keeping existing fields unchanged.
 
 USAGE:
     pip install requests unidecode
-    python scripts/refresh_hitter_stats_enrich.py data/hitters.json \\
-        > data/hitters.new.json
-    mv data/hitters.new.json data/hitters.json
+    python scripts/refresh_hitter_stats_enrich.py data/hitters.json > /tmp/h.json
+    mv /tmp/h.json data/hitters.json
 
-Wire this into the morning refresh AFTER any existing script that produces
-the base hitters.json.
+This is the ONLY hitter-enrichment script — it handles both projections and
+live Savant speed data. The workflow wires it in once and both data sources
+refresh together.
 """
 
 from __future__ import annotations
+import csv
+import io
 import json
 import os
 import re
@@ -29,16 +28,31 @@ import sys
 from datetime import datetime, timezone
 from typing import Dict, List
 
-import requests
-from unidecode import unidecode
+try:
+    import requests
+    REQ_OK = True
+except ImportError:
+    REQ_OK = False
+
+try:
+    from unidecode import unidecode
+except ImportError:
+    def unidecode(s): return s
 
 
-# Fangraphs projections leaderboard (ATC default).
-# type=8 is "Standard projections". Switch to 'fangraphsdc' (depth charts) or
-# 'atc' / 'steamer' / 'zips' via `projection` param.
+UA = "Mozilla/5.0 (compatible; mlb-tracker/1.0)"
+UA_DESKTOP = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+# Fangraphs ATC projections JSON endpoint (usually Cloudflare-protected).
 FG_URL = ("https://www.fangraphs.com/api/projections"
           "?type=atc&team=0&lg=all&players=0&pos=all&stats=bat")
-UA = "Mozilla/5.0 (compatible; mlb-tracker/1.0)"
+
+# Savant sprint speed (reliable, no auth)
+SAVANT_URL_TMPL = ("https://baseballsavant.mlb.com/leaderboard/sprint_speed"
+                   "?year={year}&position=&team=&min=0&csv=true")
+
+SPEED_ELITE_CUTOFF = int(os.environ.get("SPEED_ELITE_CUTOFF", "80"))
 
 
 def norm_name(s: str) -> str:
@@ -48,87 +62,161 @@ def norm_name(s: str) -> str:
     return s
 
 
-def fetch_fg() -> List[dict]:
-    r = requests.get(FG_URL, timeout=30, headers={
-        "User-Agent": UA,
-        "Referer": "https://www.fangraphs.com/projections.aspx",
-        "Accept": "application/json",
-    })
-    r.raise_for_status()
-    data = r.json()
-    return data.get("data", data) if isinstance(data, dict) else data
+# ----------------------------------------------------------------------------
+# SOURCE 1 — Fangraphs ATC OPS projections
+# ----------------------------------------------------------------------------
+
+def fetch_fg_projections():
+    if not REQ_OK:
+        return []
+    try:
+        r = requests.get(FG_URL, timeout=30, headers={
+            "User-Agent": UA_DESKTOP,
+            "Referer": "https://www.fangraphs.com/projections.aspx",
+            "Accept": "application/json, text/plain, */*",
+        })
+        if not r.ok:
+            print(f"[fg-proj] blocked (HTTP {r.status_code})", file=sys.stderr)
+            return []
+        d = r.json()
+        rows = d.get("data", d) if isinstance(d, dict) else d
+        return rows if isinstance(rows, list) else []
+    except Exception as e:
+        print(f"[fg-proj] failed: {e}", file=sys.stderr)
+        return []
 
 
-def build_enrichment(rows: List[dict]) -> Dict[str, dict]:
+def build_projection_enrichment(rows: List[dict]) -> Dict[str, dict]:
     out: Dict[str, dict] = {}
     for r in rows:
         nm = r.get("PlayerName") or r.get("playerName") or r.get("Name") or ""
         if not nm:
             continue
-
         def pick(*keys):
             for k in keys:
                 if k in r and r[k] not in (None, ""):
                     return r[k]
             return None
-
-        def to_float(v):
-            try:
-                return float(v) if v is not None else None
-            except (TypeError, ValueError):
-                return None
-
-        ops = to_float(pick("OPS", "ops"))
-        iso = to_float(pick("ISO", "iso"))
-        pa = to_float(pick("PA", "pa"))
-
-        enrich = {}
-        if ops is not None: enrich["ops"] = ops
-        if iso is not None: enrich["iso"] = iso
-        if pa  is not None: enrich["pa"]  = pa
-
-        if enrich:
-            out[norm_name(nm)] = enrich
+        def to_f(v):
+            try: return float(v) if v is not None else None
+            except (TypeError, ValueError): return None
+        e = {}
+        ops = to_f(pick("OPS", "ops"))
+        iso = to_f(pick("ISO", "iso"))
+        pa  = to_f(pick("PA", "pa"))
+        if ops is not None: e["ops"] = ops
+        if iso is not None: e["iso"] = iso
+        if pa  is not None: e["pa"]  = pa
+        if e:
+            out[norm_name(nm)] = e
     return out
 
 
+# ----------------------------------------------------------------------------
+# SOURCE 2 — Baseball Savant sprint speed
+# ----------------------------------------------------------------------------
+
+def savant_name_to_std(name: str) -> str:
+    if "," in name:
+        last, first = [p.strip() for p in name.split(",", 1)]
+        return f"{first} {last}"
+    return name
+
+
+def fetch_sprint_speed(year: int):
+    if not REQ_OK:
+        return []
+    url = SAVANT_URL_TMPL.format(year=year)
+    try:
+        r = requests.get(url, timeout=30, headers={"User-Agent": UA})
+        r.raise_for_status()
+        text = r.text.lstrip("\ufeff")
+        reader = csv.DictReader(io.StringIO(text))
+        rows = []
+        for row in reader:
+            # Column key uses bom sometimes
+            nm = row.get("last_name, first_name") \
+                or row.get("\ufefflast_name, first_name") or ""
+            spd = row.get("sprint_speed")
+            try:
+                spd_f = float(spd) if spd else None
+            except ValueError:
+                spd_f = None
+            if nm and spd_f is not None:
+                rows.append({
+                    "std_name": savant_name_to_std(nm),
+                    "sprint_speed": spd_f,
+                })
+        return rows
+    except Exception as e:
+        print(f"[savant] year {year} failed: {e}", file=sys.stderr)
+        return []
+
+
+def compute_percentiles(rows):
+    s = sorted(rows, key=lambda r: r["sprint_speed"])
+    n = len(s)
+    for i, r in enumerate(s):
+        r["sprint_pct"] = round(100.0 * (i + 0.5) / n, 1)
+        r["key"] = norm_name(r["std_name"])
+    return s
+
+
+# ----------------------------------------------------------------------------
+# MAIN
+# ----------------------------------------------------------------------------
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: refresh_hitter_stats_enrich.py data/hitters.json", file=sys.stderr)
+        print("Usage: refresh_hitter_stats_enrich.py data/hitters.json",
+              file=sys.stderr)
         sys.exit(1)
 
     with open(sys.argv[1]) as f:
         hs = json.load(f)
 
-    try:
-        rows = fetch_fg()
-    except Exception as e:
-        print(f"[refresh_hitter_stats_enrich] FG fetch failed: {e}", file=sys.stderr)
-        json.dump(hs, sys.stdout, indent=2)
-        return
+    hitters = hs.get("hitters") or {}
+    hs["thresholds"] = hs.get("thresholds") or {}
+    hs["thresholds"].setdefault("ops",
+        {"elite": 0.900, "good": 0.800, "bad": 0.700, "worst": 0.650})
 
-    enrich = build_enrichment(rows)
-    hitters = hs.get("hitters", {})
-    matched = 0
-    for key, entry in hitters.items():
-        e = enrich.get(key)
-        if e:
-            for fld in ("ops", "iso", "pa"):
-                if fld in e:
-                    entry[fld] = e[fld]
-            matched += 1
+    # --- FG OPS projections --------------------------------------------------
+    fg_rows = fetch_fg_projections()
+    fg_enrich = build_projection_enrichment(fg_rows)
+    ops_matched = 0
+    if fg_enrich:
+        for key, entry in hitters.items():
+            e = fg_enrich.get(key)
+            if e:
+                for fld in ("ops", "iso", "pa"):
+                    if fld in e:
+                        entry[fld] = e[fld]
+                ops_matched += 1
+    # If FG failed, existing values are preserved.
+
+    # --- Savant sprint speed -------------------------------------------------
+    year = int(os.environ.get("SAVANT_YEAR", datetime.now().year))
+    sprint_rows = fetch_sprint_speed(year) or fetch_sprint_speed(year - 1)
+    sprint_rows = compute_percentiles(sprint_rows) if sprint_rows else []
+    sprint_lookup = {r["key"]: r for r in sprint_rows}
+    sprint_matched = 0
+    if sprint_lookup:
+        for key, entry in hitters.items():
+            r = sprint_lookup.get(key)
+            if r:
+                entry["sprint_speed"] = r["sprint_speed"]
+                entry["sprint_pct"] = r["sprint_pct"]
+                entry["sprint_elite"] = r["sprint_pct"] >= SPEED_ELITE_CUTOFF
+                sprint_matched += 1
 
     hs["enriched_at"] = datetime.now(timezone.utc).isoformat()
-    hs["enriched_count"] = matched
-    # Standard OPS tier bands — lines up with what the front-end uses if
-    # no thresholds.ops is set there yet.
-    if "thresholds" in hs:
-        hs["thresholds"].setdefault("ops",
-            {"elite": 0.900, "good": 0.800, "bad": 0.700, "worst": 0.650})
+    hs["enriched_count"] = ops_matched
+    hs["speed_enriched_count"] = sprint_matched
+    hs["speed_cutoff_pct"] = SPEED_ELITE_CUTOFF
 
     json.dump(hs, sys.stdout, indent=2)
-    print(f"Enriched {matched}/{len(hitters)} hitters with OPS/ISO/PA",
-          file=sys.stderr)
+    print(f"Enriched {ops_matched} OPS · {sprint_matched} sprint-speed "
+          f"(elite cutoff p{SPEED_ELITE_CUTOFF})", file=sys.stderr)
 
 
 if __name__ == "__main__":
