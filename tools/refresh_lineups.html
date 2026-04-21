@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MLB Tracker — Refresh Lineups (FG Roster Resource)</title>
+<style>
+  body { max-width: 780px; margin: 2rem auto; padding: 0 1rem;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1419; color: #e6edf3; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+  .sub { color: #8b95a1; font-size: 0.88rem; margin-bottom: 1.5rem; }
+  .panel { background: #1a2029; border: 1px solid #2a3340; border-radius: 8px;
+    padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  input[type="password"] { width: 100%; padding: 0.5rem 0.7rem; background: #0f1419;
+    border: 1px solid #2a3340; border-radius: 4px; color: #e6edf3; font: inherit; box-sizing: border-box; }
+  button { background: #4ea8de; border: none; color: #0f1419; font-weight: 600;
+    padding: 0.55rem 1rem; border-radius: 5px; cursor: pointer; font: inherit; }
+  button.ghost { background: transparent; color: #8b95a1; border: 1px solid #2a3340; }
+  .log { font-family: ui-monospace, monospace; font-size: 0.82rem;
+    background: #0f1419; border: 1px solid #2a3340; border-radius: 4px;
+    padding: 0.7rem; margin-top: 0.8rem; min-height: 120px;
+    white-space: pre-wrap; color: #8b95a1; max-height: 420px; overflow-y: auto; }
+  .log .ok { color: #6eff94; }
+  .log .err { color: #f87171; }
+  .log .warn { color: #e5a449; }
+  label { display: block; margin: 0.8rem 0 0.3rem; font-size: 0.85rem; color: #8b95a1; }
+  .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+  a { color: #4ea8de; }
+  code { background: #0f1419; padding: 1px 5px; border-radius: 3px;
+    font-family: ui-monospace, monospace; font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<h1>Refresh Lineups · FG Roster Resource platoons</h1>
+<div class="sub">
+  Scrapes all 30
+  <a href="https://www.fangraphs.com/roster-resource/platoon-lineups/" target="_blank">Fangraphs Roster Resource platoon-lineup</a>
+  pages for each team's <b>Go-To Starting Lineup vs. RHP</b> and <b>vs. LHP</b>,
+  matches them to today's games using the opposing probable pitcher's handedness,
+  and commits <code>data/lineups.json</code>. Preserves any MLB-confirmed or
+  Rotowire-expected lineups already posted. Fangraphs is Cloudflare-protected
+  from GitHub Actions runners, so this runs from your logged-in browser session.
+</div>
+
+<div class="panel">
+  <label>GitHub fine-grained PAT (stored in this browser's localStorage)</label>
+  <input type="password" id="pat" placeholder="github_pat_..." autocomplete="off">
+  <div class="row">
+    <button id="run">Refresh now</button>
+    <button class="ghost" id="clear">Clear stored PAT</button>
+    <span style="color:#8b95a1;font-size:0.82rem;margin-left:auto;" id="last"></span>
+  </div>
+</div>
+
+<div class="panel">
+  <div style="font-weight:600;margin-bottom:0.4rem;">Log</div>
+  <div class="log" id="log">Ready.</div>
+</div>
+
+<script>
+const PAT_KEY = 'mlb_tracker_lineups_pat';
+const LAST_KEY = 'mlb_tracker_lineups_last';
+const REPO = 'szerillo/mlb-tracker';
+
+const SLUGS = {
+  ARI: 'diamondbacks', ATL: 'braves', BAL: 'orioles', BOS: 'red-sox',
+  CHC: 'cubs',         CWS: 'white-sox', CHW: 'white-sox',
+  CIN: 'reds',         CLE: 'guardians', COL: 'rockies',  DET: 'tigers',
+  HOU: 'astros',       KC:  'royals',    LAA: 'angels',   LAD: 'dodgers',
+  MIA: 'marlins',      MIL: 'brewers',   MIN: 'twins',    NYM: 'mets',
+  NYY: 'yankees',      OAK: 'athletics', ATH: 'athletics',
+  PHI: 'phillies',     PIT: 'pirates',   SD:  'padres',   SEA: 'mariners',
+  SF:  'giants',       STL: 'cardinals', TB:  'rays',     TEX: 'rangers',
+  TOR: 'blue-jays',    WSH: 'nationals', WAS: 'nationals',
+};
+
+const $ = id => document.getElementById(id);
+const log = (msg, cls) => {
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  if (cls) div.className = cls;
+  div.textContent = `[${t}] ${msg}`;
+  $('log').appendChild(div);
+  $('log').scrollTop = $('log').scrollHeight;
+};
+
+$('pat').value = localStorage.getItem(PAT_KEY) || '';
+const lastRun = localStorage.getItem(LAST_KEY);
+if (lastRun) $('last').textContent = `last: ${lastRun}`;
+
+$('clear').onclick = () => {
+  localStorage.removeItem(PAT_KEY);
+  $('pat').value = '';
+  log('PAT cleared.', 'warn');
+};
+
+// ---------------- FG scrape ----------------
+
+async function fetchFG(abbr) {
+  const slug = SLUGS[abbr];
+  if (!slug) return null;
+  const url = `https://www.fangraphs.com/roster-resource/platoon-lineups/${slug}`;
+  try {
+    const resp = await fetch(url, { credentials: 'include' });
+    if (!resp.ok) { log(`  ${abbr}: HTTP ${resp.status}`, 'warn'); return null; }
+    return await resp.text();
+  } catch (e) {
+    log(`  ${abbr}: ${e.message}`, 'warn'); return null;
+  }
+}
+
+function parsePlatoons(html) {
+  // Parse Fangraphs Roster Resource platoon-lineups page — find "Go-To Starting
+  // Lineup vsR" and "vsL" tables. The headers appear in <h3>/<h4>/<div>, and
+  // the following table has 9 rows of { Order, Pos, Name, Bats, PA, HR, wRC+ }.
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const out = { R: null, L: null };
+
+  // Strategy: scan all headings; when text contains "vsR" or "vsL" (or
+  // "vs. R" / "vs. L" / "vs RHP" / "vs LHP"), walk forward until a table
+  // with ≥ 8 rows appears.
+  const heads = Array.from(doc.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span,strong,b'));
+  for (const h of heads) {
+    const txt = (h.textContent || '').trim();
+    if (txt.length > 80) continue;
+    let hand = null;
+    if (/\bvs\.?\s*R(HP)?\b/i.test(txt) || /\bvsR\b/i.test(txt)) hand = 'R';
+    else if (/\bvs\.?\s*L(HP)?\b/i.test(txt) || /\bvsL\b/i.test(txt)) hand = 'L';
+    if (!hand) continue;
+    if (out[hand]) continue; // already captured
+
+    // Walk forward through the DOM looking for a table
+    let node = h;
+    let table = null;
+    for (let i = 0; i < 15 && node; i++) {
+      // Try self-table first
+      if (node.querySelector) {
+        const t = node.querySelector('table');
+        if (t && t.querySelectorAll('tbody tr').length >= 8) { table = t; break; }
+      }
+      node = node.nextElementSibling || node.parentElement?.nextElementSibling;
+      if (!node) break;
+    }
+    // Fallback: any table nearby (walk ancestors and look within)
+    if (!table) {
+      let anc = h.parentElement;
+      for (let i = 0; i < 5 && anc; i++) {
+        const candidates = anc.querySelectorAll('table');
+        for (const t of candidates) {
+          if (t.querySelectorAll('tbody tr').length >= 8) { table = t; break; }
+        }
+        if (table) break;
+        anc = anc.parentElement;
+      }
+    }
+    if (!table) continue;
+
+    const rows = [];
+    const trs = table.querySelectorAll('tbody tr');
+    trs.forEach((tr, i) => {
+      const tds = Array.from(tr.children).map(c => (c.textContent || '').trim());
+      if (tds.length < 3) return;
+      // Layout is typically: [order, pos, name, bats, PA, HR, wRC+]
+      // Some pages omit order — detect by checking if first cell is a number 1-9
+      let ord, pos, name, bats;
+      if (/^[1-9]$/.test(tds[0])) {
+        ord = parseInt(tds[0], 10);
+        pos = tds[1] || '';
+        name = tds[2] || '';
+        bats = tds[3] || '';
+      } else {
+        ord = i + 1;
+        pos = tds[0] || '';
+        name = tds[1] || '';
+        bats = tds[2] || '';
+      }
+      if (!name) return;
+      rows.push({
+        order: ord,
+        pos: pos,
+        name: name,
+        bats: (bats || 'R').charAt(0).toUpperCase(),
+        status: 'projected',
+        flag: null,
+      });
+    });
+    if (rows.length >= 8) {
+      out[hand] = rows.slice(0, 9);
+    }
+  }
+  return out;
+}
+
+async function scrapeAllTeams() {
+  const teams = ['ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
+                 'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','OAK',
+                 'PHI','PIT','SD','SEA','SF','STL','TB','TEX','TOR','WSH'];
+  const lineups = {};
+  for (const abbr of teams) {
+    const html = await fetchFG(abbr);
+    if (!html) { lineups[abbr] = {}; continue; }
+    const plat = parsePlatoons(html);
+    lineups[abbr] = plat;
+    const r = plat.R ? plat.R.length : 0;
+    const l = plat.L ? plat.L.length : 0;
+    log(`  ${abbr}: vsR=${r} · vsL=${l}`, (r || l) ? 'ok' : 'warn');
+    // Gentle pacing so we don't slam FG
+    await new Promise(r => setTimeout(r, 120));
+  }
+  return lineups;
+}
+
+// ---------------- MLB schedule ----------------
+
+const MLB_TO_FG = { CHW: 'CWS', WSH: 'WSH', ATH: 'OAK' };
+const fgAbbr = a => MLB_TO_FG[a] || a;
+
+async function fetchSchedule() {
+  const today = new Date().toISOString().slice(0, 10);
+  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=team,probablePitcher(person)`;
+  const d = await fetch(url).then(r => r.json());
+  return (d.dates?.[0]?.games) || [];
+}
+
+function probHand(g, side) {
+  const p = g.teams[side].probablePitcher;
+  return p?.pitchHand?.code || null;
+}
+
+// ---------------- GitHub I/O ----------------
+
+async function getJSON(path, pat) {
+  const resp = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${path}?ref=main`,
+    { headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json' } }
+  );
+  if (!resp.ok) throw new Error(`GET ${path}: HTTP ${resp.status}`);
+  const body = await resp.json();
+  const text = atob(body.content.replace(/\n/g, ''));
+  // Decode potential UTF-8 sequences
+  const bytes = Uint8Array.from(text, c => c.charCodeAt(0));
+  const decoded = new TextDecoder('utf-8').decode(bytes);
+  return { json: JSON.parse(decoded), sha: body.sha };
+}
+
+async function putJSON(path, obj, sha, pat, message) {
+  const text = JSON.stringify(obj, null, 2);
+  const bytes = new TextEncoder().encode(text);
+  let bin = ''; for (const b of bytes) bin += String.fromCharCode(b);
+  const b64 = btoa(bin);
+  const resp = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${path}`,
+    { method: 'PUT',
+      headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json',
+                 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, content: b64, sha, branch: 'main' }) }
+  );
+  const body = await resp.json();
+  if (!body.commit) throw new Error('PUT failed: ' + (body.message || '?'));
+  return body.commit.sha;
+}
+
+// ---------------- Main ----------------
+
+$('run').onclick = async () => {
+  $('log').innerHTML = '';
+  const pat = $('pat').value.trim();
+  if (!pat.startsWith('github_pat_') && !pat.startsWith('ghp_')) {
+    log('PAT does not look valid', 'err'); return;
+  }
+  localStorage.setItem(PAT_KEY, pat);
+  $('run').disabled = true;
+  try {
+    log('Fetching FG Roster Resource for 30 teams…');
+    const fgLineups = await scrapeAllTeams();
+    const haveData = Object.values(fgLineups).filter(x => x.R || x.L).length;
+    log(`Got platoons for ${haveData}/30 teams`, haveData >= 25 ? 'ok' : 'warn');
+
+    log('Fetching today\'s MLB schedule…');
+    const games = await fetchSchedule();
+    log(`${games.length} games today`, 'ok');
+
+    log('Reading current data/lineups.json…');
+    const { json: doc, sha } = await getJSON('data/lineups.json', pat);
+
+    // Build lookup of our doc's games by game_pk for fast merge
+    const byPk = {};
+    for (const g of (doc.games || [])) byPk[g.game_pk] = g;
+
+    let applied = 0, preserved = 0;
+    for (const g of games) {
+      const pk = g.gamePk;
+      const awayAbbr = fgAbbr(g.teams.away.team.abbreviation || '');
+      const homeAbbr = fgAbbr(g.teams.home.team.abbreviation || '');
+      const awayOppHand = probHand(g, 'home') || 'R';
+      const homeOppHand = probHand(g, 'away') || 'R';
+
+      let entry = byPk[pk];
+      if (!entry) {
+        entry = {
+          game_pk: pk,
+          matchup: `${g.teams.away.team.name} @ ${g.teams.home.team.name}`,
+          away: g.teams.away.team.name,
+          home: g.teams.home.team.name,
+          game_time: g.gameDate,
+          lineups: { away: {}, home: {} },
+        };
+        doc.games = doc.games || [];
+        doc.games.push(entry);
+        byPk[pk] = entry;
+      }
+
+      for (const [side, abbr, oppHand] of [
+        ['away', awayAbbr, awayOppHand],
+        ['home', homeAbbr, homeOppHand],
+      ]) {
+        const existing = entry.lineups?.[side] || {};
+        // Preserve MLB-confirmed or Rotowire-expected
+        if (existing.players?.length && ['confirmed', 'expected'].includes(existing.status)) {
+          preserved += 1;
+          continue;
+        }
+        const platoon = fgLineups[abbr]?.[oppHand];
+        if (!platoon) continue;
+        entry.lineups = entry.lineups || {};
+        entry.lineups[side] = {
+          status: 'projected',
+          source: `FG Roster Resource · vs. ${oppHand}HP`,
+          players: platoon,
+        };
+        applied += 1;
+      }
+    }
+
+    doc.fg_roster_resource_at = new Date().toISOString();
+    doc.fg_roster_resource_applied = applied;
+
+    log(`Applying ${applied} platoon lineups · ${preserved} preserved`, 'ok');
+    log('Committing…');
+    const commitSha = await putJSON(
+      'data/lineups.json', doc, sha, pat,
+      `FG Roster Resource platoons refresh (${applied} applied, ${preserved} preserved)`
+    );
+    log(`Committed ${commitSha.slice(0, 8)}`, 'ok');
+    localStorage.setItem(LAST_KEY, new Date().toLocaleString());
+    $('last').textContent = `last: ${new Date().toLocaleString()}`;
+  } catch (e) {
+    log(`Error: ${e.message || e}`, 'err');
+    console.error(e);
+  } finally {
+    $('run').disabled = false;
+  }
+};
+</script>
+
+</body>
+</html>
