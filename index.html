@@ -1121,18 +1121,29 @@ async function loadBatSides(playerIds) {
     }
   }));
 }
+// Global map: normName → { pos, bats } — populated from full team rosters so
+// projected lineups with empty pos/bats (Rotowire platoon default, etc.) can
+// still render with proper position + handedness.
+let PLAYER_INFO = {};
 async function getTeamRoster(teamId) {
   if (ROSTERS_CACHE[teamId]) return ROSTERS_CACHE[teamId];
   try {
     const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=active&hydrate=person`);
-    const pitchers = (d.roster || [])
-      .filter(r => (r.position?.code || "") === "1")
-      .map(r => ({
-        id: r.person?.id,
-        name: r.person?.fullName,
-        hand: r.person?.pitchHand?.code || "?",
-        jersey: r.jerseyNumber || "",
-      }));
+    const all = (d.roster || []).map(r => ({
+      id: r.person?.id,
+      name: r.person?.fullName,
+      pos: r.position?.abbreviation || "",
+      pos_code: r.position?.code || "",
+      hand: r.person?.pitchHand?.code || "?",
+      bats: r.person?.batSide?.code || "",
+      jersey: r.jerseyNumber || "",
+    }));
+    // Populate PLAYER_INFO (all positions) — used by lineup render to backfill
+    for (const r of all) {
+      if (r.name) PLAYER_INFO[normName(r.name)] = { pos: r.pos, bats: r.bats };
+    }
+    // Return only pitchers — bullpen code filters by position.code === "1"
+    const pitchers = all.filter(r => r.pos_code === "1");
     ROSTERS_CACHE[teamId] = pitchers;
     return pitchers;
   } catch (e) {
@@ -1224,6 +1235,16 @@ async function loadForDate(date) {
     for (const pid of (lv.homeBattingOrder || [])) allBatterIds.push(pid);
   }
   await loadBatSides(allBatterIds);
+
+  // Prefetch full rosters for every team in today's slate. This populates
+  // PLAYER_INFO (norm_name → {pos, bats}) so the Lineups tab can backfill
+  // missing pos/bats on projected lineups (e.g. Rotowire platoon default).
+  const lineupTeamIds = new Set();
+  for (const g of g0) {
+    lineupTeamIds.add(g.teams.away.team.id);
+    lineupTeamIds.add(g.teams.home.team.id);
+  }
+  await Promise.all([...lineupTeamIds].map(id => getTeamRoster(id)));
 
   g0.forEach(g => {
     const lv = liveByPk[g.gamePk] || {};
@@ -1536,12 +1557,12 @@ function renderLineupsTab() {
           <div class="m-lineup-box">
             <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name} ${teamWrcSpan(g, 'away')}</h4>
             ${renderLineupSPHeader(awaySPName, "vs")}
-            ${renderLineupTable(lg.lineups?.away)}
+            ${renderLineupTable(lg.lineups?.away, { expanded: true })}
           </div>
           <div class="m-lineup-box">
             <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name} ${teamWrcSpan(g, 'home')}</h4>
             ${renderLineupSPHeader(homeSPName, "vs")}
-            ${renderLineupTable(lg.lineups?.home)}
+            ${renderLineupTable(lg.lineups?.home, { expanded: true })}
           </div>
         </div>
       </div>`;
@@ -1600,7 +1621,9 @@ function renderLineupSPHeader(spName, prefix="vs") {
   </div>`;
 }
 
+// opts: { expanded: true } → include K%/BB% cols (used on Lineups tab, skipped in modal)
 function renderLineupTable(side, opts={}) {
+  const expanded = !!opts.expanded;
   if (!side) return `<div class="coming-soon">${opts.noDataMsg || "No lineup yet"}</div>`;
   if (!side.players || !side.players.length) {
     const status = (side.status || "").toUpperCase();
@@ -1656,7 +1679,11 @@ function renderLineupTable(side, opts={}) {
       } else {
         bsrCell = `<td class="chip"></td>`;
       }
-      const bats = p.bats || "";
+      // Backfill pos/bats from the cached team roster when the lineup source
+      // (e.g. Rotowire platoon default) didn't include them.
+      const playerInfo = PLAYER_INFO[normName(nm)] || {};
+      const pos = p.pos || playerInfo.pos || "";
+      const bats = p.bats || playerInfo.bats || "";
       const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
       const danFlag = p.flag
         ? ` <span style="color:var(--projected);font-size:0.75rem;"
@@ -1670,11 +1697,26 @@ function renderLineupTable(side, opts={}) {
         ? ("." + Math.round(opsVal * 1000)).slice(0, 4)
         : "—";
       const opsTitle = opsVal != null ? `Projected OPS ${opsVal.toFixed(3)}` : "no projection";
+      // Expanded-only stats: K% / BB% (Steamer or ATC projection). Lineups tab
+      // has room for these; modal renders a slimmer table.
+      let kbbCells = "";
+      if (expanded) {
+        const kThr  = hitThr.k_pct  || {elite: 16, good: 20, bad: 26, worst: 30};
+        const bbThr = hitThr.bb_pct || {elite: 13, good: 10, bad: 6,  worst: 4};
+        const kVal  = h?.k_pct;
+        const bbVal = h?.bb_pct;
+        const kCls  = tier(kVal,  kThr,  false);  // lower-is-better
+        const bbCls = tier(bbVal, bbThr, true);   // higher-is-better
+        const pct = v => v == null ? "—" : (v.toFixed(v % 1 === 0 ? 0 : 1) + "%");
+        kbbCells = `
+        <td class="split split-chip ${kCls}"  title="${kVal !=null?`Projected K% ${kVal}%`:"no projection"}">${pct(kVal)}</td>
+        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`Projected BB% ${bbVal}%`:"no projection"}">${pct(bbVal)}</td>`;
+      }
       rowsHTML += `<tr>
         <td class="order">${p.order || ""}</td>
-        <td class="pos">${p.pos || ""}</td>
+        <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="player">${nm}${danFlag}</td>
+        <td class="player">${nm}${danFlag}</td>${kbbCells}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
         <td class="split split-chip ${vLCls}">${vL != null ? Math.round(vL) : "—"}</td>
@@ -1700,14 +1742,17 @@ function renderLineupTable(side, opts={}) {
   const pillCls = effStatus === "CONFIRMED" ? "lu-confirmed"
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
+  const kbbHeaders = expanded ? `
+    <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>
+    <th class="right" style="width:46px;" title="Projected BB% (higher = better)">BB%</th>` : "";
   let html = `<table class="lineup-table"><thead><tr>
     <th class="center" style="width:22px;">#</th>
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
-    <th class="left">Player</th>
+    <th class="left">Player</th>${kbbHeaders}
     <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
-    <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (ATC projection — career-weighted)">vR</th>
-    <th class="right" style="width:42px;" title="Projected wRC+ vs. LHP (ATC projection — career-weighted)">vL</th>
+    <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (Steamer)">vR</th>
+    <th class="right" style="width:42px;" title="Projected wRC+ vs. LHP (Steamer)">vL</th>
     <th class="center" style="width:40px;" title="Fielding qualifier (+/±/–) vs. average">DEF</th>
     <th class="center" style="width:40px;" title="Baserunning qualifier (+/±/–) — boosted by elite Savant sprint speed">BSR</th>
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
@@ -1849,9 +1894,9 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
      </td></tr>`;
 
   const sections = [
-    { label: "AVAILABLE", rows: avail, cls: "avail" },
-    { label: "OUT",       rows: out,   cls: "out"   },
-    { label: "FATIGUED",  rows: ftg,   cls: "ftg"   },
+    { label: "RESTED",   rows: avail, cls: "avail" },
+    { label: "FATIGUED", rows: ftg,   cls: "ftg"   },
+    { label: "OUT",      rows: out,   cls: "out"   },
   ].filter(s => s.rows.length > 0);
 
   const tableBody = sections.map(sec =>
@@ -1927,7 +1972,7 @@ function renderEnvTab() {
         ${pfStat("Runs", pf.park_factor)}
         ${pfStat("wOBA", pf.woba)}
         ${pfStat("HR",   pf.hr)}
-        ${pfStat("HH",   pf.hardhit)}
+        ${pfStat("Hit",  pf.bacon)}
         ${pfStat("BB",   pf.bb)}
         ${pfStat("K",    pf.so)}
       </div>` : `<div class="coming-soon">No park factor</div>`;
@@ -2273,7 +2318,7 @@ async function openModal(game) {
               ${pfStat("Runs", pf.park_factor)}
               ${pfStat("wOBA", pf.woba)}
               ${pfStat("HR", pf.hr)}
-              ${pfStat("HH", pf.hardhit)}
+              ${pfStat("Hit", pf.bacon)}
               ${pfStat("BB", pf.bb)}
               ${pfStat("K", pf.so)}
             </div>`;
