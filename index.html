@@ -117,6 +117,24 @@
   .sb-sp-cell.home .sb-pen-line { text-align: right; }
   .sb-pen-label { color: var(--muted); font-weight: 600; margin-right: 0.2rem;
     text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem; }
+
+  /* Small pitch-model chips under SP stats on scoreboard */
+  .sb-sp-plus { margin-top: 0.2rem; display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .sb-sp-cell.home .sb-sp-plus { justify-content: flex-end; }
+  .plus-mini { display: inline-flex; align-items: baseline; gap: 0.2rem;
+    font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.08rem 0.35rem; border-radius: 3px; font-weight: 600;
+    background: rgba(139, 149, 161, 0.08); color: var(--muted); }
+  .plus-mini b { font-family: var(--mono); font-size: 0.72rem; color: var(--text);
+    font-weight: 700; }
+  .plus-mini.elite { background: rgba(255, 145, 64, 0.12); color: var(--tier-elite); }
+  .plus-mini.elite b { color: var(--tier-elite); }
+  .plus-mini.good  { background: rgba(110, 255, 148, 0.1); color: var(--tier-good); }
+  .plus-mini.good b { color: var(--tier-good); }
+  .plus-mini.bad   { background: rgba(91, 184, 245, 0.1); color: var(--tier-bad); }
+  .plus-mini.bad b  { color: var(--tier-bad); }
+  .plus-mini.worst { background: rgba(248, 113, 113, 0.12); color: var(--tier-worst); }
+  .plus-mini.worst b { color: var(--tier-worst); }
   .sb-pen-out { color: var(--fatigue-out); font-weight: 700; }
   .sb-pen-ftg { color: var(--fatigue-fat); font-weight: 700; }
   .sb-pen-ok  { color: var(--muted); opacity: 0.7; }
@@ -718,10 +736,12 @@ function lookupSplits(name) {
   return PITCHER_SPLITS.pitchers[normName(name)] || null;
 }
 
-// When xFIP is present AND the pitcher has a meaningful sample (IP >= 30),
-// xFIP is the primary stat. Otherwise fall back to projected FIP (pFIP).
+// When xFIP is present AND the pitcher has enough innings for it to be
+// meaningful, xFIP is the primary stat. Otherwise fall back to projected
+// FIP (pFIP). Cutoff lowered to 15 IP for early-season coverage; by May
+// most SPs clear 30 IP which is the classic xFIP-stabilization mark.
 function primaryFipStat(s) {
-  if (s?.xfip != null && (s?.ip ?? 0) >= 30) {
+  if (s?.xfip != null && (s?.ip ?? 0) >= 15) {
     return { label: "xFIP", val: s.xfip, lowerBetter: true };
   }
   return { label: "pFIP", val: s?.fip_proj, lowerBetter: true };
@@ -1149,6 +1169,16 @@ function spMiniCell(name, teamName, sideCls) {
     ? `<span class="sb-sp-stat"><span class="lbl">${lbl}</span><span class="val">—</span></span>`
     : `<span class="sb-sp-stat"><span class="lbl">${lbl}</span><span class="val ${cls}">${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}</span></span>`;
 
+  // Pitch-model row under the stat triplet — Stuff+ and Pitching+ when present
+  const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+  const stuffCls    = tier(s.stuff_plus, plusBands, true);
+  const pitchingCls = tier(s.pitching_plus, plusBands, true);
+  const plusLine = (s.stuff_plus != null || s.pitching_plus != null) ? `
+    <div class="sb-sp-plus">
+      ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">Stf <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
+      ${s.pitching_plus != null ? `<span class="plus-mini ${pitchingCls}" title="Pitching+ (100=avg)">Pch <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+    </div>` : '';
+
   return `<div class="sb-sp-cell ${sideCls}">
     <div class="sb-sp-name">${name}${handTag}</div>
     <div class="sb-sp-stats">
@@ -1156,6 +1186,7 @@ function spMiniCell(name, teamName, sideCls) {
       ${cell("xERA", s.xera, xeraCls)}
       ${cell("K-BB", s.k_bb_pct, kbbCls, "%")}
     </div>
+    ${plusLine}
     ${penLine}
   </div>`;
 }
