@@ -12,11 +12,11 @@
     --over: #6eff94; --under: #ff8e6e;
     --tier-elite: #ff9140; --tier-good: #6eff94; --tier-bad: #5bb8f5; --tier-worst: #f87171;
     --fatigue-out: #f87171; --fatigue-fat: #e5a449;
+    --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    padding: 0; max-width: 1200px; margin: 0 auto; }
+  body { margin: 0 auto; max-width: 1400px; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 0; }
 
   header { padding: 1.2rem 1.5rem 0; }
   h1 { margin: 0 0 0.2rem; font-size: 1.5rem; }
@@ -30,34 +30,153 @@
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
+  /* Controls bar */
+  .controls { display: flex; gap: 0.5rem; align-items: center; padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .ctrl-btn { background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 0.4rem 0.8rem; border-radius: 5px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ctrl-btn.ctrl-today { font-weight: 600; }
+  .ctrl-btn.ctrl-refresh { margin-left: auto; background: rgba(78, 168, 222, 0.08);
+    color: var(--accent); border-color: rgba(78, 168, 222, 0.3); }
+  .ctrl-btn.ctrl-density { background: rgba(78, 168, 222, 0.04); }
+  .ctrl-btn.ctrl-density.active { background: rgba(78, 168, 222, 0.16); color: var(--accent);
+    border-color: rgba(78, 168, 222, 0.4); }
+  .ctrl-date-label { color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem; }
+  .ctrl-date-label input[type="date"] { background: var(--panel); border: 1px solid var(--border);
+    color: var(--text); padding: 0.35rem 0.5rem; border-radius: 5px; font: inherit; font-size: 0.85rem;
+    color-scheme: dark; }
+  .ctrl-showing { color: var(--muted); font-size: 0.85rem; margin-left: 0.4rem; }
+  .ctrl-density-group { display: inline-flex; gap: 0; border: 1px solid var(--border);
+    border-radius: 5px; overflow: hidden; margin-left: 0.6rem; }
+  .ctrl-density-group .ctrl-btn { border: none; border-radius: 0; padding: 0.35rem 0.65rem;
+    font-size: 0.78rem; }
+
   .content { padding: 0 1.5rem 2rem; }
   .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
     margin-bottom: 0.6rem; padding: 0.9rem 1.1rem; }
   .panel.clickable { cursor: pointer; transition: background 0.15s; }
   .panel.clickable:hover { background: var(--panel-hover); }
 
-  /* Scoreboard row */
-  .sb-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; }
-  .sb-matchup { font-size: 1rem; font-weight: 600; }
-  .sb-time { font-size: 0.82rem; color: var(--muted); margin-top: 0.15rem; }
-  .sb-status-final { color: var(--muted); }
-  .sb-status-live { color: var(--accent); }
-  .sb-right { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  /* =========================================================================
+     SCOREBOARD TABLE — fixed layout, sub-grid matchup for vertical alignment
+     ========================================================================= */
+  .sb-table { width: 100%; border-collapse: collapse; table-layout: fixed;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; margin-bottom: 1rem; }
+  .sb-table thead { background: rgba(42, 51, 64, 0.6); }
+  .sb-table th { font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); padding: 0.6rem 0.4rem;
+    border-bottom: 1px solid var(--border); text-align: center; }
+  .sb-table td { padding: 0.65rem 0.4rem; border-bottom: 1px solid var(--border);
+    vertical-align: middle; text-align: center; }
+  .sb-table tr:last-child td { border-bottom: none; }
+  .sb-sub { font-size: 0.66rem; color: var(--muted); opacity: 0.7; font-weight: 400;
+    text-transform: none; letter-spacing: 0; display: block; margin-top: 0.1rem; }
+
+  .sb-clickable { cursor: pointer; transition: background 0.12s; }
+  .sb-clickable:hover, .sb-expand:hover { background: var(--panel-hover); }
+
+  /* Matchup cell as a 3-col sub-grid so team names always line up vertically */
+  .sb-match {
+    display: grid;
+    grid-template-columns: 72px 1fr 72px;
+    column-gap: 0.6rem;
+    align-items: center;
+  }
+  .sb-match .ml-away { text-align: right; }
+  .sb-match .ml-home { text-align: left; }
+  .sb-match .teams {
+    display: flex; justify-content: center; align-items: center;
+    gap: 0.45rem; font-weight: 600; font-size: 0.98rem;
+  }
+  .sb-match .teams img { display: block; }
+  .sb-at { color: var(--muted); font-weight: 400; margin: 0 0.15rem; }
+  .sb-time-row { margin-top: 0.25rem; font-size: 0.76rem; color: var(--muted); text-align: center; }
+
+  /* Moneyline chip (fixed width so rows align) */
+  .sb-ml { display: inline-block; min-width: 52px; text-align: center;
+    font-family: var(--mono); font-size: 0.87rem; font-weight: 600;
+    color: var(--accent); padding: 0.15rem 0.35rem; border-radius: 3px;
+    background: rgba(78, 168, 222, 0.08); border: 1px solid rgba(78, 168, 222, 0.2); }
+  .sb-ml-empty { display: inline-block; min-width: 52px; text-align: center;
+    color: var(--muted); font-family: var(--mono); font-size: 0.85rem; }
+
+  /* Totals cell */
+  .sb-total-cell { font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; }
+  .sb-total-line { font-weight: 700; color: var(--text); }
+  .sb-total-odds { color: var(--muted); margin-left: 0.2rem; }
+
+  /* Park factor */
+  .sb-pf-val { display: inline-block; font-family: var(--mono); font-size: 1rem;
+    font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; }
+  .sb-pf-val.over { color: var(--over); background: rgba(110, 255, 148, 0.08); }
+  .sb-pf-val.under { color: var(--under); background: rgba(255, 142, 110, 0.08); }
+  .sb-pf-val.neutral { color: var(--text); background: rgba(139, 149, 161, 0.06); }
+
+  /* Weather stacked badges */
+  .sb-wx-stack { display: inline-flex; flex-direction: column; gap: 0.15rem; }
+  .sb-wx-row { display: inline-block; font-family: var(--mono);
+    font-size: 0.82rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 3px; }
+  .sb-wx-row.over { color: var(--over); background: rgba(110, 255, 148, 0.1); }
+  .sb-wx-row.under { color: var(--under); background: rgba(255, 142, 110, 0.1); }
+  .sb-wx-row.neutral { color: var(--muted); }
+  .sb-dome { font-size: 0.85rem; color: var(--muted); }
+
+  /* HP ump */
+  .sb-ump-name { font-weight: 600; margin-right: 0.2rem; font-size: 0.88rem; }
+  .sb-empty { color: var(--muted); opacity: 0.6; }
+
+  /* Legacy tag styles (used in a few places like fatigue counts) */
   .sb-tag { display: inline-block; font-size: 0.78rem; padding: 0.15rem 0.5rem;
     border-radius: 4px; background: rgba(139, 149, 161, 0.1); color: var(--muted); }
   .sb-tag.fatigue-out { background: rgba(248, 113, 113, 0.15); color: var(--fatigue-out); }
   .sb-tag.fatigue-fat { background: rgba(229, 164, 73, 0.15); color: var(--fatigue-fat); }
   .sb-tag.placeholder { font-style: italic; opacity: 0.6; }
 
-  /* Umpire pill (reused) */
-  .ump-pct {
-    display: inline-block; padding: 0.05rem 0.4rem; border-radius: 4px;
-    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
-  }
-  .ump-pct.over    { background: rgba(110, 255, 148, 0.15); color: var(--over);  border: 1px solid rgba(110, 255, 148, 0.35); }
-  .ump-pct.under   { background: rgba(255, 142, 110, 0.15); color: var(--under); border: 1px solid rgba(255, 142, 110, 0.35); }
-  .ump-pct.neutral { background: rgba(139, 149, 161, 0.12); color: var(--muted); border: 1px solid rgba(139, 149, 161, 0.25); }
-  .ump-pct.tbd     { background: rgba(139, 149, 161, 0.08); color: var(--tbd); border: 1px solid rgba(139, 149, 161, 0.2); font-style: italic; }
+  /* Expanded sub-row (detailed density mode) */
+  .sb-expand td { padding: 0.55rem 1.2rem 0.8rem; background: rgba(26, 32, 41, 0.65);
+    border-bottom: 1px solid var(--border); }
+  .sb-expand-grid { display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 1rem; align-items: start; }
+  .sb-expand-sp { text-align: left; }
+  .sb-expand-sp .sp-name { font-weight: 600; font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .sb-expand-sp .sp-name .hand-tag { color: var(--muted); font-size: 0.75rem;
+    font-weight: 600; margin-left: 0.3rem; }
+  .sb-expand-sp.home { text-align: right; }
+  .sb-expand-stats { display: flex; gap: 0.7rem; font-family: var(--mono); font-size: 0.82rem; }
+  .sb-expand-sp.home .sb-expand-stats { justify-content: flex-end; }
+  .sb-expand-stat { display: flex; flex-direction: column; align-items: center;
+    min-width: 48px; }
+  .sb-expand-stat .lbl { font-size: 0.62rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em; font-family: inherit; font-weight: 600; }
+  .sb-expand-stat .val { font-weight: 700; }
+  .sb-expand-stat .val.elite { color: var(--tier-elite); }
+  .sb-expand-stat .val.good  { color: var(--tier-good); }
+  .sb-expand-stat .val.bad   { color: var(--tier-bad); }
+  .sb-expand-stat .val.worst { color: var(--tier-worst); }
+  .sb-expand-mid { text-align: center; color: var(--muted);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 0 0.4rem; border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border); min-width: 120px; }
+  .sb-expand-mid .mid-row { margin-top: 0.25rem; color: var(--text);
+    font-size: 0.78rem; text-transform: none; letter-spacing: 0; }
+  .sb-expand-mid .mid-row .pill { display: inline-block; font-family: var(--mono);
+    font-size: 0.76rem; padding: 0.05rem 0.35rem; border-radius: 3px;
+    background: rgba(139, 149, 161, 0.1); color: var(--muted); margin: 0 0.15rem; }
+  .sb-expand-mid .mid-row .pill.fat { background: rgba(229, 164, 73, 0.14); color: var(--fatigue-fat); }
+
+  /* Umpire pill (reused modal + scoreboard) */
+  .ump-pct { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 4px;
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; }
+  .ump-pct.over    { background: rgba(110, 255, 148, 0.15); color: var(--over);
+    border: 1px solid rgba(110, 255, 148, 0.35); }
+  .ump-pct.under   { background: rgba(255, 142, 110, 0.15); color: var(--under);
+    border: 1px solid rgba(255, 142, 110, 0.35); }
+  .ump-pct.neutral { background: rgba(139, 149, 161, 0.12); color: var(--muted);
+    border: 1px solid rgba(139, 149, 161, 0.25); }
+  .ump-pct.tbd     { background: rgba(139, 149, 161, 0.08); color: var(--tbd);
+    border: 1px solid rgba(139, 149, 161, 0.2); font-style: italic; }
 
   /* Ump table (Umpires tab) */
   .ump-game h3 { margin: 0 0 0.5rem; font-size: 1rem; display: flex;
@@ -69,30 +188,34 @@
   .ump-table td { padding: 0.4rem 0.5rem; border-top: 1px solid var(--border); }
   .ump-table tr:first-child td { border-top: none; }
 
-  .status-pill { font-size: 0.73rem; padding: 0.12rem 0.45rem; border-radius: 3px; display: inline-block; }
+  .status-pill { font-size: 0.73rem; padding: 0.12rem 0.45rem; border-radius: 3px;
+    display: inline-block; }
   .status-pill.confirmed { background: rgba(78, 195, 124, 0.15); color: var(--confirmed); }
   .status-pill.projected { background: rgba(229, 164, 73, 0.15); color: var(--projected); }
   .status-pill.tbd { background: rgba(139, 149, 161, 0.15); color: var(--tbd); }
 
-  .coming-soon { color: var(--muted); font-style: italic; font-size: 0.82rem; padding: 0.4rem 0.5rem; }
+  .coming-soon { color: var(--muted); font-style: italic; font-size: 0.82rem;
+    padding: 0.4rem 0.5rem; }
 
-  /* Fatigue list (Lineups + Fatigue tab) */
+  /* Fatigue list */
   .fatigue-team h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
   .fatigue-line { font-size: 0.85rem; padding: 0.2rem 0; }
   .fatigue-tier { display: inline-block; font-size: 0.72rem; font-weight: 700;
-    padding: 0.05rem 0.35rem; border-radius: 3px; margin-right: 0.5rem; min-width: 32px; text-align: center; }
+    padding: 0.05rem 0.35rem; border-radius: 3px; margin-right: 0.5rem;
+    min-width: 32px; text-align: center; }
   .fatigue-tier.out { background: rgba(248, 113, 113, 0.15); color: var(--fatigue-out); }
   .fatigue-tier.fat { background: rgba(229, 164, 73, 0.15); color: var(--fatigue-fat); }
   .fatigue-name { font-weight: 600; }
   .fatigue-reason { color: var(--muted); font-size: 0.78rem; margin-left: 0.4rem; }
-  .fatigue-days { font-family: ui-monospace, "JetBrains Mono", monospace; color: var(--muted); font-size: 0.78rem; }
+  .fatigue-days { font-family: var(--mono); color: var(--muted); font-size: 0.78rem; }
   .team-none { color: var(--muted); font-style: italic; font-size: 0.82rem; }
 
   /* Lineup table */
   .lineup-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 0.3rem; }
   .lineup-table th { font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
     letter-spacing: 0.05em; text-align: left; padding: 0.2rem 0.3rem; font-weight: 500; }
-  .lineup-table td { padding: 0.3rem 0.3rem; border-top: 1px solid var(--border); }
+  .lineup-table td { padding: 0.3rem 0.3rem; border-top: 1px solid var(--border);
+    vertical-align: middle; }
   .lineup-table tr:first-child td { border-top: none; }
   .hand-r { color: var(--text); }
   .hand-l { color: #5bb8f5; }
@@ -103,40 +226,188 @@
   .split-chip.worst { color: var(--tier-worst); font-weight: 700; }
   .split-chip { margin-left: 0.4rem; font-size: 0.78rem; }
 
-  /* SP stat boxes */
+  /* SP stat boxes (legacy for modal Starting Pitchers section) */
   .sp-stat-group { display: flex; gap: 0.5rem; justify-content: space-between; }
   .sp-stat { flex: 1; text-align: center; padding: 0.3rem; }
   .sp-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase;
     letter-spacing: 0.08em; font-weight: 600; }
-  .sp-stat-val { font-family: ui-monospace, "JetBrains Mono", monospace; font-size: 1.25rem;
+  .sp-stat-val { font-family: var(--mono); font-size: 1.25rem;
     font-weight: 700; margin-top: 0.15rem; }
   .sp-stat-val.elite { color: var(--tier-elite); }
   .sp-stat-val.good  { color: var(--tier-good); }
   .sp-stat-val.bad   { color: var(--tier-bad); }
   .sp-stat-val.worst { color: var(--tier-worst); }
 
-  /* Modal */
+  /* =========================================================================
+     MODAL — WBC-inspired matchup card
+     ========================================================================= */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
     display: none; overflow-y: auto; padding: 2rem 1rem; }
   .modal-bg.active { display: block; }
-  .modal { max-width: 900px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border);
+  .modal { max-width: 920px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border);
     border-radius: 10px; padding: 1.25rem 1.5rem 1.5rem; position: relative; }
   .modal-close { position: absolute; top: 0.75rem; right: 1rem; background: none; border: none;
     color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
   .modal-close:hover { color: var(--text); }
-  .modal h2 { margin: 0 0 0.2rem; font-size: 1.3rem; }
-  .modal .subhead { color: var(--muted); font-size: 0.86rem; margin-bottom: 1rem; }
 
-  .modal section { margin-bottom: 1.2rem; }
-  .modal section h3 { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem;
-    padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+  /* Matchup bar */
+  .m-matchup-bar {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem;
+    align-items: center; background: var(--panel);
+    border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.4rem;
+  }
+  .m-team { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  .m-team.away { align-items: flex-start; }
+  .m-team.home { align-items: flex-end; }
+  .m-team-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+  .m-team-logo-name { display: flex; align-items: center; gap: 0.55rem;
+    margin-bottom: 0.3rem; }
+  .m-team.home .m-team-logo-name { flex-direction: row-reverse; }
+  .m-team-name { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .m-team-ml { font-family: var(--mono); font-size: 1.9rem; font-weight: 700;
+    line-height: 1.1; color: var(--text); }
+  .m-team-ml.fav { color: var(--tier-good); }
+  .m-team-ml.dog { color: var(--tier-bad); }
+  .m-team-book { font-size: 0.7rem; color: var(--muted); margin-top: 0.1rem; }
 
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  @media (max-width: 680px) { .grid-2 { grid-template-columns: 1fr; } }
+  .m-center-box { display: flex; flex-direction: column; align-items: center;
+    background: rgba(30, 42, 51, 0.65); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 0.6rem 1.1rem; min-width: 130px; }
+  .m-total-num { font-family: var(--mono); font-size: 1.55rem; font-weight: 700;
+    color: var(--text); line-height: 1.15; }
+  .m-total-label { font-family: var(--mono); font-size: 0.58rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    margin-top: 0.1rem; }
+  .m-total-juice { font-family: var(--mono); font-size: 0.8rem; color: var(--muted);
+    margin-top: 0.35rem; letter-spacing: 0.02em; }
 
-  .team-box { background: var(--panel); border-radius: 6px; padding: 0.7rem 0.9rem; }
-  .team-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+  .m-venue-row { text-align: center; margin: 0.7rem 0 1rem; }
+  .m-venue-badge { display: inline-block; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 1rem;
+    font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+
+  .m-section-header { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.55rem;
+    padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: baseline; }
+  .m-section-header .right-note { font-size: 0.68rem; color: var(--muted);
+    letter-spacing: 0.06em; text-transform: none; font-weight: 500; }
+
+  /* Best Odds grid (modal) */
+  .m-odds-grid { display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.6rem; }
+  .m-odds-cell { background: var(--panel); border-radius: 6px; padding: 0.55rem 0.75rem; }
+  .m-odds-cell .market { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); }
+  .m-odds-cell .row { display: flex; justify-content: space-between;
+    align-items: baseline; margin-top: 0.3rem; font-family: var(--mono); }
+  .m-odds-cell .row .side { font-size: 0.68rem; color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase; }
+  .m-odds-cell .row .price { font-size: 1rem; font-weight: 700; }
+  .m-odds-cell .row .price.fav { color: var(--tier-good); }
+  .m-odds-cell .row .price.dog { color: var(--tier-bad); }
+  .m-odds-cell .book { font-size: 0.66rem; color: var(--muted);
+    margin-top: 0.1rem; opacity: 0.7; font-family: inherit; }
+
+  /* Starting pitchers (modal, WBC-style) */
+  .m-sp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .m-sp-box { background: var(--panel); border-radius: 8px; padding: 0.8rem 0.9rem; }
+  .m-sp-header { display: flex; align-items: center; gap: 0.4rem;
+    font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+  .m-sp-header .team-abbr { color: var(--muted); font-weight: 600; font-size: 0.82rem;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-left: 0.15rem; }
+  .m-sp-header .hand-tag { color: var(--muted); font-size: 0.78rem; font-weight: 600;
+    margin-left: auto; }
+  .m-sp-header .hand-tag.L { color: var(--tier-bad); }
+  .m-sp-stats { display: flex; gap: 0.4rem; justify-content: space-between;
+    margin: 0.25rem 0 0.4rem; }
+  .m-sp-stats .sp-stat { flex: 1; text-align: center; padding: 0.2rem; }
+  .m-sp-sub { color: var(--muted); font-size: 0.75rem; margin-top: 0.3rem; }
+  .m-sp-splits { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
+    font-size: 0.78rem; }
+  .m-sp-splits th, .m-sp-splits td { padding: 0.18rem 0.35rem; text-align: right; }
+  .m-sp-splits th:first-child, .m-sp-splits td:first-child { text-align: left;
+    color: var(--muted); font-weight: 500; letter-spacing: 0.04em; }
+  .m-sp-splits th { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.06em;
+    text-transform: uppercase; font-weight: 500; }
+  .m-sp-splits td { font-family: var(--mono); border-top: 1px solid var(--border); }
+  .m-sp-splits td.elite { color: var(--tier-elite); font-weight: 700; }
+  .m-sp-splits td.good  { color: var(--tier-good); font-weight: 600; }
+  .m-sp-splits td.bad   { color: var(--tier-bad); }
+  .m-sp-splits td.worst { color: var(--tier-worst); font-weight: 700; }
+
+  /* Side-by-side panels (bullpen + ump, weather + park) */
+  .m-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+  /* Bullpen box (modal) */
+  .m-bp-box { background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem; }
+  .m-bp-box h4 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+
+  /* HP Ump box (modal) */
+  .m-ump-box { background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem; }
+  .m-ump-box .ump-name { font-weight: 700; font-size: 1rem; }
+  .m-ump-box .ump-crew { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; }
+  .m-ump-box .ump-future { margin-top: 0.5rem; font-size: 0.8rem; }
+  .m-ump-box .ump-future .row { margin-top: 0.2rem; }
+
+  /* Weather + Park (modal) */
+  .m-wx-box, .m-park-box { background: var(--panel); border-radius: 8px;
+    padding: 0.7rem 0.85rem; }
+  .m-wx-box .wx-top { display: flex; gap: 0.8rem; align-items: flex-start; }
+  .m-wx-box .wx-text { flex: 1; min-width: 0; }
+  .m-wx-box .wx-headline { font-weight: 600; font-size: 0.95rem; }
+  .m-wx-box .wx-forecast { color: var(--muted); font-size: 0.82rem; }
+  .m-wx-box .wx-v8 { margin-top: 0.5rem; }
+  .m-wx-box .wx-components { color: var(--muted); font-size: 0.74rem;
+    margin-top: 0.35rem; letter-spacing: 0.02em; }
+  .m-wx-box .wx-bp { margin-top: 0.55rem; padding-top: 0.45rem;
+    border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+  .m-park-box .pf-venue { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.4rem; }
+
+  /* Lineups (modal, WBC-like) */
+  .m-lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .m-lineup-box { background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem; }
+  .m-lineup-box h4 { margin: 0 0 0.4rem; display: flex; align-items: center;
+    gap: 0.4rem; font-size: 0.95rem; }
+  .m-lineup-box .src-note { color: var(--muted); font-size: 0.72rem;
+    margin-top: 0.3rem; letter-spacing: 0.04em; }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { padding: 0.9rem 0.9rem 0; }
+    h1 { font-size: 1.2rem; }
+    .controls { padding: 0.55rem 0.9rem; gap: 0.35rem; }
+    .ctrl-btn { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    .ctrl-date-label { display: none; }
+    .content { padding: 0 0.6rem 2rem; }
+
+    /* Hide secondary columns, widen primary ones */
+    .sb-col-hide-mobile { display: none !important; }
+    .sb-match { grid-template-columns: 1fr; row-gap: 0.18rem; }
+    .sb-match .ml-away, .sb-match .ml-home { text-align: center; }
+    .sb-match .teams { font-size: 0.95rem; }
+    .sb-ml, .sb-ml-empty { min-width: 46px; font-size: 0.82rem; }
+    .sb-total-cell { font-size: 0.82rem; }
+
+    /* Modal compresses */
+    .modal-bg { padding: 0.6rem 0.4rem; }
+    .modal { padding: 1rem 0.8rem 1.2rem; }
+    .m-matchup-bar { grid-template-columns: 1fr; padding: 0.8rem 1rem;
+      gap: 0.55rem; }
+    .m-team, .m-team.away, .m-team.home { align-items: center; }
+    .m-team-ml { font-size: 1.6rem; }
+    .m-center-box { order: 2; padding: 0.5rem 0.9rem; }
+    .m-sp-grid, .m-lineup-grid, .m-split, .m-odds-grid { grid-template-columns: 1fr; }
+
+    /* Expanded sub-row scales down */
+    .sb-expand-grid { grid-template-columns: 1fr; }
+    .sb-expand-mid { border: none; padding: 0.5rem 0;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .sb-expand-sp, .sb-expand-sp.home { text-align: left; }
+    .sb-expand-sp.home .sb-expand-stats { justify-content: flex-start; }
+  }
 
   footer { margin-top: 1.5rem; padding: 1rem 1.5rem; border-top: 1px solid var(--border);
     color: var(--muted); font-size: 0.76rem; line-height: 1.6; }
@@ -145,6 +416,10 @@
   .loading, .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
   .error { background: rgba(220, 80, 80, 0.15); border: 1px solid rgba(220, 80, 80, 0.4);
     color: #ff8888; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .stale-banner { background: rgba(229, 164, 73, 0.12);
+    border: 1px solid rgba(229, 164, 73, 0.35); color: var(--projected);
+    padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.82rem;
+    margin-bottom: 0.8rem; }
 </style>
 </head>
 <body>
@@ -163,8 +438,22 @@
   </div>
 </header>
 
+<div class="controls">
+  <button class="ctrl-btn" id="prevDayBtn">← Prev</button>
+  <button class="ctrl-btn ctrl-today" id="todayBtn">Today</button>
+  <button class="ctrl-btn" id="nextDayBtn">Next →</button>
+  <label class="ctrl-date-label">Date: <input type="date" id="datePicker"></label>
+  <span class="ctrl-showing" id="showingLabel"></span>
+  <span class="ctrl-density-group" role="group" aria-label="Scoreboard density">
+    <button class="ctrl-btn ctrl-density" id="densityCompactBtn" data-density="compact" title="Compact — one row per game">Compact</button>
+    <button class="ctrl-btn ctrl-density active" id="densityDetailedBtn" data-density="detailed" title="Detailed — show SP matchup + tired arms">Detailed</button>
+  </span>
+  <button class="ctrl-btn ctrl-refresh" id="refreshBtn">↻ Refresh</button>
+</div>
+
 <main class="content">
   <section id="tab-scoreboard" class="tab-content">
+    <div id="scoreboard-banner"></div>
     <div id="scoreboard-list" class="loading">Loading today's slate…</div>
   </section>
 
@@ -173,6 +462,7 @@
   </section>
 
   <section id="tab-lineups" class="tab-content" hidden>
+    <div id="lineups-banner"></div>
     <div id="lineups-list" class="loading">Loading bullpen fatigue &amp; lineups…</div>
   </section>
 </main>
@@ -217,6 +507,12 @@ let CURRENT_GAMES = [];
 let CURRENT_SERIES_NEXT = [];
 let CURRENT_DATES = [];
 
+// Density preference (persisted)
+let DENSITY = (() => {
+  try { return localStorage.getItem("mlb_density") || "detailed"; }
+  catch { return "detailed"; }
+})();
+
 async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${r.status} for ${url}`);
@@ -248,23 +544,18 @@ function parkFactorFor(homeTeamAbbr) {
 }
 function bpWeatherForGame(home_abbr, away_abbr) {
   if (!BP_WEATHER) return null;
-  return BP_WEATHER.games.find(g => g.home_abbr === home_abbr && (!away_abbr || g.away_abbr === away_abbr)) || null;
-}
-
-function pfBadge(pf) {
-  if (!pf) return "";
-  const v = pf.park_factor;
-  const cls = v >= 107 ? "over" : v <= 93 ? "under" : "neutral";
-  const sign = v >= 100 ? "" : "";
-  return `<span class="ump-pct ${cls}" title="Savant 3-yr Park Factor (100 = avg)">PF ${v}</span>`;
+  return BP_WEATHER.games.find(g =>
+    g.home_abbr === home_abbr && (!away_abbr || g.away_abbr === away_abbr)) || null;
 }
 
 function teamLogo(teamId, size=28) {
   if (!teamId) return "";
-  return `<img src="https://www.mlbstatic.com/team-logos/${teamId}.svg" width="${size}" height="${size}" alt="" style="vertical-align:middle;margin-right:0.35rem;">`;
+  return `<img src="https://www.mlbstatic.com/team-logos/${teamId}.svg"
+    width="${size}" height="${size}" alt=""
+    style="vertical-align:middle;">`;
 }
 
-// CF bearings from V8 methodology (degrees east of due north — direction from home plate to CF)
+// CF bearings (degrees east of due north — home plate → CF)
 const PARK_CF = {
   ARI:52, ATL:42, BAL:49, BOS:63, CHC:9, CHW:37, CIN:41, CLE:9, COL:69, DET:81,
   HOU:41, KC:49, LAA:50, LAD:53, MIA:37, MIL:46, MIN:38, NYM:7, NYY:37, OAK:44,
@@ -275,79 +566,63 @@ const NWS_COMPASS = {
   S:180, SSW:202.5, SW:225, WSW:247.5, W:270, WNW:292.5, NW:315, NNW:337.5
 };
 
-function renderFieldDiagram(wind_dir_str, wind_mph, home_park_code, size=120) {
+function renderFieldDiagram(wind_dir_str, wind_mph, home_park_code, size=130) {
   const cf = PARK_CF[home_park_code];
   const wd = NWS_COMPASS[(wind_dir_str||"").toUpperCase()];
   let arrowAngle = null;
   let label = "";
   if (wd !== undefined && cf !== undefined) {
-    // NWS gives wind's "from" direction. Flip to "toward" direction, then
-    // subtract CF bearing to get field-relative direction where 0° = toward CF.
+    // NWS gives "from" direction; flip to "toward", then subtract CF bearing.
     const towardCompass = (wd + 180) % 360;
     arrowAngle = ((towardCompass - cf + 540) % 360) - 180;  // -180..180, 0 = toward CF
-    // Classify for label
     const abs = Math.abs(arrowAngle);
     let dir;
-    if (abs < 22.5) dir = "OutCenter";
-    else if (abs < 67.5) dir = arrowAngle < 0 ? "OutLeft" : "OutRight";
-    else if (abs < 112.5) dir = arrowAngle < 0 ? "FromLeft" : "FromRight";
-    else if (abs < 157.5) dir = arrowAngle < 0 ? "InLeft" : "InRight";
-    else dir = "InCenter";
+    if (abs < 22.5)       dir = "out to CF";
+    else if (abs < 67.5)  dir = arrowAngle < 0 ? "out to LF" : "out to RF";
+    else if (abs < 112.5) dir = arrowAngle < 0 ? "cross · LF side" : "cross · RF side";
+    else if (abs < 157.5) dir = arrowAngle < 0 ? "in from LF" : "in from RF";
+    else                  dir = "in from CF";
     label = `${wind_mph||0} mph · ${dir}`;
   } else {
     label = wind_dir_str ? `${wind_mph||0} mph ${wind_dir_str}` : "wind n/a";
   }
   const S = size;
-  const cx = S/2, cy = S*0.82;  // home plate
-  const r = S * 0.55;           // outfield arc radius
-  // Basepath to 1B/3B corners (45° from home)
+  const cx = S/2, cy = S*0.82;
+  const r  = S * 0.55;
   const b1x = cx + r*0.72*Math.cos(Math.PI/4), b1y = cy - r*0.72*Math.sin(Math.PI/4);
   const b3x = cx - r*0.72*Math.cos(Math.PI/4), b3y = cy - r*0.72*Math.sin(Math.PI/4);
-  // Foul lines from home to LF/RF corners
-  const lfx = cx - r*Math.cos(Math.PI/4), lfy = cy - r*Math.sin(Math.PI/4);
-  const rfx = cx + r*Math.cos(Math.PI/4), rfy = cy - r*Math.sin(Math.PI/4);
+  const lfx = cx - r*Math.cos(Math.PI/4),      lfy = cy - r*Math.sin(Math.PI/4);
+  const rfx = cx + r*Math.cos(Math.PI/4),      rfy = cy - r*Math.sin(Math.PI/4);
+  const cfx = cx, cfy = cy - r;
 
-  // Arrow geometry: length ~45 pts, always drawn in the middle of infield
-  const arrow = arrowAngle !== null ? (() => {
-    const len = S * 0.32;
-    const rad = (arrowAngle - 90) * Math.PI / 180;  // -90 so 0 (toward CF) points up
-    const tailX = cx;
-    const tailY = cy - S*0.35;  // center on mound area
-    const tipX = tailX + len * Math.cos(rad);
-    const tipY = tailY + len * Math.sin(rad);
-    return `<line x1="${tailX}" y1="${tailY+len/2}" x2="${tailX+Math.cos(rad)*len}" y2="${tailY+len/2+Math.sin(rad)*len}"
-              stroke="#4ea8de" stroke-width="2.5" marker-end="url(#arrowhead)"/>`;
-    // ^ this won't quite work — just use a simple rotated group
-  })() : "";
-
-  // Simpler: one rotated line for the arrow
   let arrowSVG = "";
   if (arrowAngle !== null) {
-    const cx2 = cx, cy2 = cy - S*0.35;
+    const cx2 = cx, cy2 = cy - S*0.34;
     arrowSVG = `<g transform="translate(${cx2},${cy2}) rotate(${arrowAngle})">
-      <line x1="0" y1="18" x2="0" y2="-22" stroke="#4ea8de" stroke-width="2.5" marker-end="url(#ah)"/>
+      <line x1="0" y1="22" x2="0" y2="-26" stroke="#4ea8de" stroke-width="3.5"
+            stroke-linecap="round" marker-end="url(#ah)"/>
     </g>`;
   }
-
   return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
     <defs>
-      <marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ea8de"/>
+      <marker id="ah" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+        <path d="M 0 0 L 12 6 L 0 12 z" fill="#4ea8de"/>
       </marker>
     </defs>
-    <!-- Outfield arc -->
-    <path d="M ${lfx} ${lfy} A ${r} ${r} 0 0 1 ${rfx} ${rfy}" fill="#1e2a33" stroke="#2a3a43" stroke-width="1.2"/>
-    <!-- Infield (diamond) -->
+    <path d="M ${lfx} ${lfy} A ${r} ${r} 0 0 1 ${rfx} ${rfy}"
+          fill="#1e2a33" stroke="#2a3a43" stroke-width="1.2"/>
     <polygon points="${cx},${cy} ${b1x},${b1y} ${cx},${cy-S*0.42} ${b3x},${b3y}"
              fill="#2a3a43" stroke="#3a4a53" stroke-width="1"/>
-    <!-- Foul lines -->
     <line x1="${cx}" y1="${cy}" x2="${lfx}" y2="${lfy}" stroke="#2a3a43" stroke-width="1"/>
     <line x1="${cx}" y1="${cy}" x2="${rfx}" y2="${rfy}" stroke="#2a3a43" stroke-width="1"/>
-    <!-- Home plate -->
+    <circle cx="${cfx}" cy="${cfy}" r="3" fill="none" stroke="#3a4a53"
+            stroke-width="1" stroke-dasharray="2 2"/>
     <circle cx="${cx}" cy="${cy}" r="2.5" fill="#e6edf3"/>
     ${arrowSVG}
-    <!-- Label -->
-    <text x="${cx}" y="${S-4}" font-size="9" text-anchor="middle" fill="#8b95a1" font-family="sans-serif">${label}</text>
+    <rect x="${cx-55}" y="${S-14}" width="110" height="12"
+          fill="rgba(15,20,25,0.82)" rx="2"/>
+    <text x="${cx}" y="${S-5}" font-size="10" text-anchor="middle"
+          fill="#c8d2dc" font-family="sans-serif" font-weight="500">${label}</text>
   </svg>`;
 }
 
@@ -357,128 +632,42 @@ function oddsForGame(game_pk) {
 }
 function lookupPitcherStats(name) {
   if (!name || !PITCHER_STATS) return null;
-  const key = name.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
-    .replace(/ jr\.?$/,"").replace(/ sr\.?$/,"").replace(/ iii$/,"").replace(/ ii$/,"")
-    .replace(/\./g,"").trim();
+  const key = normName(name);
   return PITCHER_STATS.pitchers[key] || null;
 }
-
-function oddsChip(game_pk) {
-  const o = oddsForGame(game_pk);
-  if (!o) return `<span class="sb-tag placeholder">Odds TBD</span>`;
-  const a = o.moneyline?.away, h = o.moneyline?.home, tot = o.total?.over;
-  let parts = [];
-  if (a) parts.push(`<span class="sb-tag" title="${a.book}">${a.odds>0?'+':''}${a.odds}</span>`);
-  if (h) parts.push(`<span class="sb-tag" title="${h.book}">${h.odds>0?'+':''}${h.odds}</span>`);
-  if (tot) parts.push(`<span class="sb-tag" title="${tot.book}">O${tot.line} ${tot.odds>0?'+':''}${tot.odds}</span>`);
-  return parts.join("");
-}
-
-function renderOddsDetail(o) {
-  if (!o) return `<div class="coming-soon">No odds loaded</div>`;
-  const row = (label, a, h) => {
-    const fmt = (x) => x ? `<span style="font-family:monospace;">${x.odds>0?'+':''}${x.odds}</span> <span style="color:var(--muted);font-size:0.78rem;">(${x.book}${x.line!=null?', '+x.line:''})</span>` : "—";
-    return `<tr><td style="color:var(--muted);">${label}</td><td>${fmt(a)}</td><td>${fmt(h)}</td></tr>`;
-  };
-  return `<table class="ump-table" style="font-size:0.85rem;">
-    <thead><tr><th></th><th>Away</th><th>Home</th></tr></thead>
-    <tbody>
-    ${row("Moneyline", o.moneyline?.away, o.moneyline?.home)}
-    ${row("Run Line",  o.run_line?.away, o.run_line?.home)}
-    </tbody></table>
-    <table class="ump-table" style="font-size:0.85rem;margin-top:0.4rem;">
-    <thead><tr><th></th><th>Over</th><th>Under</th></tr></thead>
-    <tbody>
-    ${row("Total", o.total?.over, o.total?.under)}
-    </tbody></table>`;
-}
-
 function lookupSplits(name) {
   if (!name || !PITCHER_SPLITS) return null;
-  const key = name.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
-    .replace(/ jr\.?$/,"").replace(/ sr\.?$/,"").replace(/ iii$/,"").replace(/ ii$/,"")
-    .replace(/\./g,"").trim();
+  const key = normName(name);
   return PITCHER_SPLITS.pitchers[key] || null;
 }
 
-function renderSPBox(name, teamLabel) {
-  if (!name) return `<div class="team-box"><h4>${teamLabel} · TBA</h4><div class="coming-soon">No probable pitcher</div></div>`;
-  const s = lookupPitcherStats(name);
-  const sp = lookupSplits(name);
-  const hand = sp?.hand || s?.hand;
-  const handTag = hand ? `<span style="color:${hand==='L'?'#5bb8f5':'var(--muted)'};font-size:0.85rem;font-weight:600;">${hand}HP</span>` : "";
-  const openerTag = sp?.is_opener ? `<span class="ump-pct under" style="font-size:0.78rem;margin-left:0.4rem;" title="${sp.opener_reason}">OPENER</span>` : "";
-  if (!s) return `<div class="team-box"><h4>${teamLabel} ${handTag}${openerTag}</h4><div style="font-weight:600;">${name}</div><div class="coming-soon">No stats loaded</div></div>`;
-  const thr = PITCHER_STATS?.thresholds || {};
-  function tier(v, bands, lowerIsBetter) {
-    if (v == null || !bands) return "";
-    if (lowerIsBetter) {
-      if (v <= bands.elite) return "elite";
-      if (v <= bands.good)  return "good";
-      if (v >= bands.worst) return "worst";
-      if (v >= bands.bad)   return "bad";
-    } else {
-      if (v >= bands.elite) return "elite";
-      if (v >= bands.good)  return "good";
-      if (v <= bands.worst) return "worst";
-      if (v <= bands.bad)   return "bad";
-    }
-    return "";
-  }
-  const fipCls = tier(s.fip_proj, thr.fip, true);
-  const xeraCls = tier(s.xera, thr.xera, true);
-  const kbbCls = tier(s.k_bb_pct, thr.k_bb, false);
-  const stat = (label, val, cls, suffix="") =>
-    val == null ? `<div class="sp-stat"><div class="sp-stat-label">${label}</div><div class="sp-stat-val">—</div></div>`
-                : `<div class="sp-stat"><div class="sp-stat-label">${label}</div><div class="sp-stat-val ${cls}">${val.toFixed(val % 1 === 0 ? 0 : 2)}${suffix}</div></div>`;
-  // Split rendering helper
-  const renderSplitRow = (label, split) => {
-    if (!split) return `<tr><td style="color:var(--muted);">${label}</td><td colspan="4" style="color:var(--muted);font-style:italic;font-size:0.78rem;">no data</td></tr>`;
-    const opsCls = split.ops_against == null ? "" :
-      parseFloat(split.ops_against) <= 0.640 ? "elite" :
-      parseFloat(split.ops_against) <= 0.700 ? "good" :
-      parseFloat(split.ops_against) >= 0.820 ? "worst" :
-      parseFloat(split.ops_against) >= 0.770 ? "bad" : "";
-    return `<tr>
-      <td style="color:var(--muted);">${label}</td>
-      <td style="font-family:monospace;text-align:right;">${split.k_pct!=null?split.k_pct+"%":"—"}</td>
-      <td style="font-family:monospace;text-align:right;">${split.bb_pct!=null?split.bb_pct+"%":"—"}</td>
-      <td style="font-family:monospace;text-align:right;" class="sp-stat-val ${opsCls}">${split.ops_against||"—"}</td>
-      <td style="color:var(--muted);font-size:0.78rem;text-align:right;">${split.tbf||0} TBF</td>
-    </tr>`;
-  };
+// Central name normalizer (match Python side)
+function normName(s) {
+  if (!s) return "";
+  return s.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
+    .replace(/ jr\.?$/,"").replace(/ sr\.?$/,"").replace(/ iii$/,"").replace(/ ii$/,"")
+    .replace(/\./g,"").trim();
+}
 
-  return `<div class="team-box">
-    <h4>${teamLabel} · ${name} ${handTag}${openerTag}</h4>
-    <div class="sp-stat-group">
-      ${stat("FIP (proj)", s.fip_proj, fipCls)}
-      ${stat("xERA", s.xera, xeraCls)}
-      ${stat("K-BB%", s.k_bb_pct, kbbCls, "%")}
-    </div>
-    <div style="color:var(--muted);font-size:0.76rem;margin-top:0.4rem;">
-      ${s.era != null ? `ERA ${s.era}` : ''}
-      ${s.k_pct != null ? ` · K% ${s.k_pct}` : ''}
-      ${s.bb_pct != null ? ` · BB% ${s.bb_pct}` : ''}
-      ${s.xwoba != null ? ` · xwOBA ${s.xwoba.toFixed(3)}` : ''}
-    </div>
-    ${sp ? `<table style="width:100%;margin-top:0.5rem;font-size:0.82rem;border-collapse:collapse;">
-      <thead><tr>
-        <th></th>
-        <th style="color:var(--muted);font-size:0.7rem;text-align:right;font-weight:500;">K%</th>
-        <th style="color:var(--muted);font-size:0.7rem;text-align:right;font-weight:500;">BB%</th>
-        <th style="color:var(--muted);font-size:0.7rem;text-align:right;font-weight:500;">OPS ag.</th>
-        <th></th>
-      </tr></thead>
-      <tbody>
-        ${renderSplitRow("vs RHB", sp.vs_r)}
-        ${renderSplitRow("vs LHB", sp.vs_l)}
-      </tbody>
-    </table>` : ""}
-  </div>`;
+// Tier classifier shared across pitchers/hitters/park
+function tier(v, bands, higherIsBetter=true) {
+  if (v === null || v === undefined || !bands) return "";
+  if (higherIsBetter) {
+    if (v >= bands.elite) return "elite";
+    if (v >= bands.good)  return "good";
+    if (v <= bands.worst) return "worst";
+    if (v <= bands.bad)   return "bad";
+  } else {
+    if (v <= bands.elite) return "elite";
+    if (v <= bands.good)  return "good";
+    if (v >= bands.worst) return "worst";
+    if (v >= bands.bad)   return "bad";
+  }
+  return "";
 }
 
 // ============================================================================
-// WEATHER + LINEUP LOOKUPS
+// LOOKUPS
 // ============================================================================
 function weatherForGame(game_pk) {
   if (!WEATHER) return null;
@@ -489,108 +678,219 @@ function lineupsForGame(game_pk) {
   return (LINEUPS.games || []).find(g => g.game_pk === game_pk) || null;
 }
 
-function weatherBadge(game) {
-  // game is the MLB game object; extract home/away abbrs
+// ============================================================================
+// SCOREBOARD WEATHER BADGE
+// ============================================================================
+function weatherCellBadge(game) {
   const homeAbbr = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
   const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
   const wx = weatherForGame(game.gamePk);
   const bp = bpWeatherForGame(homeAbbr, awayAbbr);
-  if (!wx && !bp) return `<span class="sb-tag placeholder">Wx TBD</span>`;
-  if (wx?.is_dome) return `<span class="sb-tag">🏟 DOME</span>`;
-  let parts = [];
+  if (wx?.is_dome) return `<span class="sb-dome">🏟 DOME</span>`;
+  if (!wx && !bp) return `<span class="sb-empty">—</span>`;
+  let lines = [];
   if (wx?.v8) {
     const p = wx.v8.run_adj_pct;
-    const cls = p > 0.5 ? "fatigue-fat" : p < -0.5 ? "fatigue-out" : "";
+    const cls = p > 0.5 ? "over" : p < -0.5 ? "under" : "neutral";
     const sign = p >= 0 ? "+" : "";
-    const w = wx.weather || {};
-    parts.push(`<span class="sb-tag ${cls}" title="V8: ${w.temp_f||"?"}°F ${w.wind_speed_mph||0}mph ${w.wind_dir||''}, ${w.short_forecast||''}">V8 ${sign}${p.toFixed(1)}%</span>`);
+    lines.push(`<span class="sb-wx-row ${cls}">V8 ${sign}${p.toFixed(1)}%</span>`);
   }
-  if (bp && bp.bp_weather_runs_pct !== null) {
+  if (bp && bp.bp_weather_runs_pct !== null && bp.bp_weather_runs_pct !== undefined) {
     const p = bp.bp_weather_runs_pct;
-    const cls = p > 0 ? "fatigue-fat" : p < 0 ? "fatigue-out" : "";
+    const cls = p > 0 ? "over" : p < 0 ? "under" : "neutral";
     const sign = p >= 0 ? "+" : "";
-    parts.push(`<span class="sb-tag ${cls}" title="BallparkPal weather-only runs adj">BP ${sign}${p}%</span>`);
+    lines.push(`<span class="sb-wx-row ${cls}">BP ${sign}${p}%</span>`);
   }
-  return parts.join("");
+  if (!lines.length) return `<span class="sb-empty">—</span>`;
+  return `<div class="sb-wx-stack">${lines.join("")}</div>`;
 }
 
-function renderLineupTable(side) {
-  if (!side || !side.players || !side.players.length) {
-    return `<div class="coming-soon">No lineup yet</div>`;
+// ============================================================================
+// STARTING PITCHER BOX (modal)
+// ============================================================================
+function renderSPBox(name, teamAbbrStr) {
+  if (!name) {
+    return `<div class="m-sp-box"><div class="m-sp-header">${teamAbbrStr}
+      <span class="team-abbr">TBA</span></div>
+      <div class="coming-soon">No probable pitcher</div></div>`;
+  }
+  const s  = lookupPitcherStats(name);
+  const sp = lookupSplits(name);
+  const hand = sp?.hand || s?.hand;
+  const handTag = hand ? `<span class="hand-tag ${hand==='L'?'L':''}">${hand}HP</span>` : "";
+  const openerTag = sp?.is_opener
+    ? `<span class="ump-pct under" style="font-size:0.7rem;margin-left:0.35rem;"
+        title="${sp.opener_reason||''}">OPENER</span>` : "";
+
+  if (!s) {
+    return `<div class="m-sp-box">
+      <div class="m-sp-header">
+        <span>${name}</span><span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
+      </div>
+      <div class="coming-soon">No stats loaded</div></div>`;
+  }
+  const thr = PITCHER_STATS?.thresholds || {};
+  const fipCls  = tier(s.fip_proj, thr.fip, false);
+  const xeraCls = tier(s.xera, thr.xera, false);
+  const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
+  const stat = (label, val, cls, suffix="") => val == null
+    ? `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
+        <div class="sp-stat-val">—</div></div>`
+    : `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
+        <div class="sp-stat-val ${cls}">${val.toFixed(val % 1 === 0 ? 0 : 2)}${suffix}</div></div>`;
+
+  const renderSplitRow = (label, split) => {
+    if (!split) return `<tr><td>${label}</td><td colspan="4"
+      style="color:var(--muted);font-style:italic;text-align:left;">no data</td></tr>`;
+    const opsV = split.ops_against ? parseFloat(split.ops_against) : null;
+    const opsCls = opsV == null ? "" :
+      opsV <= 0.640 ? "elite" :
+      opsV <= 0.700 ? "good" :
+      opsV >= 0.820 ? "worst" :
+      opsV >= 0.770 ? "bad" : "";
+    return `<tr>
+      <td>${label}</td>
+      <td>${split.k_pct!=null?split.k_pct+"%":"—"}</td>
+      <td>${split.bb_pct!=null?split.bb_pct+"%":"—"}</td>
+      <td class="${opsCls}">${split.ops_against||"—"}</td>
+      <td style="color:var(--muted);">${split.tbf||0} TBF</td>
+    </tr>`;
+  };
+
+  return `<div class="m-sp-box">
+    <div class="m-sp-header">
+      <span>${name}</span>
+      <span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
+    </div>
+    <div class="m-sp-stats">
+      ${stat("FIP", s.fip_proj, fipCls)}
+      ${stat("xERA", s.xera, xeraCls)}
+      ${stat("K-BB%", s.k_bb_pct, kbbCls, "%")}
+    </div>
+    <div class="m-sp-sub">
+      ${s.era != null ? `ERA ${s.era}` : ''}
+      ${s.k_pct != null ? ` · K% ${s.k_pct}` : ''}
+      ${s.bb_pct != null ? ` · BB% ${s.bb_pct}` : ''}
+      ${s.xwoba != null ? ` · xwOBA ${s.xwoba.toFixed(3)}` : ''}
+    </div>
+    ${sp ? `<table class="m-sp-splits">
+      <thead><tr>
+        <th></th><th>K%</th><th>BB%</th><th>OPS ag.</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${renderSplitRow("vs RHB", sp.vs_r)}
+        ${renderSplitRow("vs LHB", sp.vs_l)}
+      </tbody>
+    </table>` : ""}
+  </div>`;
+}
+
+// ============================================================================
+// LINEUP TABLE — hardened
+// ============================================================================
+function renderLineupTable(side, opts={}) {
+  if (!side) {
+    return `<div class="coming-soon">${opts.noDataMsg || "No lineup yet"}</div>`;
+  }
+  if (!side.players || !side.players.length) {
+    const status = (side.status || "").toUpperCase();
+    const src = side.source || "";
+    const note = status === "TBD" ? "TBD — not yet posted"
+               : status ? `${status} · ${src}`
+               : "No lineup yet";
+    return `<div class="coming-soon">${note}</div>`;
   }
   const hitThr = HITTERS?.thresholds || {};
-  const wBands = hitThr.wrc_splits || {elite: 140, good: 115, bad: 80, worst: 65};
-  const wobaBands = hitThr.woba || {elite: 0.344, good: 0.319, bad: 0.279, worst: 0.263};
-  const fldBands = hitThr.fld || {elite: 0.054, good: 0.025, bad: -0.033, worst: -0.045};
-  const bsrBands = hitThr.bsr || {elite: 0.022, good: 0.0, bad: -0.018, worst: -0.021};
+  const wBands    = hitThr.wrc_splits || {elite: 140, good: 115, bad: 80,  worst: 65};
+  const wobaBands = hitThr.woba       || {elite: 0.344, good: 0.319, bad: 0.279, worst: 0.263};
+  const fldBands  = hitThr.fld        || {elite: 0.054, good: 0.025, bad: -0.033, worst: -0.045};
+  const bsrBands  = hitThr.bsr        || {elite: 0.022, good: 0.0,   bad: -0.018, worst: -0.021};
 
-  function normName(s) { return s.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
-    .replace(/ jr\.?$/,"").replace(/ sr\.?$/,"").replace(/ iii$/,"").replace(/ ii$/,"").replace(/\./g,"").trim(); }
   function lookupHitter(name) {
     if (!HITTERS) return null;
     const k = normName(name);
     return HITTERS.hitters[k] || null;
   }
-  function tier(v, bands, higherIsBetter=true) {
-    if (v === null || v === undefined) return "";
-    if (higherIsBetter) {
-      if (v >= bands.elite) return "elite";
-      if (v >= bands.good)  return "good";
-      if (v <= bands.worst) return "worst";
-      if (v <= bands.bad)   return "bad";
-    } else {
-      if (v <= bands.elite) return "elite";
-      if (v <= bands.good)  return "good";
-      if (v >= bands.worst) return "worst";
-      if (v >= bands.bad)   return "bad";
-    }
-    return "";
-  }
   function flagIcon(v, bands) {
-    if (v === null || v === undefined) return "";
+    if (v === null || v === undefined || !bands) return "";
     if (v >= bands.elite) return "🟢";
     if (v <= bands.worst) return "🔴";
     return "";
   }
 
+  let hitterMatches = 0;
+  let rowsHTML = "";
+  for (const p of side.players) {
+    try {
+      const nm = (p && p.name) || "";
+      const h  = lookupHitter(nm);
+      if (h) hitterMatches++;
+      const vR = h?.wrc_vs_r; const vL = h?.wrc_vs_l;
+      const vRCls   = tier(vR, wBands, true);
+      const vLCls   = tier(vL, wBands, true);
+      const wobaCls = tier(h?.woba, wobaBands, true);
+      const fldFlag = h ? flagIcon(h.fld, fldBands) : "";
+      const bsrFlag = h ? flagIcon(h.bsr, bsrBands) : "";
+      const flagStr = `${fldFlag}${bsrFlag}`;
+      const bats = p.bats || "";
+      const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
+      const danFlag = p.flag
+        ? ` <span style="color:var(--projected);font-size:0.75rem;"
+             title="${String(p.flag).replace(/"/g,'&quot;')}">⚠</span>` : "";
+      let wobaChip = "";
+      if (h && h.woba !== undefined && h.woba !== null) {
+        const wobaStr = ("." + Math.round(h.woba * 1000)).slice(0, 4);
+        wobaChip = `<span class="split-chip ${wobaCls}" title="ATC wOBA">${wobaStr}</span>`;
+      }
+      rowsHTML += `<tr>
+        <td style="color:var(--muted);font-size:0.78rem;">${p.order || ""}</td>
+        <td style="color:var(--muted);font-weight:600;">${p.pos || ""}</td>
+        <td class="${batsCls}" style="font-weight:700;">${bats}</td>
+        <td style="font-weight:600;">${nm} ${flagStr}${danFlag} ${wobaChip}</td>
+        <td class="split-chip ${vRCls}" style="text-align:right;font-family:var(--mono);">${vR != null ? Math.round(vR) : "—"}</td>
+        <td class="split-chip ${vLCls}" style="text-align:right;font-family:var(--mono);">${vL != null ? Math.round(vL) : "—"}</td>
+      </tr>`;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("Lineup row render failed", p, err);
+      rowsHTML += `<tr><td colspan="6" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
+    }
+  }
+
+  const statusLabel = (side.status || "").toUpperCase();
+  const statusCls = statusLabel === "CONFIRMED" ? "confirmed"
+                  : statusLabel === "PROJECTED" ? "projected"
+                  : "tbd";
+  const srcNote = side.source || "";
+
   let html = `<table class="lineup-table"><thead><tr>
     <th style="width:16px;">#</th><th style="width:26px;">Pos</th><th style="width:14px;"></th>
-    <th>Player</th><th style="text-align:right;">vR</th><th style="text-align:right;">vL</th></tr></thead><tbody>`;
-  side.players.forEach(p => {
-    const h = lookupHitter(p.name || "");
-    const vR = h?.wrc_vs_r; const vL = h?.wrc_vs_l;
-    const vRCls = tier(vR, wBands, true);
-    const vLCls = tier(vL, wBands, true);
-    const wobaCls = tier(h?.woba, wobaBands, true);
-    const fldFlag = h ? flagIcon(h.fld, fldBands) : "";
-    const bsrFlag = h ? flagIcon(h.bsr, bsrBands) : "";
-    const flagStr = `${fldFlag}${bsrFlag}`;
-    const bats = p.bats || "";
-    const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
-    const danFlag = p.flag ? ` <span style="color:var(--projected);font-size:0.75rem;" title="${p.flag}">⚠</span>` : "";
-    html += `<tr>
-      <td style="color:var(--muted);font-size:0.78rem;">${p.order||""}</td>
-      <td style="color:var(--muted);font-weight:600;">${p.pos||""}</td>
-      <td class="${batsCls}" style="font-weight:700;">${bats}</td>
-      <td style="font-weight:600;">${p.name||""} ${flagStr}${danFlag}
-        ${h?.woba !== undefined ? `<span class="split-chip ${wobaCls}" title="ATC wOBA">${(h.woba*1000).toFixed(0).replace(/^/,".").slice(0,4)}</span>` : ""}
-      </td>
-      <td class="split-chip ${vRCls}" style="text-align:right;font-family:monospace;">${vR!=null?Math.round(vR):"—"}</td>
-      <td class="split-chip ${vLCls}" style="text-align:right;font-family:monospace;">${vL!=null?Math.round(vL):"—"}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  if (side.dan_note) html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
-  html += `<div style="color:var(--muted);font-size:0.74rem;margin-top:0.3rem;">${side.status?.toUpperCase()||""} · ${side.source||""}</div>`;
+    <th>Player</th>
+    <th style="text-align:right;">vR</th>
+    <th style="text-align:right;">vL</th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+  if (side.dan_note) {
+    html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
+  }
+  html += `<div class="src-note"><span class="status-pill ${statusCls}">${statusLabel||"TBD"}</span>${srcNote ? ` · ${srcNote}` : ""}${HITTERS && hitterMatches === 0 ? ` · <span style="color:var(--projected);">hitter stats not matched</span>` : ""}</div>`;
   return html;
 }
 
 function renderLineupForTeam(game_pk, side) {
   const lg = lineupsForGame(game_pk);
-  if (!lg) return `<div class="coming-soon">No lineups yet</div>`;
-  return renderLineupTable(lg.lineups?.[side]);
+  if (!lg) {
+    console.warn("No lineup entry for gamePk", game_pk,
+      "— LINEUPS.generated_at=", LINEUPS?.generated_at);
+    return `<div class="coming-soon">No lineup entry for this game
+      ${LINEUPS?.generated_at ? `(data from ${LINEUPS.generated_at})` : ""}</div>`;
+  }
+  return renderLineupTable(lg.lineups?.[side], {
+    noDataMsg: `No ${side} lineup yet`
+  });
 }
 
+// ============================================================================
+// WEATHER DETAIL (modal + umpires tab)
+// ============================================================================
 function renderWeatherDetail(wx, home_park_code) {
   if (!wx) return `<div class="coming-soon">Weather not loaded</div>`;
   if (wx.is_dome) return `<div style="color:var(--muted);">🏟 ${wx.note || 'Dome / retractable roof'}</div>`;
@@ -599,18 +899,21 @@ function renderWeatherDetail(wx, home_park_code) {
   const v8 = wx.v8 || {};
   const pct = v8.run_adj_pct;
   const comps = v8.components || {};
-  const pctCls = pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral";
+  const pctCls = pct == null ? "neutral" : (pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral");
   const sign = pct >= 0 ? "+" : "";
-  const cappedNote = v8.capped ? " <span style=\"color:var(--projected);font-size:0.75rem;\">(capped)</span>" : "";
+  const cappedNote = v8.capped
+    ? ` <span style="color:var(--projected);font-size:0.75rem;">(capped)</span>` : "";
   return `
-    <div style="display:flex;gap:1rem;align-items:flex-start;">
-      <div style="flex:1;">
-        <div><b>${w.temp_f}°F</b> · ${w.humidity_pct||'?'}% hum · ${w.wind_speed_mph}mph ${w.wind_dir||''} · ${w.precip_pct||0}% precip</div>
-        <div style="color:var(--muted);font-size:0.85rem;">${w.short_forecast||''}</div>
-        <div style="margin-top:0.5rem;">
-          <span class="ump-pct ${pctCls}" style="font-size:1.1rem;">V8 Run Adj ${sign}${pct!=null?pct.toFixed(1):'?'}%</span>${cappedNote}
+    <div class="wx-top">
+      <div class="wx-text">
+        <div class="wx-headline">
+          <b>${w.temp_f}°F</b> · ${w.humidity_pct||'?'}% hum · ${w.wind_speed_mph}mph ${w.wind_dir||''} · ${w.precip_pct||0}% precip
         </div>
-        ${comps.temp_delta !== undefined ? `<div style="color:var(--muted);font-size:0.78rem;margin-top:0.4rem;">
+        <div class="wx-forecast">${w.short_forecast||''}</div>
+        <div class="wx-v8">
+          <span class="ump-pct ${pctCls}" style="font-size:1.05rem;">V8 Run Adj ${pct != null ? sign+pct.toFixed(1)+"%" : "—"}</span>${cappedNote}
+        </div>
+        ${comps.temp_delta !== undefined ? `<div class="wx-components">
           Δ ${comps.temp_delta>0?'+':''}${comps.temp_delta}°F →
           T ${comps.t_adj_pct>=0?'+':''}${comps.t_adj_pct}% ·
           W ${comps.w_adj_pct>=0?'+':''}${comps.w_adj_pct}% ·
@@ -622,9 +925,10 @@ function renderWeatherDetail(wx, home_park_code) {
     </div>`;
 }
 
-// Date helpers (ET)
+// ============================================================================
+// DATE HELPERS (ET)
+// ============================================================================
 function today() {
-  // Format current time directly in ET without round-tripping through UTC.
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric", month: "2-digit", day: "2-digit",
@@ -635,7 +939,8 @@ function today() {
   return `${y}-${m}-${d}`;
 }
 function addDays(iso, n) {
-  const d = new Date(iso+"T12:00:00Z"); d.setUTCDate(d.getUTCDate()+n);
+  const d = new Date(iso+"T12:00:00Z");
+  d.setUTCDate(d.getUTCDate()+n);
   return d.toISOString().slice(0,10);
 }
 function fmtTime(iso) {
@@ -647,6 +952,9 @@ function fmtDateShort(iso) {
     {weekday:"short",month:"short",day:"numeric"});
 }
 
+// ============================================================================
+// MLB API
+// ============================================================================
 async function getSchedule(date) {
   const d = await fetchJSON(`${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season))`);
   return d.dates?.[0]?.games || [];
@@ -656,10 +964,6 @@ async function getOfficials(pk) {
     const d = await fetchJSON(`${LIVE}/game/${pk}/feed/live`);
     return d.liveData?.boxscore?.officials || d.gameData?.officials || [];
   } catch { return []; }
-}
-async function getBoxscore(pk) {
-  try { return await fetchJSON(`${API}/game/${pk}/boxscore`); }
-  catch { return null; }
 }
 
 function umpByType(officials, prefix) {
@@ -699,86 +1003,9 @@ function umpBadge(name) {
 }
 
 // ============================================================================
-// CORE LOAD: today's games + officials + series lookups
+// TEAM ABBREVIATION FALLBACK
 // ============================================================================
-async function loadToday() {
-  await loadStaticData();
-  const date = today();
-  const dates = [date, addDays(date,1), addDays(date,2), addDays(date,3)];
-  const [g0,g1,g2,g3] = await Promise.all(dates.map(getSchedule));
-  CURRENT_DATES = dates;
-  // Attach officials
-  const officialsByPk = {};
-  await Promise.all(g0.map(async g => { officialsByPk[g.gamePk] = await getOfficials(g.gamePk); }));
-  g0.forEach(g => { g._officials = officialsByPk[g.gamePk] || []; });
-  g0.sort((a,b) => new Date(a.gameDate)-new Date(b.gameDate));
-  CURRENT_GAMES = g0;
-  CURRENT_SERIES_NEXT = [g1,g2,g3];
-
-  document.getElementById("updated").textContent = new Date().toLocaleTimeString();
-  renderScoreboard();
-  renderUmpiresTab();
-  renderLineupsTab();
-}
-
-// ============================================================================
-// TAB: SCOREBOARD
-// ============================================================================
-function renderScoreboard() {
-  const el = document.getElementById("scoreboard-list");
-  if (!CURRENT_GAMES.length) { el.innerHTML = `<div class="empty">No games scheduled today.</div>`; return; }
-  el.innerHTML = "";
-  CURRENT_GAMES.forEach(g => {
-    const away = g.teams.away.team.name;
-    const home = g.teams.home.team.name;
-    const awayAbbr = g.teams.away.team.abbreviation || teamAbbr(away);
-    const homeAbbr = g.teams.home.team.abbreviation || teamAbbr(home);
-    const status = g.status.detailedState;
-    const statusCls = status === "Final" || status === "Game Over" ? "sb-status-final"
-      : status === "In Progress" ? "sb-status-live" : "";
-    const hp = umpByType(g._officials, "Home Plate");
-
-    // Fatigue summaries
-    const awayFat = FATIGUE?.teams?.[away];
-    const homeFat = FATIGUE?.teams?.[home];
-    const fatigueTag = (rows) => {
-      if (!rows || !rows.length) return "";
-      const out = rows.filter(r => r.tier === "LIKELY OUT").length;
-      const fat = rows.filter(r => r.tier === "FATIGUED").length;
-      let parts = [];
-      if (out) parts.push(`<span class="sb-tag fatigue-out">${out} OUT</span>`);
-      if (fat) parts.push(`<span class="sb-tag fatigue-fat">${fat} FAT</span>`);
-      return parts.join("");
-    };
-
-    const awayId = g.teams.away.team.id;
-    const homeId = g.teams.home.team.id;
-    const pf = parkFactorFor(homeAbbr);
-
-    const row = document.createElement("div");
-    row.className = "panel clickable";
-    row.innerHTML = `
-      <div class="sb-row">
-        <div>
-          <div class="sb-matchup">${teamLogo(awayId,22)}${awayAbbr} @ ${teamLogo(homeId,22)}${homeAbbr}</div>
-          <div class="sb-time"><span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}</div>
-        </div>
-        <div class="sb-right">
-          ${hp ? `<span class="sb-tag">HP ${hp.split(" ").slice(-1)[0]} ${umpBadge(hp)}</span>` : `<span class="sb-tag placeholder">Ump TBD</span>`}
-          ${pfBadge(pf)}
-          ${weatherBadge(g)}
-          <span>${fatigueTag(awayFat)}${fatigueTag(homeFat)}</span>
-          ${oddsChip(g.gamePk)}
-        </div>
-      </div>
-    `;
-    row.onclick = () => openModal(g);
-    el.appendChild(row);
-  });
-}
-
 function teamAbbr(name) {
-  // Fallback abbreviations if MLB doesn't provide
   const map = {
     "New York Yankees":"NYY","New York Mets":"NYM","Los Angeles Dodgers":"LAD","Los Angeles Angels":"LAA",
     "San Francisco Giants":"SF","San Diego Padres":"SD","Chicago Cubs":"CHC","Chicago White Sox":"CWS",
@@ -793,11 +1020,257 @@ function teamAbbr(name) {
 }
 
 // ============================================================================
-// TAB: UMPIRES + WEATHER (all games, ump info + weather placeholder)
+// LOAD
+// ============================================================================
+let VIEW_DATE = null;
+
+async function loadToday() { return loadForDate(today()); }
+
+async function loadForDate(date) {
+  VIEW_DATE = date;
+  await loadStaticData();
+  const dates = [date, addDays(date,1), addDays(date,2), addDays(date,3)];
+  const [g0,g1,g2,g3] = await Promise.all(dates.map(getSchedule));
+  CURRENT_DATES = dates;
+  const officialsByPk = {};
+  await Promise.all(g0.map(async g => { officialsByPk[g.gamePk] = await getOfficials(g.gamePk); }));
+  g0.forEach(g => { g._officials = officialsByPk[g.gamePk] || []; });
+  g0.sort((a,b) => new Date(a.gameDate)-new Date(b.gameDate));
+  CURRENT_GAMES = g0;
+  CURRENT_SERIES_NEXT = [g1,g2,g3];
+
+  const dp = document.getElementById("datePicker"); if (dp) dp.value = date;
+  const showing = document.getElementById("showingLabel");
+  if (showing) {
+    const pretty = fmtDateShort(date);
+    const isToday = date === today();
+    showing.textContent = isToday ? `Showing ${pretty} (today)` : `Showing ${pretty}`;
+  }
+
+  document.getElementById("updated").textContent = new Date().toLocaleTimeString();
+  renderScoreboard();
+  renderUmpiresTab();
+  renderLineupsTab();
+}
+
+// ============================================================================
+// STALENESS BANNER HELPERS
+// ============================================================================
+function lineupCoverageForView() {
+  if (!LINEUPS || !CURRENT_GAMES.length) return null;
+  const ids = new Set((LINEUPS.games || []).map(g => g.game_pk));
+  const hits = CURRENT_GAMES.filter(g => ids.has(g.gamePk)).length;
+  return { hits, total: CURRENT_GAMES.length, generated: LINEUPS.generated_at };
+}
+
+function renderStalenessBanners() {
+  const lb = document.getElementById("lineups-banner");
+  const sb = document.getElementById("scoreboard-banner");
+  if (lb) lb.innerHTML = "";
+  if (sb) sb.innerHTML = "";
+  const cov = lineupCoverageForView();
+  if (cov && cov.hits === 0 && cov.total > 0) {
+    const msg = `Lineups JSON (${cov.generated || "?"}) doesn't match today's slate. The morning refresh may not have run yet.`;
+    if (lb) lb.innerHTML = `<div class="stale-banner">${msg}</div>`;
+  }
+}
+
+// ============================================================================
+// SCOREBOARD
+// ============================================================================
+function renderScoreboard() {
+  const el = document.getElementById("scoreboard-list");
+  if (!CURRENT_GAMES.length) {
+    el.innerHTML = `<div class="empty">No games scheduled today.</div>`;
+    renderStalenessBanners();
+    return;
+  }
+
+  let html = `<table class="sb-table">
+    <colgroup>
+      <col class="col-matchup">
+      <col class="col-total">
+      <col class="col-pf sb-col-hide-mobile">
+      <col class="col-wx">
+      <col class="col-ump sb-col-hide-mobile">
+    </colgroup>
+    <thead><tr>
+      <th class="sb-h-teams">Matchup<span class="sb-sub">ML flanking teams</span></th>
+      <th class="sb-h-total">Total</th>
+      <th class="sb-h-pf sb-col-hide-mobile">PF</th>
+      <th class="sb-h-weather">Weather</th>
+      <th class="sb-h-ump sb-col-hide-mobile">HP Ump</th>
+    </tr></thead><tbody>`;
+
+  CURRENT_GAMES.forEach(g => {
+    const away = g.teams.away.team.name;
+    const home = g.teams.home.team.name;
+    const awayAbbr = g.teams.away.team.abbreviation || teamAbbr(away);
+    const homeAbbr = g.teams.home.team.abbreviation || teamAbbr(home);
+    const awayId = g.teams.away.team.id;
+    const homeId = g.teams.home.team.id;
+    const status = g.status.detailedState;
+    const statusCls = (status === "Final" || status === "Game Over") ? "sb-status-final"
+      : status === "In Progress" ? "sb-status-live" : "";
+
+    const hp = umpByType(g._officials, "Home Plate");
+    const pf = parkFactorFor(homeAbbr);
+    const o = oddsForGame(g.gamePk);
+
+    const aML = o?.moneyline?.away;
+    const hML = o?.moneyline?.home;
+    const awayMLStr = aML
+      ? `<span class="sb-ml" title="${aML.book}">${aML.odds>0?'+':''}${aML.odds}</span>`
+      : `<span class="sb-ml-empty">—</span>`;
+    const homeMLStr = hML
+      ? `<span class="sb-ml" title="${hML.book}">${hML.odds>0?'+':''}${hML.odds}</span>`
+      : `<span class="sb-ml-empty">—</span>`;
+
+    const tOver = o?.total?.over, tUnder = o?.total?.under;
+    let totalCell = `<span class="sb-empty">—</span>`;
+    if (tOver) {
+      totalCell = `<span class="sb-total-line">O ${tOver.line}</span> <span class="sb-total-odds" title="${tOver.book}">${tOver.odds>0?'+':''}${tOver.odds}</span>`;
+      if (tUnder) totalCell += `<br><span class="sb-total-line">U ${tUnder.line}</span> <span class="sb-total-odds" title="${tUnder.book}">${tUnder.odds>0?'+':''}${tUnder.odds}</span>`;
+    }
+
+    const pfCell = pf
+      ? `<span class="sb-pf-val ${pf.park_factor >= 107 ? 'over' : pf.park_factor <= 93 ? 'under' : 'neutral'}">${pf.park_factor}</span>`
+      : `<span class="sb-empty">—</span>`;
+
+    const wxCell = weatherCellBadge(g);
+
+    const umpCell = hp
+      ? `<span class="sb-ump-name">${hp.split(" ").slice(-1)[0]}</span> ${umpBadge(hp)}`
+      : `<span class="sb-empty">TBD</span>`;
+
+    html += `<tr class="sb-clickable" data-pk="${g.gamePk}">
+      <td>
+        <div class="sb-match">
+          <span class="ml-away">${awayMLStr}</span>
+          <span class="teams">
+            ${teamLogo(awayId,22)}<span>${awayAbbr}</span>
+            <span class="sb-at">@</span>
+            ${teamLogo(homeId,22)}<span>${homeAbbr}</span>
+          </span>
+          <span class="ml-home">${homeMLStr}</span>
+        </div>
+        <div class="sb-time-row">
+          <span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}
+        </div>
+      </td>
+      <td class="sb-total-cell">${totalCell}</td>
+      <td class="sb-pf-cell sb-col-hide-mobile">${pfCell}</td>
+      <td class="sb-weather-cell">${wxCell}</td>
+      <td class="sb-ump-cell sb-col-hide-mobile">${umpCell}</td>
+    </tr>`;
+
+    if (DENSITY === "detailed") {
+      html += renderExpandedRow(g, awayAbbr, homeAbbr);
+    }
+  });
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+
+  el.querySelectorAll("tr.sb-clickable").forEach(tr => {
+    tr.onclick = () => {
+      const pk = parseInt(tr.dataset.pk, 10);
+      const g = CURRENT_GAMES.find(x => x.gamePk === pk);
+      if (g) openModal(g);
+    };
+  });
+  el.querySelectorAll("tr.sb-expand").forEach(tr => {
+    tr.onclick = () => {
+      const pk = parseInt(tr.dataset.pk, 10);
+      const g = CURRENT_GAMES.find(x => x.gamePk === pk);
+      if (g) openModal(g);
+    };
+  });
+  renderStalenessBanners();
+}
+
+function spMiniStats(name) {
+  if (!name) return { name: "TBA", handTag: "", html: "" };
+  const s = lookupPitcherStats(name);
+  const sp = lookupSplits(name);
+  const hand = sp?.hand || s?.hand;
+  const handTag = hand ? `<span class="hand-tag">${hand}HP</span>` : "";
+  if (!s) return { name, handTag, html: `<span class="sb-empty">no stats</span>` };
+  const thr = PITCHER_STATS?.thresholds || {};
+  const fipCls  = tier(s.fip_proj, thr.fip, false);
+  const xeraCls = tier(s.xera, thr.xera, false);
+  const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
+  const cell = (lbl, v, cls, suf="") => v == null
+    ? `<span class="sb-expand-stat"><span class="lbl">${lbl}</span><span class="val">—</span></span>`
+    : `<span class="sb-expand-stat"><span class="lbl">${lbl}</span><span class="val ${cls}">${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}</span></span>`;
+  const html = `${cell("FIP", s.fip_proj, fipCls)}${cell("xERA", s.xera, xeraCls)}${cell("K-BB", s.k_bb_pct, kbbCls, "%")}`;
+  return { name, handTag, html };
+}
+
+function tiredArmSummary(teamName) {
+  if (!FATIGUE || !FATIGUE.teams) return null;
+  const rows = FATIGUE.teams[teamName];
+  if (!rows || !rows.length) return null;
+  const out = rows.filter(r => r.tier === "LIKELY OUT").length;
+  const fat = rows.filter(r => r.tier === "FATIGUED").length;
+  const parts = [];
+  if (out) parts.push(`<span class="pill" style="color:var(--fatigue-out);background:rgba(248,113,113,0.15);">${out} OUT</span>`);
+  if (fat) parts.push(`<span class="pill fat">${fat} fat</span>`);
+  return parts.length ? parts.join(" ") : null;
+}
+
+function renderExpandedRow(g, awayAbbr, homeAbbr) {
+  const probAway = g.teams.away.probablePitcher;
+  const probHome = g.teams.home.probablePitcher;
+  const awayName = g.teams.away.team.name;
+  const homeName = g.teams.home.team.name;
+
+  const aw = spMiniStats(probAway?.fullName);
+  const ho = spMiniStats(probHome?.fullName);
+
+  const awayTired = tiredArmSummary(awayName);
+  const homeTired = tiredArmSummary(homeName);
+
+  const lg = lineupsForGame(g.gamePk);
+  const awLu = lg?.lineups?.away;
+  const hoLu = lg?.lineups?.home;
+  const luStatus = (awLu?.status || hoLu?.status || "").toLowerCase();
+  const luPill = luStatus === "confirmed"
+    ? `<span class="status-pill confirmed">lineups confirmed</span>`
+    : luStatus === "projected"
+      ? `<span class="status-pill projected">projected lineups</span>`
+      : `<span class="status-pill tbd">lineups TBD</span>`;
+
+  return `<tr class="sb-expand" data-pk="${g.gamePk}">
+    <td colspan="5">
+      <div class="sb-expand-grid">
+        <div class="sb-expand-sp away">
+          <div class="sp-name">${awayAbbr} · ${aw.name} ${aw.handTag}</div>
+          <div class="sb-expand-stats">${aw.html}</div>
+          ${awayTired ? `<div class="mid-row" style="margin-top:0.35rem;">Tired pen: ${awayTired}</div>` : ""}
+        </div>
+        <div class="sb-expand-mid">
+          Series snapshot
+          <div class="mid-row">${luPill}</div>
+        </div>
+        <div class="sb-expand-sp home">
+          <div class="sp-name">${homeAbbr} · ${ho.name} ${ho.handTag}</div>
+          <div class="sb-expand-stats">${ho.html}</div>
+          ${homeTired ? `<div class="mid-row" style="margin-top:0.35rem;">Tired pen: ${homeTired}</div>` : ""}
+        </div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+// ============================================================================
+// UMPIRES & WEATHER TAB
 // ============================================================================
 function renderUmpiresTab() {
   const el = document.getElementById("umpires-list");
-  if (!CURRENT_GAMES.length) { el.innerHTML = `<div class="empty">No games scheduled.</div>`; return; }
+  if (!CURRENT_GAMES.length) {
+    el.innerHTML = `<div class="empty">No games scheduled.</div>`;
+    return;
+  }
   el.innerHTML = "";
   CURRENT_GAMES.forEach(g => {
     const away = g.teams.away.team.name;
@@ -812,7 +1285,8 @@ function renderUmpiresTab() {
 
     const div = document.createElement("div");
     div.className = "panel ump-game";
-    let inner = `<h3>${teamAbbr(away)} @ ${teamAbbr(home)} <span class="venue">${venue} · ${fmtTime(g.gameDate)}</span></h3>`;
+    let inner = `<h3>${teamAbbr(away)} @ ${teamAbbr(home)}
+      <span class="venue">${venue} · ${fmtTime(g.gameDate)}</span></h3>`;
     inner += `<table class="ump-table">
       <thead><tr><th>Game</th><th>Date</th><th>HP Umpire</th><th>Source</th></tr></thead>
       <tbody>`;
@@ -831,18 +1305,21 @@ function renderUmpiresTab() {
       </tr>`;
     });
     inner += `</tbody></table>`;
-    if (hp) inner += `<div style="color:var(--muted);font-size:0.8rem;margin-top:0.4rem;">Today's crew: HP ${hp} · 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>`;
+    if (hp) {
+      inner += `<div style="color:var(--muted);font-size:0.8rem;margin-top:0.4rem;">
+        Today's crew: HP ${hp} · 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>`;
+    }
     const _awayAbbr = g.teams.away.team.abbreviation || teamAbbr(g.teams.away.team.name);
     const _homeAbbr = g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name);
     inner += `<div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Weather</b></div>`;
-    inner += renderWeatherDetail(weatherForGame(g.gamePk), _homeAbbr);
-    // BP overlay
+    inner += `<div class="m-wx-box" style="margin-top:0.35rem;">${renderWeatherDetail(weatherForGame(g.gamePk), _homeAbbr)}</div>`;
     const _bp = bpWeatherForGame(_homeAbbr, _awayAbbr);
     if (_bp && _bp.bp_weather_runs_pct !== null) {
       const _p = _bp.bp_weather_runs_pct;
       const _cls = _p > 0 ? "over" : _p < 0 ? "under" : "neutral";
       const _sign = _p >= 0 ? "+" : "";
-      inner += `<div style="margin-top:0.4rem;"><span class="ump-pct ${_cls}">BP Wx ${_sign}${_p}%</span></div>`;
+      inner += `<div style="margin-top:0.4rem;">
+        <span class="ump-pct ${_cls}">BP Wx ${_sign}${_p}%</span></div>`;
     }
     div.innerHTML = inner;
     el.appendChild(div);
@@ -850,11 +1327,14 @@ function renderUmpiresTab() {
 }
 
 // ============================================================================
-// TAB: LINEUPS + BULLPEN FATIGUE
+// LINEUPS + FATIGUE TAB
 // ============================================================================
 function renderLineupsTab() {
   const el = document.getElementById("lineups-list");
-  if (!CURRENT_GAMES.length) { el.innerHTML = `<div class="empty">No games scheduled.</div>`; return; }
+  if (!CURRENT_GAMES.length) {
+    el.innerHTML = `<div class="empty">No games scheduled.</div>`;
+    return;
+  }
   el.innerHTML = "";
   CURRENT_GAMES.forEach(g => {
     const away = g.teams.away.team.name;
@@ -862,19 +1342,19 @@ function renderLineupsTab() {
     const div = document.createElement("div");
     div.className = "panel";
     div.innerHTML = `<h3 style="margin:0 0 0.6rem;font-size:1rem;">${teamAbbr(away)} @ ${teamAbbr(home)} <span style="color:var(--muted);font-weight:normal;font-size:0.82rem;">${fmtTime(g.gameDate)}</span></h3>
-      <div class="grid-2">
-        <div class="team-box">
+      <div class="m-split">
+        <div class="m-bp-box">
           <h4>${away}</h4>
-          <div><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Bullpen Fatigue</b></div>
+          <div><b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Bullpen Fatigue</b></div>
           ${renderFatigue(away)}
-          <div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Lineup</b></div>
+          <div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Lineup</b></div>
           ${renderLineupForTeam(g.gamePk, 'away')}
         </div>
-        <div class="team-box">
+        <div class="m-bp-box">
           <h4>${home}</h4>
-          <div><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Bullpen Fatigue</b></div>
+          <div><b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Bullpen Fatigue</b></div>
           ${renderFatigue(home)}
-          <div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Lineup</b></div>
+          <div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Lineup</b></div>
           ${renderLineupForTeam(g.gamePk, 'home')}
         </div>
       </div>`;
@@ -885,13 +1365,9 @@ function pitcherHand(name) {
   const s = lookupPitcherStats(name);
   return s?.hand || null;
 }
-
 function renderFatigue(team) {
   if (!FATIGUE || !FATIGUE.teams) return `<div class="team-none">No fatigue data</div>`;
   const rows = FATIGUE.teams[team];
-  // Compute bullpen hand summary (all pitchers in the usage list, tired or not)
-  // Note: FATIGUE.teams only includes tired arms; we can only summarize what's shown.
-  // For a full pen summary we'd need the broader usage set — add later.
   if (!rows || !rows.length) return `<div class="team-none">No tired arms flagged</div>`;
   const tiredHandCounts = {R:0, L:0, unknown:0};
   rows.forEach(r => {
@@ -905,7 +1381,9 @@ function renderFatigue(team) {
     const tierCls = r.tier === "LIKELY OUT" ? "out" : "fat";
     const tierTag = r.tier === "LIKELY OUT" ? "OUT" : "FAT";
     const h = pitcherHand(r.name);
-    const handTag = h ? `<span style="color:${h==='L'?'#5bb8f5':'var(--muted)'};font-size:0.72rem;font-weight:700;margin-left:0.25rem;">${h}</span>` : "";
+    const handTag = h
+      ? `<span style="color:${h==='L'?'#5bb8f5':'var(--muted)'};font-size:0.72rem;font-weight:700;margin-left:0.25rem;">${h}</span>`
+      : "";
     return `<div class="fatigue-line">
       <span class="fatigue-tier ${tierCls}">${tierTag}</span>
       <span class="fatigue-name">${r.name}</span>${handTag}
@@ -916,13 +1394,49 @@ function renderFatigue(team) {
 }
 
 // ============================================================================
-// MODAL: GAME DETAIL
+// MODAL — WBC-inspired
 // ============================================================================
+function renderOddsGrid(o) {
+  if (!o) return `<div class="coming-soon">No odds loaded</div>`;
+  const fmtPrice = (side, classif) => side
+    ? `<span class="price ${classif}">${side.odds>0?'+':''}${side.odds}</span>`
+    : `<span class="price">—</span>`;
+  const classifML = (ml) => !ml ? "" : (ml.odds < 0 ? "fav" : "dog");
+  const a = o.moneyline?.away, h = o.moneyline?.home;
+  const aRL = o.run_line?.away, hRL = o.run_line?.home;
+  const over = o.total?.over, under = o.total?.under;
+  return `<div class="m-odds-grid">
+    <div class="m-odds-cell">
+      <div class="market">Moneyline</div>
+      <div class="row"><span class="side">Away</span>${fmtPrice(a, classifML(a))}</div>
+      <div class="book">${a?.book || "—"}</div>
+      <div class="row"><span class="side">Home</span>${fmtPrice(h, classifML(h))}</div>
+      <div class="book">${h?.book || "—"}</div>
+    </div>
+    <div class="m-odds-cell">
+      <div class="market">Run Line</div>
+      <div class="row"><span class="side">${aRL?.line ? aRL.line.toFixed(1) : '—'}</span>${fmtPrice(aRL, "")}</div>
+      <div class="book">${aRL?.book || "—"}</div>
+      <div class="row"><span class="side">${hRL?.line ? hRL.line.toFixed(1) : '—'}</span>${fmtPrice(hRL, "")}</div>
+      <div class="book">${hRL?.book || "—"}</div>
+    </div>
+    <div class="m-odds-cell">
+      <div class="market">Total</div>
+      <div class="row"><span class="side">O ${over?.line ?? "—"}</span>${fmtPrice(over, "")}</div>
+      <div class="book">${over?.book || "—"}</div>
+      <div class="row"><span class="side">U ${under?.line ?? "—"}</span>${fmtPrice(under, "")}</div>
+      <div class="book">${under?.book || "—"}</div>
+    </div>
+  </div>`;
+}
+
 function openModal(game) {
   const bg = document.getElementById("modal-bg");
   const body = document.getElementById("modal-body");
   const away = game.teams.away.team.name;
   const home = game.teams.home.team.name;
+  const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(away);
+  const homeAbbr = game.teams.home.team.abbreviation || teamAbbr(home);
   const venue = game.venue?.name || "";
   const off = game._officials;
   const hp = umpByType(off,"Home Plate");
@@ -933,116 +1447,148 @@ function openModal(game) {
 
   const probAway = game.teams.away.probablePitcher;
   const probHome = game.teams.home.probablePitcher;
+  const o = oddsForGame(game.gamePk);
+  const wx = weatherForGame(game.gamePk);
 
-  const fmtSP = (p) => {
-    if (!p) return `<div class="coming-soon">TBA</div>`;
-    const s = p.stats?.[0]?.stats || {};
-    return `<div style="font-weight:600;">${p.fullName}</div>
-      <div style="color:var(--muted);font-size:0.8rem;margin-top:0.15rem;">
-        ${s.era ? `ERA ${s.era}` : ""} ${s.inningsPitched ? `· ${s.inningsPitched} IP` : ""}
-        ${s.strikeOuts ? `· ${s.strikeOuts} K` : ""} ${s.baseOnBalls ? `· ${s.baseOnBalls} BB` : ""}
-      </div>`;
-  };
+  // Matchup bar ML classification
+  const aML = o?.moneyline?.away;
+  const hML = o?.moneyline?.home;
+  const aCls = !aML ? "" : (aML.odds < 0 ? "fav" : "dog");
+  const hCls = !hML ? "" : (hML.odds < 0 ? "fav" : "dog");
+  const fmtMlBig = (ml, cls) => ml
+    ? `<div class="m-team-ml ${cls}">${ml.odds>0?'+':''}${ml.odds}</div>
+       <div class="m-team-book">${ml.book}</div>`
+    : `<div class="m-team-ml">—</div><div class="m-team-book">no price</div>`;
+
+  // Center box: total + juice
+  const over = o?.total?.over;
+  const under = o?.total?.under;
+  let centerBox = `<div class="m-center-box">
+    <div class="m-total-label">Total</div>
+    <div class="m-total-num">${over?.line ?? "—"}</div>
+    ${over || under ? `<div class="m-total-juice">
+      O ${over ? (over.odds>0?'+':'')+over.odds : '—'} &nbsp;·&nbsp;
+      U ${under ? (under.odds>0?'+':'')+under.odds : '—'}
+    </div>` : ""}
+  </div>`;
+
+  // Weather + venue line content
+  const isDome = wx?.is_dome;
+  const wxShort = wx?.weather?.short_forecast;
+  const tempF = wx?.weather?.temp_f;
+  const venueLine = `${isDome ? "🏟 " : ""}${venue} · ${fmtTime(game.gameDate)} · ${game.status.detailedState}${tempF != null ? ` · ${tempF}°F ${wxShort||""}` : ""}`;
 
   body.innerHTML = `
-    <h2>${teamLogo(game.teams.away.team.id,28)}${away} @ ${home}${teamLogo(game.teams.home.team.id,28)}</h2>
-    <div class="subhead">${venue} · ${fmtTime(game.gameDate)} · ${game.status.detailedState}</div>
-
-    <section>
-      <h3>Best Odds</h3>
-      ${renderOddsDetail(oddsForGame(game.gamePk))}
-    </section>
-
-    <section>
-      <h3>Starting Pitchers</h3>
-      <div class="grid-2">
-        ${renderSPBox(probAway?.fullName, teamAbbr(away))}
-        ${renderSPBox(probHome?.fullName, teamAbbr(home))}
+    <div class="m-matchup-bar">
+      <div class="m-team away">
+        <div class="m-team-label">Away</div>
+        <div class="m-team-logo-name">
+          ${teamLogo(game.teams.away.team.id, 36)}
+          <span class="m-team-name">${awayAbbr}</span>
+        </div>
+        ${fmtMlBig(aML, aCls)}
       </div>
-    </section>
-
-    <section>
-      <h3>Bullpen Fatigue</h3>
-      <div class="grid-2">
-        <div class="team-box"><h4>${away}</h4>${renderFatigue(away)}</div>
-        <div class="team-box"><h4>${home}</h4>${renderFatigue(home)}</div>
+      ${centerBox}
+      <div class="m-team home">
+        <div class="m-team-label">Home</div>
+        <div class="m-team-logo-name">
+          ${teamLogo(game.teams.home.team.id, 36)}
+          <span class="m-team-name">${homeAbbr}</span>
+        </div>
+        ${fmtMlBig(hML, hCls)}
       </div>
-    </section>
+    </div>
+    <div class="m-venue-row">
+      <div class="m-venue-badge">${venueLine}</div>
+    </div>
 
-    <section>
-      <h3>Home Plate Umpire</h3>
-      <div class="team-box">
-        ${hp ? `<div><b>${hp}</b> ${umpBadge(hp)}</div>
-                <div style="color:var(--muted);font-size:0.82rem;margin-top:0.3rem;">
-                  Crew: 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}
-                </div>` : `<div class="coming-soon">HP umpire not yet posted</div>`}
-        ${seriesNext.some(x => x) && hp ? `
-          <div style="margin-top:0.6rem;font-size:0.85rem;">
-            <b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Projected for rest of series</b>
-            ${seriesNext.map((fg, i) => {
-              if (!fg) return "";
-              const proj = projectHP(off, i+1);
-              return `<div style="margin-top:0.25rem;">G${i+2} · ${fmtDateShort(CURRENT_DATES[i+1])}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
-            }).join("")}
-          </div>` : ""}
-      </div>
-    </section>
+    <div class="m-section-header"><span>Best Odds</span>
+      <span class="right-note">best price across 7 NJ books</span></div>
+    ${renderOddsGrid(o)}
 
-    <section>
-      <h3>Park Factors (3-yr Savant)</h3>
-      ${(() => {
-        const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
-        const homeAbbr2 = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
-        const pf = parkFactorFor(homeAbbr2);
-        if (!pf) return `<div class="coming-soon">No park factor data</div>`;
-        const stat = (label, v) => {
-          const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
-          return `<div class="sp-stat"><div class="sp-stat-label">${label}</div><div class="sp-stat-val ${cls}">${v}</div></div>`;
-        };
-        return `<div class="team-box">
-          <div style="color:var(--muted);font-size:0.82rem;margin-bottom:0.4rem;">${pf.venue} · index 100 = league avg</div>
-          <div class="sp-stat-group">
-            ${stat("Overall", pf.park_factor)}
-            ${stat("wOBA", pf.woba)}
-            ${stat("HR", pf.hr)}
-            ${stat("HardHit", pf.hardhit)}
-            ${stat("BB", pf.bb)}
-            ${stat("K", pf.so)}
-          </div>
-        </div>`;
-      })()}
-    </section>
+    <div class="m-section-header"><span>Starting Pitchers</span></div>
+    <div class="m-sp-grid">
+      ${renderSPBox(probAway?.fullName, awayAbbr)}
+      ${renderSPBox(probHome?.fullName, homeAbbr)}
+    </div>
 
-    <section>
-      <h3>Weather</h3>
-      <div class="team-box">
-        ${renderWeatherDetail(weatherForGame(game.gamePk), game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name))}
+    <div class="m-section-header"><span>Bullpen Fatigue</span>
+      <span class="right-note">${FATIGUE?.window ? `${FATIGUE.window.start} → ${FATIGUE.window.end}` : ""}</span></div>
+    <div class="m-split">
+      <div class="m-bp-box"><h4>${away}</h4>${renderFatigue(away)}</div>
+      <div class="m-bp-box"><h4>${home}</h4>${renderFatigue(home)}</div>
+    </div>
+
+    <div class="m-section-header"><span>Home Plate Umpire</span></div>
+    <div class="m-ump-box">
+      ${hp ? `<div class="ump-name">${hp} ${umpBadge(hp)}</div>
+              <div class="ump-crew">Crew: 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>` :
+             `<div class="coming-soon">HP umpire not yet posted</div>`}
+      ${seriesNext.some(x => x) && hp ? `
+        <div class="ump-future">
+          <b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Projected rest of series</b>
+          ${seriesNext.map((fg, i) => {
+            if (!fg) return "";
+            const proj = projectHP(off, i+1);
+            return `<div class="row">G${i+2} · ${fmtDateShort(CURRENT_DATES[i+1])}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
+          }).join("")}
+        </div>` : ""}
+    </div>
+
+    <div class="m-section-header"><span>Weather &amp; Park</span></div>
+    <div class="m-split">
+      <div class="m-wx-box">
+        ${renderWeatherDetail(wx, homeAbbr)}
         ${(() => {
-          const homeAbbr2 = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
-          const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
-          const bp = bpWeatherForGame(homeAbbr2, awayAbbr);
+          const bp = bpWeatherForGame(homeAbbr, awayAbbr);
           if (!bp) return "";
           const p = bp.bp_weather_runs_pct;
           if (p == null) return "";
           const cls = p > 0 ? "over" : p < 0 ? "under" : "neutral";
           const sign = p >= 0 ? "+" : "";
-          return `<div style="margin-top:0.7rem;border-top:1px solid var(--border);padding-top:0.5rem;">
-            <span class="ump-pct ${cls}" style="font-size:1.05rem;">BP Weather-Only Runs ${sign}${p}%</span>
-            <span style="color:var(--muted);font-size:0.78rem;margin-left:0.5rem;">
-              HR ${(bp.bp_weather_hr_pct??0)>=0?'+':''}${bp.bp_weather_hr_pct??'?'}% · 2B/3B ${(bp.bp_weather_23b_pct??0)>=0?'+':''}${bp.bp_weather_23b_pct??'?'}% · 1B ${(bp.bp_weather_1b_pct??0)>=0?'+':''}${bp.bp_weather_1b_pct??'?'}%
+          return `<div class="wx-bp">
+            <span class="ump-pct ${cls}" style="font-size:1rem;">BP Weather-Only Runs ${sign}${p}%</span>
+            <span style="color:var(--muted);font-size:0.76rem;margin-left:0.5rem;">
+              HR ${(bp.bp_weather_hr_pct??0)>=0?'+':''}${bp.bp_weather_hr_pct??'?'}%
+              · 2B/3B ${(bp.bp_weather_23b_pct??0)>=0?'+':''}${bp.bp_weather_23b_pct??'?'}%
+              · 1B ${(bp.bp_weather_1b_pct??0)>=0?'+':''}${bp.bp_weather_1b_pct??'?'}%
             </span>
           </div>`;
         })()}
       </div>
-    </section>
-
-    <section>
-      <h3>Lineups</h3>
-      <div class="grid-2">
-        <div class="team-box"><h4>${away}</h4>${renderLineupForTeam(game.gamePk, 'away')}</div>
-        <div class="team-box"><h4>${home}</h4>${renderLineupForTeam(game.gamePk, 'home')}</div>
+      <div class="m-park-box">
+        ${(() => {
+          const pf = parkFactorFor(homeAbbr);
+          if (!pf) return `<div class="coming-soon">No park factor data</div>`;
+          const pfStat = (label, v) => {
+            const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
+            return `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
+              <div class="sp-stat-val ${cls}" style="font-size:1.1rem;">${v}</div></div>`;
+          };
+          return `<div class="pf-venue">${pf.venue} · 100 = league avg</div>
+            <div class="sp-stat-group">
+              ${pfStat("Overall", pf.park_factor)}
+              ${pfStat("wOBA", pf.woba)}
+              ${pfStat("HR", pf.hr)}
+              ${pfStat("HH", pf.hardhit)}
+              ${pfStat("BB", pf.bb)}
+              ${pfStat("K", pf.so)}
+            </div>`;
+        })()}
       </div>
-    </section>
+    </div>
+
+    <div class="m-section-header"><span>Lineups</span></div>
+    <div class="m-lineup-grid">
+      <div class="m-lineup-box">
+        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}</h4>
+        ${renderLineupForTeam(game.gamePk, 'away')}
+      </div>
+      <div class="m-lineup-box">
+        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}</h4>
+        ${renderLineupForTeam(game.gamePk, 'home')}
+      </div>
+    </div>
   `;
 
   bg.classList.add("active");
@@ -1059,7 +1605,7 @@ document.getElementById("modal-bg").onclick = (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
 // ============================================================================
-// TAB SWITCHING
+// TABS
 // ============================================================================
 document.querySelectorAll(".tab").forEach(btn => {
   btn.onclick = () => {
@@ -1071,13 +1617,37 @@ document.querySelectorAll(".tab").forEach(btn => {
 });
 
 // ============================================================================
+// DENSITY TOGGLE
+// ============================================================================
+function applyDensityUI() {
+  document.querySelectorAll(".ctrl-density").forEach(b => {
+    b.classList.toggle("active", b.dataset.density === DENSITY);
+  });
+}
+document.querySelectorAll(".ctrl-density").forEach(btn => {
+  btn.onclick = () => {
+    DENSITY = btn.dataset.density;
+    try { localStorage.setItem("mlb_density", DENSITY); } catch {}
+    applyDensityUI();
+    renderScoreboard();
+  };
+});
+applyDensityUI();
+
+// ============================================================================
 // LIFECYCLE
 // ============================================================================
+document.getElementById("todayBtn").onclick    = () => loadForDate(today());
+document.getElementById("prevDayBtn").onclick  = () => loadForDate(addDays(VIEW_DATE || today(), -1));
+document.getElementById("nextDayBtn").onclick  = () => loadForDate(addDays(VIEW_DATE || today(), 1));
+document.getElementById("refreshBtn").onclick  = () => loadForDate(VIEW_DATE || today());
+document.getElementById("datePicker").onchange = (e) => { if (e.target.value) loadForDate(e.target.value); };
+
 loadToday();
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") loadToday();
+  if (document.visibilityState === "visible") loadForDate(VIEW_DATE || today());
 });
-window.addEventListener("focus", loadToday);
+window.addEventListener("focus", () => loadForDate(VIEW_DATE || today()));
 </script>
 </body>
 </html>
