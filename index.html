@@ -179,6 +179,10 @@
   .status-pill.confirmed { background: rgba(78, 195, 124, 0.15); color: var(--confirmed); }
   .status-pill.projected { background: rgba(229, 164, 73, 0.15); color: var(--projected); }
   .status-pill.tbd { background: rgba(139, 149, 161, 0.15); color: var(--tbd); }
+  .status-pill.lu-confirmed { background: rgba(78, 195, 124, 0.18); color: var(--confirmed);
+    font-weight: 700; }
+  .status-pill.lu-projected { background: rgba(248, 113, 113, 0.18); color: var(--tier-worst);
+    font-weight: 700; }
 
   .coming-soon { color: var(--muted); font-style: italic; font-size: 0.82rem;
     padding: 0.4rem 0.5rem; }
@@ -237,6 +241,10 @@
   .bp-split-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--muted); margin: 0.6rem 0 0.25rem; }
   .bp-split-header.L { color: #5bb8f5; }
+  .bp-sub-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); opacity: 0.7;
+    margin: 0.35rem 0 0.1rem; }
+  .bp-sub-label.L { color: #5bb8f5; opacity: 0.85; }
 
   /* Lineup table */
   .lineup-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 0.3rem; }
@@ -810,6 +818,10 @@ function fmtDateShort(iso) {
   return new Date(iso+"T12:00:00Z").toLocaleDateString("en-US",
     {weekday:"short",month:"short",day:"numeric"});
 }
+function dayAbbr(iso) {
+  return new Date(iso+"T12:00:00Z").toLocaleDateString("en-US",
+    {weekday:"short"}).toUpperCase();
+}
 
 // ============================================================================
 // MLB API
@@ -932,22 +944,22 @@ async function loadForDate(date) {
   VIEW_DATE = date;
   await loadStaticData();
 
-  // 3 forward + today + 3 backward for both SP identification and HP inference
+  // 3 forward + today for the schedule proper.
+  // 10 days backward of probables to build a thorough known-starters set
+  // (catches rotation SPs who haven't pitched recently, e.g. TX depth).
   const dates = [date, addDays(date,1), addDays(date,2), addDays(date,3)];
-  const priorDates = [addDays(date,-1), addDays(date,-2), addDays(date,-3)];
+  const priorDates = Array.from({length: 10}, (_, i) => addDays(date, -(i+1)));
 
-  const [g0,g1,g2,g3, p1,p2,p3] = await Promise.all(
-    dates.concat(priorDates).map(getSchedule)
-  );
+  const forwardGames = await Promise.all(dates.map(getSchedule));
+  const [g0,g1,g2,g3] = forwardGames;
+  const priorGames = await Promise.all(priorDates.map(getSchedule));
   CURRENT_DATES = dates;
   CURRENT_SERIES_NEXT = [g1,g2,g3];
-  CURRENT_SERIES_PRIOR = [p1,p2,p3];
+  CURRENT_SERIES_PRIOR = priorGames.slice(0, 3);  // first 3 used for HP backfill
 
-  // Build known-starters set from every probable pitcher across the 7-day window.
-  // Any pitcher who has appeared as a probable SP is treated as a starter and
-  // excluded from bullpen views.
+  // Known-starters set from probable pitchers across today + 3 forward + 10 prior = 14 days.
   KNOWN_STARTERS = new Set();
-  const allWindowGames = [g0, g1, g2, g3, p1, p2, p3].flat();
+  const allWindowGames = [...forwardGames, ...priorGames].flat();
   for (const gg of allWindowGames) {
     for (const side of ['away','home']) {
       const nm = gg.teams?.[side]?.probablePitcher?.fullName;
@@ -1113,25 +1125,23 @@ function renderScoreboard() {
       ? `<span class="ml-paren ${mlCls(ml)}" title="${ml.book}">(${ml.odds>0?'+':''}${ml.odds})</span>`
       : `<span class="ml-paren empty">(—)</span>`;
 
-    // For completed games, show final score instead of moneyline (ML doesn't matter post-game)
+    // Scores (if final) sit next to team logos; odds remain in parens between teams
     const isFinal = status === "Final" || status === "Game Over";
     const fs = g._finalScore;
-    const leftPiece = isFinal && fs
-      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>`
-      : mlFmt(aML);
-    const rightPiece = isFinal && fs
-      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>`
-      : mlFmt(hML);
+    const awayScoreHTML = (isFinal && fs)
+      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>` : "";
+    const homeScoreHTML = (isFinal && fs)
+      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>` : "";
     const bottomLine = isFinal
       ? `<span class="${statusCls}">${status}</span>`
       : `<span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}`;
     const matchHTML = `
       <div class="sb-teams-line">
-        <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span></span>
-        ${leftPiece}
+        <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span>${awayScoreHTML}</span>
+        ${mlFmt(aML)}
         <span class="sb-at">@</span>
-        ${rightPiece}
-        <span class="team"><span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
+        ${mlFmt(hML)}
+        <span class="team">${homeScoreHTML}<span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
       </div>
       <div class="sb-time-row">${bottomLine}</div>`;
 
@@ -1322,8 +1332,13 @@ function renderLineupTable(side, opts={}) {
   }
 
   const statusLabel = (side.status || "").toUpperCase();
-  const statusCls = statusLabel === "CONFIRMED" ? "confirmed"
-                  : statusLabel === "PROJECTED" ? "projected" : "tbd";
+  // Heuristic: if the static JSON claims CONFIRMED but this wasn't from the
+  // MLB live feed, treat as PROJECTED (stale carry-over) unless the source
+  // is literally "MLB batting order".
+  const isLiveConfirmed = side.source === "MLB batting order";
+  const effStatus = statusLabel === "CONFIRMED" && !isLiveConfirmed ? "PROJECTED" : statusLabel;
+  const pillCls = effStatus === "CONFIRMED" ? "lu-confirmed"
+                : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
   let html = `<table class="lineup-table"><thead><tr>
     <th style="width:16px;">#</th><th style="width:26px;">Pos</th><th style="width:14px;"></th>
@@ -1333,7 +1348,7 @@ function renderLineupTable(side, opts={}) {
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
   }
-  html += `<div class="src-note"><span class="status-pill ${statusCls}">${statusLabel||"TBD"}</span>${side.source ? ` · ${side.source}` : ""}</div>`;
+  html += `<div class="src-note"><span class="status-pill ${pillCls}">${effStatus||"TBD"}</span></div>`;
   return html;
 }
 
@@ -1415,11 +1430,24 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
     const s = lookupPitcherStats(p.name);
     return { ...p, fatigue: f, fip: s?.fip_proj };
   });
-  const tierRank = (f) => f ? (f.tier === "LIKELY OUT" ? 0 : 1) : 2;
-  withMeta.sort((a, b) => tierRank(a.fatigue) - tierRank(b.fatigue) || a.name.localeCompare(b.name));
+  // Split into flagged (OUT/FTG) and available; sort available by pFIP asc
+  // (best → worst). Flagged arms stay at the top.
+  const flagged = withMeta.filter(p => !!p.fatigue);
+  flagged.sort((a,b) => {
+    const rank = (f) => f.tier === "LIKELY OUT" ? 0 : 1;
+    return rank(a.fatigue) - rank(b.fatigue) || a.name.localeCompare(b.name);
+  });
+  const avail = withMeta.filter(p => !p.fatigue);
+  avail.sort((a, b) => {
+    const af = a.fip == null ? 999 : a.fip;
+    const bf = b.fip == null ? 999 : b.fip;
+    return af - bf || a.name.localeCompare(b.name);
+  });
 
-  const rhps = withMeta.filter(p => p.hand === "R");
-  const lhps = withMeta.filter(p => p.hand === "L");
+  const rhpsFlagged = flagged.filter(p => p.hand === "R");
+  const lhpsFlagged = flagged.filter(p => p.hand === "L");
+  const rhpsAvail = avail.filter(p => p.hand === "R");
+  const lhpsAvail = avail.filter(p => p.hand === "L");
 
   const row = (p) => {
     const f = p.fatigue;
@@ -1432,13 +1460,10 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
     const thr = PITCHER_STATS?.thresholds || {};
     const s = lookupPitcherStats(p.name);
     const fipCls  = tier(s?.fip_proj, thr.fip, false);
-    const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
     const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
     const statsPipe = s ? `<span class="bp-stats">
       <span class="lbl">pFIP</span> <span class="v ${fipCls}">${fmt(s.fip_proj)}</span>
-      <span class="sep">|</span>
-      <span class="lbl">xERA</span> <span class="v ${xeraCls}">${fmt(s.xera)}</span>
       <span class="sep">|</span>
       <span class="lbl">K-BB</span> <span class="v ${kbbCls}">${fmt(s.k_bb_pct, "%")}</span>
     </span>` : "";
@@ -1460,10 +1485,17 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
   return `
     <div style="color:var(--muted);font-size:0.75rem;margin-bottom:0.3rem;">
       ${withMeta.length} pitchers · ${outCount ? `<span style="color:var(--fatigue-out);font-weight:700;">${outCount} OUT</span>` : ''}${outCount && fatCount ? ' · ' : ''}${fatCount ? `<span style="color:var(--fatigue-fat);font-weight:700;">${fatCount} FTG</span>` : ''}${!outCount && !fatCount ? 'no flagged fatigue' : ''}
-      ${probableSP ? ` · today's SP (${probableSP}) excluded` : ""}
     </div>
-    ${rhps.length ? `<div class="bp-split-header R">RHP (${rhps.length})</div>${rhps.map(row).join("")}` : ''}
-    ${lhps.length ? `<div class="bp-split-header L">LHP (${lhps.length})</div>${lhps.map(row).join("")}` : ''}
+    ${flagged.length ? `
+      <div class="bp-split-header" style="color:var(--fatigue-out);">Flagged (${flagged.length})</div>
+      ${rhpsFlagged.length ? `<div class="bp-sub-label R">RHP</div>${rhpsFlagged.map(row).join("")}` : ''}
+      ${lhpsFlagged.length ? `<div class="bp-sub-label L">LHP</div>${lhpsFlagged.map(row).join("")}` : ''}
+    ` : ''}
+    ${avail.length ? `
+      <div class="bp-split-header">Available · best pFIP first</div>
+      ${rhpsAvail.length ? `<div class="bp-sub-label R">RHP (${rhpsAvail.length})</div>${rhpsAvail.map(row).join("")}` : ''}
+      ${lhpsAvail.length ? `<div class="bp-sub-label L">LHP (${lhpsAvail.length})</div>${lhpsAvail.map(row).join("")}` : ''}
+    ` : ''}
   `;
 }
 
@@ -1509,26 +1541,23 @@ function renderUmpiresTab() {
       g1source = `<span class="status-pill tbd">Awaiting MLB</span>`;
     }
     inner += `<tr>
-      <td>G1</td><td>${fmtDateShort(CURRENT_DATES[0])}</td>
+      <td>${dayAbbr(CURRENT_DATES[0])}</td><td>${fmtDateShort(CURRENT_DATES[0])}</td>
       <td>${g1ump}</td><td>${g1source}</td>
     </tr>`;
     seriesNext.forEach((fg,i) => {
       if (!fg) return;
-      // Project forward. Preferred: today's confirmed crew → use rotation offset i+1.
-      // Fallback: today's HP was inferred from `daysBack` days ago. Rotation offset
-      // to G(i+2)'s HP = daysBack + (i+1).
       let proj = null, projNote = null;
       if (hp) {
         proj = projectHP(off, i+1);
         projNote = `Proj from ${["1B","2B","3B"][i]}`;
       } else if (projHP?.anchorOfficials) {
         proj = umpAtRotationOffset(projHP.anchorOfficials, projHP.daysBack + i + 1);
-        projNote = `Proj chain from G${projHP.daysBack} prior`;
+        projNote = `Proj chain`;
       }
       inner += `<tr>
-        <td>G${i+2}</td><td>${fmtDateShort(CURRENT_DATES[i+1])}</td>
+        <td>${dayAbbr(CURRENT_DATES[i+1])}</td><td>${fmtDateShort(CURRENT_DATES[i+1])}</td>
         <td>${proj ? proj + " " + umpBadge(proj) : `<span class="status-pill tbd">NA</span>`}</td>
-        <td>${proj ? `<span class="status-pill projected">${projNote}</span>` : `<span class="status-pill tbd">Awaiting G1 crew</span>`}</td>
+        <td>${proj ? `<span class="status-pill projected">${projNote}</span>` : `<span class="status-pill tbd">Awaiting crew</span>`}</td>
       </tr>`;
     });
     inner += `</tbody></table>`;
@@ -1572,7 +1601,7 @@ function renderWeatherTab() {
 // ============================================================================
 function renderWeatherDetail(wx, home_park_code, game) {
   if (!wx) return `<div class="coming-soon">Weather not loaded</div>`;
-  if (wx.is_dome) return `<div style="color:var(--muted);">🏟 ${wx.note || 'Dome / retractable roof'}</div>`;
+  if (wx.is_dome) return `<div style="color:var(--muted);">🏟 Dome / retractable roof</div>`;
   if (!wx.weather) return `<div class="coming-soon">${wx.note || 'Forecast unavailable'}</div>`;
   const w = wx.weather;
   const v8 = wx.v8 || {};
@@ -1871,7 +1900,7 @@ async function openModal(game) {
               if (hp) proj = projectHP(off, i+1);
               else if (projHP?.anchorOfficials)
                 proj = umpAtRotationOffset(projHP.anchorOfficials, projHP.daysBack + i + 1);
-              return `<div class="row">G${i+2}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
+              return `<div class="row">${dayAbbr(CURRENT_DATES[i+1])}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
             }).join("")}
           </div>` : ""}
       </div>
