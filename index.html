@@ -83,6 +83,10 @@
   .sb-teams-line .ml-paren.fav { color: var(--tier-good); }
   .sb-teams-line .ml-paren.dog { color: var(--tier-bad); }
   .sb-teams-line .ml-paren.empty { color: var(--muted); opacity: 0.5; }
+  .sb-teams-line .sb-score { font-family: var(--mono); font-size: 1.2rem;
+    font-weight: 800; color: var(--text); min-width: 28px; text-align: center; }
+  .sb-teams-line .sb-score.win { color: var(--tier-good); }
+  .sb-teams-line .sb-score.loss { color: var(--muted); opacity: 0.85; }
   .sb-time-row { margin-top: 0.3rem; font-size: 0.78rem; color: var(--muted);
     text-align: center; letter-spacing: 0.02em; }
   .sb-time-row .sb-status-live { color: var(--accent); font-weight: 600; }
@@ -111,6 +115,8 @@
   .sb-pen-line { margin-top: 0.25rem; font-size: 0.7rem; letter-spacing: 0.04em;
     color: var(--muted); }
   .sb-sp-cell.home .sb-pen-line { text-align: right; }
+  .sb-pen-label { color: var(--muted); font-weight: 600; margin-right: 0.2rem;
+    text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem; }
   .sb-pen-out { color: var(--fatigue-out); font-weight: 700; }
   .sb-pen-ftg { color: var(--fatigue-fat); font-weight: 700; }
   .sb-pen-ok  { color: var(--muted); opacity: 0.7; }
@@ -209,6 +215,23 @@
   .bp-fip.good  { color: var(--tier-good); }
   .bp-fip.bad   { color: var(--tier-bad); }
   .bp-fip.worst { color: var(--tier-worst); }
+  .bp-stats { font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+    display: inline-flex; align-items: baseline; gap: 0.25rem; flex-wrap: wrap; }
+  .bp-stats .lbl { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); opacity: 0.8; }
+  .bp-stats .sep { color: var(--border); font-weight: 400; }
+  .bp-stats .v { font-weight: 700; color: var(--text); }
+  .bp-stats .v.elite { color: var(--tier-elite); }
+  .bp-stats .v.good  { color: var(--tier-good); }
+  .bp-stats .v.bad   { color: var(--tier-bad); }
+  .bp-stats .v.worst { color: var(--tier-worst); }
+
+  /* DEF / BSR chips on hitter rows (replacing emoji) */
+  .def-bsr-chip { display: inline-block; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.06em; padding: 0.05rem 0.32rem; border-radius: 3px;
+    margin-left: 0.3rem; vertical-align: middle; }
+  .def-bsr-chip.elite { background: rgba(255, 145, 64, 0.14); color: var(--tier-elite); }
+  .def-bsr-chip.worst { background: rgba(248, 113, 113, 0.14); color: var(--tier-worst); }
   .team-none { color: var(--muted); font-style: italic; font-size: 0.82rem; }
 
   .bp-split-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
@@ -338,6 +361,15 @@
   .m-sp-splits td.worst { color: var(--tier-worst); font-weight: 700; }
 
   .m-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .m-env-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 0.7rem; }
+  @media (max-width: 760px) { .m-env-row { grid-template-columns: 1fr; } }
+  .m-team-wrc { font-size: 0.78rem; font-weight: 500; margin-left: 0.5rem;
+    color: var(--muted); letter-spacing: 0.02em; }
+  .m-team-wrc .val { font-family: var(--mono); font-weight: 700; }
+  .m-team-wrc .val.elite { color: var(--tier-elite); }
+  .m-team-wrc .val.good  { color: var(--tier-good); }
+  .m-team-wrc .val.bad   { color: var(--tier-bad); }
+  .m-team-wrc .val.worst { color: var(--tier-worst); }
   .m-bp-box, .m-ump-box, .m-wx-box, .m-park-box, .m-lineup-box {
     background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem;
   }
@@ -404,7 +436,8 @@
   </div>
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
-    <button class="tab" data-tab="umpires" role="tab">Umpires &amp; Weather</button>
+    <button class="tab" data-tab="umpires" role="tab">Umpires</button>
+    <button class="tab" data-tab="weather" role="tab">Weather</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
   </div>
@@ -426,6 +459,10 @@
 
   <section id="tab-umpires" class="tab-content" hidden>
     <div id="umpires-list" class="loading">Loading umpires…</div>
+  </section>
+
+  <section id="tab-weather" class="tab-content" hidden>
+    <div id="weather-list" class="loading">Loading weather…</div>
   </section>
 
   <section id="tab-lineups" class="tab-content" hidden>
@@ -453,7 +490,7 @@
   <a href="https://umpscorecards.com" target="_blank" rel="noopener">UmpScorecards</a> umpire offense adjustment ·
   ATC / ZIPS / Steamer projections (hitters + pitchers).
   <br>
-  Runs PF is Savant's 3-yr rolling run-scoring index (100 = avg, displayed as ±% vs. league). Weather is a blended runs-adjustment from our V8 model plus a secondary weather signal. HP umpires project forward via crew rotation (today's HP = yesterday's 1B in a series).
+  Runs PF is Savant's 3-yr rolling run-scoring index, displayed as ±% vs. league. Weather is a blended runs adjustment derived from the <a href="https://www.weather.gov/" target="_blank" rel="noopener">NWS</a> hourly forecast. HP umpires project forward via crew rotation (today's HP = yesterday's 1B in a series).
 </footer>
 
 <script>
@@ -482,6 +519,14 @@ let CURRENT_SERIES_PRIOR = [];    // [day-1, day-2, day-3] — for HP backfill
 let CURRENT_DATES = [];
 
 let ROSTERS_CACHE = {};
+
+// Set of pitcher names known to be starters (built each load from probablePitcher across 7 days).
+// Keys: normName(fullName). Used to exclude SPs from bullpen views.
+let KNOWN_STARTERS = new Set();
+
+// Live lineup cache from MLB feed/live (keyed by gamePk).
+// Shape: { away: [{order,name,pos,bats,flag}], home: [...], awayStatus: 'confirmed', etc. }
+let LIVE_LINEUPS = {};
 
 async function fetchJSON(url) {
   const r = await fetch(url);
@@ -514,7 +559,10 @@ async function loadStaticData() {
 // ============================================================================
 function parkFactorFor(homeTeamAbbr) {
   if (!PARK_FACTORS) return null;
-  return PARK_FACTORS.parks[homeTeamAbbr] || null;
+  // MLB API returns "WSH" for Nationals; park_factors.json keys use "WAS"
+  const ABBREV_ALIAS = { WSH: "WAS", CWS: "CHW", ATH: "OAK" };
+  const k = homeTeamAbbr;
+  return PARK_FACTORS.parks[k] || PARK_FACTORS.parks[ABBREV_ALIAS[k]] || null;
 }
 
 // Runs PF expressed as ±% vs. league avg (Savant's 3-yr rolling value is
@@ -658,6 +706,25 @@ function weatherForGame(game_pk) {
 }
 
 function lineupsForGame(game) {
+  // Priority order:
+  // 1. MLB live feed/live batting orders (confirmed, authoritative)
+  // 2. Static lineups.json by gamePk
+  // 3. Static lineups.json by team-pair fallback
+  const live = LIVE_LINEUPS[game.gamePk];
+  if (live) {
+    const awayName = game.teams.away.team.name;
+    const homeName = game.teams.home.team.name;
+    return {
+      game_pk: game.gamePk,
+      away: awayName,
+      home: homeName,
+      lineups: {
+        away: { status: "confirmed", source: "MLB batting order", players: live.away },
+        home: { status: "confirmed", source: "MLB batting order", players: live.home },
+      },
+      _source: "mlb-live",
+    };
+  }
   if (!LINEUPS) return null;
   const games = LINEUPS.games || [];
   let lg = games.find(g => g.game_pk === game.gamePk);
@@ -751,11 +818,52 @@ async function getSchedule(date) {
   const d = await fetchJSON(`${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season))`);
   return d.dates?.[0]?.games || [];
 }
-async function getOfficials(pk) {
+// One-shot fetch for game live data: officials, battingOrder for both sides,
+// player map (needed to resolve IDs to names), and final score if game is over.
+async function getGameLive(pk) {
   try {
     const d = await fetchJSON(`${LIVE}/game/${pk}/feed/live`);
-    return d.liveData?.boxscore?.officials || d.gameData?.officials || [];
-  } catch { return []; }
+    const box = d.liveData?.boxscore || {};
+    const linescore = d.liveData?.linescore || {};
+    const teams = box.teams || {};
+    const status = d.gameData?.status?.detailedState || "";
+    let finalScore = null;
+    if (status === "Final" || status === "Game Over") {
+      const a = linescore?.teams?.away?.runs;
+      const h = linescore?.teams?.home?.runs;
+      if (a != null && h != null) finalScore = { away: a, home: h };
+    }
+    return {
+      officials: box.officials || d.gameData?.officials || [],
+      awayBattingOrder: teams.away?.battingOrder || [],
+      homeBattingOrder: teams.home?.battingOrder || [],
+      awayPlayers: teams.away?.players || {},
+      homePlayers: teams.home?.players || {},
+      finalScore,
+    };
+  } catch {
+    return { officials: [], awayBattingOrder: [], homeBattingOrder: [],
+             awayPlayers: {}, homePlayers: {}, finalScore: null };
+  }
+}
+// Back-compat helper used by HP projection
+async function getOfficials(pk) {
+  const lv = await getGameLive(pk);
+  return lv.officials || [];
+}
+
+// Build a lineup-shape array from MLB feed/live battingOrder + players map
+function buildLineupFromLive(battingOrder, players) {
+  return battingOrder.map((pid, i) => {
+    const p = players[`ID${pid}`] || {};
+    const person = p.person || {};
+    return {
+      order: i + 1,
+      name: person.fullName || "",
+      pos:  p.position?.abbreviation || "",
+      bats: p.stats?.batting?.batSide?.code || person.batSide?.code || "R",
+    };
+  });
 }
 async function getTeamRoster(teamId) {
   if (ROSTERS_CACHE[teamId]) return ROSTERS_CACHE[teamId];
@@ -783,8 +891,9 @@ async function getTeamRoster(teamId) {
 // - Today G4 → 3 days ago 3B
 // Only valid when the prior-day matchup is the same two teams (same series).
 async function inferHPFromPrior(game) {
-  // Look at each prior day, find a game with same matchup, fetch officials,
-  // pull the rotation-position ump.
+  // Walk back through prior-day schedules. For the first match same-series game
+  // where we can read officials, use the daysBack-th rotation position as
+  // today's HP. Returns { name, anchorOfficials, daysBack, projectedFrom }.
   const rotPos = ["First Base","Second Base","Third Base"];
   for (let daysBack = 1; daysBack <= 3; daysBack++) {
     const priorDay = CURRENT_SERIES_PRIOR[daysBack - 1] || [];
@@ -793,10 +902,23 @@ async function inferHPFromPrior(game) {
     const off = await getOfficials(priorGame.gamePk);
     const projName = umpByType(off, rotPos[daysBack - 1]);
     if (projName) {
-      return { name: projName, projectedFrom: `${rotPos[daysBack - 1].replace('Base','B')} of G${daysBack} prior`, daysBack };
+      return {
+        name: projName,
+        projectedFrom: `${rotPos[daysBack - 1].replace('Base','B')} of G${daysBack} prior`,
+        daysBack,
+        anchorOfficials: off,
+      };
     }
   }
   return null;
+}
+
+// Given an officials list from some reference game and the total rotation offset
+// from that game's HP, return the umpire who would be at HP.
+// Rotation cycle of 4: offset 0 = HP, 1 = 1B, 2 = 2B, 3 = 3B, 4 = HP (repeats).
+function umpAtRotationOffset(officials, totalOffset) {
+  const pos = ["Home Plate","First Base","Second Base","Third Base"];
+  return umpByType(officials, pos[totalOffset % 4]);
 }
 
 // ============================================================================
@@ -810,7 +932,7 @@ async function loadForDate(date) {
   VIEW_DATE = date;
   await loadStaticData();
 
-  // 4 days forward + 3 days backward for HP inference
+  // 3 forward + today + 3 backward for both SP identification and HP inference
   const dates = [date, addDays(date,1), addDays(date,2), addDays(date,3)];
   const priorDates = [addDays(date,-1), addDays(date,-2), addDays(date,-3)];
 
@@ -821,11 +943,36 @@ async function loadForDate(date) {
   CURRENT_SERIES_NEXT = [g1,g2,g3];
   CURRENT_SERIES_PRIOR = [p1,p2,p3];
 
-  const officialsByPk = {};
-  await Promise.all(g0.map(async g => { officialsByPk[g.gamePk] = await getOfficials(g.gamePk); }));
-  g0.forEach(g => { g._officials = officialsByPk[g.gamePk] || []; });
+  // Build known-starters set from every probable pitcher across the 7-day window.
+  // Any pitcher who has appeared as a probable SP is treated as a starter and
+  // excluded from bullpen views.
+  KNOWN_STARTERS = new Set();
+  const allWindowGames = [g0, g1, g2, g3, p1, p2, p3].flat();
+  for (const gg of allWindowGames) {
+    for (const side of ['away','home']) {
+      const nm = gg.teams?.[side]?.probablePitcher?.fullName;
+      if (nm) KNOWN_STARTERS.add(normName(nm));
+    }
+  }
 
-  // For each game where today's HP is missing, try to project from prior day's crew
+  // For each of today's games, hit feed/live ONCE and extract officials + battingOrder.
+  LIVE_LINEUPS = {};
+  const liveByPk = {};
+  await Promise.all(g0.map(async g => { liveByPk[g.gamePk] = await getGameLive(g.gamePk); }));
+  g0.forEach(g => {
+    const lv = liveByPk[g.gamePk] || {};
+    g._officials = lv.officials || [];
+    g._finalScore = lv.finalScore || null;
+    // Stash live lineup if MLB has batting orders posted
+    if ((lv.awayBattingOrder?.length || 0) >= 8 && (lv.homeBattingOrder?.length || 0) >= 8) {
+      LIVE_LINEUPS[g.gamePk] = {
+        away: buildLineupFromLive(lv.awayBattingOrder, lv.awayPlayers),
+        home: buildLineupFromLive(lv.homeBattingOrder, lv.homePlayers),
+      };
+    }
+  });
+
+  // HP projection from prior-day crew if today's isn't confirmed
   await Promise.all(g0.map(async g => {
     const hp = umpByType(g._officials, "Home Plate");
     if (!hp) {
@@ -848,6 +995,7 @@ async function loadForDate(date) {
   document.getElementById("updated").textContent = new Date().toLocaleTimeString();
   renderScoreboard();
   renderUmpiresTab();
+  renderWeatherTab();
   renderLineupsTab();
   invalidateBullpenTab();
 }
@@ -858,14 +1006,14 @@ async function loadForDate(date) {
 function penSummaryChip(teamName) {
   if (!FATIGUE || !FATIGUE.teams) return "";
   const rows = FATIGUE.teams[teamName];
-  if (!rows || !rows.length) return `<span class="sb-pen-ok">pen rested</span>`;
-  const out = rows.filter(r => r.tier === "LIKELY OUT").length;
-  const ftg = rows.filter(r => r.tier === "FATIGUED").length;
+  const out = rows?.filter(r => r.tier === "LIKELY OUT").length || 0;
+  const ftg = rows?.filter(r => r.tier === "FATIGUED").length || 0;
   const parts = [];
   if (out) parts.push(`<span class="sb-pen-out">${out} OUT</span>`);
   if (ftg) parts.push(`<span class="sb-pen-ftg">${ftg} FTG</span>`);
-  if (!parts.length) return `<span class="sb-pen-ok">pen rested</span>`;
-  return parts.join(" · ");
+  const label = `<span class="sb-pen-label">Bullpen:</span>`;
+  if (!parts.length) return `${label} <span class="sb-pen-ok">rested</span>`;
+  return `${label} ${parts.join(" · ")}`;
 }
 
 function spMiniCell(name, teamName, sideCls) {
@@ -899,7 +1047,7 @@ function spMiniCell(name, teamName, sideCls) {
   return `<div class="sb-sp-cell ${sideCls}">
     <div class="sb-sp-name">${name}${handTag}</div>
     <div class="sb-sp-stats">
-      ${cell("FIP", s.fip_proj, fipCls)}
+      ${cell("pFIP", s.fip_proj, fipCls)}
       ${cell("xERA", s.xera, xeraCls)}
       ${cell("K-BB", s.k_bb_pct, kbbCls, "%")}
     </div>
@@ -965,17 +1113,27 @@ function renderScoreboard() {
       ? `<span class="ml-paren ${mlCls(ml)}" title="${ml.book}">(${ml.odds>0?'+':''}${ml.odds})</span>`
       : `<span class="ml-paren empty">(—)</span>`;
 
+    // For completed games, show final score instead of moneyline (ML doesn't matter post-game)
+    const isFinal = status === "Final" || status === "Game Over";
+    const fs = g._finalScore;
+    const leftPiece = isFinal && fs
+      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>`
+      : mlFmt(aML);
+    const rightPiece = isFinal && fs
+      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>`
+      : mlFmt(hML);
+    const bottomLine = isFinal
+      ? `<span class="${statusCls}">${status}</span>`
+      : `<span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}`;
     const matchHTML = `
       <div class="sb-teams-line">
         <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span></span>
-        ${mlFmt(aML)}
+        ${leftPiece}
         <span class="sb-at">@</span>
-        ${mlFmt(hML)}
+        ${rightPiece}
         <span class="team"><span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
       </div>
-      <div class="sb-time-row">
-        <span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}
-      </div>`;
+      <div class="sb-time-row">${bottomLine}</div>`;
 
     const tOver = o?.total?.over, tUnder = o?.total?.under;
     let totalCell = `<span class="sb-empty">—</span>`;
@@ -1121,10 +1279,10 @@ function renderLineupTable(side, opts={}) {
     if (!HITTERS) return null;
     return HITTERS.hitters[normName(name)] || null;
   }
-  function flagIcon(v, bands) {
+  function defBsrChip(v, bands, label) {
     if (v === null || v === undefined || !bands) return "";
-    if (v >= bands.elite) return "🟢";
-    if (v <= bands.worst) return "🔴";
+    if (v >= bands.elite) return ` <span class="def-bsr-chip elite" title="${label} ${v>0?'+':''}${v}">${label}+</span>`;
+    if (v <= bands.worst) return ` <span class="def-bsr-chip worst" title="${label} ${v>0?'+':''}${v}">${label}−</span>`;
     return "";
   }
 
@@ -1137,8 +1295,8 @@ function renderLineupTable(side, opts={}) {
       const vRCls   = tier(vR, wBands, true);
       const vLCls   = tier(vL, wBands, true);
       const wobaCls = tier(h?.woba, wobaBands, true);
-      const fldFlag = h ? flagIcon(h.fld, fldBands) : "";
-      const bsrFlag = h ? flagIcon(h.bsr, bsrBands) : "";
+      const defChip = h ? defBsrChip(h.fld, fldBands, "DEF") : "";
+      const bsrChip = h ? defBsrChip(h.bsr, bsrBands, "BSR") : "";
       const bats = p.bats || "";
       const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
       const danFlag = p.flag
@@ -1153,7 +1311,7 @@ function renderLineupTable(side, opts={}) {
         <td style="color:var(--muted);font-size:0.78rem;">${p.order || ""}</td>
         <td style="color:var(--muted);font-weight:600;">${p.pos || ""}</td>
         <td class="${batsCls}" style="font-weight:700;">${bats}</td>
-        <td style="font-weight:600;">${nm} ${fldFlag}${bsrFlag}${danFlag} ${wobaChip}</td>
+        <td style="font-weight:600;">${nm}${defChip}${bsrChip}${danFlag} ${wobaChip}</td>
         <td class="split-chip ${vRCls}" style="text-align:right;font-family:var(--mono);">${vR != null ? Math.round(vR) : "—"}</td>
         <td class="split-chip ${vLCls}" style="text-align:right;font-family:var(--mono);">${vL != null ? Math.round(vL) : "—"}</td>
       </tr>`;
@@ -1240,8 +1398,13 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
   const roster = ROSTERS_CACHE[teamId] || [];
   if (!roster.length) return `<div class="team-none">Roster not available</div>`;
 
+  // Exclude today's probable SP AND any pitcher known to be a starter
+  // (appeared as probable anywhere in the 7-day window)
   const spKey = normName(probableSP);
-  const bullpen = roster.filter(p => normName(p.name) !== spKey);
+  const bullpen = roster.filter(p => {
+    const k = normName(p.name);
+    return k !== spKey && !KNOWN_STARTERS.has(k);
+  });
 
   const fatigueRows = (FATIGUE?.teams?.[teamName]) || [];
   const fatigueByName = {};
@@ -1267,15 +1430,25 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
       tierHTML = `<span class="fatigue-tier fat" title="${(f.reasons||'').replace(/"/g,'&quot;')}">FTG</span>`;
     }
     const thr = PITCHER_STATS?.thresholds || {};
-    const fipCls = tier(p.fip, thr.fip, false);
-    const fipTxt = p.fip != null ? `FIP ${p.fip.toFixed(2)}` : "";
+    const s = lookupPitcherStats(p.name);
+    const fipCls  = tier(s?.fip_proj, thr.fip, false);
+    const xeraCls = tier(s?.xera, thr.xera, false);
+    const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
+    const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+    const statsPipe = s ? `<span class="bp-stats">
+      <span class="lbl">pFIP</span> <span class="v ${fipCls}">${fmt(s.fip_proj)}</span>
+      <span class="sep">|</span>
+      <span class="lbl">xERA</span> <span class="v ${xeraCls}">${fmt(s.xera)}</span>
+      <span class="sep">|</span>
+      <span class="lbl">K-BB</span> <span class="v ${kbbCls}">${fmt(s.k_bb_pct, "%")}</span>
+    </span>` : "";
     const daysTxt = f ? `[${f.days.join("/")}]` : "";
     const reasonTxt = f?.reasons || "";
     return `<div class="fatigue-line">
       ${tierHTML}
       <span class="bp-hand ${p.hand}">${p.hand}</span>
       <span class="fatigue-name">${p.name}</span>
-      ${fipTxt ? `<span class="bp-fip ${fipCls}">${fipTxt}</span>` : ""}
+      ${statsPipe}
       ${daysTxt ? `<span class="fatigue-days">${daysTxt}</span>` : ""}
       ${reasonTxt ? `<span class="fatigue-reason">${reasonTxt}</span>` : ""}
     </div>`;
@@ -1341,12 +1514,21 @@ function renderUmpiresTab() {
     </tr>`;
     seriesNext.forEach((fg,i) => {
       if (!fg) return;
-      // Project forward using today's confirmed crew (preferred) or today's projected HP's day-back crew
-      const proj = hp ? projectHP(off, i+1) : null;
+      // Project forward. Preferred: today's confirmed crew → use rotation offset i+1.
+      // Fallback: today's HP was inferred from `daysBack` days ago. Rotation offset
+      // to G(i+2)'s HP = daysBack + (i+1).
+      let proj = null, projNote = null;
+      if (hp) {
+        proj = projectHP(off, i+1);
+        projNote = `Proj from ${["1B","2B","3B"][i]}`;
+      } else if (projHP?.anchorOfficials) {
+        proj = umpAtRotationOffset(projHP.anchorOfficials, projHP.daysBack + i + 1);
+        projNote = `Proj chain from G${projHP.daysBack} prior`;
+      }
       inner += `<tr>
         <td>G${i+2}</td><td>${fmtDateShort(CURRENT_DATES[i+1])}</td>
         <td>${proj ? proj + " " + umpBadge(proj) : `<span class="status-pill tbd">NA</span>`}</td>
-        <td>${proj ? `<span class="status-pill projected">Proj from ${["1B","2B","3B"][i]}</span>` : `<span class="status-pill tbd">Awaiting G1 crew</span>`}</td>
+        <td>${proj ? `<span class="status-pill projected">${projNote}</span>` : `<span class="status-pill tbd">Awaiting G1 crew</span>`}</td>
       </tr>`;
     });
     inner += `</tbody></table>`;
@@ -1357,10 +1539,30 @@ function renderUmpiresTab() {
       inner += `<div style="color:var(--muted);font-size:0.8rem;margin-top:0.4rem;">
         Crew projected from prior day (${projHP.projectedFrom})</div>`;
     }
-    const _homeAbbr = g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name);
-    inner += `<div style="margin-top:0.6rem;"><b style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;">Weather</b></div>`;
-    inner += `<div class="m-wx-box" style="margin-top:0.35rem;">${renderWeatherDetail(weatherForGame(g.gamePk), _homeAbbr, g)}</div>`;
     div.innerHTML = inner;
+    el.appendChild(div);
+  });
+}
+
+// ============================================================================
+// WEATHER TAB
+// ============================================================================
+function renderWeatherTab() {
+  const el = document.getElementById("weather-list");
+  if (!CURRENT_GAMES.length) { el.innerHTML = `<div class="empty">No games scheduled.</div>`; return; }
+  el.innerHTML = "";
+  CURRENT_GAMES.forEach(g => {
+    const away = g.teams.away.team.name;
+    const home = g.teams.home.team.name;
+    const venue = g.venue?.name || "";
+    const homeAbbr = g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name);
+    const div = document.createElement("div");
+    div.className = "panel";
+    div.innerHTML = `<h3 style="margin:0 0 0.5rem;font-size:1rem;">
+      ${teamAbbr(away)} @ ${teamAbbr(home)}
+      <span style="color:var(--muted);font-weight:normal;font-size:0.82rem;">${venue} · ${fmtTime(g.gameDate)}</span>
+    </h3>
+    <div class="m-wx-box" style="margin-top:0.35rem;">${renderWeatherDetail(weatherForGame(g.gamePk), homeAbbr, g)}</div>`;
     el.appendChild(div);
   });
 }
@@ -1380,8 +1582,6 @@ function renderWeatherDetail(wx, home_park_code, game) {
   const pct = blended.value;
   const pctCls = pct == null ? "neutral" : (pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral");
   const sign = pct >= 0 ? "+" : "";
-  const cappedNote = v8.capped
-    ? ` <span style="color:var(--projected);font-size:0.75rem;">(component cap)</span>` : "";
 
   return `
     <div class="wx-top">
@@ -1391,15 +1591,8 @@ function renderWeatherDetail(wx, home_park_code, game) {
         </div>
         <div class="wx-forecast">${w.short_forecast||''}</div>
         <div class="wx-v8">
-          <span class="ump-pct ${pctCls}" style="font-size:1.05rem;">Weather Run Adj ${pct != null ? sign+pct.toFixed(1)+"%" : "—"}</span>${cappedNote}
+          <span class="ump-pct ${pctCls}" style="font-size:1.05rem;">Weather Run Adj ${pct != null ? sign+pct.toFixed(1)+"%" : "—"}</span>
         </div>
-        ${comps.temp_delta !== undefined ? `<div class="wx-components">
-          Δ ${comps.temp_delta>0?'+':''}${comps.temp_delta}°F →
-          T ${comps.t_adj_pct>=0?'+':''}${comps.t_adj_pct}% ·
-          W ${comps.w_adj_pct>=0?'+':''}${comps.w_adj_pct}% ·
-          DP ${comps.dp_adj_pct>=0?'+':''}${comps.dp_adj_pct}% ·
-          Carry ${comps.carry_pct>=0?'+':''}${comps.carry_pct}%
-        </div>` : ""}
       </div>
       ${home_park_code ? renderFieldDiagram(w.wind_dir, w.wind_speed_mph, home_park_code, 130) : ""}
     </div>`;
@@ -1497,7 +1690,7 @@ function renderSPBox(name, teamAbbrStr) {
       <span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
     </div>
     <div class="m-sp-stats">
-      ${stat("FIP", s.fip_proj, fipCls)}
+      ${stat("pFIP", s.fip_proj, fipCls)}
       ${stat("xERA", s.xera, xeraCls)}
       ${stat("K-BB%", s.k_bb_pct, kbbCls, "%")}
     </div>
@@ -1519,29 +1712,41 @@ function renderSPBox(name, teamAbbrStr) {
   </div>`;
 }
 
-function renderFatigueForModal(team) {
-  if (!FATIGUE || !FATIGUE.teams) return `<div class="team-none">No fatigue data</div>`;
-  const rows = FATIGUE.teams[team];
-  if (!rows || !rows.length) return `<div class="team-none">No tired arms flagged</div>`;
-  return rows.map(r => {
-    const tierCls = r.tier === "LIKELY OUT" ? "out" : "fat";
-    const tierTag = r.tier === "LIKELY OUT" ? "OUT" : "FTG";
-    const s = lookupPitcherStats(r.name);
-    const h = s?.hand;
-    const handTag = h ? `<span class="bp-hand ${h}">${h}</span>` : "";
-    return `<div class="fatigue-line">
-      <span class="fatigue-tier ${tierCls}">${tierTag}</span>
-      ${handTag}
-      <span class="fatigue-name">${r.name}</span>
-      <span class="fatigue-days">[${r.days.join("/")}]</span>
-      <span class="fatigue-reason">${r.reasons}</span>
-    </div>`;
-  }).join("");
+// Team avg projected wRC+ vs opposing SP's hand — chip next to team header
+function teamWrcSpan(game, side) {
+  const lg = lineupsForGame(game);
+  const players = lg?.lineups?.[side]?.players || [];
+  if (!HITTERS || !players.length) return "";
+  // Opponent SP hand
+  const oppSide = side === 'away' ? 'home' : 'away';
+  const oppSP = game.teams[oppSide].probablePitcher?.fullName;
+  const oppStats = oppSP ? lookupPitcherStats(oppSP) : null;
+  const oppHand = (oppStats?.hand || 'R').toUpperCase();
+  const key = oppHand === 'L' ? 'wrc_vs_l' : 'wrc_vs_r';
+  const vals = [];
+  for (const p of players) {
+    const h = HITTERS.hitters[normName(p.name || "")];
+    if (h && h[key] != null) vals.push(h[key]);
+  }
+  if (!vals.length) return "";
+  const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+  const thr = HITTERS?.thresholds?.wrc_splits || {elite:140,good:115,bad:80,worst:65};
+  const cls = tier(avg, thr, true);
+  return `<span class="m-team-wrc">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
 }
 
-function openModal(game) {
+async function openModal(game) {
   const bg = document.getElementById("modal-bg");
   const body = document.getElementById("modal-body");
+  // Show modal immediately with a loading shim, then fill in once rosters are ready
+  body.innerHTML = `<div class="loading">Loading game detail…</div>`;
+  bg.classList.add("active");
+  document.body.style.overflow = "hidden";
+  // Prefetch both team rosters for the Bullpens section
+  await Promise.all([
+    getTeamRoster(game.teams.away.team.id),
+    getTeamRoster(game.teams.home.team.id),
+  ]);
   const away = game.teams.away.team.name;
   const home = game.teams.home.team.name;
   const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(away);
@@ -1580,10 +1785,18 @@ function openModal(game) {
     </div>` : ""}
   </div>`;
 
-  const isDome = wx?.is_dome;
-  const wxShort = wx?.weather?.short_forecast;
-  const tempF = wx?.weather?.temp_f;
-  const venueLine = `${isDome ? "🏟 " : ""}${venue} · ${fmtTime(game.gameDate)} · ${game.status.detailedState}${tempF != null ? ` · ${tempF}°F ${wxShort||""}` : ""}`;
+  // Simple venue pill — just stadium + time (or final score if game is over)
+  const isFinal = game.status.detailedState === "Final" || game.status.detailedState === "Game Over";
+  const fs = game._finalScore;
+  let timeOrScore;
+  if (isFinal && fs) {
+    timeOrScore = `Final · ${awayAbbr} ${fs.away} – ${fs.home} ${homeAbbr}`;
+  } else if (isFinal) {
+    timeOrScore = `Final`;
+  } else {
+    timeOrScore = fmtTime(game.gameDate);
+  }
+  const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
     <div class="m-matchup-bar">
@@ -1613,58 +1826,25 @@ function openModal(game) {
       <span class="right-note">best price across 7 NJ books</span></div>
     ${renderOddsGrid(o)}
 
-    <div class="m-section-header"><span>Starting Pitchers</span></div>
-    <div class="m-sp-grid">
-      ${renderSPBox(probAway?.fullName, awayAbbr)}
-      ${renderSPBox(probHome?.fullName, homeAbbr)}
-    </div>
-
-    <div class="m-section-header"><span>Bullpen · Tired Arms</span>
-      <span class="right-note">${FATIGUE?.window ? `${FATIGUE.window.start} → ${FATIGUE.window.end}` : ""}</span></div>
-    <div class="m-split">
-      <div class="m-bp-box"><h4>${away}</h4>${renderFatigueForModal(away)}</div>
-      <div class="m-bp-box"><h4>${home}</h4>${renderFatigueForModal(home)}</div>
-    </div>
-
-    <div class="m-section-header"><span>Home Plate Umpire</span></div>
-    <div class="m-ump-box">
-      ${hp
-        ? `<div class="ump-name">${hp} ${umpBadge(hp)}</div>
-           <div class="ump-crew">Crew: 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>`
-        : projHP
-          ? `<div class="ump-name">${projHP.name} ${umpBadge(projHP.name)}
-              <span class="status-pill projected" style="margin-left:0.5rem;">Projected · ${projHP.projectedFrom}</span></div>`
-          : `<div class="coming-soon">HP umpire not yet posted</div>`}
-      ${seriesNext.some(x => x) && hp ? `
-        <div class="ump-future">
-          <b style="color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;">Projected rest of series</b>
-          ${seriesNext.map((fg, i) => {
-            if (!fg) return "";
-            const proj = projectHP(off, i+1);
-            return `<div class="row">G${i+2} · ${fmtDateShort(CURRENT_DATES[i+1])}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
-          }).join("")}
-        </div>` : ""}
-    </div>
-
-    <div class="m-section-header"><span>Weather &amp; Park</span>
-      <span class="right-note">Savant PF · 3-yr rolling · 100 = MLB avg</span></div>
-    <div class="m-split">
+    <!-- Environmental factors row: Weather | Park | Umpire -->
+    <div class="m-section-header"><span>Weather · Park · Umpire</span></div>
+    <div class="m-env-row">
       <div class="m-wx-box">
         ${renderWeatherDetail(wx, homeAbbr, game)}
       </div>
       <div class="m-park-box">
         ${(() => {
           const pf = parkFactorFor(homeAbbr);
-          if (!pf) return `<div class="coming-soon">No park factor data</div>`;
+          if (!pf) return `<div class="coming-soon">No park factor</div>`;
           const pfStat = (label, v) => {
             const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
             const pct = v - 100;
             const sign = pct >= 0 ? "+" : "";
             return `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
-              <div class="sp-stat-val ${cls}" style="font-size:1.1rem;">${sign}${pct}%</div></div>`;
+              <div class="sp-stat-val ${cls}" style="font-size:1rem;">${sign}${pct}%</div></div>`;
           };
-          return `<div class="pf-venue">${pf.venue} · Baseball Savant 3-yr rolling · ±% vs. league avg</div>
-            <div class="sp-stat-group">
+          return `<div class="pf-venue">${pf.venue} · Savant 3-yr rolling</div>
+            <div class="sp-stat-group" style="flex-wrap:wrap;">
               ${pfStat("Runs", pf.park_factor)}
               ${pfStat("wOBA", pf.woba)}
               ${pfStat("HR", pf.hr)}
@@ -1674,23 +1854,55 @@ function openModal(game) {
             </div>`;
         })()}
       </div>
+      <div class="m-ump-box">
+        ${hp
+          ? `<div class="ump-name">${hp} ${umpBadge(hp)}</div>
+             <div class="ump-crew">Crew: 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>`
+          : projHP
+            ? `<div class="ump-name">${projHP.name} ${umpBadge(projHP.name)}</div>
+               <div class="ump-crew"><span class="status-pill projected">Proj · ${projHP.projectedFrom}</span></div>`
+            : `<div class="coming-soon">HP umpire not posted</div>`}
+        ${seriesNext.some(x => x) ? `
+          <div class="ump-future">
+            <b style="color:var(--muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;">Rest of series</b>
+            ${seriesNext.map((fg, i) => {
+              if (!fg) return "";
+              let proj = null;
+              if (hp) proj = projectHP(off, i+1);
+              else if (projHP?.anchorOfficials)
+                proj = umpAtRotationOffset(projHP.anchorOfficials, projHP.daysBack + i + 1);
+              return `<div class="row">G${i+2}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
+            }).join("")}
+          </div>` : ""}
+      </div>
+    </div>
+
+    <div class="m-section-header"><span>Starting Pitchers</span></div>
+    <div class="m-sp-grid">
+      ${renderSPBox(probAway?.fullName, awayAbbr)}
+      ${renderSPBox(probHome?.fullName, homeAbbr)}
+    </div>
+
+    <div class="m-section-header"><span>Bullpens</span>
+      <span class="right-note">${FATIGUE?.window ? `fatigue window ${FATIGUE.window.start} → ${FATIGUE.window.end}` : ""}</span></div>
+    <div class="m-split">
+      <div class="m-bp-box"><h4>${away}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName)}</div>
+      <div class="m-bp-box"><h4>${home}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName)}</div>
     </div>
 
     <div class="m-section-header"><span>Lineups</span></div>
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}</h4>
+        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away} ${teamWrcSpan(game, 'away')}</h4>
         ${renderLineupForTeam(game, 'away')}
       </div>
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}</h4>
+        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home} ${teamWrcSpan(game, 'home')}</h4>
         ${renderLineupForTeam(game, 'home')}
       </div>
     </div>
   `;
 
-  bg.classList.add("active");
-  document.body.style.overflow = "hidden";
 }
 function closeModal() {
   document.getElementById("modal-bg").classList.remove("active");
