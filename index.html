@@ -1175,8 +1175,8 @@ function spMiniCell(name, teamName, sideCls) {
   const pitchingCls = tier(s.pitching_plus, plusBands, true);
   const plusLine = (s.stuff_plus != null || s.pitching_plus != null) ? `
     <div class="sb-sp-plus">
-      ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">Stf <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
-      ${s.pitching_plus != null ? `<span class="plus-mini ${pitchingCls}" title="Pitching+ (100=avg)">Pch <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+      ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
+      ${s.pitching_plus != null ? `<span class="plus-mini ${pitchingCls}" title="Pitching+ (100=avg)">PIT+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
     </div>` : '';
 
   return `<div class="sb-sp-cell ${sideCls}">
@@ -1895,8 +1895,8 @@ function renderSPBox(name, teamAbbrStr) {
     </div>
     ${(s.stuff_plus != null || s.pitching_plus != null || s.bot_era != null) ? `
       <div class="m-sp-plus">
-        ${s.stuff_plus != null ? `<span class="plus-chip ${stuffCls}" title="Stuff+ (pitch grade · 100 = MLB avg)">Stuff+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
-        ${s.pitching_plus != null ? `<span class="plus-chip ${pitchingCls}" title="Pitching+ (overall grade · 100 = MLB avg)">Pitching+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+        ${s.stuff_plus != null ? `<span class="plus-chip ${stuffCls}" title="Stuff+ (pitch grade · 100 = MLB avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
+        ${s.pitching_plus != null ? `<span class="plus-chip ${pitchingCls}" title="Pitching+ (overall grade · 100 = MLB avg)">PIT+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
         ${s.bot_era != null ? `<span class="plus-chip ${tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false)}" title="FG Pitcher Bot ERA (lower = better)">botERA <b>${s.bot_era.toFixed(2)}</b></span>` : ''}
       </div>` : ''}
     <div class="m-sp-sub">
