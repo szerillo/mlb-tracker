@@ -196,7 +196,7 @@ def main():
         for key, entry in hitters.items():
             e = fg_enrich.get(key)
             if e:
-                for fld in ("ops", "iso", "pa"):
+                for fld in ("ops", "iso", "pa", "k_pct", "bb_pct"):
                     if fld in e:
                         entry[fld] = e[fld]
                 ops_matched += 1
