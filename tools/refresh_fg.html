@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MLB Tracker — Refresh FG Pitch Model</title>
+<style>
+  body { max-width: 720px; margin: 2rem auto; padding: 0 1rem;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1419; color: #e6edf3; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+  .sub { color: #8b95a1; font-size: 0.88rem; margin-bottom: 1.5rem; }
+  .panel { background: #1a2029; border: 1px solid #2a3340; border-radius: 8px;
+    padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  input[type="password"], input[type="text"] {
+    width: 100%; padding: 0.5rem 0.7rem; background: #0f1419;
+    border: 1px solid #2a3340; border-radius: 4px; color: #e6edf3;
+    font: inherit; box-sizing: border-box; }
+  button { background: #4ea8de; border: none; color: #0f1419; font-weight: 600;
+    padding: 0.55rem 1rem; border-radius: 5px; cursor: pointer; font: inherit;
+    font-weight: 600; }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: #8b95a1; border: 1px solid #2a3340; }
+  .log { font-family: ui-monospace, monospace; font-size: 0.82rem;
+    background: #0f1419; border: 1px solid #2a3340; border-radius: 4px;
+    padding: 0.7rem; margin-top: 0.8rem; min-height: 100px;
+    white-space: pre-wrap; color: #8b95a1; }
+  .log .ok { color: #6eff94; }
+  .log .err { color: #f87171; }
+  .log .warn { color: #e5a449; }
+  label { display: block; margin: 0.8rem 0 0.3rem; font-size: 0.85rem;
+    color: #8b95a1; }
+  .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+  a { color: #4ea8de; }
+  code { background: #0f1419; padding: 1px 5px; border-radius: 3px;
+    font-family: ui-monospace, monospace; font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<h1>FG Pitch Model · Refresh</h1>
+<div class="sub">
+  Pulls xFIP / Stuff+ / Location+ / Pitching+ / IP from Fangraphs leaderboards
+  using your browser session (bypasses Cloudflare), then commits to
+  <code>data/_fg_pitch_model.json</code> in the repo. The Python
+  enrichment step reads it on the next workflow run.
+</div>
+
+<div class="panel">
+  <label>GitHub fine-grained PAT (stored in this browser's localStorage)</label>
+  <input type="password" id="pat" placeholder="github_pat_..." autocomplete="off">
+  <div class="row">
+    <button id="run">Refresh now</button>
+    <button class="ghost" id="clear">Clear stored PAT</button>
+    <span style="color:#8b95a1;font-size:0.82rem;margin-left:auto;" id="last">
+    </span>
+  </div>
+</div>
+
+<div class="panel">
+  <div style="font-weight:600;margin-bottom:0.4rem;">Log</div>
+  <div class="log" id="log">Ready. Click Refresh when a Fangraphs session is active.</div>
+</div>
+
+<div class="sub" style="margin-top:1rem;">
+  <b>Before you use it:</b> open any
+  <a href="https://www.fangraphs.com/leaders/major-league?pos=all&stats=pit&lg=all&type=36" target="_blank">Fangraphs pitching leaderboard page</a>
+  first — that gives this script Cloudflare cookies to borrow.
+  Then come back and click Refresh.
+</div>
+
+<script>
+const PAT_KEY = 'mlb_tracker_fg_pat';
+const LAST_KEY = 'mlb_tracker_fg_last';
+const REPO = 'szerillo/mlb-tracker';
+const FILE_PATH = 'data/_fg_pitch_model.json';
+
+const $ = (id) => document.getElementById(id);
+const log = (msg, cls) => {
+  const t = new Date().toLocaleTimeString();
+  const line = `[${t}] ${msg}`;
+  const div = document.createElement('div');
+  if (cls) div.className = cls;
+  div.textContent = line;
+  $('log').appendChild(div);
+  $('log').scrollTop = $('log').scrollHeight;
+};
+
+// Restore saved PAT + last-run
+$('pat').value = localStorage.getItem(PAT_KEY) || '';
+const lastRun = localStorage.getItem(LAST_KEY);
+if (lastRun) $('last').textContent = `last: ${lastRun}`;
+
+$('clear').onclick = () => {
+  localStorage.removeItem(PAT_KEY);
+  $('pat').value = '';
+  log('PAT cleared.', 'warn');
+};
+
+const normName = (s) => (s || '').normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  .replace(/\s+jr\.?$|\s+sr\.?$|\s+iii$|\s+ii$/g, '')
+  .replace(/\./g, '').trim();
+
+$('run').onclick = async () => {
+  $('log').innerHTML = '';
+  const pat = $('pat').value.trim();
+  if (!pat.startsWith('github_pat_') && !pat.startsWith('ghp_')) {
+    log('PAT doesn\'t look like a GitHub fine-grained token.', 'err');
+    return;
+  }
+  localStorage.setItem(PAT_KEY, pat);
+  $('run').disabled = true;
+
+  try {
+    log('Fetching FG pitch model (type=36) — requires active FG session…');
+    const year = new Date().getFullYear();
+    const url = 'https://www.fangraphs.com/api/leaders/major-league/data?' +
+      new URLSearchParams({
+        pos:'all', stats:'pit', lg:'all', type:'36', season:year,
+        month:'0', season1:year, ind:'0', qual:'10', pageitems:'2000000000',
+      });
+    const fgResp = await fetch(url, { credentials: 'include' });
+    if (!fgResp.ok) {
+      if (fgResp.status === 403 || fgResp.status === 429) {
+        log('FG blocked (Cloudflare). Open a Fangraphs leaderboard page first, solve any CAPTCHA, then retry here.', 'err');
+      } else {
+        log(`FG returned HTTP ${fgResp.status}`, 'err');
+      }
+      return;
+    }
+    const d = await fgResp.json();
+    const arr = d.data || d;
+    if (!Array.isArray(arr)) { log('FG response shape unexpected', 'err'); return; }
+
+    const enrichment = {};
+    for (const r of arr) {
+      const k = normName(r.PlayerName || r.Name);
+      if (!k) continue;
+      const e = {};
+      if (r.xFIP        != null) e.xfip          = r.xFIP;
+      if (r.sp_stuff    != null) e.stuff_plus    = r.sp_stuff;
+      if (r.sp_location != null) e.location_plus = r.sp_location;
+      if (r.sp_pitching != null) e.pitching_plus = r.sp_pitching;
+      if (r.IP          != null) e.ip            = r.IP;
+      if (Object.keys(e).length) enrichment[k] = e;
+    }
+    log(`Got ${Object.keys(enrichment).length} pitchers`, 'ok');
+
+    const payload = {
+      generated_at: new Date().toISOString(),
+      source: 'fangraphs-pitch-modeling-type36',
+      count: Object.keys(enrichment).length,
+      pitchers: enrichment,
+    };
+    const text = JSON.stringify(payload, null, 2);
+    const bytes = new TextEncoder().encode(text);
+    let bin = ''; for (const b of bytes) bin += String.fromCharCode(b);
+    const b64 = btoa(bin);
+
+    // Existing SHA?
+    let sha = '';
+    const existing = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?ref=main`,
+      { headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json' } }
+    );
+    if (existing.ok) sha = (await existing.json()).sha || '';
+
+    const body = {
+      message: `Refresh FG pitch-model (${payload.count} pitchers)`,
+      content: b64, branch: 'main',
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: 'Bearer ' + pat,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    const putData = await putResp.json();
+    if (putData.commit) {
+      log(`Committed ${putData.commit.sha.slice(0, 8)} — ${payload.count} pitchers dumped`, 'ok');
+      log('Next workflow run will merge this into pitcher_stats.json', 'ok');
+      localStorage.setItem(LAST_KEY, new Date().toLocaleString());
+      $('last').textContent = `last: ${new Date().toLocaleString()}`;
+    } else {
+      log(`PUT failed: ${putData.message || JSON.stringify(putData)}`, 'err');
+    }
+  } catch (e) {
+    log(`Error: ${e.message || e}`, 'err');
+  } finally {
+    $('run').disabled = false;
+  }
+};
+</script>
+
+</body>
+</html>
