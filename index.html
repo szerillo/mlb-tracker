@@ -248,11 +248,21 @@
 
   /* Lineup table */
   .lineup-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 0.3rem; }
-  .lineup-table th { font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 0.05em; text-align: left; padding: 0.2rem 0.3rem; font-weight: 500; }
-  .lineup-table td { padding: 0.3rem 0.3rem; border-top: 1px solid var(--border);
+  .lineup-table th { font-size: 0.66rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 0.25rem 0.2rem; font-weight: 600; }
+  .lineup-table th.center { text-align: center; }
+  .lineup-table th.left   { text-align: left; }
+  .lineup-table th.right  { text-align: right; }
+  .lineup-table td { padding: 0.3rem 0.2rem; border-top: 1px solid var(--border);
     vertical-align: middle; }
   .lineup-table tr:first-child td { border-top: none; }
+  .lineup-table td.order  { color: var(--muted); font-size: 0.78rem; text-align: center; width: 22px; }
+  .lineup-table td.pos    { color: var(--muted); font-weight: 600; text-align: center; width: 30px; font-size: 0.78rem; }
+  .lineup-table td.bats   { font-weight: 700; text-align: center; width: 18px; }
+  .lineup-table td.player { font-weight: 600; padding-left: 0.3rem; }
+  .lineup-table td.chip   { text-align: center; width: 42px; font-family: var(--mono);
+    font-size: 0.78rem; }
+  .lineup-table td.split  { text-align: right; font-family: var(--mono); font-size: 0.82rem; }
   .hand-r { color: var(--text); }
   .hand-l { color: #5bb8f5; }
   .hand-s { color: #f5c842; }
@@ -533,8 +543,10 @@ let ROSTERS_CACHE = {};
 let KNOWN_STARTERS = new Set();
 
 // Live lineup cache from MLB feed/live (keyed by gamePk).
-// Shape: { away: [{order,name,pos,bats,flag}], home: [...], awayStatus: 'confirmed', etc. }
 let LIVE_LINEUPS = {};
+
+// Batter handedness cache (personId -> 'L' | 'R' | 'S'). Enriched from MLB people endpoint.
+let BATSIDE_CACHE = {};
 
 async function fetchJSON(url) {
   const r = await fetch(url);
@@ -864,18 +876,43 @@ async function getOfficials(pk) {
   return lv.officials || [];
 }
 
-// Build a lineup-shape array from MLB feed/live battingOrder + players map
+// Build a lineup-shape array from MLB feed/live battingOrder + players map.
+// Handedness is resolved via BATSIDE_CACHE (loaded separately in bulk).
 function buildLineupFromLive(battingOrder, players) {
   return battingOrder.map((pid, i) => {
     const p = players[`ID${pid}`] || {};
     const person = p.person || {};
+    const bats = BATSIDE_CACHE[pid]
+      || p.person?.batSide?.code
+      || p.stats?.batting?.batSide?.code
+      || "";
     return {
       order: i + 1,
+      _pid: pid,
       name: person.fullName || "",
       pos:  p.position?.abbreviation || "",
-      bats: p.stats?.batting?.batSide?.code || person.batSide?.code || "R",
+      bats,
     };
   });
+}
+
+// Batch-fetch batSide for all player IDs that aren't already cached.
+async function loadBatSides(playerIds) {
+  const need = [...new Set(playerIds.filter(id => id != null && !(id in BATSIDE_CACHE)))];
+  if (!need.length) return;
+  // MLB API supports comma-separated personIds; chunk in 50s to be safe.
+  const chunks = [];
+  for (let i = 0; i < need.length; i += 50) chunks.push(need.slice(i, i + 50));
+  await Promise.all(chunks.map(async chunk => {
+    try {
+      const d = await fetchJSON(`${API}/people?personIds=${chunk.join(",")}`);
+      for (const p of (d.people || [])) {
+        BATSIDE_CACHE[p.id] = p.batSide?.code || "R";
+      }
+    } catch (e) {
+      console.warn("BatSide fetch failed for chunk", e);
+    }
+  }));
 }
 async function getTeamRoster(teamId) {
   if (ROSTERS_CACHE[teamId]) return ROSTERS_CACHE[teamId];
@@ -971,11 +1008,20 @@ async function loadForDate(date) {
   LIVE_LINEUPS = {};
   const liveByPk = {};
   await Promise.all(g0.map(async g => { liveByPk[g.gamePk] = await getGameLive(g.gamePk); }));
+
+  // Collect all player IDs from every batting order and bulk-enrich handedness
+  const allBatterIds = [];
+  for (const g of g0) {
+    const lv = liveByPk[g.gamePk] || {};
+    for (const pid of (lv.awayBattingOrder || [])) allBatterIds.push(pid);
+    for (const pid of (lv.homeBattingOrder || [])) allBatterIds.push(pid);
+  }
+  await loadBatSides(allBatterIds);
+
   g0.forEach(g => {
     const lv = liveByPk[g.gamePk] || {};
     g._officials = lv.officials || [];
     g._finalScore = lv.finalScore || null;
-    // Stash live lineup if MLB has batting orders posted
     if ((lv.awayBattingOrder?.length || 0) >= 8 && (lv.homeBattingOrder?.length || 0) >= 8) {
       LIVE_LINEUPS[g.gamePk] = {
         away: buildLineupFromLive(lv.awayBattingOrder, lv.awayPlayers),
@@ -1135,13 +1181,14 @@ function renderScoreboard() {
     const bottomLine = isFinal
       ? `<span class="${statusCls}">${status}</span>`
       : `<span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}`;
+    // Odds on the OUTSIDE (edges), scores (if any) INSIDE next to team abbrs
     const matchHTML = `
       <div class="sb-teams-line">
-        <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span>${awayScoreHTML}</span>
         ${mlFmt(aML)}
+        <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span>${awayScoreHTML}</span>
         <span class="sb-at">@</span>
-        ${mlFmt(hML)}
         <span class="team">${homeScoreHTML}<span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
+        ${mlFmt(hML)}
       </div>
       <div class="sb-time-row">${bottomLine}</div>`;
 
@@ -1289,11 +1336,11 @@ function renderLineupTable(side, opts={}) {
     if (!HITTERS) return null;
     return HITTERS.hitters[normName(name)] || null;
   }
-  function defBsrChip(v, bands, label) {
-    if (v === null || v === undefined || !bands) return "";
-    if (v >= bands.elite) return ` <span class="def-bsr-chip elite" title="${label} ${v>0?'+':''}${v}">${label}+</span>`;
-    if (v <= bands.worst) return ` <span class="def-bsr-chip worst" title="${label} ${v>0?'+':''}${v}">${label}−</span>`;
-    return "";
+  function defBsrCell(v, bands, label) {
+    if (v === null || v === undefined || !bands) return `<td class="chip"></td>`;
+    if (v >= bands.elite) return `<td class="chip"><span class="def-bsr-chip elite" title="${label} ${v>0?'+':''}${v}">+</span></td>`;
+    if (v <= bands.worst) return `<td class="chip"><span class="def-bsr-chip worst" title="${label} ${v>0?'+':''}${v}">−</span></td>`;
+    return `<td class="chip"></td>`;
   }
 
   let rowsHTML = "";
@@ -1305,8 +1352,8 @@ function renderLineupTable(side, opts={}) {
       const vRCls   = tier(vR, wBands, true);
       const vLCls   = tier(vL, wBands, true);
       const wobaCls = tier(h?.woba, wobaBands, true);
-      const defChip = h ? defBsrChip(h.fld, fldBands, "DEF") : "";
-      const bsrChip = h ? defBsrChip(h.bsr, bsrBands, "BSR") : "";
+      const defCell = h ? defBsrCell(h.fld, fldBands, "DEF") : `<td class="chip"></td>`;
+      const bsrCell = h ? defBsrCell(h.bsr, bsrBands, "BSR") : `<td class="chip"></td>`;
       const bats = p.bats || "";
       const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
       const danFlag = p.flag
@@ -1315,15 +1362,17 @@ function renderLineupTable(side, opts={}) {
       let wobaChip = "";
       if (h && h.woba !== undefined && h.woba !== null) {
         const wobaStr = ("." + Math.round(h.woba * 1000)).slice(0, 4);
-        wobaChip = `<span class="split-chip ${wobaCls}" title="ATC wOBA">${wobaStr}</span>`;
+        wobaChip = ` <span class="split-chip ${wobaCls}" title="ATC wOBA">${wobaStr}</span>`;
       }
       rowsHTML += `<tr>
-        <td style="color:var(--muted);font-size:0.78rem;">${p.order || ""}</td>
-        <td style="color:var(--muted);font-weight:600;">${p.pos || ""}</td>
-        <td class="${batsCls}" style="font-weight:700;">${bats}</td>
-        <td style="font-weight:600;">${nm}${defChip}${bsrChip}${danFlag} ${wobaChip}</td>
-        <td class="split-chip ${vRCls}" style="text-align:right;font-family:var(--mono);">${vR != null ? Math.round(vR) : "—"}</td>
-        <td class="split-chip ${vLCls}" style="text-align:right;font-family:var(--mono);">${vL != null ? Math.round(vL) : "—"}</td>
+        <td class="order">${p.order || ""}</td>
+        <td class="pos">${p.pos || ""}</td>
+        <td class="bats ${batsCls}">${bats}</td>
+        <td class="player">${nm}${danFlag}${wobaChip}</td>
+        ${defCell}
+        ${bsrCell}
+        <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
+        <td class="split split-chip ${vLCls}">${vL != null ? Math.round(vL) : "—"}</td>
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
@@ -1341,10 +1390,15 @@ function renderLineupTable(side, opts={}) {
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
   let html = `<table class="lineup-table"><thead><tr>
-    <th style="width:16px;">#</th><th style="width:26px;">Pos</th><th style="width:14px;"></th>
-    <th>Player</th>
-    <th style="text-align:right;">vR</th>
-    <th style="text-align:right;">vL</th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+    <th class="center" style="width:22px;">#</th>
+    <th class="center" style="width:30px;">Pos</th>
+    <th class="center" style="width:18px;">B</th>
+    <th class="left">Player</th>
+    <th class="center" style="width:42px;" title="Fielding flag vs. average">DEF</th>
+    <th class="center" style="width:42px;" title="Baserunning flag vs. average">BSR</th>
+    <th class="right" style="width:42px;">vR</th>
+    <th class="right" style="width:42px;">vL</th>
+  </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
   }
@@ -1492,7 +1546,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
       ${lhpsFlagged.length ? `<div class="bp-sub-label L">LHP</div>${lhpsFlagged.map(row).join("")}` : ''}
     ` : ''}
     ${avail.length ? `
-      <div class="bp-split-header">Available · best pFIP first</div>
+      <div class="bp-split-header">Available</div>
       ${rhpsAvail.length ? `<div class="bp-sub-label R">RHP (${rhpsAvail.length})</div>${rhpsAvail.map(row).join("")}` : ''}
       ${lhpsAvail.length ? `<div class="bp-sub-label L">LHP (${lhpsAvail.length})</div>${lhpsAvail.map(row).join("")}` : ''}
     ` : ''}
