@@ -1621,8 +1621,8 @@ function renderLineupSPHeader(spName, prefix="vs") {
       ${chip(primary.label, primary.val, primaryCls)}
       ${chip("xERA", s.xera, xeraCls)}
       ${s.bot_era != null ? chip("botERA", s.bot_era, botEraCls) : ''}
-      ${chip("BB%", s.bb_pct, bbPctCls, "%")}
       ${chip("K%",  s.k_pct,  kPctCls,  "%")}
+      ${chip("BB%", s.bb_pct, bbPctCls, "%")}
     </span>
     ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
       ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
