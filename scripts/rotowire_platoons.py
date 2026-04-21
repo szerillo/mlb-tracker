@@ -36,7 +36,8 @@ RW_TEAM_CODES = [
     "PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WAS",
 ]
 # MLB API abbreviations (differ in a few cases)
-MLB_TO_RW = {"CHW": "CWS", "WSH": "WAS", "ATH": "OAK"}
+# MLB now returns 'AZ' for Arizona (was 'ARI' historically), and 'ATH' for Athletics.
+MLB_TO_RW = {"CHW": "CWS", "WSH": "WAS", "ATH": "OAK", "AZ": "ARI"}
 
 
 def fetch(url: str) -> str:
@@ -190,3 +191,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
