@@ -206,6 +206,104 @@
     padding: 0.4rem 0.5rem; }
 
   /* =========================================================================
+     PITCHERS TAB — deep SP cards + team bullpen arsenal aggregates
+     ========================================================================= */
+  .pt-game { padding: 0.85rem 1rem; }
+  .pt-game-hdr { display: flex; align-items: center; gap: 0.4rem;
+    margin: 0 0 0.75rem; font-size: 1rem; font-weight: 700; }
+  .pt-gametime { color: var(--muted); font-weight: 400; font-size: 0.82rem;
+    margin-left: 0.4rem; }
+  .pt-sp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+    margin-bottom: 0.75rem; }
+  .pt-sp-card { background: rgba(255, 255, 255, 0.03); border-radius: 8px;
+    padding: 0.7rem 0.9rem; min-width: 0; }
+  .pt-sp-none { color: var(--muted); font-style: italic; font-size: 0.88rem;
+    padding: 0.4rem 0; }
+  .pt-sp-hdr { display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .pt-sp-team { color: var(--muted); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; }
+  .pt-sp-name { font-weight: 700; font-size: 1.02rem; }
+  .pt-sp-ip { margin-left: auto; color: var(--muted); font-size: 0.8rem;
+    font-family: var(--mono); }
+  .pt-pills { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem;
+    margin: 0.35rem 0; }
+  .pt-pill { font-family: var(--mono); font-size: 0.78rem;
+    display: inline-flex; align-items: baseline; gap: 0.25rem; }
+  .pt-pill .lbl { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); }
+  .pt-pill .val { font-weight: 700; color: var(--text); }
+  .pt-pill .val.elite { color: var(--tier-elite); }
+  .pt-pill .val.good  { color: var(--tier-good); }
+  .pt-pill .val.bad   { color: var(--tier-bad); }
+  .pt-pill .val.worst { color: var(--tier-worst); }
+  .pt-plus-line { display: flex; gap: 0.35rem; margin: 0.25rem 0 0.45rem;
+    flex-wrap: wrap; }
+
+  .pt-arsenal-table { width: 100%; border-collapse: collapse; table-layout: fixed;
+    font-size: 0.8rem; margin-top: 0.35rem; }
+  .pt-arsenal-table th { font-size: 0.6rem; color: var(--muted); font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.25rem 0.35rem; text-align: left;
+    border-bottom: 1px solid var(--border); }
+  .pt-arsenal-table th.r { text-align: right; }
+  .pt-arsenal-table td { padding: 0.25rem 0.35rem; border-top: 1px solid var(--border); }
+  .pt-arsenal-table tbody tr:first-child td { border-top: none; }
+  .pt-pitch-name { font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pt-mono { font-family: var(--mono); font-weight: 500; text-align: right;
+    color: var(--text); }
+  .pt-mono.elite { color: var(--tier-elite); }
+  .pt-mono.good  { color: var(--tier-good); }
+  .pt-mono.bad   { color: var(--tier-bad); }
+  .pt-mono.worst { color: var(--tier-worst); }
+  .pt-no-arsenal { color: var(--muted); font-style: italic; font-size: 0.78rem;
+    padding: 0.4rem 0; }
+
+  .pt-bp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .pt-bp-card { background: rgba(255, 255, 255, 0.015); border-radius: 8px;
+    padding: 0.6rem 0.85rem; min-width: 0; }
+  .pt-bp-card h4 { margin: 0 0 0.35rem; font-size: 0.86rem; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.02em; }
+
+  @media (max-width: 820px) {
+    .pt-sp-grid, .pt-bp-grid { grid-template-columns: 1fr; }
+  }
+
+  /* =========================================================================
+     STATCAST TAB — team percentile aggregates
+     ========================================================================= */
+  .sc-note { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.6rem;
+    max-width: 1100px; line-height: 1.5; }
+  .sc-table { width: 100%; border-collapse: collapse; font-size: 0.88rem;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; }
+  .sc-table thead { background: rgba(42, 51, 64, 0.5); }
+  .sc-table th { padding: 0.55rem 0.5rem; font-size: 0.66rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); font-weight: 700;
+    border-bottom: 1px solid var(--border); text-align: left; }
+  .sc-table th.r { text-align: right; }
+  .sc-table td { padding: 0.48rem 0.5rem; border-bottom: 1px solid var(--border);
+    vertical-align: middle; }
+  .sc-table tr:last-child td { border-bottom: none; }
+  .sc-team-cell { display: flex; align-items: center; gap: 0.4rem;
+    font-weight: 600; }
+  .sc-team-name { font-weight: 700; letter-spacing: 0.02em; }
+  .sc-opp { color: var(--muted); font-size: 0.72rem; font-weight: 400;
+    margin-left: 0.25rem; }
+  .sc-plr { color: var(--muted); font-size: 0.72rem; font-family: var(--mono); }
+  .sc-cell { text-align: right; font-family: var(--mono); font-weight: 700;
+    font-size: 0.95rem; }
+  .sc-cell.elite { color: var(--tier-elite);
+    background: rgba(255, 145, 64, 0.08); }
+  .sc-cell.good  { color: var(--tier-good);
+    background: rgba(74, 222, 128, 0.06); }
+  .sc-cell.bad   { color: var(--tier-bad);
+    background: rgba(91, 184, 245, 0.06); }
+  .sc-cell.worst { color: var(--tier-worst);
+    background: rgba(248, 113, 113, 0.08); }
+
+  /* =========================================================================
      ENV TAB — Weather · Park · Ump per game (3-across)
      ========================================================================= */
   .env-game { padding: 0.75rem 1rem; }
@@ -619,7 +717,9 @@
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
     <button class="tab" data-tab="env" role="tab">Park | WX | Umps</button>
+    <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
+    <button class="tab" data-tab="statcast" role="tab">Statcast</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
   </div>
 </header>
@@ -642,9 +742,17 @@
     <div id="env-list" class="loading">Loading weather · park · umpire…</div>
   </section>
 
+  <section id="tab-pitchers" class="tab-content" hidden>
+    <div id="pitchers-list" class="loading">Loading pitcher deep-dive…</div>
+  </section>
+
   <section id="tab-lineups" class="tab-content" hidden>
     <div id="lineups-summary"></div>
     <div id="lineups-list" class="loading">Loading lineups…</div>
+  </section>
+
+  <section id="tab-statcast" class="tab-content" hidden>
+    <div id="statcast-list" class="loading">Loading Statcast team percentile aggregates…</div>
   </section>
 
   <section id="tab-bullpen" class="tab-content" hidden>
@@ -694,6 +802,8 @@ let PITCHER_STATS = null;
 let PARK_FACTORS = null;
 let BP_WEATHER = null;
 let PITCHER_SPLITS = null;
+let PITCHER_ARSENAL = null;
+let HITTER_PCT = null;
 
 let CURRENT_GAMES = [];
 let CURRENT_SERIES_NEXT = [];
@@ -719,7 +829,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -731,10 +841,12 @@ async function loadStaticData() {
     fetchJSON(`data/park_factors.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/bp_weather.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_splits.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/pitcher_arsenal.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
-  PITCHER_SPLITS = splits;
+  PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
   document.getElementById("data_age").textContent = UMP_STATS.generated_at || "—";
 }
 
@@ -1287,6 +1399,8 @@ async function loadForDate(date) {
   renderScoreboard();
   renderEnvTab();
   renderLineupsTab();
+  renderStatcastTab();
+  invalidatePitchersTab();
   invalidateBullpenTab();
 }
 
@@ -1613,16 +1727,22 @@ function renderLineupSPHeader(spName, prefix="vs") {
     <span class="lbl">${label}</span>
     <span class="val ${cls}">${val != null ? fmt(val, suffix) : '—'}</span>
   </span>`;
-  const botEraCls = tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false);
+  const botEraCls   = tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false);
+  const hr9Cls      = tier(s.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false);
+  const whiffOvrCls = tier(s.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true);
+  const gbCls       = tier(s.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true);
   return `<div class="lu-sp">
     <span class="lu-sp-label">${prefix}</span>
     <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
     <span class="lu-sp-stats">
       ${chip(primary.label, primary.val, primaryCls)}
       ${chip("xERA", s.xera, xeraCls)}
-      ${s.bot_era != null ? chip("botERA", s.bot_era, botEraCls) : ''}
+      ${s.bot_era   != null ? chip("botERA", s.bot_era, botEraCls) : ''}
+      ${s.hr_per_9  != null ? chip("HR/9",   s.hr_per_9, hr9Cls)    : ''}
+      ${s.whiff_pct != null ? chip("Whiff",  s.whiff_pct, whiffOvrCls, "%") : ''}
       ${chip("K%",  s.k_pct,  kPctCls,  "%")}
       ${chip("BB%", s.bb_pct, bbPctCls, "%")}
+      ${s.gb_pct    != null ? chip("GB%",    s.gb_pct,    gbCls,       "%") : ''}
     </span>
     ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
       ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
@@ -1952,6 +2072,334 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <tbody>${tableBody}</tbody>
     </table>
   `;
+}
+
+// ============================================================================
+// PITCHERS TAB — deep SP + aggregate team bullpen pitch mix
+// ============================================================================
+let PITCHERS_TAB_RENDERED = false;
+function invalidatePitchersTab() { PITCHERS_TAB_RENDERED = false; }
+
+async function renderPitchersTab() {
+  if (PITCHERS_TAB_RENDERED) return;
+  const el = document.getElementById("pitchers-list");
+  if (!CURRENT_GAMES.length) {
+    el.innerHTML = `<div class="empty">No games scheduled.</div>`;
+    PITCHERS_TAB_RENDERED = true; return;
+  }
+  el.innerHTML = `<div class="loading">Loading bullpen rosters…</div>`;
+
+  // Pull every team's roster so we can aggregate the pen arsenal
+  const teamIds = new Set();
+  CURRENT_GAMES.forEach(g => { teamIds.add(g.teams.away.team.id); teamIds.add(g.teams.home.team.id); });
+  await Promise.all([...teamIds].map(id => getTeamRoster(id)));
+
+  let html = "";
+  for (const g of CURRENT_GAMES) {
+    const away = g.teams.away.team.name;
+    const home = g.teams.home.team.name;
+    const awaySP = g.teams.away.probablePitcher?.fullName || "";
+    const homeSP = g.teams.home.probablePitcher?.fullName || "";
+
+    html += `<div class="panel pt-game">
+      <h3 class="pt-game-hdr">
+        ${teamLogo(g.teams.away.team.id, 20)} ${teamAbbr(away)} @ ${teamAbbr(home)} ${teamLogo(g.teams.home.team.id, 20)}
+        <span class="pt-gametime">${fmtTime(g.gameDate)}</span>
+      </h3>
+      <div class="pt-sp-grid">
+        ${renderPitcherDeepSP(awaySP, away)}
+        ${renderPitcherDeepSP(homeSP, home)}
+      </div>
+      <div class="pt-bp-grid">
+        ${renderTeamBpAggregate(g.teams.away.team.id, away, awaySP)}
+        ${renderTeamBpAggregate(g.teams.home.team.id, home, homeSP)}
+      </div>
+    </div>`;
+  }
+  el.innerHTML = html;
+  PITCHERS_TAB_RENDERED = true;
+}
+
+// Render a deep SP card — header line, stat pills, pitch arsenal table
+function renderPitcherDeepSP(spName, teamName) {
+  if (!spName) {
+    return `<div class="pt-sp-card"><div class="pt-sp-none">TBA — ${teamName}</div></div>`;
+  }
+  const s  = lookupPitcherStats(spName);
+  const sp = lookupSplits(spName);
+  const ar = PITCHER_ARSENAL?.pitchers?.[normName(spName)];
+  const hand = sp?.hand || s?.hand || ar?.hand || "";
+
+  const headerOpener = sp?.is_opener
+    ? `<span class="lu-sp-opener" title="${(sp.opener_reason||'').replace(/"/g,'&quot;')}">OPENER</span>`
+    : "";
+  const headerHand = hand ? `<span class="lu-sp-hand ${hand==='L'?'L':''}">${hand}HP</span>` : "";
+
+  // Stat pills — pull from enriched pitcher_stats.json + pitcher_arsenal
+  const thr = PITCHER_STATS?.thresholds || {};
+  const primary = s ? primaryFipStat(s) : { label: "xFIP", val: null };
+  const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
+  const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+  const tierCls = (v, bands, hib) => tier(v, bands, hib);
+  const pill = (label, val, bands, hib, suf="") => `<span class="pt-pill">
+      <span class="lbl">${label}</span>
+      <span class="val ${tierCls(val, bands, hib)}">${val != null ? fmt(val, suf) : '—'}</span>
+    </span>`;
+  const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+  const plusChip = (label, v, hib) => v == null ? '' : `<span class="plus-chip ${tier(v, plusBands, hib)}" title="${label} (100=avg)">${label} <b>${Math.round(v)}</b></span>`;
+
+  // Pitch arsenal table
+  let arsenalTable = "";
+  if (ar?.pitches?.length) {
+    const rows = ar.pitches.slice(0, 6).map(p => {
+      const uw = p.usage != null ? p.usage.toFixed(1) + "%" : "—";
+      const v  = p.velo != null ? p.velo.toFixed(1) : "—";
+      const ivb = p.ivb != null ? (p.ivb > 0 ? "+" : "") + p.ivb.toFixed(1) : "—";
+      const hb  = p.hb  != null ? (p.hb  > 0 ? "+" : "") + p.hb.toFixed(1)  : "—";
+      const wh  = p.whiff != null ? p.whiff.toFixed(0) + "%" : "—";
+      const xw  = p.xwoba != null ? p.xwoba.toFixed(3) : "—";
+      return `<tr>
+        <td class="pt-pitch-name">${p.name || p.type}</td>
+        <td class="pt-mono">${uw}</td>
+        <td class="pt-mono">${v}</td>
+        <td class="pt-mono">${ivb}</td>
+        <td class="pt-mono">${hb}</td>
+        <td class="pt-mono ${p.whiff != null ? tier(p.whiff, {elite:40,good:32,bad:22,worst:15}, true) : ''}">${wh}</td>
+        <td class="pt-mono ${p.xwoba != null ? tier(p.xwoba, {elite:0.270,good:0.300,bad:0.340,worst:0.370}, false) : ''}">${xw}</td>
+      </tr>`;
+    }).join("");
+    arsenalTable = `<table class="pt-arsenal-table">
+      <colgroup><col style="width:28%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:14%"><col style="width:15%"></colgroup>
+      <thead><tr>
+        <th>Pitch</th><th class="r">Usage</th><th class="r">Velo</th>
+        <th class="r" title="Induced Vertical Break (inches)">IVB</th>
+        <th class="r" title="Horizontal Break (inches)">HB</th>
+        <th class="r">Whiff</th><th class="r">xwOBA</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  } else {
+    arsenalTable = `<div class="pt-no-arsenal">Savant arsenal data unavailable</div>`;
+  }
+
+  // Header stats — season IP, primary FIP, xERA, botERA, HR/9, Whiff%, K%, BB%, GB%
+  const pillsHTML = `
+    ${pill(primary.label, primary.val, primaryBands, false)}
+    ${pill("xERA", s?.xera, thr.xera, false)}
+    ${s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false) : ''}
+    ${pill("HR/9", s?.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false)}
+    ${pill("Whiff", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%")}
+    ${pill("K%",  s?.k_pct, thr.k_pct, true, "%")}
+    ${pill("BB%", s?.bb_pct, {elite:5,good:7,bad:9,worst:11}, false, "%")}
+    ${pill("GB%", s?.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%")}
+    ${pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48}, false, "%")}
+  `;
+  const plusLine = (s?.stuff_plus != null || s?.pitching_plus != null) ? `
+    <div class="pt-plus-line">
+      ${plusChip("STF+", s.stuff_plus, true)}
+      ${s.location_plus != null ? plusChip("LOC+", s.location_plus, true) : ''}
+      ${plusChip("PIT+", s.pitching_plus, true)}
+    </div>` : '';
+
+  const ipTxt = s?.ip != null ? `${s.ip} IP` : (ar?.total_pitches ? `${ar.total_pitches}p` : '');
+  return `<div class="pt-sp-card">
+    <div class="pt-sp-hdr">
+      <span class="pt-sp-team">${teamAbbr(teamName)}</span>
+      <span class="pt-sp-name">${spName}</span>
+      ${headerHand}${headerOpener}
+      ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
+    </div>
+    <div class="pt-pills">${pillsHTML}</div>
+    ${plusLine}
+    ${arsenalTable}
+  </div>`;
+}
+
+// Aggregate team bullpen (non-SP) pitch mix — one card per team, showing
+// the weighted pitch-type distribution across the rostered relievers and
+// their average velo / whiff.
+function renderTeamBpAggregate(teamId, teamName, probableSP) {
+  const roster = ROSTERS_CACHE[teamId] || [];
+  if (!roster.length || !PITCHER_ARSENAL) {
+    return `<div class="pt-bp-card"><h4>${teamName} bullpen</h4>
+      <div class="pt-sp-none">${!PITCHER_ARSENAL ? 'arsenal data loading…' : 'roster loading…'}</div></div>`;
+  }
+  // Reliever set: active roster minus today's SP and known starters
+  const spKey = normName(probableSP);
+  const rhp = [], lhp = [];
+  for (const p of roster) {
+    const k = normName(p.name);
+    if (k === spKey || KNOWN_STARTERS.has(k)) continue;
+    const ar = PITCHER_ARSENAL.pitchers[k];
+    if (!ar) continue;
+    (p.hand === "L" ? lhp : rhp).push(ar);
+  }
+  const relievers = rhp.concat(lhp);
+  if (!relievers.length) {
+    return `<div class="pt-bp-card"><h4>${teamName} bullpen</h4>
+      <div class="pt-sp-none">No Savant arsenal on any reliever</div></div>`;
+  }
+
+  // Weighted aggregate: for each pitch type, total pitches across relievers,
+  // weighted avg velo/IVB/HB by pitch count, usage % = (type pitches) / (total pitches)
+  const agg = {}; // { type: { name, pitches, veloSum, veloN, ivbSum, ivbN, hbSum, hbN, whiffSum, whiffN } }
+  let totalPitches = 0;
+  for (const r of relievers) {
+    for (const pitch of (r.pitches || [])) {
+      const n = pitch.pitches || 0;
+      if (!n) continue;
+      totalPitches += n;
+      const a = agg[pitch.type] = agg[pitch.type] || {
+        type: pitch.type, name: pitch.name, pitches: 0,
+        veloSum: 0, veloN: 0, ivbSum: 0, ivbN: 0, hbSum: 0, hbN: 0,
+        whiffSum: 0, whiffN: 0, pitchers: 0
+      };
+      a.pitches += n;
+      a.pitchers += 1;
+      if (pitch.velo  != null) { a.veloSum  += pitch.velo  * n; a.veloN  += n; }
+      if (pitch.ivb   != null) { a.ivbSum   += pitch.ivb   * n; a.ivbN   += n; }
+      if (pitch.hb    != null) { a.hbSum    += pitch.hb    * n; a.hbN    += n; }
+      if (pitch.whiff != null) { a.whiffSum += pitch.whiff * n; a.whiffN += n; }
+    }
+  }
+  const rows = Object.values(agg).sort((a,b) => b.pitches - a.pitches).slice(0, 6);
+  const fmt = (sum, n, digits=1) => n ? (sum/n).toFixed(digits) : "—";
+  const tbody = rows.map(a => {
+    const usage = totalPitches ? (a.pitches / totalPitches * 100).toFixed(1) + "%" : "—";
+    const velo = fmt(a.veloSum, a.veloN);
+    const ivbv = a.ivbN ? (a.ivbSum/a.ivbN) : null;
+    const hbv  = a.hbN  ? (a.hbSum/a.hbN)   : null;
+    const ivb  = ivbv != null ? (ivbv > 0 ? "+" : "") + ivbv.toFixed(1) : "—";
+    const hb   = hbv  != null ? (hbv  > 0 ? "+" : "") + hbv.toFixed(1)  : "—";
+    const wh   = a.whiffN ? (a.whiffSum/a.whiffN).toFixed(0) + "%" : "—";
+    return `<tr>
+      <td class="pt-pitch-name">${a.name}</td>
+      <td class="pt-mono">${a.pitchers}×</td>
+      <td class="pt-mono">${usage}</td>
+      <td class="pt-mono">${velo}</td>
+      <td class="pt-mono">${ivb}</td>
+      <td class="pt-mono">${hb}</td>
+      <td class="pt-mono">${wh}</td>
+    </tr>`;
+  }).join("");
+
+  return `<div class="pt-bp-card">
+    <h4>${teamName} pen — ${rhp.length} RHP · ${lhp.length} LHP</h4>
+    <table class="pt-arsenal-table">
+      <colgroup><col style="width:26%"><col style="width:10%"><col style="width:12%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:13%"></colgroup>
+      <thead><tr>
+        <th>Pitch</th><th class="r" title="# of relievers who throw it">Arms</th>
+        <th class="r">Usage</th><th class="r">Velo</th>
+        <th class="r" title="Induced Vertical Break (inches)">IVB</th>
+        <th class="r" title="Horizontal Break (inches)">HB</th>
+        <th class="r">Whiff</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  </div>`;
+}
+
+// ============================================================================
+// STATCAST TAB — team percentile aggregates (flat mean across projected lineup)
+// ============================================================================
+function renderStatcastTab() {
+  const el = document.getElementById("statcast-list");
+  if (!CURRENT_GAMES.length) {
+    el.innerHTML = `<div class="empty">No games scheduled.</div>`;
+    return;
+  }
+  if (!HITTER_PCT) {
+    el.innerHTML = `<div class="coming-soon">Savant hitter percentiles not loaded yet.</div>`;
+    return;
+  }
+  // Columns to aggregate (label → percentile key in hitter_percentiles)
+  const metrics = [
+    ["xwOBA",    "xwoba"],    ["xBA",      "xba"],     ["xSLG", "xslg"],
+    ["Barrel",   "barrel"],   ["HardHit",  "hard_hit"],
+    ["Avg EV",   "exit_velocity"], ["Max EV", "max_ev"],
+    ["Chase",    "chase"],    ["Whiff",    "whiff"],
+    ["K%",       "k_pct"],    ["BB%",      "bb_pct"],
+    ["Sprint",   "sprint"],
+  ];
+
+  // For each team in today's slate, get today's projected lineup, look up
+  // each hitter's percentile, compute flat mean per metric.
+  function teamRow(game, side, teamName) {
+    const lg = lineupsForGame(game);
+    const players = lg?.lineups?.[side]?.players || [];
+    const cells = {};
+    const cnts  = {};
+    for (const p of players) {
+      const e = HITTER_PCT.hitters[normName(p.name)];
+      if (!e) continue;
+      for (const [_, key] of metrics) {
+        if (e[key] != null) {
+          cells[key] = (cells[key] || 0) + e[key];
+          cnts[key]  = (cnts[key]  || 0) + 1;
+        }
+      }
+    }
+    const row = { _team: teamName, _game: game, _side: side, _players: players.length };
+    for (const [label, key] of metrics) {
+      row[key] = cnts[key] ? Math.round(cells[key] / cnts[key]) : null;
+    }
+    return row;
+  }
+
+  const rows = [];
+  for (const g of CURRENT_GAMES) {
+    rows.push(teamRow(g, "away", g.teams.away.team.name));
+    rows.push(teamRow(g, "home", g.teams.home.team.name));
+  }
+  // Sortable by each metric — default: xwOBA desc, then team name
+  rows.sort((a, b) => (b.xwoba ?? -1) - (a.xwoba ?? -1));
+
+  // Color bands — percentiles are 0-100, so: >=70 elite, >=55 good, <=35 bad, <=20 worst
+  const pCls = (v, lowerBetter) => {
+    if (v == null) return "";
+    const up = [70, 55, 35, 20]; // elite, good, bad, worst (higher=better)
+    const down = [30, 45, 65, 80]; // flipped
+    if (!lowerBetter) {
+      if (v >= up[0]) return "elite";
+      if (v >= up[1]) return "good";
+      if (v <= up[3]) return "worst";
+      if (v <= up[2]) return "bad";
+      return "";
+    }
+    if (v <= down[0]) return "elite";
+    if (v <= down[1]) return "good";
+    if (v >= down[3]) return "worst";
+    if (v >= down[2]) return "bad";
+    return "";
+  };
+  // Which metrics are "lower is better" (for the hitter view — we want higher percentiles to mean better outcomes, so we flip K% / Whiff% / Chase%)
+  const lowerBetter = new Set(["k_pct", "whiff", "chase"]);
+
+  const cellHTML = (v, key) => v == null
+    ? `<td class="sc-cell" style="color:var(--muted);opacity:0.5;">—</td>`
+    : `<td class="sc-cell ${pCls(v, lowerBetter.has(key))}">${v}</td>`;
+
+  const header = `<tr>
+    <th class="sc-team-cell">Team</th>
+    <th class="r sc-plr">Plr</th>
+    ${metrics.map(([lbl]) => `<th class="r">${lbl}</th>`).join("")}
+  </tr>`;
+  const body = rows.map(r => `<tr>
+    <td class="sc-team-cell">
+      ${teamLogo(r._game.teams[r._side].team.id, 18)}
+      <span class="sc-team-name">${teamAbbr(r._team)}</span>
+      <span class="sc-opp">vs ${teamAbbr(r._game.teams[r._side === 'away' ? 'home' : 'away'].team.name)}</span>
+    </td>
+    <td class="r sc-plr">${r._players}</td>
+    ${metrics.map(([, key]) => cellHTML(r[key], key)).join("")}
+  </tr>`).join("");
+
+  el.innerHTML = `
+    <div class="sc-note">Flat mean percentile across today's projected lineup. Higher = better. K% / Whiff% / Chase% flipped so high still = good outcome for the hitter. Early-season blanks backfilled with prior-year percentile where available.</div>
+    <table class="sc-table">
+      <thead>${header}</thead>
+      <tbody>${body}</tbody>
+    </table>`;
 }
 
 // ============================================================================
@@ -2415,7 +2863,8 @@ document.querySelectorAll(".tab").forEach(btn => {
     btn.classList.add("active");
     document.querySelectorAll(".tab-content").forEach(s => s.hidden = true);
     document.getElementById(`tab-${btn.dataset.tab}`).hidden = false;
-    if (btn.dataset.tab === "bullpen") renderBullpenTab();
+    if (btn.dataset.tab === "bullpen")  renderBullpenTab();
+    if (btn.dataset.tab === "pitchers") renderPitchersTab();
   };
 });
 
