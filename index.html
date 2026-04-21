@@ -365,6 +365,20 @@
     margin: 0.25rem 0 0.4rem; }
   .m-sp-stats .sp-stat { flex: 1; text-align: center; padding: 0.2rem; }
   .m-sp-sub { color: var(--muted); font-size: 0.75rem; margin-top: 0.3rem; }
+  .m-sp-plus { display: flex; gap: 0.4rem; margin-top: 0.2rem; flex-wrap: wrap; }
+  .plus-chip { display: inline-flex; align-items: baseline; gap: 0.25rem;
+    font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 4px;
+    background: rgba(139, 149, 161, 0.08); color: var(--muted);
+    letter-spacing: 0.04em; font-weight: 600; }
+  .plus-chip b { font-family: var(--mono); font-size: 0.82rem; color: var(--text); font-weight: 700; }
+  .plus-chip.elite { background: rgba(255, 145, 64, 0.12); color: var(--tier-elite); }
+  .plus-chip.elite b { color: var(--tier-elite); }
+  .plus-chip.good  { background: rgba(110, 255, 148, 0.1); color: var(--tier-good); }
+  .plus-chip.good b { color: var(--tier-good); }
+  .plus-chip.bad   { background: rgba(91, 184, 245, 0.1); color: var(--tier-bad); }
+  .plus-chip.bad b  { color: var(--tier-bad); }
+  .plus-chip.worst { background: rgba(248, 113, 113, 0.12); color: var(--tier-worst); }
+  .plus-chip.worst b { color: var(--tier-worst); }
   .m-sp-splits { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
     font-size: 0.78rem; }
   .m-sp-splits th, .m-sp-splits td { padding: 0.18rem 0.35rem; text-align: right; }
@@ -704,6 +718,15 @@ function lookupSplits(name) {
   return PITCHER_SPLITS.pitchers[normName(name)] || null;
 }
 
+// When xFIP is present AND the pitcher has a meaningful sample (IP >= 30),
+// xFIP is the primary stat. Otherwise fall back to projected FIP (pFIP).
+function primaryFipStat(s) {
+  if (s?.xfip != null && (s?.ip ?? 0) >= 30) {
+    return { label: "xFIP", val: s.xfip, lowerBetter: true };
+  }
+  return { label: "pFIP", val: s?.fip_proj, lowerBetter: true };
+}
+
 function tier(v, bands, higherIsBetter=true) {
   if (v === null || v === undefined || !bands) return "";
   if (higherIsBetter) {
@@ -833,6 +856,28 @@ function fmtDateShort(iso) {
 function dayAbbr(iso) {
   return new Date(iso+"T12:00:00Z").toLocaleDateString("en-US",
     {weekday:"short"}).toUpperCase();
+}
+
+// Precise fatigue breakdown: show only days where pitcher actually threw.
+// Input: days array like [0,0,8,0,33]. Uses FATIGUE.day_labels for accurate
+// weekday names aligned to the fatigue window (oldest → newest, last index
+// is the most recent day the pipeline counted).
+function fatigueBreakdown(days) {
+  if (!days || !days.length) return "";
+  const labels = FATIGUE?.day_labels || [];
+  const last = days.length - 1;
+  const parts = [];
+  for (let i = 0; i < days.length; i++) {
+    const p = days[i];
+    if (!p) continue;
+    let tag;
+    if (i === last) tag = "yesterday";
+    else if (i === last - 1) tag = "2d ago";
+    else if (labels[i]) tag = dayAbbr(labels[i]);
+    else tag = `${last - i}d ago`;
+    parts.push(`${tag} ${p}p`);
+  }
+  return parts.join(" · ");
 }
 
 // ============================================================================
@@ -1095,7 +1140,9 @@ function spMiniCell(name, teamName, sideCls) {
     </div>`;
   }
   const thr = PITCHER_STATS?.thresholds || {};
-  const fipCls  = tier(s.fip_proj, thr.fip, false);
+  const primary = primaryFipStat(s);
+  const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
+  const primaryCls = tier(primary.val, primaryBands, false);
   const xeraCls = tier(s.xera, thr.xera, false);
   const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
   const cell = (lbl, v, cls, suf="") => v == null
@@ -1105,7 +1152,7 @@ function spMiniCell(name, teamName, sideCls) {
   return `<div class="sb-sp-cell ${sideCls}">
     <div class="sb-sp-name">${name}${handTag}</div>
     <div class="sb-sp-stats">
-      ${cell("pFIP", s.fip_proj, fipCls)}
+      ${cell(primary.label, primary.val, primaryCls)}
       ${cell("xERA", s.xera, xeraCls)}
       ${cell("K-BB", s.k_bb_pct, kbbCls, "%")}
     </div>
@@ -1364,11 +1411,21 @@ function renderLineupTable(side, opts={}) {
         const wobaStr = ("." + Math.round(h.woba * 1000)).slice(0, 4);
         wobaChip = ` <span class="split-chip ${wobaCls}" title="ATC wOBA">${wobaStr}</span>`;
       }
+      // OPS cell — use projected OPS if present, tier against standard OPS bands.
+      // Bands: elite >=.900, good >=.800, bad <=.700, worst <=.650.
+      const opsBands = hitThr.ops || {elite: 0.900, good: 0.800, bad: 0.700, worst: 0.650};
+      const opsVal = h?.ops;
+      const opsCls = tier(opsVal, opsBands, true);
+      const opsStr = opsVal != null
+        ? ("." + Math.round(opsVal * 1000)).slice(0, 4)
+        : "—";
+      const opsTitle = opsVal != null ? `Projected OPS ${opsVal.toFixed(3)}` : "no projection";
       rowsHTML += `<tr>
         <td class="order">${p.order || ""}</td>
         <td class="pos">${p.pos || ""}</td>
         <td class="bats ${batsCls}">${bats}</td>
         <td class="player">${nm}${danFlag}${wobaChip}</td>
+        <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         ${defCell}
         ${bsrCell}
         <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
@@ -1394,8 +1451,9 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
-    <th class="center" style="width:42px;" title="Fielding flag vs. average">DEF</th>
-    <th class="center" style="width:42px;" title="Baserunning flag vs. average">BSR</th>
+    <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
+    <th class="center" style="width:38px;" title="Fielding flag vs. average">DEF</th>
+    <th class="center" style="width:38px;" title="Baserunning flag vs. average">BSR</th>
     <th class="right" style="width:42px;">vR</th>
     <th class="right" style="width:42px;">vL</th>
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
@@ -1505,7 +1563,8 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
 
   const row = (p) => {
     const f = p.fatigue;
-    let tierHTML = `<span class="fatigue-tier ok" title="Not flagged">—</span>`;
+    // Available (non-flagged) pitchers get no tier pill — just the list.
+    let tierHTML = "";
     if (f?.tier === "LIKELY OUT") {
       tierHTML = `<span class="fatigue-tier out" title="${(f.reasons||'').replace(/"/g,'&quot;')}">OUT</span>`;
     } else if (f?.tier === "FATIGUED") {
@@ -1521,15 +1580,13 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
       <span class="sep">|</span>
       <span class="lbl">K-BB</span> <span class="v ${kbbCls}">${fmt(s.k_bb_pct, "%")}</span>
     </span>` : "";
-    const daysTxt = f ? `[${f.days.join("/")}]` : "";
-    const reasonTxt = f?.reasons || "";
+    const daysTxt = f ? fatigueBreakdown(f.days) : "";
     return `<div class="fatigue-line">
       ${tierHTML}
       <span class="bp-hand ${p.hand}">${p.hand}</span>
       <span class="fatigue-name">${p.name}</span>
       ${statsPipe}
       ${daysTxt ? `<span class="fatigue-days">${daysTxt}</span>` : ""}
-      ${reasonTxt ? `<span class="fatigue-reason">${reasonTxt}</span>` : ""}
     </div>`;
   };
 
@@ -1740,9 +1797,15 @@ function renderSPBox(name, teamAbbrStr) {
       <div class="coming-soon">No stats loaded</div></div>`;
   }
   const thr = PITCHER_STATS?.thresholds || {};
-  const fipCls  = tier(s.fip_proj, thr.fip, false);
+  const primary = primaryFipStat(s);
+  const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
+  const primaryCls = tier(primary.val, primaryBands, false);
   const xeraCls = tier(s.xera, thr.xera, false);
   const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
+  // Pitch model grades (higher-is-better, 100 = MLB avg)
+  const pitchPlusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+  const stuffCls    = tier(s.stuff_plus, pitchPlusBands, true);
+  const pitchingCls = tier(s.pitching_plus, pitchPlusBands, true);
   const stat = (label, val, cls, suffix="") => val == null
     ? `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
         <div class="sp-stat-val">—</div></div>`
@@ -1773,15 +1836,22 @@ function renderSPBox(name, teamAbbrStr) {
       <span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
     </div>
     <div class="m-sp-stats">
-      ${stat("pFIP", s.fip_proj, fipCls)}
+      ${stat(primary.label, primary.val, primaryCls)}
       ${stat("xERA", s.xera, xeraCls)}
       ${stat("K-BB%", s.k_bb_pct, kbbCls, "%")}
     </div>
+    ${(s.stuff_plus != null || s.pitching_plus != null) ? `
+      <div class="m-sp-plus">
+        ${s.stuff_plus != null ? `<span class="plus-chip ${stuffCls}" title="Stuff+ (pitch grade · 100 = MLB avg)">Stuff+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
+        ${s.pitching_plus != null ? `<span class="plus-chip ${pitchingCls}" title="Pitching+ (overall grade · 100 = MLB avg)">Pitching+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+      </div>` : ''}
     <div class="m-sp-sub">
+      ${primary.label === "xFIP" && s.fip_proj != null ? `pFIP ${s.fip_proj} · ` : ''}
       ${s.era != null ? `ERA ${s.era}` : ''}
       ${s.k_pct != null ? ` · K% ${s.k_pct}` : ''}
       ${s.bb_pct != null ? ` · BB% ${s.bb_pct}` : ''}
       ${s.xwoba != null ? ` · xwOBA ${s.xwoba.toFixed(3)}` : ''}
+      ${s.ip != null ? ` · ${s.ip} IP` : ''}
     </div>
     ${sp ? `<table class="m-sp-splits">
       <thead><tr>
