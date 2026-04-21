@@ -216,37 +216,38 @@
   .env-row { display: grid; grid-template-columns: 1.35fr 1fr 1.1fr; gap: 0.7rem; }
   @media (max-width: 900px) { .env-row { grid-template-columns: 1fr; } }
   .env-box { background: rgba(255, 255, 255, 0.025); border-radius: 6px;
-    padding: 0.55rem 0.7rem; min-width: 0; }
+    padding: 0.7rem 0.85rem; min-width: 0; }
   .env-box .wx-top { display: flex; gap: 0.6rem; align-items: flex-start; }
   .env-box .wx-text { flex: 1; min-width: 0; }
-  .env-box .wx-headline { font-weight: 600; font-size: 0.85rem; }
-  .env-box .wx-forecast { color: var(--muted); font-size: 0.76rem; margin-top: 0.1rem; }
-  .env-box .wx-v8 { margin-top: 0.4rem; }
-  /* Smaller weather pill than the stand-alone page had */
-  .env-box .wx-v8 .ump-pct { font-size: 0.82rem !important; padding: 0.12rem 0.45rem; }
+  .env-box .wx-headline { font-weight: 600; font-size: 1rem; }
+  .env-box .wx-forecast { color: var(--muted); font-size: 0.88rem; margin-top: 0.2rem; }
+  .env-box .wx-v8 { margin-top: 0.55rem; }
+  .env-box .wx-v8 .ump-pct { font-size: 0.95rem !important; padding: 0.18rem 0.55rem; }
 
-  .env-pf-venue { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.35rem;
+  .env-pf-venue { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem;
     letter-spacing: 0.02em; }
   .env-pf-grid { display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 0.3rem 0.5rem; }
+    gap: 0.4rem 0.55rem; }
   .env-pf-stat { text-align: center; }
-  .env-pf-lbl { color: var(--muted); font-size: 0.62rem; font-weight: 600;
+  .env-pf-lbl { color: var(--muted); font-size: 0.68rem; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase; }
-  .env-pf-val { font-family: var(--mono); font-weight: 700; font-size: 0.88rem; }
+  .env-pf-val { font-family: var(--mono); font-weight: 700; font-size: 1rem; }
   .env-pf-val.elite { color: var(--tier-elite); }
   .env-pf-val.good  { color: var(--tier-good); }
   .env-pf-val.bad   { color: var(--tier-bad); }
   .env-pf-val.worst { color: var(--tier-worst); }
 
-  .env-ump-name { font-weight: 700; font-size: 0.92rem; display: flex;
-    align-items: center; gap: 0.35rem; flex-wrap: wrap; }
-  .env-ump-crew { color: var(--muted); font-size: 0.76rem; margin-top: 0.2rem; }
-  .env-ump-next-label { color: var(--muted); font-size: 0.62rem; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.5rem; }
-  .env-ump-next-row { font-size: 0.8rem; margin-top: 0.18rem;
-    display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-  .env-ump-next-day { color: var(--muted); font-weight: 600; min-width: 30px;
-    font-size: 0.72rem; letter-spacing: 0.05em; }
+  .env-box-ump { text-align: center; }
+  .env-ump-name { font-weight: 700; font-size: 1.02rem; display: flex;
+    align-items: center; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+  .env-ump-crew { color: var(--muted); font-size: 0.86rem; margin-top: 0.3rem; }
+  .env-ump-next-label { color: var(--muted); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.6rem; }
+  .env-ump-next-row { font-size: 0.88rem; margin-top: 0.22rem;
+    display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;
+    justify-content: center; }
+  .env-ump-next-day { color: var(--muted); font-weight: 600; min-width: 34px;
+    font-size: 0.76rem; letter-spacing: 0.05em; }
 
   /* Lineups tab: compact SP overlay above each team's lineup */
   .lu-sp { display: flex; flex-wrap: wrap; gap: 0.45rem 0.6rem; align-items: center;
@@ -550,9 +551,10 @@
   }
   .m-bp-box h4, .m-lineup-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem;
     display: flex; align-items: center; gap: 0.4rem; }
-  .m-ump-box .ump-name { font-weight: 700; font-size: 1rem; }
+  .m-ump-box { text-align: center; }
+  .m-ump-box .ump-name { font-weight: 700; font-size: 1rem; justify-content: center; }
   .m-ump-box .ump-crew { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; }
-  .m-ump-box .ump-future { margin-top: 0.5rem; font-size: 0.8rem; }
+  .m-ump-box .ump-future { margin-top: 0.5rem; font-size: 0.8rem; text-align: center; }
   .m-ump-box .ump-future .row { margin-top: 0.2rem; }
 
   .m-wx-box .wx-top { display: flex; gap: 0.8rem; align-items: flex-start; }
@@ -871,6 +873,17 @@ function shortName(name) {
   const last = parts.slice(1).join(" ");
   const initial = (first.match(/[A-Za-zÀ-ÿ]/) || [first[0] || ""])[0].toUpperCase();
   return `${initial}. ${last}`;
+}
+// Auto-shrink when a name would wrap: anything > 17 chars or with hyphen
+// in the last name becomes "F. Lastname" (e.g. "Pete Crow-Armstrong",
+// "Moises Ballesteros"). Everything else renders full.
+function autoName(name) {
+  if (!name) return "";
+  const parts = String(name).trim().split(/\s+/);
+  const last = parts.slice(-1)[0] || "";
+  const isLong = name.length > 17;
+  const hasHyphen = /-/.test(last);
+  return (isLong || hasHyphen) ? shortName(name) : name;
 }
 function lookupPitcherStats(name) {
   if (!name || !PITCHER_STATS) return null;
@@ -1597,7 +1610,11 @@ function renderLineupSPHeader(spName, prefix="vs") {
   const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
   const primaryCls = tier(primary.val, primaryBands, false);
   const xeraCls = tier(s.xera, thr.xera, false);
-  const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
+  // Split out K% and BB% individually (lower K-against-pitcher = worse; lower BB = better)
+  const kPctCls  = tier(s.k_pct,  thr.k_pct, true);   // higher is better for pitcher
+  const bbPctCls = tier(s.bb_pct, {elite:5, good:7, bad:9, worst:11}, false); // lower is better
+  // pFIP is also shown separately when the primary stat is xFIP
+  const pfipCls  = tier(s.fip_proj, thr.fip, false);
   const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
   const stuffCls    = tier(s.stuff_plus, plusBands, true);
   const pitchingCls = tier(s.pitching_plus, plusBands, true);
@@ -1606,13 +1623,17 @@ function renderLineupSPHeader(spName, prefix="vs") {
     <span class="lbl">${label}</span>
     <span class="val ${cls}">${val != null ? fmt(val, suffix) : '—'}</span>
   </span>`;
+  // If primary is xFIP, also show pFIP chip. If primary is pFIP, skip the duplicate.
+  const showPfip = primary.label === "xFIP" && s.fip_proj != null;
   return `<div class="lu-sp">
     <span class="lu-sp-label">${prefix}</span>
     <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
     <span class="lu-sp-stats">
       ${chip(primary.label, primary.val, primaryCls)}
+      ${showPfip ? chip("pFIP", s.fip_proj, pfipCls) : ''}
       ${chip("xERA", s.xera, xeraCls)}
-      ${chip("K-BB", s.k_bb_pct, kbbCls, "%")}
+      ${chip("K%",  s.k_pct,  kPctCls,  "%")}
+      ${chip("BB%", s.bb_pct, bbPctCls, "%")}
     </span>
     ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
       ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
@@ -1644,16 +1665,16 @@ function renderLineupTable(side, opts={}) {
     if (!HITTERS) return null;
     return HITTERS.hitters[normName(name)] || null;
   }
-  // 4-tier DEF/BSR chip: elite="++", good="+", bad="−", worst="−−"
+  // 4-tier DEF/BSR chip: single + / − glyphs; color carries tier intensity
   function defBsrCell(v, bands, label) {
     if (v === null || v === undefined || !bands) return `<td class="chip"></td>`;
     const signed = (v > 0 ? "+" : "") + v;
     if (v >= bands.elite)
-      return `<td class="chip"><span class="def-bsr-chip elite" title="${label} ${signed}">++</span></td>`;
+      return `<td class="chip"><span class="def-bsr-chip elite" title="${label} ${signed}">+</span></td>`;
     if (v >= bands.good)
       return `<td class="chip"><span class="def-bsr-chip good" title="${label} ${signed}">+</span></td>`;
     if (v <= bands.worst)
-      return `<td class="chip"><span class="def-bsr-chip worst" title="${label} ${signed}">−−</span></td>`;
+      return `<td class="chip"><span class="def-bsr-chip worst" title="${label} ${signed}">−</span></td>`;
     if (v <= bands.bad)
       return `<td class="chip"><span class="def-bsr-chip bad" title="${label} ${signed}">−</span></td>`;
     return `<td class="chip"></td>`;
@@ -1673,7 +1694,7 @@ function renderLineupTable(side, opts={}) {
       let bsrCell;
       if (h && h.sprint_elite) {
         const pct = h.sprint_pct != null ? Math.round(h.sprint_pct) : null;
-        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">++</span></td>`;
+        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">+</span></td>`;
       } else if (h) {
         bsrCell = defBsrCell(h.bsr, bsrBands, "BSR");
       } else {
@@ -1697,6 +1718,13 @@ function renderLineupTable(side, opts={}) {
         ? ("." + Math.round(opsVal * 1000)).slice(0, 4)
         : "—";
       const opsTitle = opsVal != null ? `Projected OPS ${opsVal.toFixed(3)}` : "no projection";
+      // pwOBA — projected wOBA from hitters.json (Steamer/ATC base)
+      const wobaVal = h?.woba;
+      const wobaCls = tier(wobaVal, wobaBands, true);
+      const wobaStr = wobaVal != null
+        ? ("." + Math.round(wobaVal * 1000)).slice(0, 4)
+        : "—";
+      const wobaTitle = wobaVal != null ? `Projected wOBA ${wobaVal.toFixed(3)}` : "no projection";
       // Expanded-only stats: K% / BB% (Steamer or ATC projection). Lineups tab
       // has room for these; modal renders a slimmer table.
       let kbbCells = "";
@@ -1712,11 +1740,15 @@ function renderLineupTable(side, opts={}) {
         <td class="split split-chip ${kCls}"  title="${kVal !=null?`Projected K% ${kVal}%`:"no projection"}">${pct(kVal)}</td>
         <td class="split split-chip ${bbCls}" title="${bbVal!=null?`Projected BB% ${bbVal}%`:"no projection"}">${pct(bbVal)}</td>`;
       }
+      const wobaCell = expanded
+        ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
+        : "";
       rowsHTML += `<tr>
         <td class="order">${p.order || ""}</td>
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="player">${nm}${danFlag}</td>${kbbCells}
+        <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>${kbbCells}
+        ${wobaCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
         <td class="split split-chip ${vLCls}">${vL != null ? Math.round(vL) : "—"}</td>
@@ -1745,16 +1777,19 @@ function renderLineupTable(side, opts={}) {
   const kbbHeaders = expanded ? `
     <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>
     <th class="right" style="width:46px;" title="Projected BB% (higher = better)">BB%</th>` : "";
+  const wobaHeader = expanded
+    ? `<th class="right" style="width:50px;" title="Projected wOBA">pwOBA</th>` : "";
   let html = `<table class="lineup-table"><thead><tr>
     <th class="center" style="width:22px;">#</th>
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>${kbbHeaders}
+    ${wobaHeader}
     <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
     <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (Steamer)">vR</th>
     <th class="right" style="width:42px;" title="Projected wRC+ vs. LHP (Steamer)">vL</th>
-    <th class="center" style="width:40px;" title="Fielding qualifier (+/±/–) vs. average">DEF</th>
-    <th class="center" style="width:40px;" title="Baserunning qualifier (+/±/–) — boosted by elite Savant sprint speed">BSR</th>
+    <th class="center" style="width:40px;" title="Fielding qualifier (+/−) vs. average">DEF</th>
+    <th class="center" style="width:40px;" title="Baserunning qualifier (+/−) — boosted by elite Savant sprint speed">BSR</th>
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
@@ -1849,9 +1884,11 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const thr = PITCHER_STATS?.thresholds || {};
 
   const sortKey = (a, b) => a.sortKey - b.sortKey || a.name.localeCompare(b.name);
+  // fatigue rows now include ALL pitchers with any 5-day usage — tier is
+  // "LIKELY OUT" / "FATIGUED" for flagged, null for rested.
   const out = withMeta.filter(p => p.fatigue?.tier === "LIKELY OUT").sort(sortKey);
   const ftg = withMeta.filter(p => p.fatigue?.tier === "FATIGUED").sort(sortKey);
-  const avail = withMeta.filter(p => !p.fatigue).sort(sortKey);
+  const avail = withMeta.filter(p => !p.fatigue || p.fatigue.tier == null).sort(sortKey);
 
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
   // Last-name helper for modal (compact)
@@ -1924,7 +1961,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
         <th class="r" title="xFIP (≥10 IP) or pFIP projection (lower = better)">xFIP</th>
         <th class="r" title="Expected ERA (lower = better)">xERA</th>
         <th class="r" title="K% minus BB%">K-BB%</th>
-        <th>Recent</th>
+        <th title="Pitches thrown in the last 5 days">L5 Days</th>
       </tr></thead>
       <tbody>${tableBody}</tbody>
     </table>
