@@ -1400,7 +1400,17 @@ function renderLineupTable(side, opts={}) {
       const vLCls   = tier(vL, wBands, true);
       const wobaCls = tier(h?.woba, wobaBands, true);
       const defCell = h ? defBsrCell(h.fld, fldBands, "DEF") : `<td class="chip"></td>`;
-      const bsrCell = h ? defBsrCell(h.bsr, bsrBands, "BSR") : `<td class="chip"></td>`;
+      // BSR cell: prefer the Savant sprint_elite flag when present; otherwise
+      // fall back to the projected bsr value + chip.
+      let bsrCell;
+      if (h && h.sprint_elite) {
+        const pct = h.sprint_pct != null ? Math.round(h.sprint_pct) : null;
+        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">+</span></td>`;
+      } else if (h) {
+        bsrCell = defBsrCell(h.bsr, bsrBands, "BSR");
+      } else {
+        bsrCell = `<td class="chip"></td>`;
+      }
       const bats = p.bats || "";
       const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
       const danFlag = p.flag
