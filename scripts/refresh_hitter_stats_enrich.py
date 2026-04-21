@@ -52,6 +52,12 @@ FG_URL = ("https://www.fangraphs.com/api/projections"
 SAVANT_URL_TMPL = ("https://baseballsavant.mlb.com/leaderboard/sprint_speed"
                    "?year={year}&position=&team=&min=0&csv=true")
 
+# Savant batter wOBA leaderboard — current season actual wOBA/xwOBA (no auth)
+SAVANT_WOBA_TMPL = ("https://baseballsavant.mlb.com/leaderboard/custom"
+                    "?year={year}&type=batter&filter=&sort=4&sortDir=desc&min=1"
+                    "&selections=b_total_pa,b_k_percent,b_bb_percent,woba,xwoba"
+                    "&chart=false&x=b_total_pa&y=b_total_pa&r=no&csv=true")
+
 SPEED_ELITE_CUTOFF = int(os.environ.get("SPEED_ELITE_CUTOFF", "80"))
 
 
@@ -171,6 +177,52 @@ def compute_percentiles(rows):
 
 
 # ----------------------------------------------------------------------------
+# SOURCE 3 — Savant current-season wOBA/xwOBA
+# ----------------------------------------------------------------------------
+
+def fetch_savant_woba(year: int):
+    """Current-season actual wOBA + xwOBA per hitter, keyed by normalized name."""
+    if not REQ_OK:
+        return {}
+    url = SAVANT_WOBA_TMPL.format(year=year)
+    try:
+        r = requests.get(url, timeout=30, headers={"User-Agent": UA})
+        r.raise_for_status()
+        text = r.text.lstrip("\ufeff")
+        reader = csv.DictReader(io.StringIO(text))
+        out = {}
+        for row in reader:
+            nm = (row.get("last_name, first_name")
+                  or row.get("\ufefflast_name, first_name") or "")
+            if "," in nm:
+                last, first = [p.strip() for p in nm.split(",", 1)]
+                std = f"{first} {last}"
+            else:
+                std = nm
+            def f(s):
+                if s is None: return None
+                s = s.strip().strip('"')
+                if not s or s == '.': return None
+                try: return float(s)
+                except ValueError: return None
+            woba  = f(row.get("woba"))
+            xwoba = f(row.get("xwoba"))
+            pa = row.get("b_total_pa")
+            try: pa = int(pa) if pa else 0
+            except ValueError: pa = 0
+            entry = {}
+            if woba  is not None: entry["woba_actual"]  = woba
+            if xwoba is not None: entry["xwoba_actual"] = xwoba
+            if pa:                entry["pa_actual"]    = pa
+            if entry:
+                out[norm_name(std)] = entry
+        return out
+    except Exception as e:
+        print(f"[savant-woba] year {year} failed: {e}", file=sys.stderr)
+        return {}
+
+
+# ----------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------
 
@@ -202,8 +254,20 @@ def main():
                 ops_matched += 1
     # If FG failed, existing values are preserved.
 
-    # --- Savant sprint speed -------------------------------------------------
+    # --- Savant current-season actual wOBA ----------------------------------
     year = int(os.environ.get("SAVANT_YEAR", datetime.now().year))
+    woba_map = fetch_savant_woba(year)
+    woba_matched = 0
+    if woba_map:
+        for key, entry in hitters.items():
+            e = woba_map.get(key)
+            if e:
+                for fld in ("woba_actual", "xwoba_actual", "pa_actual"):
+                    if fld in e:
+                        entry[fld] = e[fld]
+                woba_matched += 1
+
+    # --- Savant sprint speed -------------------------------------------------
     sprint_rows = fetch_sprint_speed(year) or fetch_sprint_speed(year - 1)
     sprint_rows = compute_percentiles(sprint_rows) if sprint_rows else []
     sprint_lookup = {r["key"]: r for r in sprint_rows}
@@ -221,10 +285,12 @@ def main():
     hs["enriched_count"] = ops_matched
     hs["speed_enriched_count"] = sprint_matched
     hs["speed_cutoff_pct"] = SPEED_ELITE_CUTOFF
+    hs["woba_actual_count"] = woba_matched
 
     json.dump(hs, sys.stdout, indent=2)
-    print(f"Enriched {ops_matched} OPS · {sprint_matched} sprint-speed "
-          f"(elite cutoff p{SPEED_ELITE_CUTOFF})", file=sys.stderr)
+    print(f"Enriched {ops_matched} OPS · {woba_matched} actual wOBA · "
+          f"{sprint_matched} sprint-speed (elite cutoff p{SPEED_ELITE_CUTOFF})",
+          file=sys.stderr)
 
     # --- SIDE EFFECT: fill missing lineups with Rotowire platoon projections
     # Uses each team's "Default vs. RHP" / "Default vs. LHP" batting order
