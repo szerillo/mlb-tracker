@@ -1,0 +1,111 @@
+name: Data refresh
+
+# Runs at:
+#   - 12 AM, 2 AM, 8 AM ET (overnight checkpoints)
+#   - Every 15 min from 9 AM ET through 11:45 PM ET (covers every game's
+#     "4 hours before first pitch" pregame window, plus in-progress hours)
+#   - Manual trigger always available from Actions tab.
+#
+# All times below are in UTC. Conversion assumes EDT (UTC-4, ~Mar-Nov).
+# During EST (Nov-Mar) triggers shift +1 hour in ET, which is outside the
+# main MLB season so it doesn't matter much.
+
+on:
+  schedule:
+    # Every 15 min during MLB game-window hours.
+    # 16:00 UTC (noon ET) through 03:45 UTC next day (11:45pm ET).
+    # Scripts themselves early-exit if no game is within 4 hours, so the off-peak
+    # runs only cost ~30s to spin up, check schedule, and exit.
+    - cron: "*/15 16-23 * * *"
+    - cron: "*/15 0-3 * * *"
+    # Overnight anchors for ump stat refresh (UmpScorecards updates daily)
+    - cron: "0 4 * * *"     # 12 AM ET
+    - cron: "0 6 * * *"     # 2 AM ET
+    - cron: "0 12 * * *"    # 8 AM ET
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force all refresh steps to run regardless of game window"
+        type: boolean
+        default: true
+
+concurrency:
+  group: refresh
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh umpire stats
+        run: python scripts/refresh_umps.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Compute bullpen fatigue
+        run: python scripts/compute_fatigue.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh weather forecasts
+        run: python scripts/refresh_weather.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh lineups (confirmed + projected)
+        run: python scripts/refresh_lineups.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh pitcher stats (overnight only)
+        run: python scripts/refresh_pitcher_stats.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh betting odds (ActionNetwork scrape)
+        run: python scripts/refresh_odds.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh park factors + BP daily weather
+        run: python scripts/refresh_park_data.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Refresh SP platoon splits + opener detection
+        run: python scripts/refresh_splits.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: Commit changed data (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Data refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git push
+          fi

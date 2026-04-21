@@ -1,0 +1,10 @@
+# This file was replaced by refresh.yml.
+# Keeping as an empty no-op workflow so the repo doesn't double-fire.
+name: _deprecated
+on:
+  workflow_dispatch:
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow has been replaced by refresh.yml"
