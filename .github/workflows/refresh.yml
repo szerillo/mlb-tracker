@@ -73,9 +73,24 @@ jobs:
           python scripts/refresh_pitcher_stats_enrich.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
         continue-on-error: true
 
-      - name: Enrich hitters with projected OPS
+      - name: Enrich pitcher_stats with Savant HR/9 / GB% / Whiff% / HH%
+        run: |
+          python scripts/refresh_pitcher_savant.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
+        continue-on-error: true
+
+      - name: Pull pitcher arsenal (Savant per-pitch-type stats)
+        run: |
+          python scripts/refresh_pitcher_arsenal.py > /tmp/pa.json && mv /tmp/pa.json data/pitcher_arsenal.json || true
+        continue-on-error: true
+
+      - name: Enrich hitters with projected OPS / K% / BB% / actual wOBA
         run: |
           python scripts/refresh_hitter_stats_enrich.py data/hitters.json > /tmp/h.json && mv /tmp/h.json data/hitters.json || true
+        continue-on-error: true
+
+      - name: Pull hitter Statcast percentile rankings
+        run: |
+          python scripts/refresh_hitter_percentiles.py > /tmp/hp.json && mv /tmp/hp.json data/hitter_percentiles.json || true
         continue-on-error: true
 
       - name: Refresh betting odds (ActionNetwork scrape)
