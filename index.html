@@ -1891,13 +1891,6 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const avail = withMeta.filter(p => !p.fatigue || p.fatigue.tier == null).sort(sortKey);
 
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
-  // Last-name helper for modal (compact)
-  const lastNm = (full) => {
-    if (!full) return "";
-    const clean = String(full).trim().replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, "");
-    const parts = clean.split(/\s+/);
-    return parts.length === 1 ? parts[0] : parts.slice(-1)[0];
-  };
 
   const bpRow = (p) => {
     const f = p.fatigue;
@@ -1911,7 +1904,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
     const daysTxt = f ? fatigueBreakdown(f.days) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
-    const nameShown = compact ? lastNm(p.name) : p.name;
+    const nameShown = compact ? shortName(p.name) : p.name;
     const fipLbl = useXfip ? "xFIP" : "pFIP";
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
