@@ -48,7 +48,27 @@ python scripts/refresh_odds.py > data/odds.json
 Pulls best price per market across DK / FanDuel / BetMGM / Caesars /
 BetRivers / bet365 / Fanatics, matching your existing schema.
 
-## 3. `refresh_pitcher_stats_enrich.py`
+## 3. `refresh_hitter_stats_enrich.py`
+
+Adds projected **OPS** (and ISO / PA) to each hitter in `hitters.json`. Uses
+Fangraphs' ATC projections by default; flip the `type=` query string in
+`FG_URL` to `steamer` or `zips` if you prefer those.
+
+**Install:**
+```bash
+pip install requests unidecode
+```
+
+**Run:**
+```bash
+python scripts/refresh_hitter_stats_enrich.py data/hitters.json > /tmp/h.json
+mv /tmp/h.json data/hitters.json
+```
+
+The front-end's Lineups tab already has an OPS column — once this script
+runs, the values light up (.329 wOBA chip stays, OPS chip fills in).
+
+## 4. `refresh_pitcher_stats_enrich.py`
 
 Adds **xFIP**, **Stuff+**, **Pitching+**, and **IP** to each pitcher in
 `pitcher_stats.json`. Runs after your existing refresh script.
