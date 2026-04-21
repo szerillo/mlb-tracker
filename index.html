@@ -741,7 +741,7 @@ function lookupSplits(name) {
 // FIP (pFIP). Cutoff lowered to 15 IP for early-season coverage; by May
 // most SPs clear 30 IP which is the classic xFIP-stabilization mark.
 function primaryFipStat(s) {
-  if (s?.xfip != null && (s?.ip ?? 0) >= 15) {
+  if (s?.xfip != null && (s?.ip ?? 0) >= 10) {
     return { label: "xFIP", val: s.xfip, lowerBetter: true };
   }
   return { label: "pFIP", val: s?.fip_proj, lowerBetter: true };
