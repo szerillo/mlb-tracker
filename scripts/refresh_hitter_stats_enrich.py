@@ -104,9 +104,17 @@ def build_projection_enrichment(rows: List[dict]) -> Dict[str, dict]:
         ops = to_f(pick("OPS", "ops"))
         iso = to_f(pick("ISO", "iso"))
         pa  = to_f(pick("PA", "pa"))
-        if ops is not None: e["ops"] = ops
-        if iso is not None: e["iso"] = iso
-        if pa  is not None: e["pa"]  = pa
+        # K% / BB% — FG endpoints return either as fraction (0.22) or
+        # percent (22.0). Normalize to percent (22.0).
+        k_pct  = to_f(pick("K%", "k_pct", "SO%", "so_pct"))
+        bb_pct = to_f(pick("BB%", "bb_pct"))
+        if k_pct  is not None and k_pct  < 1: k_pct  = k_pct  * 100
+        if bb_pct is not None and bb_pct < 1: bb_pct = bb_pct * 100
+        if ops    is not None: e["ops"]    = ops
+        if iso    is not None: e["iso"]    = iso
+        if pa     is not None: e["pa"]     = pa
+        if k_pct  is not None: e["k_pct"]  = round(k_pct, 1)
+        if bb_pct is not None: e["bb_pct"] = round(bb_pct, 1)
         if e:
             out[norm_name(nm)] = e
     return out
