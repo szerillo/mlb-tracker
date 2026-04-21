@@ -127,13 +127,24 @@ def main():
                     if p > 0:
                         usage[team][n][idx] += p
 
-    # Classify per team/pitcher
+    # Classify per team/pitcher — emit a row for EVERY pitcher with any usage
+    # (frontend shows L5 Days for rested arms too; tier is "OK" when no flag)
     out_teams = {}
     for team, pmap in usage.items():
         rows = []
         for p, days in pmap.items():
             tier, reasons = classify(days)
-            if tier in ("LIKELY OUT", "FATIGUED"):
+            if tier == "AVAILABLE":
+                # Emit with tier=null so the frontend can show usage but not
+                # bucket the pitcher into RESTED-vs-flagged incorrectly.
+                rows.append({
+                    "name": p,
+                    "days": days,
+                    "total": sum(days),
+                    "tier": None,
+                    "reasons": "",
+                })
+            else:
                 rows.append({
                     "name": p,
                     "days": days,
@@ -141,8 +152,11 @@ def main():
                     "tier": tier,
                     "reasons": "; ".join(reasons),
                 })
-        # Sort: LIKELY OUT first, then by d5 desc
-        rows.sort(key=lambda r: (0 if r["tier"] == "LIKELY OUT" else 1, -r["days"][4], -r["total"]))
+        # Sort: LIKELY OUT first, FATIGUED next, then rested — within each by recency
+        def sort_key(r):
+            tier_rank = {"LIKELY OUT": 0, "FATIGUED": 1}.get(r["tier"], 2)
+            return (tier_rank, -r["days"][4], -r["total"])
+        rows.sort(key=sort_key)
         if rows:
             out_teams[team] = rows
 
