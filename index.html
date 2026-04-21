@@ -248,6 +248,33 @@
   .env-ump-next-day { color: var(--muted); font-weight: 600; min-width: 30px;
     font-size: 0.72rem; letter-spacing: 0.05em; }
 
+  /* Lineups tab: compact SP overlay above each team's lineup */
+  .lu-sp { display: flex; flex-wrap: wrap; gap: 0.45rem 0.6rem; align-items: center;
+    padding: 0.4rem 0.5rem; background: rgba(255, 255, 255, 0.025);
+    border-radius: 5px; margin-bottom: 0.45rem; font-size: 0.82rem; }
+  .lu-sp-label { color: var(--muted); font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; }
+  .lu-sp-name { font-weight: 700; color: var(--text); }
+  .lu-sp-hand { font-size: 0.65rem; font-weight: 700; color: var(--muted);
+    padding: 0.05rem 0.35rem; border-radius: 3px; letter-spacing: 0.06em;
+    background: rgba(139, 149, 161, 0.12); }
+  .lu-sp-hand.L { color: #5bb8f5; background: rgba(91, 184, 245, 0.12); }
+  .lu-sp-opener { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+    padding: 0.05rem 0.35rem; border-radius: 3px;
+    background: rgba(229, 164, 73, 0.18); color: var(--projected); }
+  .lu-sp-stats { display: flex; gap: 0.4rem; margin-left: auto; }
+  .lu-sp-stat { font-family: var(--mono); font-size: 0.72rem;
+    display: inline-flex; gap: 0.22rem; align-items: baseline; }
+  .lu-sp-stat .lbl { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); }
+  .lu-sp-stat .val { font-weight: 700; color: var(--text); }
+  .lu-sp-stat .val.elite { color: var(--tier-elite); }
+  .lu-sp-stat .val.good  { color: var(--tier-good); }
+  .lu-sp-stat .val.bad   { color: var(--tier-bad); }
+  .lu-sp-stat .val.worst { color: var(--tier-worst); }
+  .lu-sp-plus { display: flex; gap: 0.3rem; }
+  .lu-sp-none { color: var(--muted); font-style: italic; font-size: 0.72rem; }
+
   /* Lineups tab layout */
   .lu-summary { display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 0.8rem; font-size: 0.85rem; color: var(--muted);
@@ -291,12 +318,15 @@
   .bp-stats .v.bad   { color: var(--tier-bad); }
   .bp-stats .v.worst { color: var(--tier-worst); }
 
-  /* DEF / BSR chips on hitter rows (replacing emoji) */
-  .def-bsr-chip { display: inline-block; font-size: 0.62rem; font-weight: 700;
-    letter-spacing: 0.06em; padding: 0.05rem 0.32rem; border-radius: 3px;
-    margin-left: 0.3rem; vertical-align: middle; }
-  .def-bsr-chip.elite { background: rgba(255, 145, 64, 0.14); color: var(--tier-elite); }
-  .def-bsr-chip.worst { background: rgba(248, 113, 113, 0.14); color: var(--tier-worst); }
+  /* DEF / BSR chips on hitter rows — 4 tiers, enlarged glyphs */
+  .def-bsr-chip { display: inline-block; font-size: 0.95rem; font-weight: 800;
+    line-height: 1; letter-spacing: 0; padding: 0.08rem 0.42rem;
+    border-radius: 4px; margin-left: 0.2rem; vertical-align: middle;
+    min-width: 26px; text-align: center; }
+  .def-bsr-chip.elite { background: rgba(255, 145, 64, 0.20); color: var(--tier-elite); }
+  .def-bsr-chip.good  { background: rgba(74, 222, 128, 0.14); color: var(--tier-good); }
+  .def-bsr-chip.bad   { background: rgba(229, 164, 73, 0.14); color: var(--tier-bad); }
+  .def-bsr-chip.worst { background: rgba(248, 113, 113, 0.18); color: var(--tier-worst); }
   .team-none { color: var(--muted); font-style: italic; font-size: 0.82rem; }
 
   .bp-split-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
@@ -586,7 +616,7 @@
   </div>
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
-    <button class="tab" data-tab="env" role="tab">Env · Park · Ump</button>
+    <button class="tab" data-tab="env" role="tab">Park | WX | Umps</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
   </div>
@@ -791,17 +821,16 @@ function renderFieldDiagram(wind_dir_str, wind_mph, home_park_code, size=130) {
   let arrowSVG = "";
   if (arrowAngle !== null) {
     const cx2 = cx, cy2 = cy - S*0.34;
+    // Draw arrow head as an explicit polygon — no SVG marker dependency, so
+    // multiple field diagrams on the same page all render correctly
+    // (previous marker-id-based approach rendered as a bare line in the modal).
     arrowSVG = `<g transform="translate(${cx2},${cy2}) rotate(${arrowAngle})">
-      <line x1="0" y1="22" x2="0" y2="-26" stroke="#4ea8de" stroke-width="3.5"
-            stroke-linecap="round" marker-end="url(#ah)"/>
+      <line x1="0" y1="22" x2="0" y2="-16" stroke="#4ea8de" stroke-width="3.5"
+            stroke-linecap="round"/>
+      <polygon points="0,-26 -7,-14 7,-14" fill="#4ea8de"/>
     </g>`;
   }
   return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-    <defs>
-      <marker id="ah" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="9" markerHeight="9" orient="auto">
-        <path d="M 0 0 L 12 6 L 0 12 z" fill="#4ea8de"/>
-      </marker>
-    </defs>
     <path d="M ${lfx} ${lfy} A ${r} ${r} 0 0 1 ${rfx} ${rfy}"
           fill="#1e2a33" stroke="#2a3a43" stroke-width="1.2"/>
     <polygon points="${cx},${cy} ${b1x},${b1y} ${cx},${cy-S*0.42} ${b3x},${b3y}"
@@ -1006,11 +1035,8 @@ function fatigueBreakdown(days) {
   for (let i = 0; i < days.length; i++) {
     const p = days[i];
     if (!p) continue;
-    let tag;
-    if (i === last) tag = "yesterday";
-    else if (i === last - 1) tag = "2d ago";
-    else if (labels[i]) tag = dayAbbr(labels[i]);
-    else tag = `${last - i}d ago`;
+    // Always use the ISO date's day abbrev (MON/TUE/etc.) — no "yesterday" label
+    const tag = labels[i] ? dayAbbr(labels[i]) : `${last - i}d ago`;
     parts.push(`${tag} ${p}p`);
   }
   return parts.join(" · ");
@@ -1494,6 +1520,11 @@ function renderLineupsTab() {
         <div class="note">Awaiting lineups from MLB / Rotowire</div>
       </div>`;
     } else {
+      // Opposing SP info — the lineup faces the OTHER team's probable pitcher.
+      const awaySPName = g.teams.home.probablePitcher?.fullName || "";
+      const homeSPName = g.teams.away.probablePitcher?.fullName || "";
+      const awayTeamAbbr = g.teams.away.team.abbreviation || teamAbbr(g.teams.away.team.name);
+      const homeTeamAbbr = g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name);
       postedHTML += `<div class="panel">
         <h3 style="margin:0 0 0.6rem;font-size:1rem;">
           ${teamLogo(g.teams.away.team.id, 20)}
@@ -1503,11 +1534,13 @@ function renderLineupsTab() {
         </h3>
         <div class="m-lineup-grid">
           <div class="m-lineup-box">
-            <h4>${g.teams.away.team.name}</h4>
+            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name} ${teamWrcSpan(g, 'away')}</h4>
+            ${renderLineupSPHeader(awaySPName, "vs")}
             ${renderLineupTable(lg.lineups?.away)}
           </div>
           <div class="m-lineup-box">
-            <h4>${g.teams.home.team.name}</h4>
+            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name} ${teamWrcSpan(g, 'home')}</h4>
+            ${renderLineupSPHeader(homeSPName, "vs")}
             ${renderLineupTable(lg.lineups?.home)}
           </div>
         </div>
@@ -1515,6 +1548,56 @@ function renderLineupsTab() {
     }
   }
   el.innerHTML = postedHTML + tbdHTML;
+}
+
+// Compact SP card rendered above each team's lineup — shows the OPPOSING SP
+// (so hitters can be read against their matchup).
+function renderLineupSPHeader(spName, prefix="vs") {
+  if (!spName) {
+    return `<div class="lu-sp"><span class="lu-sp-label">${prefix}</span>
+              <span class="lu-sp-name" style="color:var(--muted);font-style:italic;">TBA</span></div>`;
+  }
+  const s  = lookupPitcherStats(spName);
+  const sp = lookupSplits(spName);
+  const hand = sp?.hand || s?.hand;
+  const handTag = hand ? `<span class="lu-sp-hand ${hand==='L'?'L':''}">${hand}HP</span>` : "";
+  const openerTag = sp?.is_opener
+    ? `<span class="lu-sp-opener" title="${(sp.opener_reason||'').replace(/"/g,'&quot;')}">OPENER</span>` : "";
+
+  if (!s) {
+    return `<div class="lu-sp">
+      <span class="lu-sp-label">${prefix}</span>
+      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
+      <span class="lu-sp-none">no stats loaded</span>
+    </div>`;
+  }
+  const thr = PITCHER_STATS?.thresholds || {};
+  const primary = primaryFipStat(s);
+  const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
+  const primaryCls = tier(primary.val, primaryBands, false);
+  const xeraCls = tier(s.xera, thr.xera, false);
+  const kbbCls  = tier(s.k_bb_pct, thr.k_bb, true);
+  const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+  const stuffCls    = tier(s.stuff_plus, plusBands, true);
+  const pitchingCls = tier(s.pitching_plus, plusBands, true);
+  const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+  const chip = (label, val, cls, suffix="") => `<span class="lu-sp-stat">
+    <span class="lbl">${label}</span>
+    <span class="val ${cls}">${val != null ? fmt(val, suffix) : '—'}</span>
+  </span>`;
+  return `<div class="lu-sp">
+    <span class="lu-sp-label">${prefix}</span>
+    <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
+    <span class="lu-sp-stats">
+      ${chip(primary.label, primary.val, primaryCls)}
+      ${chip("xERA", s.xera, xeraCls)}
+      ${chip("K-BB", s.k_bb_pct, kbbCls, "%")}
+    </span>
+    ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
+      ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
+      ${s.pitching_plus != null ? `<span class="plus-mini ${pitchingCls}" title="Pitching+ (100=avg)">PIT+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
+    </span>` : ''}
+  </div>`;
 }
 
 function renderLineupTable(side, opts={}) {
@@ -1530,17 +1613,26 @@ function renderLineupTable(side, opts={}) {
   const hitThr = HITTERS?.thresholds || {};
   const wBands    = hitThr.wrc_splits || {elite: 140, good: 115, bad: 80,  worst: 65};
   const wobaBands = hitThr.woba       || {elite: 0.344, good: 0.319, bad: 0.279, worst: 0.263};
-  const fldBands  = hitThr.fld        || {elite: 0.054, good: 0.025, bad: -0.033, worst: -0.045};
+  // DEF bands — broadened so "good"/"bad" threshold shows chips too (parity with BSR)
+  const fldBands  = hitThr.fld        || {elite: 0.040, good: 0.015, bad: -0.020, worst: -0.040};
   const bsrBands  = hitThr.bsr        || {elite: 0.022, good: 0.0,   bad: -0.018, worst: -0.021};
 
   function lookupHitter(name) {
     if (!HITTERS) return null;
     return HITTERS.hitters[normName(name)] || null;
   }
+  // 4-tier DEF/BSR chip: elite="++", good="+", bad="−", worst="−−"
   function defBsrCell(v, bands, label) {
     if (v === null || v === undefined || !bands) return `<td class="chip"></td>`;
-    if (v >= bands.elite) return `<td class="chip"><span class="def-bsr-chip elite" title="${label} ${v>0?'+':''}${v}">+</span></td>`;
-    if (v <= bands.worst) return `<td class="chip"><span class="def-bsr-chip worst" title="${label} ${v>0?'+':''}${v}">−</span></td>`;
+    const signed = (v > 0 ? "+" : "") + v;
+    if (v >= bands.elite)
+      return `<td class="chip"><span class="def-bsr-chip elite" title="${label} ${signed}">++</span></td>`;
+    if (v >= bands.good)
+      return `<td class="chip"><span class="def-bsr-chip good" title="${label} ${signed}">+</span></td>`;
+    if (v <= bands.worst)
+      return `<td class="chip"><span class="def-bsr-chip worst" title="${label} ${signed}">−−</span></td>`;
+    if (v <= bands.bad)
+      return `<td class="chip"><span class="def-bsr-chip bad" title="${label} ${signed}">−</span></td>`;
     return `<td class="chip"></td>`;
   }
 
@@ -1558,7 +1650,7 @@ function renderLineupTable(side, opts={}) {
       let bsrCell;
       if (h && h.sprint_elite) {
         const pct = h.sprint_pct != null ? Math.round(h.sprint_pct) : null;
-        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">+</span></td>`;
+        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">++</span></td>`;
       } else if (h) {
         bsrCell = defBsrCell(h.bsr, bsrBands, "BSR");
       } else {
@@ -1584,10 +1676,10 @@ function renderLineupTable(side, opts={}) {
         <td class="bats ${batsCls}">${bats}</td>
         <td class="player">${nm}${danFlag}</td>
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        ${defCell}
-        ${bsrCell}
         <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
         <td class="split split-chip ${vLCls}">${vL != null ? Math.round(vL) : "—"}</td>
+        ${defCell}
+        ${bsrCell}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
@@ -1614,10 +1706,10 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
     <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
-    <th class="center" style="width:38px;" title="Fielding flag vs. average">DEF</th>
-    <th class="center" style="width:38px;" title="Baserunning flag vs. average">BSR</th>
-    <th class="right" style="width:42px;">vR</th>
-    <th class="right" style="width:42px;">vL</th>
+    <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (ATC projection — career-weighted)">vR</th>
+    <th class="right" style="width:42px;" title="Projected wRC+ vs. LHP (ATC projection — career-weighted)">vL</th>
+    <th class="center" style="width:40px;" title="Fielding qualifier (+/±/–) vs. average">DEF</th>
+    <th class="center" style="width:40px;" title="Baserunning qualifier (+/±/–) — boosted by elite Savant sprint speed">BSR</th>
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
@@ -1683,7 +1775,9 @@ async function renderBullpenTab() {
   BULLPEN_TAB_RENDERED = true;
 }
 
-function renderBullpenForTeam(teamId, teamName, probableSP) {
+// opts: { compact: true } → last-name only (used inside the game modal where width is tighter)
+function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
+  const compact = !!opts.compact;
   const roster = ROSTERS_CACHE[teamId] || [];
   if (!roster.length) return `<div class="team-none">Roster not available</div>`;
 
@@ -1702,39 +1796,54 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
   const withMeta = bullpen.map(p => {
     const f = fatigueByName[normName(p.name)];
     const s = lookupPitcherStats(p.name);
-    return { ...p, fatigue: f, fip: s?.fip_proj };
+    // Sort key: prefer xFIP if the pitcher has enough IP (≥10); else pFIP; else worst bucket.
+    const sortKey = (s?.xfip != null && (s?.ip ?? 0) >= 10) ? s.xfip
+                    : (s?.fip_proj ?? 999);
+    return { ...p, fatigue: f, sortKey };
   });
   const thr = PITCHER_STATS?.thresholds || {};
 
-  const sortByFip = (a, b) => {
-    const af = a.fip == null ? 999 : a.fip;
-    const bf = b.fip == null ? 999 : b.fip;
-    return af - bf || a.name.localeCompare(b.name);
-  };
-  const out = withMeta.filter(p => p.fatigue?.tier === "LIKELY OUT").sort(sortByFip);
-  const ftg = withMeta.filter(p => p.fatigue?.tier === "FATIGUED").sort(sortByFip);
-  const avail = withMeta.filter(p => !p.fatigue).sort(sortByFip);
+  const sortKey = (a, b) => a.sortKey - b.sortKey || a.name.localeCompare(b.name);
+  const out = withMeta.filter(p => p.fatigue?.tier === "LIKELY OUT").sort(sortKey);
+  const ftg = withMeta.filter(p => p.fatigue?.tier === "FATIGUED").sort(sortKey);
+  const avail = withMeta.filter(p => !p.fatigue).sort(sortKey);
 
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+  // Last-name helper for modal (compact)
+  const lastNm = (full) => {
+    if (!full) return "";
+    const clean = String(full).trim().replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, "");
+    const parts = clean.split(/\s+/);
+    return parts.length === 1 ? parts[0] : parts.slice(-1)[0];
+  };
+
   const bpRow = (p) => {
     const f = p.fatigue;
     const s = lookupPitcherStats(p.name);
-    const fipCls  = tier(s?.fip_proj, thr.fip, false);
+    // Primary FIP = xFIP if ≥10 IP, else pFIP (matches SP logic)
+    const useXfip = s?.xfip != null && (s?.ip ?? 0) >= 10;
+    const fipVal = useXfip ? s.xfip : s?.fip_proj;
+    const fipBands = useXfip ? (thr.xfip || thr.fip) : thr.fip;
+    const fipCls  = tier(fipVal, fipBands, false);
+    const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
     const daysTxt = f ? fatigueBreakdown(f.days) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
+    const nameShown = compact ? lastNm(p.name) : p.name;
+    const fipLbl = useXfip ? "xFIP" : "pFIP";
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
-      <td class="bpt-name">${p.name}</td>
-      <td class="bpt-stat"><span class="v ${fipCls}">${fmt(s?.fip_proj)}</span></td>
+      <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
+      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}</span></td>
+      <td class="bpt-stat"><span class="v ${xeraCls}" title="xERA">${fmt(s?.xera)}</span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
 
-  // Section header row — spans all 5 cols with a label + count
+  // Section header row — spans all 6 cols with a label + count
   const sectionRow = (label, count, tierCls) =>
-    `<tr class="bpt-section-row ${tierCls}"><td colspan="5">
+    `<tr class="bpt-section-row ${tierCls}"><td colspan="6">
        <span class="bpt-section-label">${label}</span>
        <span class="bpt-count">${count}</span>
      </td></tr>`;
@@ -1756,17 +1865,19 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
     </div>
-    <table class="bpt-table">
+    <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
       <colgroup>
         <col style="width:26px;">
         <col>
-        <col style="width:62px;">
-        <col style="width:64px;">
-        <col style="width:44%;">
+        <col style="width:56px;">
+        <col style="width:56px;">
+        <col style="width:60px;">
+        <col style="width:${compact ? '30%' : '38%'};">
       </colgroup>
       <thead><tr>
         <th>B</th><th>Pitcher</th>
-        <th class="r" title="Projected FIP (lower = better)">pFIP</th>
+        <th class="r" title="xFIP (≥10 IP) or pFIP projection (lower = better)">xFIP</th>
+        <th class="r" title="Expected ERA (lower = better)">xERA</th>
         <th class="r" title="K% minus BB%">K-BB%</th>
         <th>Recent</th>
       </tr></thead>
@@ -2200,8 +2311,8 @@ async function openModal(game) {
     <div class="m-section-header"><span>Bullpens</span>
       <span class="right-note">${FATIGUE?.window ? `fatigue window ${FATIGUE.window.start} → ${FATIGUE.window.end}` : ""}</span></div>
     <div class="m-split">
-      <div class="m-bp-box"><h4>${away}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName)}</div>
-      <div class="m-bp-box"><h4>${home}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName)}</div>
+      <div class="m-bp-box"><h4>${away}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true})}</div>
+      <div class="m-bp-box"><h4>${home}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true})}</div>
     </div>
 
     <div class="m-section-header"><span>Lineups</span></div>
