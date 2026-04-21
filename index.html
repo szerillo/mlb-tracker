@@ -307,27 +307,41 @@
     margin: 0.35rem 0 0.1rem; }
   .bp-sub-label.L { color: #5bb8f5; opacity: 0.85; }
 
-  /* New Bullpen table (OUT / FTG / AVAILABLE sections) */
-  .bpt-summary { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.35rem; }
+  /* Bullpen table — single table per team, sections: AVAIL / OUT / FATIGUED */
+  .bpt-summary { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.45rem;
+    text-align: left; display: flex; gap: 0.55rem; flex-wrap: wrap; align-items: baseline; }
   .bpt-hot { font-weight: 700; }
   .bpt-hot.out { color: var(--fatigue-out); }
   .bpt-hot.ftg { color: var(--fatigue-fat); }
-  .bpt-section { margin-top: 0.55rem; }
-  .bpt-section-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; margin: 0 0 0.2rem; color: var(--muted);
-    display: flex; align-items: baseline; gap: 0.35rem; }
-  .bpt-section-label.out   { color: var(--fatigue-out); }
-  .bpt-section-label.ftg   { color: var(--fatigue-fat); }
-  .bpt-section-label.avail { color: var(--muted); }
-  .bpt-count { font-size: 0.62rem; font-weight: 500; opacity: 0.7; }
+
   .bpt-table { width: 100%; border-collapse: collapse; table-layout: fixed;
-    font-size: 0.8rem; }
-  .bpt-table th { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted); font-weight: 600; padding: 0.18rem 0.35rem;
-    text-align: left; }
+    font-size: 0.82rem; }
+  .bpt-table th { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600; padding: 0.25rem 0.4rem 0.3rem;
+    text-align: left; border-bottom: 1px solid var(--border); }
+  .bpt-table th.r { text-align: right; }
   .bpt-table th:first-child, .bpt-table td:first-child { text-align: center; }
-  .bpt-table td { padding: 0.2rem 0.35rem; border-top: 1px solid var(--border); }
-  .bpt-table tr:first-child td { border-top: none; }
+  .bpt-table td { padding: 0.28rem 0.4rem; border-top: 1px solid var(--border);
+    vertical-align: middle; }
+  .bpt-table tbody tr:first-child td { border-top: none; }
+
+  /* Section divider row — looks like a colored header inside the table body */
+  .bpt-section-row td {
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700; padding: 0.4rem 0.4rem 0.22rem;
+    text-align: left !important;
+    border-top: 1px solid var(--border); border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .bpt-section-row.avail td { color: var(--muted); }
+  .bpt-section-row.out   td { color: var(--fatigue-out);
+    background: rgba(248, 113, 113, 0.06); }
+  .bpt-section-row.ftg   td { color: var(--fatigue-fat);
+    background: rgba(229, 164, 73, 0.05); }
+  .bpt-section-label { letter-spacing: 0.12em; }
+  .bpt-count { margin-left: 0.45rem; opacity: 0.6; font-weight: 500;
+    letter-spacing: 0.06em; }
+
   .bpt-hand { font-family: var(--mono); font-size: 0.74rem; font-weight: 700;
     letter-spacing: 0.04em; }
   .bpt-hand.hand-l { color: #5bb8f5; }
@@ -341,7 +355,7 @@
   .bpt-stat .v.bad   { color: var(--tier-bad); }
   .bpt-stat .v.worst { color: var(--tier-worst); }
   .bpt-recent { font-family: var(--mono); color: var(--muted); font-size: 0.74rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    line-height: 1.3; /* wrap if needed — don't truncate */ }
   .bpt-muted { opacity: 0.45; }
 
   /* Lineup table */
@@ -502,6 +516,7 @@
   .m-team-wrc .val.worst { color: var(--tier-worst); }
   .m-bp-box, .m-ump-box, .m-wx-box, .m-park-box, .m-lineup-box {
     background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem;
+    text-align: left;
   }
   .m-bp-box h4, .m-lineup-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem;
     display: flex; align-items: center; gap: 0.4rem; }
@@ -736,7 +751,9 @@ function teamLogo(teamId, size=28) {
 const PARK_CF = {
   ARI:52, ATL:42, BAL:49, BOS:63, CHC:9, CHW:37, CIN:41, CLE:9, COL:69, DET:81,
   HOU:41, KC:49, LAA:50, LAD:53, MIA:37, MIL:46, MIN:38, NYM:7, NYY:37, OAK:44,
-  PHI:46, PIT:37, SD:48, SEA:2, SF:64, STL:47, TB:45, TEX:43, TOR:44, WAS:44, ATH:43
+  PHI:46, PIT:37, SD:48, SEA:2, SF:64, STL:47, TB:45, TEX:43, TOR:44, WAS:44, ATH:43,
+  // Aliases for MLB API abbreviations that differ from park_factors.json keys
+  WSH: 44, AZ: 52, CWS: 37,
 };
 const NWS_COMPASS = {
   N:0, NNE:22.5, NE:45, ENE:67.5, E:90, ESE:112.5, SE:135, SSE:157.5,
@@ -1552,8 +1569,6 @@ function renderLineupTable(side, opts={}) {
       const danFlag = p.flag
         ? ` <span style="color:var(--projected);font-size:0.75rem;"
              title="${String(p.flag).replace(/"/g,'&quot;')}">⚠</span>` : "";
-      // Shorten to "F. Lastname" for consistent row width.
-      const shortNm = shortName(nm);
       // OPS cell — use projected OPS if present, tier against standard OPS bands.
       // Bands: elite >=.900, good >=.800, bad <=.700, worst <=.650.
       const opsBands = hitThr.ops || {elite: 0.900, good: 0.800, bad: 0.700, worst: 0.650};
@@ -1567,7 +1582,7 @@ function renderLineupTable(side, opts={}) {
         <td class="order">${p.order || ""}</td>
         <td class="pos">${p.pos || ""}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="player" title="${nm.replace(/"/g,'&quot;')}">${shortNm}${danFlag}</td>
+        <td class="player">${nm}${danFlag}</td>
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         ${defCell}
         ${bsrCell}
@@ -1710,39 +1725,53 @@ function renderBullpenForTeam(teamId, teamName, probableSP) {
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
-      <td class="bpt-name">${shortName(p.name)}</td>
+      <td class="bpt-name">${p.name}</td>
       <td class="bpt-stat"><span class="v ${fipCls}">${fmt(s?.fip_proj)}</span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
 
-  const section = (label, rows, tierCls) => rows.length
-    ? `<div class="bpt-section">
-         <div class="bpt-section-label ${tierCls}">${label} <span class="bpt-count">${rows.length}</span></div>
-         <table class="bpt-table">
-           <colgroup>
-             <col style="width:26px;"><col><col style="width:58px;"><col style="width:60px;"><col>
-           </colgroup>
-           <thead><tr>
-             <th>B</th><th>Pitcher</th><th title="Projected FIP (lower = better)">pFIP</th>
-             <th title="K% - BB%">K-BB%</th><th>Recent</th>
-           </tr></thead>
-           <tbody>${rows.map(bpRow).join("")}</tbody>
-         </table>
-       </div>`
-    : "";
+  // Section header row — spans all 5 cols with a label + count
+  const sectionRow = (label, count, tierCls) =>
+    `<tr class="bpt-section-row ${tierCls}"><td colspan="5">
+       <span class="bpt-section-label">${label}</span>
+       <span class="bpt-count">${count}</span>
+     </td></tr>`;
+
+  const sections = [
+    { label: "AVAILABLE", rows: avail, cls: "avail" },
+    { label: "OUT",       rows: out,   cls: "out"   },
+    { label: "FATIGUED",  rows: ftg,   cls: "ftg"   },
+  ].filter(s => s.rows.length > 0);
+
+  const tableBody = sections.map(sec =>
+    sectionRow(sec.label, sec.rows.length, sec.cls) + sec.rows.map(bpRow).join("")
+  ).join("");
 
   return `
     <div class="bpt-summary">
-      ${withMeta.length} pitchers
-      ${out.length ? ` · <span class="bpt-hot out">${out.length} OUT</span>` : ''}
-      ${ftg.length ? ` · <span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
-      ${!out.length && !ftg.length ? ' · all available' : ''}
+      <span>${withMeta.length} pitchers</span>
+      ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
+      ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
+      ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
     </div>
-    ${section("OUT", out, "out")}
-    ${section("FTG", ftg, "ftg")}
-    ${section("AVAILABLE", avail, "avail")}
+    <table class="bpt-table">
+      <colgroup>
+        <col style="width:26px;">
+        <col>
+        <col style="width:62px;">
+        <col style="width:64px;">
+        <col style="width:44%;">
+      </colgroup>
+      <thead><tr>
+        <th>B</th><th>Pitcher</th>
+        <th class="r" title="Projected FIP (lower = better)">pFIP</th>
+        <th class="r" title="K% minus BB%">K-BB%</th>
+        <th>Recent</th>
+      </tr></thead>
+      <tbody>${tableBody}</tbody>
+    </table>
   `;
 }
 
