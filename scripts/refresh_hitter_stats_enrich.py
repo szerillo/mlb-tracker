@@ -218,6 +218,36 @@ def main():
     print(f"Enriched {ops_matched} OPS · {sprint_matched} sprint-speed "
           f"(elite cutoff p{SPEED_ELITE_CUTOFF})", file=sys.stderr)
 
+    # --- SIDE EFFECT: fill missing lineups with Rotowire platoon projections
+    # Uses each team's "Default vs. RHP" / "Default vs. LHP" batting order
+    # applied based on the opposing starting pitcher's handedness.
+    # Does NOT overwrite MLB-confirmed or Rotowire-expected lineups already posted.
+    try:
+        here = os.path.dirname(os.path.abspath(__file__))
+        repo_root = os.path.dirname(here)
+        lineups_path = os.path.join(repo_root, "data", "lineups.json")
+        if os.path.exists(lineups_path):
+            import subprocess
+            # Run the platoon scraper in-process via subprocess so it isolates
+            # stdout (it writes the new lineups to stdout).
+            result = subprocess.run(
+                [sys.executable, os.path.join(here, "rotowire_platoons.py"),
+                 lineups_path],
+                capture_output=True, text=True, timeout=180,
+            )
+            if result.returncode == 0 and result.stdout:
+                with open(lineups_path, "w") as f:
+                    f.write(result.stdout)
+                for line in (result.stderr or "").splitlines():
+                    if line.strip():
+                        print(line, file=sys.stderr)
+            else:
+                print(f"[rotowire-platoons] exit {result.returncode}: "
+                      f"{result.stderr[:200] if result.stderr else '(no stderr)'}",
+                      file=sys.stderr)
+    except Exception as e:
+        print(f"[rotowire-platoons] non-fatal error: {e}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()
