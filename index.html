@@ -1040,19 +1040,11 @@ function dayAbbr(iso) {
 // Input: days array like [0,0,8,0,33]. Uses FATIGUE.day_labels for accurate
 // weekday names aligned to the fatigue window (oldest → newest, last index
 // is the most recent day the pipeline counted).
+// Slash-delimited pitch counts across the 5-day window, oldest → newest.
+// e.g. days=[12,0,15,0,15] → "12/0/15/0/15"
 function fatigueBreakdown(days) {
   if (!days || !days.length) return "";
-  const labels = FATIGUE?.day_labels || [];
-  const last = days.length - 1;
-  const parts = [];
-  for (let i = 0; i < days.length; i++) {
-    const p = days[i];
-    if (!p) continue;
-    // Always use the ISO date's day abbrev (MON/TUE/etc.) — no "yesterday" label
-    const tag = labels[i] ? dayAbbr(labels[i]) : `${last - i}d ago`;
-    parts.push(`${tag} ${p}p`);
-  }
-  return parts.join(" · ");
+  return days.map(d => d || 0).join("/");
 }
 
 // ============================================================================
@@ -1613,8 +1605,6 @@ function renderLineupSPHeader(spName, prefix="vs") {
   // Split out K% and BB% individually (lower K-against-pitcher = worse; lower BB = better)
   const kPctCls  = tier(s.k_pct,  thr.k_pct, true);   // higher is better for pitcher
   const bbPctCls = tier(s.bb_pct, {elite:5, good:7, bad:9, worst:11}, false); // lower is better
-  // pFIP is also shown separately when the primary stat is xFIP
-  const pfipCls  = tier(s.fip_proj, thr.fip, false);
   const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
   const stuffCls    = tier(s.stuff_plus, plusBands, true);
   const pitchingCls = tier(s.pitching_plus, plusBands, true);
@@ -1623,17 +1613,16 @@ function renderLineupSPHeader(spName, prefix="vs") {
     <span class="lbl">${label}</span>
     <span class="val ${cls}">${val != null ? fmt(val, suffix) : '—'}</span>
   </span>`;
-  // If primary is xFIP, also show pFIP chip. If primary is pFIP, skip the duplicate.
-  const showPfip = primary.label === "xFIP" && s.fip_proj != null;
+  const botEraCls = tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false);
   return `<div class="lu-sp">
     <span class="lu-sp-label">${prefix}</span>
     <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
     <span class="lu-sp-stats">
       ${chip(primary.label, primary.val, primaryCls)}
-      ${showPfip ? chip("pFIP", s.fip_proj, pfipCls) : ''}
       ${chip("xERA", s.xera, xeraCls)}
-      ${chip("K%",  s.k_pct,  kPctCls,  "%")}
+      ${s.bot_era != null ? chip("botERA", s.bot_era, botEraCls) : ''}
       ${chip("BB%", s.bb_pct, bbPctCls, "%")}
+      ${chip("K%",  s.k_pct,  kPctCls,  "%")}
     </span>
     ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
       ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
@@ -1718,15 +1707,19 @@ function renderLineupTable(side, opts={}) {
         ? ("." + Math.round(opsVal * 1000)).slice(0, 4)
         : "—";
       const opsTitle = opsVal != null ? `Projected OPS ${opsVal.toFixed(3)}` : "no projection";
-      // pwOBA — projected wOBA from hitters.json (Steamer/ATC base)
-      const wobaVal = h?.woba;
-      const wobaCls = tier(wobaVal, wobaBands, true);
-      const wobaStr = wobaVal != null
+      // wOBA — prefer actual current-season (Savant); fall back to projection
+      const wobaActual = h?.woba_actual;
+      const wobaProj   = h?.woba;
+      const wobaVal    = wobaActual != null ? wobaActual : wobaProj;
+      const wobaCls    = tier(wobaVal, wobaBands, true);
+      const wobaStr    = wobaVal != null
         ? ("." + Math.round(wobaVal * 1000)).slice(0, 4)
         : "—";
-      const wobaTitle = wobaVal != null ? `Projected wOBA ${wobaVal.toFixed(3)}` : "no projection";
-      // Expanded-only stats: K% / BB% (Steamer or ATC projection). Lineups tab
-      // has room for these; modal renders a slimmer table.
+      const wobaTitle  = wobaActual != null
+        ? `Actual wOBA ${wobaActual.toFixed(3)} (${h?.pa_actual||0} PA this season)`
+        : (wobaProj != null ? `Projected wOBA ${wobaProj.toFixed(3)} (no season PA yet)` : "no data");
+      // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
+      // modal renders a slimmer table. Order: BB% first, then K%.
       let kbbCells = "";
       if (expanded) {
         const kThr  = hitThr.k_pct  || {elite: 16, good: 20, bad: 26, worst: 30};
@@ -1737,8 +1730,8 @@ function renderLineupTable(side, opts={}) {
         const bbCls = tier(bbVal, bbThr, true);   // higher-is-better
         const pct = v => v == null ? "—" : (v.toFixed(v % 1 === 0 ? 0 : 1) + "%");
         kbbCells = `
-        <td class="split split-chip ${kCls}"  title="${kVal !=null?`Projected K% ${kVal}%`:"no projection"}">${pct(kVal)}</td>
-        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`Projected BB% ${bbVal}%`:"no projection"}">${pct(bbVal)}</td>`;
+        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`Projected BB% ${bbVal}%`:"no projection"}">${pct(bbVal)}</td>
+        <td class="split split-chip ${kCls}"  title="${kVal !=null?`Projected K% ${kVal}%`:"no projection"}">${pct(kVal)}</td>`;
       }
       const wobaCell = expanded
         ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
@@ -1775,10 +1768,10 @@ function renderLineupTable(side, opts={}) {
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
   const kbbHeaders = expanded ? `
-    <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>
-    <th class="right" style="width:46px;" title="Projected BB% (higher = better)">BB%</th>` : "";
+    <th class="right" style="width:46px;" title="Projected BB% (higher = better)">BB%</th>
+    <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>` : "";
   const wobaHeader = expanded
-    ? `<th class="right" style="width:50px;" title="Projected wOBA">pwOBA</th>` : "";
+    ? `<th class="right" style="width:50px;" title="Actual current-season wOBA (Savant) — falls back to projection if no PAs yet">wOBA</th>` : "";
   let html = `<table class="lineup-table"><thead><tr>
     <th class="center" style="width:22px;">#</th>
     <th class="center" style="width:30px;">Pos</th>
@@ -2193,7 +2186,6 @@ function renderSPBox(name, teamAbbrStr) {
         ${s.bot_era != null ? `<span class="plus-chip ${tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false)}" title="FG Pitcher Bot ERA (lower = better)">botERA <b>${s.bot_era.toFixed(2)}</b></span>` : ''}
       </div>` : ''}
     <div class="m-sp-sub">
-      ${primary.label === "xFIP" && s.fip_proj != null ? `pFIP ${s.fip_proj} · ` : ''}
       ${s.era != null ? `ERA ${s.era}` : ''}
       ${s.k_pct != null ? ` · K% ${s.k_pct}` : ''}
       ${s.bb_pct != null ? ` · BB% ${s.bb_pct}` : ''}
