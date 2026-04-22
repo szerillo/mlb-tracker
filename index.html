@@ -226,19 +226,44 @@
   .pt-sp-name { font-weight: 700; font-size: 1.02rem; }
   .pt-sp-ip { margin-left: auto; color: var(--muted); font-size: 0.8rem;
     font-family: var(--mono); }
-  .pt-pills { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem;
-    margin: 0.35rem 0; }
-  .pt-pill { font-family: var(--mono); font-size: 0.78rem;
-    display: inline-flex; align-items: baseline; gap: 0.25rem; }
-  .pt-pill .lbl { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+  .pt-pills { display: flex; flex-wrap: wrap; gap: 0.45rem 0.75rem;
+    margin: 0.2rem 0 0; }
+  .pt-pill { font-family: var(--mono); font-size: 0.86rem;
+    display: inline-flex; align-items: baseline; gap: 0.32rem;
+    padding: 0.18rem 0.5rem; border-radius: 4px;
+    background: rgba(255, 255, 255, 0.028); cursor: help; }
+  .pt-pill:hover { background: rgba(255, 255, 255, 0.055); }
+  .pt-pill .lbl { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--muted); }
-  .pt-pill .val { font-weight: 700; color: var(--text); }
+  .pt-pill .val { font-weight: 700; color: var(--text); font-size: 0.9rem; }
   .pt-pill .val.elite { color: var(--tier-elite); }
   .pt-pill .val.good  { color: var(--tier-good); }
   .pt-pill .val.bad   { color: var(--tier-bad); }
   .pt-pill .val.worst { color: var(--tier-worst); }
-  .pt-plus-line { display: flex; gap: 0.35rem; margin: 0.25rem 0 0.45rem;
+  .pt-plus-line { display: flex; gap: 0.45rem; margin: 0.25rem 0 0.55rem;
     flex-wrap: wrap; }
+  .pt-plus-line .plus-chip { font-size: 0.78rem; padding: 0.18rem 0.55rem; }
+  .pt-plus-line .plus-chip b { font-size: 0.9rem; }
+
+  /* Grouped stat layout — 4 labeled tiles (Projections / Rate / Command / Contact) */
+  .pt-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem; margin: 0.35rem 0 0.6rem; }
+  .pt-stat-group { background: rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 6px; padding: 0.35rem 0.55rem 0.45rem; }
+  .pt-group-label { font-size: 0.58rem; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem;
+    padding-bottom: 0.22rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+  .pt-section-hdr { font-size: 0.7rem; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin: 0.7rem 0 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding-top: 0.55rem; }
+  @media (max-width: 1100px) {
+    .pt-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 620px) {
+    .pt-stat-grid { grid-template-columns: 1fr; }
+  }
 
   .pt-arsenal-table { width: 100%; border-collapse: collapse; table-layout: fixed;
     font-size: 0.8rem; margin-top: 0.35rem; }
@@ -346,6 +371,19 @@
     justify-content: center; }
   .env-ump-next-day { color: var(--muted); font-weight: 600; min-width: 34px;
     font-size: 0.76rem; letter-spacing: 0.05em; }
+
+  /* Lineups tab: view toggle (Projections / Statcast %) */
+  .lu-view-toggle { display: inline-flex; gap: 0.3rem; margin: 0 0 0.7rem;
+    padding: 0.18rem; background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border); border-radius: 6px; }
+  .lu-view-btn { background: transparent; border: none; color: var(--muted);
+    padding: 0.35rem 0.85rem; font: inherit; font-size: 0.82rem;
+    font-weight: 600; letter-spacing: 0.02em; border-radius: 4px;
+    cursor: pointer; }
+  .lu-view-btn:hover { color: var(--text); }
+  .lu-view-btn.active { background: var(--accent); color: var(--bg); }
+  .lu-sc-note { color: var(--muted); font-size: 0.72rem; margin-bottom: 0.4rem;
+    font-style: italic; }
 
   /* Lineups tab: compact SP overlay above each team's lineup */
   .lu-sp { display: flex; flex-wrap: wrap; gap: 0.45rem 0.6rem; align-items: center;
@@ -719,7 +757,6 @@
     <button class="tab" data-tab="env" role="tab">Park | WX | Umps</button>
     <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
-    <button class="tab" data-tab="statcast" role="tab">Statcast</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
   </div>
 </header>
@@ -748,11 +785,11 @@
 
   <section id="tab-lineups" class="tab-content" hidden>
     <div id="lineups-summary"></div>
+    <div class="lu-view-toggle" role="tablist" aria-label="Lineup view">
+      <button class="lu-view-btn active" data-lu-view="proj">Projections</button>
+      <button class="lu-view-btn"        data-lu-view="stat">Statcast %</button>
+    </div>
     <div id="lineups-list" class="loading">Loading lineups…</div>
-  </section>
-
-  <section id="tab-statcast" class="tab-content" hidden>
-    <div id="statcast-list" class="loading">Loading Statcast team percentile aggregates…</div>
   </section>
 
   <section id="tab-bullpen" class="tab-content" hidden>
@@ -1399,7 +1436,6 @@ async function loadForDate(date) {
   renderScoreboard();
   renderEnvTab();
   renderLineupsTab();
-  renderStatcastTab();
   invalidatePitchersTab();
   invalidateBullpenTab();
 }
@@ -1608,6 +1644,9 @@ function renderScoreboard() {
 // ============================================================================
 // LINEUPS TAB
 // ============================================================================
+// Lineups tab supports two views: "proj" (projection columns) and
+// "stat" (Savant percentile columns — flipped for hitter-negative stats).
+let LU_VIEW = "proj";
 function renderLineupsTab() {
   const el = document.getElementById("lineups-list");
   const sumEl = document.getElementById("lineups-summary");
@@ -1676,18 +1715,119 @@ function renderLineupsTab() {
           <div class="m-lineup-box">
             <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name} ${teamWrcSpan(g, 'away')}</h4>
             ${renderLineupSPHeader(awaySPName, "vs")}
-            ${renderLineupTable(lg.lineups?.away, { expanded: true })}
+            ${LU_VIEW === "stat"
+              ? renderLineupStatcastTable(lg.lineups?.away)
+              : renderLineupTable(lg.lineups?.away, { expanded: true })}
           </div>
           <div class="m-lineup-box">
             <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name} ${teamWrcSpan(g, 'home')}</h4>
             ${renderLineupSPHeader(homeSPName, "vs")}
-            ${renderLineupTable(lg.lineups?.home, { expanded: true })}
+            ${LU_VIEW === "stat"
+              ? renderLineupStatcastTable(lg.lineups?.home)
+              : renderLineupTable(lg.lineups?.home, { expanded: true })}
           </div>
         </div>
       </div>`;
     }
   }
   el.innerHTML = postedHTML + tbdHTML;
+}
+
+// Per-player Statcast percentile lineup table (toggled view on Lineups tab).
+// Columns: #, Pos, B, Player, xwOBA, xBA, xSLG, Barrel, HardHit, Avg EV,
+// Max EV, Chase, Whiff, K%, BB%, Sprint.
+function renderLineupStatcastTable(side, opts={}) {
+  if (!side) return `<div class="coming-soon">No lineup yet</div>`;
+  if (!side.players || !side.players.length) {
+    const status = (side.status || "").toUpperCase();
+    const src = side.source || "";
+    const note = status === "TBD" ? "TBD — not yet posted"
+               : status ? `${status} · ${src}` : "No lineup yet";
+    return `<div class="coming-soon">${note}</div>`;
+  }
+  if (!HITTER_PCT) return `<div class="coming-soon">Statcast percentiles not loaded</div>`;
+
+  const metrics = [
+    ["xwOBA",   "xwoba",   false],
+    ["xBA",     "xba",     false],
+    ["xSLG",    "xslg",    false],
+    ["Barrel",  "barrel",  false],
+    ["HardHit", "hard_hit",false],
+    ["EV",      "exit_velocity", false],
+    ["MaxEV",   "max_ev",  false],
+    ["Chase",   "chase",   true],   // lower=better → flip cls
+    ["Whiff",   "whiff",   true],   // lower=better
+    ["K%",      "k_pct",   true],   // lower=better
+    ["BB%",     "bb_pct",  false],
+    ["Sprint",  "sprint",  false],
+  ];
+
+  // Color bands on a 0-100 percentile scale
+  const pCls = (v, lowerBetter) => {
+    if (v == null) return "";
+    if (!lowerBetter) {
+      if (v >= 70) return "elite";
+      if (v >= 55) return "good";
+      if (v <= 20) return "worst";
+      if (v <= 35) return "bad";
+      return "";
+    }
+    // Lower raw stat is better for the hitter (K%/Whiff/Chase) — the Savant
+    // percentile is already flipped (high percentile = low stat = good), so
+    // colors stay the same.
+    if (v >= 70) return "elite";
+    if (v >= 55) return "good";
+    if (v <= 20) return "worst";
+    if (v <= 35) return "bad";
+    return "";
+  };
+
+  let rowsHTML = "";
+  for (const p of side.players) {
+    const nm = p.name || "";
+    const info = PLAYER_INFO[normName(nm)] || {};
+    const pos = p.pos || info.pos || "";
+    const bats = p.bats || info.bats || "";
+    const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
+    const pctEntry = HITTER_PCT.hitters[normName(nm)] || {};
+    const cells = metrics.map(([, key, lb]) => {
+      const v = pctEntry[key];
+      return v == null
+        ? `<td class="split" style="color:var(--muted);opacity:0.4;">—</td>`
+        : `<td class="split split-chip ${pCls(v, lb)}">${v}</td>`;
+    }).join("");
+    rowsHTML += `<tr>
+      <td class="order">${p.order || ""}</td>
+      <td class="pos">${pos}</td>
+      <td class="bats ${batsCls}">${bats}</td>
+      <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}</td>
+      ${cells}
+    </tr>`;
+  }
+  const statusLabel = (side.status || "").toUpperCase();
+  const isLiveConfirmed = side.source === "MLB batting order";
+  let effStatus;
+  if (statusLabel === "CONFIRMED" && isLiveConfirmed) effStatus = "CONFIRMED";
+  else if (statusLabel === "CONFIRMED")               effStatus = "PROJECTED";
+  else if (statusLabel === "EXPECTED")                effStatus = "PROJECTED";
+  else                                                effStatus = statusLabel || "TBD";
+  const pillCls = effStatus === "CONFIRMED" ? "lu-confirmed"
+                : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
+
+  const headers = metrics.map(([lbl, , lb]) => `<th class="right" style="width:42px;" title="${lb ? 'Lower raw = better; percentile is flipped so high = good' : 'Higher = better'}">${lbl}</th>`).join("");
+  const html = `<div class="lu-sc-note">Savant season percentiles · 0–100 scale · higher = better. Blanks filled with prior-year percentile where available.</div>
+    <table class="lineup-table">
+      <thead><tr>
+        <th class="center" style="width:22px;">#</th>
+        <th class="center" style="width:30px;">Pos</th>
+        <th class="center" style="width:18px;">B</th>
+        <th class="left">Player</th>
+        ${headers}
+      </tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    <div class="src-note"><span class="status-pill ${pillCls}">${effStatus||"TBD"}</span></div>`;
+  return html;
 }
 
 // Compact SP card rendered above each team's lineup — shows the OPPOSING SP
@@ -2141,7 +2281,7 @@ function renderPitcherDeepSP(spName, teamName) {
   const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
   const tierCls = (v, bands, hib) => tier(v, bands, hib);
-  const pill = (label, val, bands, hib, suf="") => `<span class="pt-pill">
+  const pill = (label, val, bands, hib, suf="", title="") => `<span class="pt-pill" ${title ? `title="${title.replace(/"/g,'&quot;')}"` : ''}>
       <span class="lbl">${label}</span>
       <span class="val ${tierCls(val, bands, hib)}">${val != null ? fmt(val, suf) : '—'}</span>
     </span>`;
@@ -2158,6 +2298,8 @@ function renderPitcherDeepSP(spName, teamName) {
       const hb  = p.hb  != null ? (p.hb  > 0 ? "+" : "") + p.hb.toFixed(1)  : "—";
       const wh  = p.whiff != null ? p.whiff.toFixed(0) + "%" : "—";
       const xw  = p.xwoba != null ? p.xwoba.toFixed(3) : "—";
+      const hh  = p.hard_hit != null ? p.hard_hit.toFixed(0) + "%" : "—";
+      const kp  = p.k_pct != null ? p.k_pct.toFixed(0) + "%" : "—";
       return `<tr>
         <td class="pt-pitch-name">${p.name || p.type}</td>
         <td class="pt-mono">${uw}</td>
@@ -2165,16 +2307,24 @@ function renderPitcherDeepSP(spName, teamName) {
         <td class="pt-mono">${ivb}</td>
         <td class="pt-mono">${hb}</td>
         <td class="pt-mono ${p.whiff != null ? tier(p.whiff, {elite:40,good:32,bad:22,worst:15}, true) : ''}">${wh}</td>
+        <td class="pt-mono ${p.k_pct != null ? tier(p.k_pct, {elite:30,good:23,bad:14,worst:10}, true) : ''}">${kp}</td>
+        <td class="pt-mono ${p.hard_hit != null ? tier(p.hard_hit, {elite:34,good:38,bad:44,worst:48}, false) : ''}">${hh}</td>
         <td class="pt-mono ${p.xwoba != null ? tier(p.xwoba, {elite:0.270,good:0.300,bad:0.340,worst:0.370}, false) : ''}">${xw}</td>
       </tr>`;
     }).join("");
-    arsenalTable = `<table class="pt-arsenal-table">
-      <colgroup><col style="width:28%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:14%"><col style="width:15%"></colgroup>
+    arsenalTable = `<div class="pt-section-hdr">Pitch Arsenal</div>
+    <table class="pt-arsenal-table">
+      <colgroup><col style="width:22%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:12%"></colgroup>
       <thead><tr>
-        <th>Pitch</th><th class="r">Usage</th><th class="r">Velo</th>
-        <th class="r" title="Induced Vertical Break (inches)">IVB</th>
-        <th class="r" title="Horizontal Break (inches)">HB</th>
-        <th class="r">Whiff</th><th class="r">xwOBA</th>
+        <th>Pitch</th>
+        <th class="r" title="Share of all pitches thrown">Usage</th>
+        <th class="r" title="Average release speed (mph)">Velo</th>
+        <th class="r" title="Induced Vertical Break (inches) — positive = rise from pure gravity drop">IVB</th>
+        <th class="r" title="Horizontal Break (inches) — arm-side positive">HB</th>
+        <th class="r" title="Whiff per swing">Whf%</th>
+        <th class="r" title="Strikeout rate on this pitch">K%</th>
+        <th class="r" title="Hard-Hit allowed (≥95 mph EV)">HH%</th>
+        <th class="r" title="Expected wOBA allowed on this pitch">xwOBA</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -2182,18 +2332,30 @@ function renderPitcherDeepSP(spName, teamName) {
     arsenalTable = `<div class="pt-no-arsenal">Savant arsenal data unavailable</div>`;
   }
 
-  // Header stats — season IP, primary FIP, xERA, botERA, HR/9, Whiff%, K%, BB%, GB%
-  const pillsHTML = `
-    ${pill(primary.label, primary.val, primaryBands, false)}
-    ${pill("xERA", s?.xera, thr.xera, false)}
-    ${s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false) : ''}
-    ${pill("HR/9", s?.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false)}
-    ${pill("Whiff", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%")}
-    ${pill("K%",  s?.k_pct, thr.k_pct, true, "%")}
-    ${pill("BB%", s?.bb_pct, {elite:5,good:7,bad:9,worst:11}, false, "%")}
-    ${pill("GB%", s?.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%")}
-    ${pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48}, false, "%")}
-  `;
+  // Grouped stat pill rows — Projections · Rate · Command · Contact
+  const projPills = [
+    pill(primary.label, primary.val, primaryBands, false,
+         primary.label === "xFIP" ? "" : "", primary.label === "xFIP" ? "xFIP — Expected FIP (HR-normalized, lower=better)" : "pFIP — Projected FIP (lower=better)"),
+    pill("xERA", s?.xera, thr.xera, false, "", "xERA — Expected ERA (lower=better)"),
+    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
+  ].filter(Boolean).join('');
+  const ratePills = [
+    pill("K%",  s?.k_pct,  thr.k_pct, true, "%", "Strikeout rate (higher=better)"),
+    pill("Whf%", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%", "Whiff per swing (higher=better)"),
+    pill("HR/9", s?.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false, "", "Home runs allowed per 9 IP (lower=better)"),
+  ].join('');
+  const cmdPills = [
+    pill("BB%", s?.bb_pct, {elite:5,good:7,bad:9,worst:11}, false, "%", "Walk rate (lower=better)"),
+    s?.f_strike_pct != null ? pill("1st-K", s.f_strike_pct, {elite:65,good:61,bad:57,worst:54}, true, "%", "First-pitch strike rate (higher=better)") : '',
+    s?.edge_pct != null ? pill("Edge", s.edge_pct, {elite:44,good:41,bad:37,worst:34}, true, "%", "% of pitches on the strike-zone edge (higher=better)") : '',
+    s?.meatball_pct != null ? pill("Meat", s.meatball_pct, {elite:5.5,good:6.5,bad:7.5,worst:8.5}, false, "%", "% of pitches left middle-middle (lower=better)") : '',
+  ].filter(Boolean).join('');
+  const contactPills = [
+    pill("Barrel", s?.barrel_pct, thr.barrel_pct || {elite:5,good:7,bad:9,worst:12}, false, "%", "Barrel rate allowed (lower=better)"),
+    pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48}, false, "%", "Hard-Hit rate allowed (lower=better)"),
+    pill("GB%", s?.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%", "Ground-ball rate (higher=better)"),
+  ].join('');
+
   const plusLine = (s?.stuff_plus != null || s?.pitching_plus != null) ? `
     <div class="pt-plus-line">
       ${plusChip("STF+", s.stuff_plus, true)}
@@ -2209,8 +2371,25 @@ function renderPitcherDeepSP(spName, teamName) {
       ${headerHand}${headerOpener}
       ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
-    <div class="pt-pills">${pillsHTML}</div>
     ${plusLine}
+    <div class="pt-stat-grid">
+      <div class="pt-stat-group">
+        <div class="pt-group-label">Projections</div>
+        <div class="pt-pills">${projPills}</div>
+      </div>
+      <div class="pt-stat-group">
+        <div class="pt-group-label">Strikeout · Run</div>
+        <div class="pt-pills">${ratePills}</div>
+      </div>
+      <div class="pt-stat-group">
+        <div class="pt-group-label">Command</div>
+        <div class="pt-pills">${cmdPills}</div>
+      </div>
+      <div class="pt-stat-group">
+        <div class="pt-group-label">Contact Allowed</div>
+        <div class="pt-pills">${contactPills}</div>
+      </div>
+    </div>
     ${arsenalTable}
   </div>`;
 }
@@ -2300,18 +2479,10 @@ function renderTeamBpAggregate(teamId, teamName, probableSP) {
 }
 
 // ============================================================================
-// STATCAST TAB — team percentile aggregates (flat mean across projected lineup)
+// STATCAST TAB (legacy — now invoked only via the Lineups-tab toggle)
+// Kept here as a no-op placeholder so old references don't break.
 // ============================================================================
-function renderStatcastTab() {
-  const el = document.getElementById("statcast-list");
-  if (!CURRENT_GAMES.length) {
-    el.innerHTML = `<div class="empty">No games scheduled.</div>`;
-    return;
-  }
-  if (!HITTER_PCT) {
-    el.innerHTML = `<div class="coming-soon">Savant hitter percentiles not loaded yet.</div>`;
-    return;
-  }
+function renderStatcastTab() { /* deprecated: use LU_VIEW="stat" on Lineups tab */ return;
   // Columns to aggregate (label → percentile key in hitter_percentiles)
   const metrics = [
     ["xwOBA",    "xwoba"],    ["xBA",      "xba"],     ["xSLG", "xslg"],
@@ -2865,6 +3036,16 @@ document.querySelectorAll(".tab").forEach(btn => {
     document.getElementById(`tab-${btn.dataset.tab}`).hidden = false;
     if (btn.dataset.tab === "bullpen")  renderBullpenTab();
     if (btn.dataset.tab === "pitchers") renderPitchersTab();
+  };
+});
+
+// Lineups tab view toggle (Projections / Statcast)
+document.querySelectorAll(".lu-view-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".lu-view-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    LU_VIEW = btn.dataset.luView || "proj";
+    renderLineupsTab();
   };
 });
 
