@@ -137,7 +137,11 @@ COLD_T = 12
 COLD_A = 0.0002
 WIND_O = 0.001
 WIND_I = 0.001
-WIND_SCALE = 10.0
+# WIND_SCALE was 10.0 which double-counted the per-park wr_out/wr_in
+# values (those are already in "%/10mph" units). Calibrated to 2.0 to
+# match BallparkPal magnitudes on a 15-game slate (Wrigley drops from
+# +37% wind to ~+7%, LAA from -22% to ~-4%).
+WIND_SCALE = 2.0
 DP_C = 0.0010
 PRES_C = 0.0018
 CARRY_INT = 0.0003
