@@ -342,12 +342,20 @@ def compute_v8(park, wx):
     if wd is not None and ws > 0:
         out_c = _compass_to_out_component(park, wd, ws)
         wr_use = base["wr_out"] if out_c > 0 else base["wr_in"]
+        # Some legacy per-park wr_out values are sign-flipped (LAA / CIN had
+        # negative out-wind coefs, implying wind blowing to OF *hurts* runs,
+        # which is physically wrong). Force the sign to match the direction:
+        # wind toward OF should help, wind from OF should hurt.
+        wr_use = abs(wr_use) if out_c > 0 else -abs(wr_use)
         w_adj = out_c * WIND_O * wr_use * WIND_SCALE
         w_adj *= OF_MULT.get(base["of"], 1.0) * (CR_MULT.get(base["cr"], 1.0) + CQ_MULT.get(base["cq"], 1.0)) / 2
         wd_rarity = _wind_dir_rarity(park, wd, ws)
         ws_rarity = _wind_speed_rarity(park, ws)
         rarity_amp = max(wd_rarity * WIND_DIR_RARITY_AMP, ws_rarity * WIND_SPEED_RARITY_AMP)
         w_adj *= (1 + rarity_amp)
+        # Cap the per-component wind impact so a single park's bad wr value
+        # can't dominate the total (BP rarely sees wind-only > ±10%).
+        w_adj = max(-0.10, min(0.10, w_adj))
         wind_info = {"out_component": round(out_c, 2), "dir_rarity": round(wd_rarity, 2),
                      "spd_rarity": round(ws_rarity, 2)}
 
