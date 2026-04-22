@@ -88,19 +88,34 @@ def _mlb_business_date():
     return et_now.date().isoformat()
 
 
-def get_today_schedule():
-    today = _mlb_business_date()
-    d = fetch(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}")
+def get_schedule_range(start_iso: str, end_iso: str):
+    """Fetch all games between start_iso..end_iso (inclusive)."""
+    d = fetch(
+        f"https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+        f"&startDate={start_iso}&endDate={end_iso}"
+    )
     if not d or not d.get("dates"):
         return []
-    return [{
-        "game_pk": g["gamePk"],
-        "away": g["teams"]["away"]["team"]["name"],
-        "home": g["teams"]["home"]["team"]["name"],
-        "game_time": g["gameDate"],
-        "venue": g.get("venue", {}).get("name", ""),
-        "status": g.get("status", {}).get("abstractGameState", ""),
-    } for g in d["dates"][0].get("games", [])]
+    out = []
+    for day in d["dates"]:
+        for g in day.get("games", []):
+            out.append({
+                "game_pk": g["gamePk"],
+                "away": g["teams"]["away"]["team"]["name"],
+                "home": g["teams"]["home"]["team"]["name"],
+                "game_time": g["gameDate"],
+                "venue": g.get("venue", {}).get("name", ""),
+                "status": g.get("status", {}).get("abstractGameState", ""),
+            })
+    return out
+
+
+def get_today_schedule():
+    """Today + tomorrow — lets users plan a day ahead without waiting for
+    the overnight refresh cycle."""
+    today = _mlb_business_date()
+    tomorrow = (datetime.date.fromisoformat(today) + datetime.timedelta(days=1)).isoformat()
+    return get_schedule_range(today, tomorrow)
 
 
 def game_has_started(status: str) -> bool:
