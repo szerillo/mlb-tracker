@@ -90,7 +90,14 @@ def get_today_schedule():
         "home": g["teams"]["home"]["team"]["name"],
         "game_time": g["gameDate"],
         "venue": g.get("venue", {}).get("name", ""),
+        "status": g.get("status", {}).get("abstractGameState", ""),
     } for g in d["dates"][0].get("games", [])]
+
+
+def game_has_started(status: str) -> bool:
+    """True once first pitch has been thrown (or game is over)."""
+    if not status: return False
+    return status in ("Live", "Final")
 
 
 def extract_hour(forecast, target_iso):
@@ -163,8 +170,25 @@ def main():
     schedule = get_today_schedule()
     print(f"Fetching weather for {len(schedule)} games...")
 
-    # Fetch forecasts in parallel (one per unique grid point)
-    unique_teams = {g["home"] for g in schedule if g["home"] in NWS_GRIDS}
+    # Preserve any game that's already in progress / final — its weather
+    # snapshot at first pitch is what matters; later forecasts would just
+    # drift. Read the existing file and index by game_pk.
+    prior_by_pk = {}
+    if os.path.exists(OUTPUT):
+        try:
+            with open(OUTPUT) as f:
+                prior = json.load(f)
+            for g in prior.get("games", []):
+                prior_by_pk[g.get("game_pk")] = g
+        except Exception as e:
+            print(f"  could not read prior weather: {e}")
+
+    # Fetch forecasts in parallel (one per unique grid point), but skip any
+    # home team whose game has started — we won't need a fresh forecast.
+    unique_teams = {
+        g["home"] for g in schedule
+        if g["home"] in NWS_GRIDS and not game_has_started(g.get("status", ""))
+    }
     forecasts = {}
 
     def _load(team):
@@ -176,8 +200,14 @@ def main():
             forecasts[team] = fc
 
     games_out = []
+    frozen = 0
     for g in schedule:
         home = g["home"]
+        # FREEZE — if the game has started, reuse the prior snapshot verbatim
+        if game_has_started(g.get("status", "")) and g["game_pk"] in prior_by_pk:
+            games_out.append(prior_by_pk[g["game_pk"]])
+            frozen += 1
+            continue
         if home in DOMES:
             games_out.append({
                 "game_pk": g["game_pk"],
@@ -228,7 +258,7 @@ def main():
         json.dump(payload, f, indent=2)
     print(f"  wrote {len(games_out)} games to {OUTPUT}")
     good = sum(1 for g in games_out if g.get("weather"))
-    print(f"  weather resolved: {good}/{len(games_out)}")
+    print(f"  weather resolved: {good}/{len(games_out)} · frozen mid-game: {frozen}")
 
 
 if __name__ == "__main__":
