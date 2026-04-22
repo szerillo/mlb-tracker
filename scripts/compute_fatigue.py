@@ -106,7 +106,11 @@ def main():
     from _common import skip_if_not_in_window
     if skip_if_not_in_window("compute_fatigue"):
         return
-    today = datetime.date.today()
+    # Treat "today" as the MLB business day in ET, not UTC — matters around
+    # midnight ET when UTC has already rolled to the next day but late West
+    # Coast games are still finishing.
+    et_now = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
+    today = et_now.date()
     # 5-day rolling window ending yesterday.
     dates = [(today - datetime.timedelta(days=d)).isoformat() for d in range(5, 0, -1)]
     print(f"Building fatigue for window: {dates[0]} .. {dates[-1]}")
