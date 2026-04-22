@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MLB Pre-Game Dashboard</title>
+<title>B.A.R.T.O.L.O.</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,8 +26,12 @@
     font-feature-settings: "cv11", "ss01", "ss03"; }
 
   header { padding: 1.2rem 1.5rem 0; }
-  h1 { margin: 0 0 0.2rem; font-size: 1.55rem; font-family: var(--display);
-    font-weight: 600; letter-spacing: -0.02em; }
+  h1 { margin: 0; font-size: 1.45rem; font-family: var(--display);
+    font-weight: 700; letter-spacing: 0.12em; color: var(--text); }
+  .brand { display: flex; align-items: center; gap: 0.85rem; margin: 0 0 0.35rem; }
+  .brand-logo { flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+  .brand-text { display: flex; flex-direction: column; gap: 0.1rem; }
+  .brand-tagline { font-size: 0.7rem; color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
   .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
   .sub span.live { color: var(--confirmed); }
 
@@ -847,12 +851,96 @@
     font-family: inherit; letter-spacing: 0.04em; }
   .rk-filter button.active { background: rgba(94, 234, 212, 0.12); border-color: var(--accent); color: var(--accent); }
   .rk-empty { color: var(--muted); font-style: italic; font-size: 0.8rem; padding: 0.4rem 0; }
+
+  /* ─── Win Prob tab (BARTOLO-style post-game) ─── */
+  .wp-intro { color: var(--muted); font-size: 0.88rem; margin-bottom: 1rem;
+    line-height: 1.5; max-width: 620px; }
+  .wp-intro strong { color: var(--text); }
+  .wp-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .wp-game-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 0.9rem; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .wp-game-card:hover { background: var(--panel-hover); border-color: var(--accent); }
+  .wp-game-card .wpg-matchup { font-weight: 600; font-size: 0.95rem; }
+  .wp-game-card .wpg-score { font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+    color: var(--text); margin-top: 0.25rem; }
+  .wp-game-card .wpg-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+  .wp-empty { color: var(--muted); font-style: italic; }
+
+  .wp-detail { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem 1.25rem 1.25rem; margin-bottom: 1.5rem; }
+  .wp-detail h3 { margin: 0 0 0.55rem; font-family: var(--display); font-size: 1.05rem;
+    letter-spacing: -0.01em; }
+  .wp-section { margin: 1.1rem 0; }
+  .wp-section h4 { font-size: 0.72rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 600; margin: 0 0 0.5rem; padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border); }
+
+  .wp-scorebox { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem;
+    align-items: center; padding: 0.6rem 0; }
+  .wp-team { text-align: center; }
+  .wp-team .wp-tname { font-family: var(--display); font-size: 1.2rem; font-weight: 600; }
+  .wp-team .wp-truns { font-family: var(--mono); font-size: 2.6rem; font-weight: 700;
+    line-height: 1.1; }
+  .wp-team .wp-twp { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+  .wp-vs { font-size: 1rem; color: var(--muted); font-style: italic; }
+
+  .wp-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem;
+    margin: 0.6rem 0; }
+  @media (max-width: 600px) { .wp-metrics { grid-template-columns: repeat(2, 1fr); } }
+  .wp-metric { background: rgba(36, 46, 58, 0.4); border-radius: 6px; padding: 0.6rem 0.75rem; }
+  .wp-metric .wp-mlabel { font-size: 0.6rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600; }
+  .wp-metric .wp-mval { font-family: var(--mono); font-size: 1.25rem; font-weight: 700;
+    color: var(--text); margin-top: 0.2rem; }
+  .wp-metric .wp-mdelta { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .wp-histogram { display: flex; align-items: flex-end; height: 120px; gap: 2px;
+    margin: 0.5rem 0; background: rgba(10, 14, 19, 0.4); padding: 0.5rem; border-radius: 6px; }
+  .wp-hbar { background: var(--accent); min-width: 6px; flex: 1; border-radius: 2px 2px 0 0;
+    opacity: 0.8; position: relative; }
+  .wp-hbar.actual { background: var(--tier-worst); opacity: 1; }
+  .wp-hbar:hover { opacity: 1; }
+  .wp-legend { font-size: 0.7rem; color: var(--muted); display: flex; gap: 0.8rem; }
+  .wp-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .wp-legend span::before { content: ''; width: 10px; height: 10px; border-radius: 2px;
+    background: var(--accent); opacity: 0.8; display: inline-block; }
+  .wp-legend span.actual::before { background: var(--tier-worst); opacity: 1; }
+
+  .wp-edges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0.8rem; }
+  .wp-edge-pill { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; }
+  .wp-edge-pill.ml { background: rgba(110, 255, 148, 0.12); color: var(--tier-good);
+    border: 1px solid rgba(110, 255, 148, 0.3); }
+  .wp-edge-pill.total { background: rgba(91, 184, 245, 0.12); color: var(--tier-bad);
+    border: 1px solid rgba(91, 184, 245, 0.3); }
+
+  /* Scoreboard Final-game WP link */
+  .sb-wp-link { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.5rem;
+    font-size: 0.68rem; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 999px; text-decoration: none; letter-spacing: 0.04em;
+    font-family: var(--body); font-weight: 600; }
+  .sb-wp-link:hover { background: rgba(94, 234, 212, 0.12); }
+
 </style>
 </head>
 <body>
 
 <header>
-  <h1>MLB Pre-Game Dashboard</h1>
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 60 60" width="52" height="52" aria-hidden="true">
+      <circle cx="30" cy="30" r="28" fill="#1f3a68"/>
+      <ellipse cx="30" cy="38" rx="13" ry="10" fill="#f7f0e2"/>
+      <circle cx="32" cy="21" r="5" fill="#c99a6a"/>
+      <path d="M 27 19 Q 28 14 32 14 Q 36 15 37 19 L 37 22 L 27 22 Z" fill="#0d1f3d"/>
+      <path d="M 40 32 Q 46 27 48 22 Q 48 19 45 20 Q 42 25 38 30 Z" fill="#f7f0e2"/>
+      <circle cx="48" cy="22" r="3" fill="#ffffff" stroke="#a01f1f" stroke-width="0.6"/>
+      <text x="30" y="42" font-family="Georgia, serif" font-size="9" font-weight="bold" fill="#1f3a68" text-anchor="middle">40</text>
+    </svg>
+    <div class="brand-text">
+      <h1>B.A.R.T.O.L.O.</h1>
+      <div class="brand-tagline">Baseball Analytic Research Tool Optimized for Longterm Outcomes</div>
+    </div>
+  </div>
   <div class="sub">
     Last loaded: <span id="updated">—</span>
     · Projections: <span id="data_age">—</span>
@@ -865,6 +953,7 @@
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
     <button class="tab" data-tab="rankings" role="tab">Rankings</button>
+    <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
   </div>
 </header>
 
@@ -905,6 +994,10 @@
 
   <section id="tab-rankings" class="tab-content" hidden>
     <div id="rankings-root" class="loading">Loading power rankings…</div>
+  </section>
+
+  <section id="tab-winprob" class="tab-content" hidden>
+    <div id="winprob-root" class="loading">Loading post-game win probability…</div>
   </section>
 </main>
 
@@ -3646,6 +3739,196 @@ function renderDefRankings(hitters, nameToTeam, teams) {
 }
 
 // ============================================================================
+// WIN PROB TAB (BARTOLO post-game simulator)
+// ============================================================================
+let WINPROB_DATA = null;      // data/winprob.json once published
+let WINPROB_SELECTED = null;  // gamePk of currently-shown detail
+let WINPROB_RENDERED = false;
+
+function invalidateWinprob() { WINPROB_RENDERED = false; }
+
+async function renderWinprobTab() {
+  if (WINPROB_RENDERED && WINPROB_SELECTED == null) return;
+  const root = document.getElementById("winprob-root");
+  if (!root) return;
+
+  // Try to fetch data/winprob.json (published by the post-game simulator).
+  if (WINPROB_DATA === null) {
+    try {
+      const r = await fetch("data/winprob.json?t=" + Date.now());
+      WINPROB_DATA = r.ok ? await r.json() : { games: {} };
+    } catch (e) {
+      WINPROB_DATA = { games: {} };
+    }
+  }
+
+  // Gather completed games from CURRENT_GAMES (final/game-over status)
+  const finalsToday = (CURRENT_GAMES || []).filter(g => {
+    const s = g.status && g.status.detailedState;
+    return s === "Final" || s === "Game Over" || s === "Completed Early";
+  });
+
+  const finalsMap = {};
+  finalsToday.forEach(g => { finalsMap[g.gamePk] = g; });
+
+  const intro = `<div class="wp-intro">
+    <strong>B.A.R.T.O.L.O. post-game win-probability simulator.</strong> For every completed game,
+    resamples batted-ball outcomes via a gradient-boosted classifier trained on ~250K Statcast events,
+    then subtracts the HP umpire's called-zone favor to produce an ump-neutral win probability.
+    Edges shown against Action Network PRO projections and the current market.
+    <span style="display:block;margin-top:0.4rem;color:var(--muted);">
+      <em>Simulator pipeline currently runs in demo mode; the Python port to the refresh workflow is pending.</em>
+    </span>
+  </div>`;
+
+  // No finals today? Try past dates from WINPROB_DATA
+  const completedPks = Object.keys(WINPROB_DATA.games || {});
+  if (finalsToday.length === 0 && completedPks.length === 0) {
+    root.innerHTML = intro + '<div class="wp-empty">No completed games yet today. Check back after first pitch — final-game analysis will surface here.</div>';
+    WINPROB_RENDERED = true;
+    return;
+  }
+
+  // Build a card grid of completed games
+  const cards = finalsToday.map(g => {
+    const away = teamAbbr(g.teams.away.team.name);
+    const home = teamAbbr(g.teams.home.team.name);
+    const fs = g._finalScore || {};
+    const aPk = g.gamePk;
+    return `<div class="wp-game-card" data-pk="${aPk}">
+      <div class="wpg-matchup">${away} @ ${home}</div>
+      <div class="wpg-score">${fs.away != null ? fs.away : '—'}–${fs.home != null ? fs.home : '—'}</div>
+      <div class="wpg-meta">${g.venue?.name || ''}</div>
+    </div>`;
+  }).join("");
+
+  // If a game is selected, render its detail below
+  let detailHtml = "";
+  const selectedGame = WINPROB_SELECTED ? finalsMap[WINPROB_SELECTED] : null;
+  if (selectedGame) {
+    detailHtml = renderWinprobDetail(selectedGame, WINPROB_DATA.games && WINPROB_DATA.games[selectedGame.gamePk]);
+  }
+
+  root.innerHTML = intro
+    + '<h3 style="margin:0 0 0.5rem;font-family:var(--display);font-size:1rem;letter-spacing:0.02em;color:var(--muted);text-transform:uppercase;">Today\'s Finals</h3>'
+    + '<div class="wp-games">' + (cards || '<div class="wp-empty">No finals today yet.</div>') + '</div>'
+    + detailHtml;
+
+  // Wire card clicks
+  document.querySelectorAll("#winprob-root .wp-game-card").forEach(card => {
+    card.onclick = () => {
+      WINPROB_SELECTED = parseInt(card.dataset.pk, 10);
+      WINPROB_RENDERED = false;
+      renderWinprobTab();
+      // Scroll detail into view
+      setTimeout(() => {
+        const d = document.querySelector(".wp-detail");
+        if (d) d.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    };
+  });
+
+  WINPROB_RENDERED = true;
+}
+
+function renderWinprobDetail(game, winprobData) {
+  const away = teamAbbr(game.teams.away.team.name);
+  const home = teamAbbr(game.teams.home.team.name);
+  const fs = game._finalScore || {};
+  const aRuns = fs.away != null ? fs.away : '—';
+  const hRuns = fs.home != null ? fs.home : '—';
+
+  // If we have real sim data, use it. Otherwise placeholder.
+  const sim = winprobData || null;
+  const awayWP = sim?.away_wp != null ? (sim.away_wp * 100).toFixed(1) + '%' : '—';
+  const homeWP = sim?.home_wp != null ? (sim.home_wp * 100).toFixed(1) + '%' : '—';
+  const awayExp = sim?.away_exp_runs != null ? sim.away_exp_runs.toFixed(2) : '—';
+  const homeExp = sim?.home_exp_runs != null ? sim.home_exp_runs.toFixed(2) : '—';
+
+  const histogram = (bins, actualIdx) => {
+    if (!bins || !bins.length) return '<div class="wp-empty" style="padding:1.5rem 0;text-align:center;">Run-distribution histogram will render once simulator data is ingested.</div>';
+    const maxCount = Math.max(...bins.map(b => b.count));
+    return '<div class="wp-histogram">' + bins.map((b, i) => {
+      const h = maxCount ? Math.round((b.count / maxCount) * 100) : 0;
+      const cls = (i === actualIdx) ? 'wp-hbar actual' : 'wp-hbar';
+      return '<div class="' + cls + '" style="height:' + h + '%" title="' + b.label + ': ' + b.count + '"></div>';
+    }).join('') + '</div>';
+  };
+
+  const umpNote = sim?.ump_name
+    ? `<p style="color:var(--muted);font-size:0.85rem;">HP ump <strong>${sim.ump_name}</strong>
+         &middot; favor: ${away} ${(sim.ump_favor_away >= 0 ? '+' : '') + sim.ump_favor_away?.toFixed(2)} runs,
+         ${home} ${(sim.ump_favor_home >= 0 ? '+' : '') + sim.ump_favor_home?.toFixed(2)} runs.</p>`
+    : '<p style="color:var(--muted);font-size:0.85rem;"><em>Ump adjustment will appear once the Ump Scorecards scrape is wired in.</em></p>';
+
+  return `<div class="wp-detail">
+    <h3>${away} @ ${home}</h3>
+    <div class="wp-scorebox">
+      <div class="wp-team">
+        <div class="wp-tname">${away}</div>
+        <div class="wp-truns">${aRuns}</div>
+        <div class="wp-twp">Sim WP: ${awayWP}</div>
+      </div>
+      <div class="wp-vs">vs</div>
+      <div class="wp-team">
+        <div class="wp-tname">${home}</div>
+        <div class="wp-truns">${hRuns}</div>
+        <div class="wp-twp">Sim WP: ${homeWP}</div>
+      </div>
+    </div>
+
+    <div class="wp-section">
+      <h4>Win Probability</h4>
+      <div class="wp-metrics">
+        <div class="wp-metric"><div class="wp-mlabel">${away} Sim WP</div><div class="wp-mval">${awayWP}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} Sim WP</div><div class="wp-mval">${homeWP}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${away} Exp Runs</div><div class="wp-mval">${awayExp}</div><div class="wp-mdelta">Actual: ${aRuns}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} Exp Runs</div><div class="wp-mval">${homeExp}</div><div class="wp-mdelta">Actual: ${hRuns}</div></div>
+      </div>
+    </div>
+
+    <div class="wp-section">
+      <h4>Run Distribution — ${away}</h4>
+      ${histogram(sim?.away_hist, sim?.away_actual_idx)}
+      <div class="wp-legend"><span>Sim</span><span class="actual">Actual</span></div>
+    </div>
+
+    <div class="wp-section">
+      <h4>Run Distribution — ${home}</h4>
+      ${histogram(sim?.home_hist, sim?.home_actual_idx)}
+      <div class="wp-legend"><span>Sim</span><span class="actual">Actual</span></div>
+    </div>
+
+    <div class="wp-section">
+      <h4>Umpire Adjustment</h4>
+      ${umpNote}
+      ${sim?.ump_adj_away_wp != null ? `<div class="wp-metrics">
+        <div class="wp-metric"><div class="wp-mlabel">Raw ${away} WP</div><div class="wp-mval">${(sim.away_wp*100).toFixed(1)}%</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">Ump-Adj ${away} WP</div><div class="wp-mval">${(sim.ump_adj_away_wp*100).toFixed(1)}%</div></div>
+      </div>` : ''}
+    </div>
+
+    <div class="wp-section">
+      <h4>PRO vs. Market — Edges</h4>
+      ${sim?.edges?.length
+        ? '<div class="wp-edges">' + sim.edges.map(e => '<span class="wp-edge-pill ' + (e.market === 'total' ? 'total' : 'ml') + '">' + e.label + '</span>').join('') + '</div>'
+        : '<div class="wp-empty">No edges tracked yet — Action Network PRO scrape is pending.</div>'}
+    </div>
+
+    <div class="wp-section">
+      <h4>Methodology</h4>
+      <p style="color:var(--muted);font-size:0.82rem;line-height:1.55;">
+        Pulls every batted ball from this game's Statcast feed (EV, LA, spray, park), feeds into a
+        gradient-boosted outcome classifier trained on ~250K batted balls to get
+        P(out / 1B / 2B / 3B / HR). Resamples 10,000 times, sums with linear weights to get each
+        team's run distribution. HP ump run-favor is subtracted to produce an ump-neutral WP.
+        Edges computed via σ=4.5 normal for totals, de-vigged implied WP for MLs.
+      </p>
+    </div>
+  </div>`;
+}
+
+// ============================================================================
 // TABS
 // ============================================================================
 document.querySelectorAll(".tab").forEach(btn => {
@@ -3657,6 +3940,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "bullpen")  renderBullpenTab();
     if (btn.dataset.tab === "pitchers") renderPitchersTab();
     if (btn.dataset.tab === "rankings") renderRankingsTab();
+    if (btn.dataset.tab === "winprob")  renderWinprobTab();
   };
 });
 
