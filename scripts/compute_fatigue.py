@@ -111,8 +111,10 @@ def main():
     # Coast games are still finishing.
     et_now = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
     today = et_now.date()
-    # 5-day rolling window ending yesterday.
-    dates = [(today - datetime.timedelta(days=d)).isoformat() for d in range(5, 0, -1)]
+    # 5-day rolling window — today back 4 days (so completed games earlier
+    # today are captured on the same evening, not waiting for midnight ET).
+    # Games still in progress / scheduled are skipped by the extract step below.
+    dates = [(today - datetime.timedelta(days=d)).isoformat() for d in range(4, -1, -1)]
     print(f"Building fatigue for window: {dates[0]} .. {dates[-1]}")
 
     # Track per-team -> pitcher -> 5-day array
@@ -124,7 +126,12 @@ def main():
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
             boxes = list(ex.map(get_box, [g[0] for g in games]))
         for (_, a, h, status), b in zip(games, boxes):
-            if status in ("Postponed", "Cancelled", "Scheduled", "Pre-Game"):
+            # Skip any game that hasn't reached a reliable box-score state.
+            # "In Progress" is excluded so partial-game pitch counts don't
+            # bleed in — once the game hits Final/Game Over the next run
+            # picks it up.
+            if status in ("Postponed", "Cancelled", "Scheduled", "Pre-Game",
+                          "Warmup", "Delayed Start", "In Progress", "Manager challenge"):
                 continue
             for team, pitchers in extract_relievers(b).items():
                 for n, p in pitchers.items():
