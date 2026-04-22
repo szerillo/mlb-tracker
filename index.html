@@ -906,7 +906,9 @@ function parkFactorRunsPct(pf) {
   return pf.park_factor - 100;
 }
 
-// Blended weather runs-pct: V8 + secondary (averaged, secondary source unnamed in UI).
+// Weather runs-pct: prefer BallparkPal when available (their model is
+// better-calibrated than our ported V8 — e.g. Wrigley wind was blowing up
+// V8 to +40%). Fall back to V8 for parks BP hasn't covered yet.
 function blendedWxPct(game) {
   const homeAbbr = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
   const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
@@ -914,11 +916,13 @@ function blendedWxPct(game) {
   if (wx?.is_dome) return { isDome: true, value: null };
   const bp = (BP_WEATHER?.games || []).find(g =>
     g.home_abbr === homeAbbr && (!awayAbbr || g.away_abbr === awayAbbr)) || null;
-  const vals = [];
-  if (wx?.v8?.run_adj_pct != null) vals.push(wx.v8.run_adj_pct);
-  if (bp?.bp_weather_runs_pct != null) vals.push(bp.bp_weather_runs_pct);
-  if (!vals.length) return { isDome: false, value: null };
-  return { isDome: false, value: vals.reduce((a,b)=>a+b,0) / vals.length };
+  if (bp?.bp_weather_runs_pct != null) {
+    return { isDome: false, value: bp.bp_weather_runs_pct, source: "BP" };
+  }
+  if (wx?.v8?.run_adj_pct != null) {
+    return { isDome: false, value: wx.v8.run_adj_pct, source: "V8" };
+  }
+  return { isDome: false, value: null };
 }
 
 function teamLogo(teamId, size=28) {
