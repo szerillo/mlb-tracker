@@ -102,6 +102,12 @@
   .sb-time-row { margin-top: 0.3rem; font-size: 0.78rem; color: var(--muted);
     text-align: center; letter-spacing: 0.02em; }
   .sb-time-row .sb-status-live { color: var(--accent); font-weight: 600; }
+  .sb-wp-chip { display: inline-block; margin-left: 0.5rem; padding: 0.05rem 0.45rem;
+    border-radius: 4px; background: rgba(94, 234, 212, 0.12); color: var(--accent);
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em;
+    border: 1px solid rgba(94, 234, 212, 0.28); cursor: pointer;
+    user-select: none; transition: background 0.12s; }
+  .sb-wp-chip:hover { background: rgba(94, 234, 212, 0.22); }
 
   /* SP cell (left/right flank of matchup) */
   .sb-sp-cell { font-size: 0.82rem; line-height: 1.35; text-align: left; }
@@ -530,6 +536,11 @@
   .bpt-hot { font-weight: 700; }
   .bpt-hot.out { color: var(--fatigue-out); }
   .bpt-hot.ftg { color: var(--fatigue-fat); }
+  .bpt-thru { margin-left: auto; color: var(--muted); font-size: 0.7rem;
+    font-weight: 500; letter-spacing: 0.02em; opacity: 0.9;
+    padding: 0.05rem 0.4rem; border-radius: 4px;
+    background: rgba(94, 234, 212, 0.06); }
+  .bpt-thru.pending { background: rgba(94, 234, 212, 0.12); color: var(--accent); }
 
   .bpt-table { width: 100%; border-collapse: collapse; table-layout: fixed;
     font-size: 0.82rem; }
@@ -1818,8 +1829,13 @@ function renderScoreboard() {
       ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>` : "";
     const homeScoreHTML = (isFinal && fs)
       ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>` : "";
+    // On Final rows, append a "→ WP" chip that jumps to the Win Prob tab with
+    // this game pre-selected. Click handler attached below alongside row clicks.
+    const wpChip = isFinal
+      ? ` <span class="sb-wp-chip" data-wp-pk="${g.gamePk}" role="button" tabindex="0" title="Open post-game win-probability detail">→ WP</span>`
+      : '';
     const bottomLine = isFinal
-      ? `<span class="${statusCls}">${status}</span>`
+      ? `<span class="${statusCls}">${status}</span>${wpChip}`
       : `<span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}`;
     // Odds on the OUTSIDE (edges), scores (if any) INSIDE next to team abbrs
     const matchHTML = `
@@ -1883,6 +1899,24 @@ function renderScoreboard() {
       const g = CURRENT_GAMES.find(x => x.gamePk === pk);
       if (g) openModal(g);
     };
+  });
+
+  // "→ WP" chip on Final rows: switch to Win Prob tab with this game selected.
+  // Must stopPropagation so the row-click modal doesn't also fire.
+  el.querySelectorAll(".sb-wp-chip").forEach(chip => {
+    const jumpToWP = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pk = parseInt(chip.dataset.wpPk, 10);
+      if (!pk) return;
+      WINPROB_SELECTED = pk;
+      WINPROB_RENDERED = false;
+      const tabBtn = document.querySelector('.tab[data-tab="winprob"]');
+      if (tabBtn) tabBtn.click();
+      else renderWinprobTab();
+    };
+    chip.onclick = jumpToWP;
+    chip.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") jumpToWP(e); };
   });
 }
 
@@ -2470,12 +2504,26 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     sectionRow(sec.label, sec.rows.length, sec.cls) + sec.rows.map(bpRow).join("")
   ).join("");
 
+  // Freshness marker: "Thru WED" (last counted Final date), "· pending" when a
+  // later game today hasn't reached Final yet. Source: FATIGUE.team_meta emitted
+  // by scripts/compute_fatigue.py. No-op when meta absent (pre-refresh).
+  const _meta = (FATIGUE && FATIGUE.team_meta) ? FATIGUE.team_meta[teamName] : null;
+  let thruPill = '';
+  if (_meta && _meta.last_final) {
+    const _tip = 'Usage counted through ' + _meta.last_final +
+                 (_meta.pending_today ? ' · later game(s) today not yet Final' : '');
+    thruPill = '<span class="bpt-thru' + (_meta.pending_today ? ' pending' : '') +
+               '" title="' + _tip + '">Thru ' + dayAbbr(_meta.last_final) +
+               (_meta.pending_today ? ' · pending' : '') + '</span>';
+  }
+
   return `
     <div class="bpt-summary">
       <span>${withMeta.length} pitchers</span>
       ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
+      ${thruPill}
     </div>
     <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
       <colgroup>
