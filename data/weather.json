@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-04-22T02:13:37.904005Z",
+  "generated_at": "2026-04-22T02:42:11.880713Z",
   "source": "NWS (api.weather.gov) hourly forecast",
-  "method_note": "Raw weather inputs for V8 compute. V8 run-impact scoring pending integration.",
+  "method_note": "Raw weather inputs for V8 compute. Retractable roofs treated as outdoor when team roof-schedule page marks the date Open.",
   "games": [
     {
       "game_pk": 824448,
@@ -450,6 +450,7 @@
       "venue": "Progressive Field",
       "game_time": "2026-04-22T17:10:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 69,
         "humidity_pct": 59,
@@ -495,6 +496,7 @@
       "venue": "Kauffman Stadium",
       "game_time": "2026-04-22T18:10:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 71,
         "humidity_pct": 64,
@@ -531,6 +533,7 @@
       "venue": "Angel Stadium",
       "game_time": "2026-04-22T19:07:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 67,
         "humidity_pct": 45,
@@ -567,6 +570,7 @@
       "venue": "T-Mobile Park",
       "game_time": "2026-04-22T20:10:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 54,
         "humidity_pct": 88,
@@ -603,6 +607,7 @@
       "venue": "Comerica Park",
       "game_time": "2026-04-22T22:40:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 67,
         "humidity_pct": 46,
@@ -639,6 +644,7 @@
       "venue": "Nationals Park",
       "game_time": "2026-04-22T22:45:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 73,
         "humidity_pct": 49,
@@ -675,6 +681,7 @@
       "venue": "Fenway Park",
       "game_time": "2026-04-22T22:45:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 45,
         "humidity_pct": 80,
@@ -711,6 +718,7 @@
       "venue": "Citi Field",
       "game_time": "2026-04-22T23:10:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 52,
         "humidity_pct": 77,
@@ -747,6 +755,7 @@
       "venue": "Wrigley Field",
       "game_time": "2026-04-22T23:40:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 52,
         "humidity_pct": 80,
@@ -792,6 +801,7 @@
       "venue": "Coors Field",
       "game_time": "2026-04-23T00:40:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 76,
         "humidity_pct": 7,
@@ -827,9 +837,37 @@
       "matchup": "Chicago White Sox @ Arizona Diamondbacks",
       "venue": "Chase Field",
       "game_time": "2026-04-23T01:40:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Dome / retractable roof \u2014 weather adjustment minimal"
+      "is_dome": false,
+      "roof_open": true,
+      "weather": {
+        "temp_f": 77,
+        "humidity_pct": 14,
+        "wind_speed_mph": 10,
+        "wind_dir": "WNW",
+        "precip_pct": 0,
+        "short_forecast": "Mostly Clear",
+        "start_time": "2026-04-22T19:00:00-07:00"
+      },
+      "v8": {
+        "run_adj_pct": -1.5,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": -11,
+          "t_adj_pct": -4.5,
+          "w_adj_pct": 0.2,
+          "dp_adj_pct": -1.1,
+          "p_adj_pct": -0.9,
+          "precip_adj_pct": 0,
+          "carry_pct": 2.7,
+          "wind": {
+            "out_component": 4.92,
+            "dir_rarity": 0,
+            "spd_rarity": 0.7
+          }
+        }
+      },
+      "note": null
     },
     {
       "game_pk": 823231,
@@ -837,6 +875,7 @@
       "venue": "Oracle Park",
       "game_time": "2026-04-23T01:45:00Z",
       "is_dome": false,
+      "roof_open": null,
       "weather": {
         "temp_f": 60,
         "humidity_pct": 72,
