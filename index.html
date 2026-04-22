@@ -245,8 +245,9 @@
   .pt-plus-line .plus-chip { font-size: 0.78rem; padding: 0.18rem 0.55rem; }
   .pt-plus-line .plus-chip b { font-size: 0.9rem; }
 
-  /* Grouped stat layout — 4 labeled tiles (Projections / Rate / Command / Contact) */
-  .pt-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+  /* Grouped stat layout — labeled tiles (Expected / Projection / Models / Rate / Command / Contact).
+     3 columns on a typical desktop, 2 on narrow, 1 on mobile. */
+  .pt-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem; margin: 0.35rem 0 0.6rem; }
   .pt-stat-group { background: rgba(0, 0, 0, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.03);
@@ -385,32 +386,45 @@
   .lu-sc-note { color: var(--muted); font-size: 0.72rem; margin-bottom: 0.4rem;
     font-style: italic; }
 
-  /* Lineups tab: compact SP overlay above each team's lineup */
-  .lu-sp { display: flex; flex-wrap: wrap; gap: 0.45rem 0.6rem; align-items: center;
-    padding: 0.4rem 0.5rem; background: rgba(255, 255, 255, 0.025);
-    border-radius: 5px; margin-bottom: 0.45rem; font-size: 0.82rem; }
-  .lu-sp-label { color: var(--muted); font-size: 0.65rem; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; }
-  .lu-sp-name { font-weight: 700; color: var(--text); }
-  .lu-sp-hand { font-size: 0.65rem; font-weight: 700; color: var(--muted);
-    padding: 0.05rem 0.35rem; border-radius: 3px; letter-spacing: 0.06em;
-    background: rgba(139, 149, 161, 0.12); }
-  .lu-sp-hand.L { color: #5bb8f5; background: rgba(91, 184, 245, 0.12); }
+  /* Lineups tab: SP overlay above each team's lineup — quick-scan card */
+  .lu-sp { display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem 0.75rem; align-items: center;
+    padding: 0.5rem 0.75rem; margin-bottom: 0.55rem;
+    background: linear-gradient(90deg, rgba(78, 168, 222, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(78, 168, 222, 0.12);
+    border-left: 2px solid var(--accent);
+    border-radius: 5px; font-size: 0.82rem; }
+  .lu-sp-left { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem;
+    min-width: 0; }
+  .lu-sp-label { color: var(--accent); font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.9; }
+  .lu-sp-name { font-weight: 700; color: var(--text); font-size: 0.95rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .lu-sp-hand { font-size: 0.66rem; font-weight: 700; color: var(--muted);
+    padding: 0.08rem 0.4rem; border-radius: 3px; letter-spacing: 0.06em;
+    background: rgba(139, 149, 161, 0.14); }
+  .lu-sp-hand.L { color: #5bb8f5; background: rgba(91, 184, 245, 0.14); }
   .lu-sp-opener { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
-    padding: 0.05rem 0.35rem; border-radius: 3px;
-    background: rgba(229, 164, 73, 0.18); color: var(--projected); }
-  .lu-sp-stats { display: flex; gap: 0.4rem; margin-left: auto; }
-  .lu-sp-stat { font-family: var(--mono); font-size: 0.72rem;
-    display: inline-flex; gap: 0.22rem; align-items: baseline; }
-  .lu-sp-stat .lbl { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em;
+    padding: 0.05rem 0.4rem; border-radius: 3px;
+    background: rgba(229, 164, 73, 0.2); color: var(--projected); }
+  .lu-sp-stats { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+  .lu-sp-stat { font-family: var(--mono); font-size: 0.8rem;
+    display: inline-flex; gap: 0.3rem; align-items: baseline;
+    padding: 0.15rem 0.4rem; border-radius: 3px;
+    background: rgba(0, 0, 0, 0.22); }
+  .lu-sp-stat .lbl { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--muted); }
-  .lu-sp-stat .val { font-weight: 700; color: var(--text); }
+  .lu-sp-stat .val { font-weight: 700; color: var(--text); font-size: 0.88rem; }
   .lu-sp-stat .val.elite { color: var(--tier-elite); }
   .lu-sp-stat .val.good  { color: var(--tier-good); }
   .lu-sp-stat .val.bad   { color: var(--tier-bad); }
   .lu-sp-stat .val.worst { color: var(--tier-worst); }
-  .lu-sp-plus { display: flex; gap: 0.3rem; }
-  .lu-sp-none { color: var(--muted); font-style: italic; font-size: 0.72rem; }
+  .lu-sp-plus { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .lu-sp-none { color: var(--muted); font-style: italic; font-size: 0.78rem; }
+  @media (max-width: 720px) {
+    .lu-sp { grid-template-columns: 1fr; }
+    .lu-sp-stats { justify-content: flex-start; }
+  }
 
   /* Lineups tab layout */
   .lu-summary { display: flex; justify-content: space-between; align-items: center;
@@ -786,7 +800,7 @@
   <section id="tab-lineups" class="tab-content" hidden>
     <div id="lineups-summary"></div>
     <div class="lu-view-toggle" role="tablist" aria-label="Lineup view">
-      <button class="lu-view-btn active" data-lu-view="proj">Projections</button>
+      <button class="lu-view-btn active" data-lu-view="proj">Stats</button>
       <button class="lu-view-btn"        data-lu-view="stat">Statcast %</button>
     </div>
     <div id="lineups-list" class="loading">Loading lineups…</div>
@@ -1193,11 +1207,24 @@ function dayAbbr(iso) {
 // Input: days array like [0,0,8,0,33]. Uses FATIGUE.day_labels for accurate
 // weekday names aligned to the fatigue window (oldest → newest, last index
 // is the most recent day the pipeline counted).
-// Slash-delimited pitch counts across the 5-day window, oldest → newest.
-// e.g. days=[12,0,15,0,15] → "12/0/15/0/15"
-function fatigueBreakdown(days) {
+// L5 pitch-count breakdown across the 5-day window, oldest → newest.
+// format: "slashes" (compact, used in modal)   → "12/0/15/0/15"
+//         "days"    (labeled, used on bullpen) → "MON 12 · WED 15 · FRI 15"
+function fatigueBreakdown(days, format="days") {
   if (!days || !days.length) return "";
-  return days.map(d => d || 0).join("/");
+  if (format === "slashes") {
+    return days.map(d => d || 0).join("/");
+  }
+  const labels = FATIGUE?.day_labels || [];
+  const last = days.length - 1;
+  const parts = [];
+  for (let i = 0; i < days.length; i++) {
+    const p = days[i];
+    if (!p) continue;
+    const tag = labels[i] ? dayAbbr(labels[i]) : `${last - i}d ago`;
+    parts.push(`${tag} ${p}`);
+  }
+  return parts.join(" · ");
 }
 
 // ============================================================================
@@ -1834,12 +1861,15 @@ function renderLineupStatcastTable(side, opts={}) {
   return html;
 }
 
-// Compact SP card rendered above each team's lineup — shows the OPPOSING SP
-// (so hitters can be read against their matchup).
+// SP card above each team's lineup — shows the OPPOSING SP's key stats.
+// Two-column layout: left = identity (vs · name · hand · opener · STF+/PIT+),
+// right = top-line stat chips (xFIP/xERA/botERA + K%/BB% + HR/9 + Whiff).
 function renderLineupSPHeader(spName, prefix="vs") {
   if (!spName) {
-    return `<div class="lu-sp"><span class="lu-sp-label">${prefix}</span>
-              <span class="lu-sp-name" style="color:var(--muted);font-style:italic;">TBA</span></div>`;
+    return `<div class="lu-sp"><div class="lu-sp-left">
+              <span class="lu-sp-label">${prefix}</span>
+              <span class="lu-sp-name" style="color:var(--muted);font-style:italic;">TBA</span>
+            </div></div>`;
   }
   const s  = lookupPitcherStats(spName);
   const sp = lookupSplits(spName);
@@ -1850,9 +1880,11 @@ function renderLineupSPHeader(spName, prefix="vs") {
 
   if (!s) {
     return `<div class="lu-sp">
-      <span class="lu-sp-label">${prefix}</span>
-      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
-      <span class="lu-sp-none">no stats loaded</span>
+      <div class="lu-sp-left">
+        <span class="lu-sp-label">${prefix}</span>
+        <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
+      </div>
+      <div><span class="lu-sp-none">no stats loaded</span></div>
     </div>`;
   }
   const thr = PITCHER_STATS?.thresholds || {};
@@ -1860,38 +1892,40 @@ function renderLineupSPHeader(spName, prefix="vs") {
   const primaryBands = primary.label === "xFIP" ? (thr.xfip || thr.fip) : thr.fip;
   const primaryCls = tier(primary.val, primaryBands, false);
   const xeraCls = tier(s.xera, thr.xera, false);
-  // Split out K% and BB% individually (lower K-against-pitcher = worse; lower BB = better)
-  const kPctCls  = tier(s.k_pct,  thr.k_pct, true);   // higher is better for pitcher
-  const bbPctCls = tier(s.bb_pct, {elite:5, good:7, bad:9, worst:11}, false); // lower is better
+  const kPctCls  = tier(s.k_pct,  thr.k_pct, true);
+  const bbPctCls = tier(s.bb_pct, {elite:5, good:7, bad:9, worst:11}, false);
   const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
   const stuffCls    = tier(s.stuff_plus, plusBands, true);
   const pitchingCls = tier(s.pitching_plus, plusBands, true);
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
-  const chip = (label, val, cls, suffix="") => `<span class="lu-sp-stat">
+  const chip = (label, val, cls, suffix="", title="") => `<span class="lu-sp-stat"${title ? ` title="${title.replace(/"/g,'&quot;')}"` : ''}>
     <span class="lbl">${label}</span>
     <span class="val ${cls}">${val != null ? fmt(val, suffix) : '—'}</span>
   </span>`;
   const botEraCls   = tier(s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false);
   const hr9Cls      = tier(s.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false);
   const whiffOvrCls = tier(s.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true);
-  const gbCls       = tier(s.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true);
-  return `<div class="lu-sp">
-    <span class="lu-sp-label">${prefix}</span>
-    <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
-    <span class="lu-sp-stats">
-      ${chip(primary.label, primary.val, primaryCls)}
-      ${chip("xERA", s.xera, xeraCls)}
-      ${s.bot_era   != null ? chip("botERA", s.bot_era, botEraCls) : ''}
-      ${s.hr_per_9  != null ? chip("HR/9",   s.hr_per_9, hr9Cls)    : ''}
-      ${s.whiff_pct != null ? chip("Whiff",  s.whiff_pct, whiffOvrCls, "%") : ''}
-      ${chip("K%",  s.k_pct,  kPctCls,  "%")}
-      ${chip("BB%", s.bb_pct, bbPctCls, "%")}
-      ${s.gb_pct    != null ? chip("GB%",    s.gb_pct,    gbCls,       "%") : ''}
-    </span>
-    ${(s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
+  // Keep the stat row to a curated set so it stays single-line most of the
+  // time — xFIP/xERA/botERA · K%/BB% · HR/9 (+ Whiff% when available)
+  const plusLine = (s.stuff_plus != null || s.pitching_plus != null) ? `<span class="lu-sp-plus">
       ${s.stuff_plus != null ? `<span class="plus-mini ${stuffCls}" title="Stuff+ (100=avg)">STF+ <b>${Math.round(s.stuff_plus)}</b></span>` : ''}
       ${s.pitching_plus != null ? `<span class="plus-mini ${pitchingCls}" title="Pitching+ (100=avg)">PIT+ <b>${Math.round(s.pitching_plus)}</b></span>` : ''}
-    </span>` : ''}
+    </span>` : '';
+  return `<div class="lu-sp">
+    <div class="lu-sp-left">
+      <span class="lu-sp-label">${prefix}</span>
+      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
+      ${plusLine}
+    </div>
+    <div class="lu-sp-stats">
+      ${chip(primary.label, primary.val, primaryCls, "", primary.label === "xFIP" ? "xFIP — Expected FIP (season)" : "pFIP — Projected FIP")}
+      ${chip("xERA", s.xera, xeraCls, "", "Expected ERA (season)")}
+      ${s.bot_era   != null ? chip("botERA", s.bot_era, botEraCls, "", "FG Pitcher Bot ERA") : ''}
+      ${chip("K%",  s.k_pct,  kPctCls,  "%", "Strikeout rate")}
+      ${chip("BB%", s.bb_pct, bbPctCls, "%", "Walk rate (lower=better)")}
+      ${s.hr_per_9  != null ? chip("HR/9",  s.hr_per_9, hr9Cls, "", "HR allowed per 9 IP") : ''}
+      ${s.whiff_pct != null ? chip("Whf%",  s.whiff_pct, whiffOvrCls, "%", "Whiff per swing") : ''}
+    </div>
   </div>`;
 }
 
@@ -2159,7 +2193,8 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const fipCls  = tier(fipVal, fipBands, false);
     const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
-    const daysTxt = f ? fatigueBreakdown(f.days) : "";
+    // Modal (compact) uses slash format; full Bullpen tab uses day abbrev.
+    const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days") : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
     const nameShown = compact ? shortName(p.name) : p.name;
     const fipLbl = useXfip ? "xFIP" : "pFIP";
@@ -2208,7 +2243,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       </colgroup>
       <thead><tr>
         <th>B</th><th>Pitcher</th>
-        <th class="r" title="xFIP (≥10 IP) or pFIP projection (lower = better)">xFIP</th>
+        <th class="r" title="xFIP (season, ≥10 IP) or pFIP projection (fallback). Hover each value for which one.">FIP</th>
         <th class="r" title="Expected ERA (lower = better)">xERA</th>
         <th class="r" title="K% minus BB%">K-BB%</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
@@ -2336,38 +2371,75 @@ function renderPitcherDeepSP(spName, teamName) {
     arsenalTable = `<div class="pt-no-arsenal">Savant arsenal data unavailable</div>`;
   }
 
-  // Grouped stat pill rows — Projections · Rate · Command · Contact
-  const projPills = [
-    pill(primary.label, primary.val, primaryBands, false,
-         primary.label === "xFIP" ? "" : "", primary.label === "xFIP" ? "xFIP — Expected FIP (HR-normalized, lower=better)" : "pFIP — Projected FIP (lower=better)"),
+  // Expected (season-level): xFIP, xERA, SIERA, botERA
+  // (xFIP/xERA/SIERA are regressed season stats; botERA is FG Pitcher Bot's
+  // predicted ERA. pFIP is the ATC/Steamer-style projection — separated.)
+  const hasXfip = s?.xfip != null && (s?.ip ?? 0) >= 10;
+  const expectedPills = [
+    hasXfip ? pill("xFIP", s.xfip, thr.xfip || thr.fip, false, "", "xFIP — Expected FIP (HR-normalized, lower=better)") : '',
     pill("xERA", s?.xera, thr.xera, false, "", "xERA — Expected ERA (lower=better)"),
+    s?.siera != null ? pill("SIERA", s.siera, thr.xfip || thr.fip, false, "", "SIERA — Skill-Interactive ERA (lower=better)") : '',
     s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
+  // Projection: pFIP (ATC/Steamer)
+  const projPills = [
+    s?.fip_proj != null ? pill("pFIP", s.fip_proj, thr.fip, false, "", "pFIP — Projected FIP (ATC/Steamer, lower=better)") : '',
+  ].filter(Boolean).join('');
+  // Pitch-model grades (100 = league avg)
+  const plusBands2 = { elite: 115, good: 105, bad: 95, worst: 85 };
+  const modelChips = [
+    s?.stuff_plus != null ? plusChip("STF+", s.stuff_plus, true) : '',
+    s?.location_plus != null ? plusChip("LOC+", s.location_plus, true) : '',
+    s?.pitching_plus != null ? plusChip("PIT+", s.pitching_plus, true) : '',
+  ].filter(Boolean).join('');
+  // Rate
   const ratePills = [
-    pill("K%",  s?.k_pct,  thr.k_pct, true, "%", "Strikeout rate (higher=better)"),
+    pill("K%",   s?.k_pct,     thr.k_pct, true, "%", "Strikeout rate (higher=better)"),
+    pill("BB%",  s?.bb_pct,    {elite:5,good:7,bad:9,worst:11}, false, "%", "Walk rate (lower=better)"),
     pill("Whf%", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%", "Whiff per swing (higher=better)"),
-    pill("HR/9", s?.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false, "", "Home runs allowed per 9 IP (lower=better)"),
+    pill("HR/9", s?.hr_per_9,  thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false, "", "Home runs allowed per 9 IP (lower=better)"),
   ].join('');
+  // Command
   const cmdPills = [
-    pill("BB%", s?.bb_pct, {elite:5,good:7,bad:9,worst:11}, false, "%", "Walk rate (lower=better)"),
     s?.f_strike_pct != null ? pill("1st-K", s.f_strike_pct, {elite:65,good:61,bad:57,worst:54}, true, "%", "First-pitch strike rate (higher=better)") : '',
     s?.edge_pct != null ? pill("Edge", s.edge_pct, {elite:44,good:41,bad:37,worst:34}, true, "%", "% of pitches on the strike-zone edge (higher=better)") : '',
     s?.meatball_pct != null ? pill("Meat", s.meatball_pct, {elite:5.5,good:6.5,bad:7.5,worst:8.5}, false, "%", "% of pitches left middle-middle (lower=better)") : '',
   ].filter(Boolean).join('');
+  // Contact
   const contactPills = [
-    pill("Barrel", s?.barrel_pct, thr.barrel_pct || {elite:5,good:7,bad:9,worst:12}, false, "%", "Barrel rate allowed (lower=better)"),
+    pill("Barrel",  s?.barrel_pct,   thr.barrel_pct || {elite:5,good:7,bad:9,worst:12}, false, "%", "Barrel rate allowed (lower=better)"),
     pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48}, false, "%", "Hard-Hit rate allowed (lower=better)"),
-    pill("GB%", s?.gb_pct, thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%", "Ground-ball rate (higher=better)"),
+    pill("GB%",     s?.gb_pct,       thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%", "Ground-ball rate (higher=better)"),
   ].join('');
 
-  const plusLine = (s?.stuff_plus != null || s?.pitching_plus != null) ? `
-    <div class="pt-plus-line">
-      ${plusChip("STF+", s.stuff_plus, true)}
-      ${s.location_plus != null ? plusChip("LOC+", s.location_plus, true) : ''}
-      ${plusChip("PIT+", s.pitching_plus, true)}
-    </div>` : '';
-
   const ipTxt = s?.ip != null ? `${s.ip} IP` : (ar?.total_pitches ? `${ar.total_pitches}p` : '');
+  const tiles = [
+    expectedPills ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Expected (season)</div>
+      <div class="pt-pills">${expectedPills}</div>
+    </div>` : '',
+    projPills ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Projection</div>
+      <div class="pt-pills">${projPills}</div>
+    </div>` : '',
+    modelChips ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Pitch Models</div>
+      <div class="pt-pills">${modelChips}</div>
+    </div>` : '',
+    `<div class="pt-stat-group">
+      <div class="pt-group-label">Rate</div>
+      <div class="pt-pills">${ratePills}</div>
+    </div>`,
+    cmdPills ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Command</div>
+      <div class="pt-pills">${cmdPills}</div>
+    </div>` : '',
+    `<div class="pt-stat-group">
+      <div class="pt-group-label">Contact Allowed</div>
+      <div class="pt-pills">${contactPills}</div>
+    </div>`,
+  ].filter(Boolean).join('');
+
   return `<div class="pt-sp-card">
     <div class="pt-sp-hdr">
       <span class="pt-sp-team">${teamAbbr(teamName)}</span>
@@ -2375,25 +2447,7 @@ function renderPitcherDeepSP(spName, teamName) {
       ${headerHand}${headerOpener}
       ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
-    ${plusLine}
-    <div class="pt-stat-grid">
-      <div class="pt-stat-group">
-        <div class="pt-group-label">Projections</div>
-        <div class="pt-pills">${projPills}</div>
-      </div>
-      <div class="pt-stat-group">
-        <div class="pt-group-label">Strikeout · Run</div>
-        <div class="pt-pills">${ratePills}</div>
-      </div>
-      <div class="pt-stat-group">
-        <div class="pt-group-label">Command</div>
-        <div class="pt-pills">${cmdPills}</div>
-      </div>
-      <div class="pt-stat-group">
-        <div class="pt-group-label">Contact Allowed</div>
-        <div class="pt-pills">${contactPills}</div>
-      </div>
-    </div>
+    <div class="pt-stat-grid">${tiles}</div>
     ${arsenalTable}
   </div>`;
 }
