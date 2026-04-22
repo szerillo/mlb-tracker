@@ -64,15 +64,22 @@ def main():
 
     pitchers = payload.get("pitchers", {})
     matched = 0
+    siera_matched = 0
     for r in rows:
         name = r.get("PlayerName") or r.get("Name")
-        pb   = r.get("pb_ERA") or r.get("botERA")
-        if not name or pb is None:
+        if not name:
             continue
         k = norm_name(name)
-        if k in pitchers:
+        if k not in pitchers:
+            continue
+        pb = r.get("pb_ERA") or r.get("botERA")
+        if pb is not None:
             pitchers[k]["bot_era"] = round(float(pb), 2)
             matched += 1
+        siera = r.get("SIERA")
+        if siera is not None:
+            pitchers[k]["siera"] = round(float(siera), 2)
+            siera_matched += 1
 
     payload["pitchers"] = pitchers
     payload["bot_era_enriched_at"] = datetime.datetime.utcnow().isoformat() + "Z"
@@ -84,6 +91,7 @@ def main():
 
     json.dump(payload, sys.stdout, indent=2)
     print(f"  bot_era: {matched} pitchers matched", file=sys.stderr)
+    print(f"  siera: {siera_matched} pitchers matched", file=sys.stderr)
 
 
 if __name__ == "__main__":
