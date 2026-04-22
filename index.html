@@ -4,22 +4,30 @@
 <meta charset="utf-8">
 <title>MLB Pre-Game Dashboard</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
   :root {
-    --bg: #0f1419; --panel: #1a2029; --panel-hover: #232d36; --border: #2a3340;
-    --text: #e6edf3; --muted: #8b95a1; --accent: #4ea8de;
+    --bg: #0a0e13; --panel: #141a22; --panel-hover: #1c242e; --border: #242e3a;
+    --text: #e6edf3; --muted: #7d8692; --accent: #5eead4;
     --confirmed: #4ec37c; --projected: #e5a449; --tbd: #8b95a1;
     --over: #6eff94; --under: #ff8e6e;
     --tier-elite: #ff9140; --tier-good: #6eff94; --tier-bad: #5bb8f5; --tier-worst: #f87171;
     --fatigue-out: #f87171; --fatigue-fat: #e5a449;
-    --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --display: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
   body { margin: 0 auto; max-width: 1500px; background: var(--bg); color: var(--text);
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 0; }
+    font: 14px/1.5 var(--body); padding: 0;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01", "ss03"; }
 
   header { padding: 1.2rem 1.5rem 0; }
-  h1 { margin: 0 0 0.2rem; font-size: 1.5rem; }
+  h1 { margin: 0 0 0.2rem; font-size: 1.55rem; font-family: var(--display);
+    font-weight: 600; letter-spacing: -0.02em; }
   .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
   .sub span.live { color: var(--confirmed); }
 
