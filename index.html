@@ -920,18 +920,38 @@ function parkFactorRunsPct(pf) {
   return pf.park_factor - 100;
 }
 
-// Weather runs-pct: prefer BallparkPal when available (their model is
-// better-calibrated than our ported V8 — e.g. Wrigley wind was blowing up
-// V8 to +40%). Fall back to V8 for parks BP hasn't covered yet.
+// ET-date helper — BP only scrapes today's slate and has no per-game date,
+// so we need to be careful matching against tomorrow's games (the team-pair
+// would match Tuesday's BP entry against a Wednesday game otherwise).
+function _etDateStr(isoMaybeUtc) {
+  if (!isoMaybeUtc) return null;
+  const d = new Date(isoMaybeUtc);
+  if (isNaN(d.getTime())) return null;
+  // Shift UTC → ET (approx; 4h in EDT, 5h in EST — 4h covers baseball season)
+  return new Date(d.getTime() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+// Weather runs-pct: prefer BallparkPal when available for the CORRECT date,
+// fall back to V8 when BP is stale (tomorrow's games won't match today's BP
+// scrape) or when BP hasn't covered a given park.
 function blendedWxPct(game) {
   const homeAbbr = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
   const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
   const wx = weatherForGame(game.gamePk);
   if (wx?.is_dome) return { isDome: true, value: null };
-  const bp = (BP_WEATHER?.games || []).find(g =>
-    g.home_abbr === homeAbbr && (!awayAbbr || g.away_abbr === awayAbbr)) || null;
-  if (bp?.bp_weather_runs_pct != null) {
-    return { isDome: false, value: bp.bp_weather_runs_pct, source: "BP" };
+
+  // Date comparison: the BP scrape is implicitly "today" (its generated_at).
+  // Only use BP if this game's ET business day matches BP's ET business day.
+  const gameEt = _etDateStr(game.gameDate);
+  const bpEt   = _etDateStr(BP_WEATHER?.generated_at);
+  const bpIsValidDate = gameEt && bpEt && gameEt === bpEt;
+
+  if (bpIsValidDate) {
+    const bp = (BP_WEATHER?.games || []).find(g =>
+      g.home_abbr === homeAbbr && (!awayAbbr || g.away_abbr === awayAbbr)) || null;
+    if (bp?.bp_weather_runs_pct != null) {
+      return { isDome: false, value: bp.bp_weather_runs_pct, source: "BP" };
+    }
   }
   if (wx?.v8?.run_adj_pct != null) {
     return { isDome: false, value: wx.v8.run_adj_pct, source: "V8" };
