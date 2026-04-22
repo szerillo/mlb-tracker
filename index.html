@@ -500,6 +500,18 @@
     margin: 0.35rem 0 0.1rem; }
   .bp-sub-label.L { color: #5bb8f5; opacity: 0.85; }
 
+  /* Bullpen tab freshness header */
+  .bp-fresh { padding: 0.55rem 0.8rem; border-radius: 5px; margin-bottom: 0.7rem;
+    font-size: 0.82rem; letter-spacing: 0.01em;
+    border-left: 3px solid var(--border); background: rgba(255, 255, 255, 0.025); }
+  .bp-fresh b { color: var(--text); letter-spacing: 0.04em; }
+  .bp-fresh.fresh    { border-left-color: var(--tier-good);
+    background: rgba(74, 222, 128, 0.06); color: var(--text); }
+  .bp-fresh.priorday { border-left-color: var(--tier-bad);
+    background: rgba(229, 164, 73, 0.06); color: var(--text); }
+  .bp-fresh.stale    { border-left-color: var(--tier-worst);
+    background: rgba(248, 113, 113, 0.06); color: var(--text); }
+
   /* Bullpen table — single table per team, sections: AVAIL / OUT / FATIGUED */
   .bpt-summary { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.45rem;
     text-align: left; display: flex; gap: 0.55rem; flex-wrap: wrap; align-items: baseline; }
@@ -2156,7 +2168,38 @@ async function renderBullpenTab() {
   CURRENT_GAMES.forEach(g => { teamIds.add(g.teams.away.team.id); teamIds.add(g.teams.home.team.id); });
   await Promise.all([...teamIds].map(id => getTeamRoster(id)));
 
-  let html = "";
+  // Freshness header — show the fatigue window + where we are relative
+  // to today's slate, so the user knows if the pen numbers include today's
+  // completed games or are still "through prior day".
+  let headerHTML = "";
+  if (FATIGUE?.window?.end) {
+    const endIso = FATIGUE.window.end;
+    const viewedDateIso = (CURRENT_DATES && CURRENT_DATES[0]) || today();
+    const viewedDate = new Date(viewedDateIso + "T12:00:00Z");
+    const endDate = new Date(endIso + "T12:00:00Z");
+    // Status:
+    //  "includes today" → fatigue window ends on the viewed date (fresh + still-updating)
+    //  "through prior day" → window ends 1 day before viewed date
+    //  "older" → window is older than 1 day behind viewed date
+    const diffDays = Math.round((viewedDate - endDate) / 86400000);
+    let label, cls;
+    if (diffDays <= 0) {
+      label = `Window includes today (${fmtDateShort(endIso)}) — may still update as night games finish`;
+      cls = "fresh";
+    } else if (diffDays === 1) {
+      label = `Updated through prior day (${fmtDateShort(endIso)}) — tonight's pen use not yet in the numbers`;
+      cls = "priorday";
+    } else {
+      label = `Last computed ${fmtDateShort(endIso)} · ${diffDays} days behind — may be stale`;
+      cls = "stale";
+    }
+    const gen = FATIGUE.generated_at ? ` · generated ${FATIGUE.generated_at.slice(0,16).replace('T',' ')} UTC` : '';
+    headerHTML = `<div class="bp-fresh ${cls}">
+      <b>Bullpen fatigue</b> · L5 ${fmtDateShort(FATIGUE.window.start)} – ${fmtDateShort(endIso)} · ${label}${gen}
+    </div>`;
+  }
+
+  let html = headerHTML;
   for (const g of CURRENT_GAMES) {
     const awayId = g.teams.away.team.id;
     const homeId = g.teams.home.team.id;
@@ -3111,7 +3154,16 @@ async function openModal(game) {
     </div>
 
     <div class="m-section-header"><span>Bullpens</span>
-      <span class="right-note">${FATIGUE?.window ? `fatigue window ${FATIGUE.window.start} → ${FATIGUE.window.end}` : ""}</span></div>
+      <span class="right-note">${(() => {
+        if (!FATIGUE?.window?.end) return "";
+        const endIso = FATIGUE.window.end;
+        const gIso = (game.gameDate || "").slice(0,10);
+        const diff = gIso && endIso ? Math.round((new Date(gIso+"T12Z") - new Date(endIso+"T12Z")) / 86400000) : 0;
+        const base = `L5 ${FATIGUE.window.start} → ${endIso}`;
+        if (diff <= 0) return `${base} · includes today`;
+        if (diff === 1) return `${base} · through prior day`;
+        return `${base} · ${diff}d behind`;
+      })()}</span></div>
     <div class="m-split">
       <div class="m-bp-box"><h4>${away}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true})}</div>
       <div class="m-bp-box"><h4>${home}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true})}</div>
