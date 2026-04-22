@@ -41,7 +41,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps for enrichment scripts
-        run: pip install requests beautifulsoup4 unidecode
+        run: pip install requests beautifulsoup4 unidecode pandas numpy scikit-learn pyarrow pybaseball
 
       - name: Refresh umpire stats
         run: python scripts/refresh_umps.py
@@ -140,6 +140,12 @@ jobs:
 
       - name: Refresh SP platoon splits + opener detection
         run: python scripts/refresh_splits.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
+      - name: BARTOLO daily WP sim (gated on model pickle)
+        run: python scripts/bartolo_daily.py
         continue-on-error: true
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
