@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>MLB Tracker — Admin</title>
+<style>
+  body { max-width: 720px; margin: 2rem auto; padding: 0 1rem;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1419; color: #e6edf3; }
+  h1 { font-size: 1.45rem; margin: 0 0 0.3rem; }
+  .sub { color: #8b95a1; font-size: 0.88rem; margin-bottom: 1.5rem; }
+  .panel { background: #1a2029; border: 1px solid #2a3340; border-radius: 8px;
+    padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .panel h2 { font-size: 0.95rem; margin: 0 0 0.55rem; letter-spacing: 0.02em; }
+  input[type="password"] { width: 100%; padding: 0.5rem 0.7rem; background: #0f1419;
+    border: 1px solid #2a3340; border-radius: 4px; color: #e6edf3; font: inherit;
+    box-sizing: border-box; }
+  button { background: #4ea8de; border: none; color: #0f1419; font-weight: 700;
+    padding: 0.6rem 1.1rem; border-radius: 5px; cursor: pointer; font: inherit; }
+  button.ghost { background: transparent; color: #8b95a1; border: 1px solid #2a3340;
+    font-weight: 500; padding: 0.55rem 0.9rem; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.big { font-size: 1rem; padding: 0.8rem 1.6rem; background: #4ade80;
+    color: #04170a; }
+  button.big:hover { background: #6eff9d; }
+  .log { font-family: ui-monospace, monospace; font-size: 0.82rem;
+    background: #0f1419; border: 1px solid #2a3340; border-radius: 4px;
+    padding: 0.7rem; margin-top: 0.8rem; min-height: 140px;
+    white-space: pre-wrap; color: #8b95a1; max-height: 360px; overflow-y: auto; }
+  .log .ok   { color: #6eff94; }
+  .log .err  { color: #f87171; }
+  .log .warn { color: #e5a449; }
+  label { display: block; margin: 0.6rem 0 0.3rem; font-size: 0.85rem; color: #8b95a1; }
+  .row { display: flex; gap: 0.55rem; align-items: center; margin-top: 0.8rem;
+    flex-wrap: wrap; }
+  .row .spacer { flex: 1; }
+  .status { font-size: 0.82rem; color: #8b95a1; }
+  a { color: #4ea8de; }
+  code { background: #0f1419; padding: 1px 5px; border-radius: 3px;
+    font-family: ui-monospace, monospace; font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<h1>MLB Tracker — Admin</h1>
+<div class="sub">
+  Private control panel. Not linked from the main dashboard — bookmark this URL.
+  <br>Triggers the <code>refresh.yml</code> workflow on GitHub Actions.
+</div>
+
+<div class="panel">
+  <h2>PAT (stored in this browser's localStorage)</h2>
+  <label>Use your <code>mlb-tracker-workflow-push</code> token (needs Actions:R/W)</label>
+  <input type="password" id="pat" placeholder="github_pat_..." autocomplete="off">
+  <div class="row">
+    <button class="ghost" id="savePat">Save PAT</button>
+    <button class="ghost" id="clearPat">Clear</button>
+    <span class="spacer"></span>
+    <span class="status" id="patStatus"></span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Run full refresh now</h2>
+  <div class="row">
+    <button class="big" id="run">↻ Refresh all data now</button>
+    <span class="spacer"></span>
+    <span class="status" id="lastRun"></span>
+  </div>
+  <div style="color:#8b95a1;font-size:0.8rem;margin-top:0.55rem;">
+    Runs umps · fatigue · weather · lineups · pitcher stats · pitcher arsenal ·
+    hitter projections · hitter percentiles · odds · park factors · splits.
+    Follow progress at
+    <a id="runLogsLink" href="https://github.com/szerillo/mlb-tracker/actions" target="_blank">
+      GitHub Actions → refresh.yml
+    </a>.
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Log</h2>
+  <div class="log" id="log">Ready.</div>
+</div>
+
+<script>
+const PAT_KEY = 'mlb_tracker_admin_pat';
+const LAST_KEY = 'mlb_tracker_admin_last';
+const REPO = 'szerillo/mlb-tracker';
+const WORKFLOW = 'refresh.yml';
+
+const $ = id => document.getElementById(id);
+const log = (msg, cls) => {
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  if (cls) div.className = cls;
+  div.textContent = `[${t}] ${msg}`;
+  $('log').appendChild(div);
+  $('log').scrollTop = $('log').scrollHeight;
+};
+
+// Bootstrap
+$('pat').value = localStorage.getItem(PAT_KEY) || '';
+const lastRun = localStorage.getItem(LAST_KEY);
+if (lastRun) $('lastRun').textContent = `last dispatch: ${lastRun}`;
+if ($('pat').value) $('patStatus').textContent = 'PAT loaded from localStorage';
+
+$('savePat').onclick = () => {
+  const v = $('pat').value.trim();
+  if (!v.startsWith('github_pat_') && !v.startsWith('ghp_')) {
+    log("PAT doesn't look valid", 'err'); return;
+  }
+  localStorage.setItem(PAT_KEY, v);
+  $('patStatus').textContent = 'saved';
+  log('PAT saved to localStorage', 'ok');
+};
+
+$('clearPat').onclick = () => {
+  localStorage.removeItem(PAT_KEY);
+  $('pat').value = '';
+  $('patStatus').textContent = '';
+  log('PAT cleared', 'warn');
+};
+
+async function dispatchWorkflow(pat) {
+  // POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+  const url = `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + pat,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ ref: 'main', inputs: { force: 'true' } }),
+  });
+  // 204 = success (no body). Anything else is an error with a body.
+  if (resp.status === 204) return { ok: true };
+  let body = null;
+  try { body = await resp.json(); } catch {}
+  return { ok: false, status: resp.status, body };
+}
+
+async function pollLatestRun(pat) {
+  // Quick peek at the workflow runs list so we can link to the new run.
+  const url = `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=1`;
+  try {
+    const resp = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json' },
+    });
+    if (!resp.ok) return null;
+    const d = await resp.json();
+    return d.workflow_runs?.[0] || null;
+  } catch { return null; }
+}
+
+$('run').onclick = async () => {
+  const pat = $('pat').value.trim() || localStorage.getItem(PAT_KEY);
+  if (!pat) { log('No PAT set — paste it above first', 'err'); return; }
+  $('run').disabled = true;
+  try {
+    log('Dispatching workflow…');
+    const result = await dispatchWorkflow(pat);
+    if (!result.ok) {
+      const msg = result.body?.message || `HTTP ${result.status}`;
+      log(`Dispatch failed: ${msg}`, 'err');
+      if (result.status === 401) log('→ PAT may be invalid or expired', 'err');
+      if (result.status === 403) log('→ PAT may be missing Actions:R/W scope for this repo', 'err');
+      if (result.status === 404) log('→ Workflow file not found at .github/workflows/refresh.yml', 'err');
+      return;
+    }
+    const now = new Date().toLocaleString();
+    localStorage.setItem(LAST_KEY, now);
+    $('lastRun').textContent = `last dispatch: ${now}`;
+    log('Workflow dispatched ✓ — it will appear in Actions within ~5s', 'ok');
+
+    // Give GitHub a moment, then look up the run for a direct link
+    await new Promise(r => setTimeout(r, 5000));
+    const run = await pollLatestRun(pat);
+    if (run) {
+      log(`Latest run: ${run.status} · ${run.display_title || run.name}`, 'ok');
+      $('runLogsLink').href = run.html_url;
+      $('runLogsLink').textContent = `View run #${run.run_number}`;
+    } else {
+      log('Could not fetch run info — open Actions tab to watch progress', 'warn');
+    }
+  } catch (e) {
+    log(`Error: ${e.message || e}`, 'err');
+  } finally {
+    $('run').disabled = false;
+  }
+};
+</script>
+
+</body>
+</html>
