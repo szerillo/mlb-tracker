@@ -19,6 +19,7 @@ on:
     paths:
       - ".manual-trigger"
       - ".train-now"
+      - ".backfill-now"
 
 concurrency:
   group: refresh
@@ -153,6 +154,18 @@ jobs:
           rm -f .train-now
         continue-on-error: true
 
+      - name: BARTOLO backfill historical sims (gated on .backfill-now file)
+        if: hashFiles('.backfill-now') != ''
+        timeout-minutes: 60
+        run: |
+          python scripts/bartolo_backfill.py
+          rm -f .backfill-now
+        continue-on-error: true
+        env:
+          BACKFILL_START: ${{ github.event.inputs.backfill_start || '' }}
+          BACKFILL_END:   ${{ github.event.inputs.backfill_end   || '' }}
+          BACKFILL_FORCE: ${{ github.event.inputs.backfill_force || '' }}
+
       - name: BARTOLO daily WP sim (gated on model pickle)
         run: python scripts/bartolo_daily.py
         continue-on-error: true
@@ -165,7 +178,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/*.json
           [ -f scripts/bartolo/bartolo_model.pkl ] && git add scripts/bartolo/bartolo_model.pkl || true
+          [ -d data/archive ] && git add data/archive || true
           git add -u .train-now 2>/dev/null || true
+          git add -u .backfill-now 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
