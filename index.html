@@ -618,18 +618,6 @@
   .modal { max-width: 1080px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border);
     border-radius: 10px; padding: 1.25rem 1.5rem 1.5rem; position: relative; }
 
-  /* Game selector strip at top of modal */
-  .m-game-nav { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: -0.25rem 0 0.9rem; padding-right: 2.5rem; }
-  .m-game-chip { display: inline-flex; align-items: center; gap: 0.3rem;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
-    padding: 0.25rem 0.65rem; font-size: 0.72rem; color: var(--muted); cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-  .m-game-chip:hover { background: var(--panel-hover); color: var(--text); }
-  .m-game-chip.active { background: rgba(94, 234, 212, 0.12); border-color: var(--accent);
-    color: var(--accent); font-weight: 600; }
-  .m-game-chip .time { font-family: var(--mono); font-size: 0.66rem; opacity: 0.8; }
-  .m-game-chip .score { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; margin-left: 0.15rem; }
-
   /* Pitcher arsenal table in modal */
   .m-sp-arsenal { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
     font-size: 0.74rem; table-layout: fixed; }
@@ -3051,22 +3039,6 @@ function teamWrcSpan(game, side) {
   return `<span class="m-team-wrc">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
 }
 
-function renderGameNav(currentGame) {
-  if (!CURRENT_GAMES || CURRENT_GAMES.length <= 1) return "";
-  const chips = CURRENT_GAMES.map(function(g) {
-    var a = teamAbbr(g.teams.away.team.name);
-    var h = teamAbbr(g.teams.home.team.name);
-    var isActive = g.gamePk === currentGame.gamePk;
-    var st = g.status && g.status.detailedState;
-    var isFinal = st === "Final" || st === "Game Over";
-    var fs = g._finalScore;
-    var right;
-    if (isFinal && fs) right = '<span class="score">' + fs.away + '–' + fs.home + '</span>';
-    else right = '<span class="time">' + fmtTime(g.gameDate) + '</span>';
-    return '<span class="m-game-chip ' + (isActive?'active':'') + '" data-pk="' + g.gamePk + '">' + a + ' @ ' + h + ' ' + right + '</span>';
-  }).join("");
-  return '<div class="m-game-nav">' + chips + '</div>';
-}
 
 async function openModal(game) {
   const bg = document.getElementById("modal-bg");
@@ -3131,9 +3103,7 @@ async function openModal(game) {
   }
   const venueLine = `${venue} · ${timeOrScore}`;
 
-  const gameNavHtml = renderGameNav(game);
   body.innerHTML = `
-    ${gameNavHtml}
     <div class="m-matchup-bar">
       <div class="m-team away">
         <div class="m-team-label">Away</div>
@@ -3253,13 +3223,6 @@ function closeModal() {
   document.body.style.overflow = "";
 }
 document.getElementById("modal-close").onclick = closeModal;
-  document.querySelectorAll(".m-game-chip").forEach(function(chip) {
-    chip.onclick = function() {
-      var pk = parseInt(chip.dataset.pk, 10);
-      var next = CURRENT_GAMES.find(function(g) { return g.gamePk === pk; });
-      if (next && next.gamePk !== game.gamePk) openModal(next);
-    };
-  });
 document.getElementById("modal-bg").onclick = (e) => {
   if (e.target.id === "modal-bg") closeModal();
 };
