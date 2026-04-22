@@ -1,11 +1,9 @@
-"""B.A.R.T.O.L.O. post-game win-probability package.
+"""DEPRECATED — nested path from an earlier port mistake.
 
-Ported from the standalone bartolo project into the mlb-tracker repo as
-scripts/bartolo/. Entry point is scripts/bartolo_daily.py (one level up).
+The real bartolo package lives at scripts/bartolo/ (one level up).
+Nothing imports from scripts/bartolo/bartolo/. This file exists only
+because GitHub's web UI has no "delete file" button on public repos
+without a PAT, and this session doesn't have one.
 
-Modules:
-  model        — batted-ball outcome classifier (GradientBoosting)
-  simulator    — event-level resampling sim → SimResult(away_runs, home_runs)
-  ingest       — MLB StatsAPI schedule + Statcast pull helpers
-  ump_adjust   — apply HP-ump favor-runs shift to a SimResult
+Safe to ignore. Safe to delete whenever a PAT flow is available.
 """
