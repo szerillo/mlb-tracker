@@ -54,9 +54,63 @@ NWS_GRIDS = {
     # Toronto is in Canada — no NWS coverage. Dome anyway.
 }
 
-# Parks with roofs where weather usually has ~0 adjustment
+# Parks with roofs. Some are permanent (TB), others retractable. For
+# retractable parks we scrape the team's roof page to determine open/closed
+# per game — when roof is "Open" we treat the game as outdoor and run V8.
 DOMES = {"Tampa Bay Rays", "Toronto Blue Jays", "Houston Astros", "Texas Rangers",
          "Arizona Diamondbacks", "Miami Marlins", "Milwaukee Brewers"}
+
+# Teams whose roof schedule is published on mlb.com. Parse the table and
+# determine "Open" vs "Closed" per game date.
+ROOF_SCHEDULE_URLS = {
+    "Arizona Diamondbacks": "https://www.mlb.com/dbacks/ballpark/information/roof",
+}
+
+
+def fetch_roof_schedule(team_name: str, url: str, year: int):
+    """Parse the team's roof schedule page. Returns {date_iso: "open"|"closed"}."""
+    import re
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/121.0",
+            "Accept": "text/html",
+        })
+        with urllib.request.urlopen(req, timeout=20) as r:
+            html = r.read().decode("utf-8", errors="replace")
+    except Exception as e:
+        print(f"  [roof] {team_name} fetch failed: {e}")
+        return {}
+    m = re.search(r"<table[\s\S]+?</table>", html)
+    if not m:
+        return {}
+    MONTHS = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"April":4,"May":5,"Jun":6,"June":6,
+              "Jul":7,"July":7,"Aug":8,"August":8,"Sep":9,"Sept":9,"Oct":10,
+              "Nov":11,"Dec":12}
+    out = {}
+    for row_m in re.finditer(r"<tr>([\s\S]*?)</tr>", m.group(0)):
+        cells = [re.sub(r"<[^>]+>", "", c).strip()
+                 for c in re.findall(r"<t[hd]>([\s\S]*?)</t[hd]>", row_m.group(1))]
+        if len(cells) < 4: continue
+        date_cell, _time, _opp, status = cells[:4]
+        if status.lower() not in ("open", "closed"): continue
+        # date_cell example: "Wed, April 22"
+        mdate = re.search(r"(\w+)\s+(\d{1,2})", date_cell)
+        if not mdate: continue
+        mo_name, day = mdate.group(1), int(mdate.group(2))
+        month = MONTHS.get(mo_name[:3]) or MONTHS.get(mo_name)
+        if not month: continue
+        iso = f"{year:04d}-{month:02d}-{day:02d}"
+        out[iso] = status.lower()
+    if out:
+        print(f"  [roof] {team_name}: {len(out)} dates — {', '.join(f'{k} {v}' for k, v in sorted(out.items())[:5])}")
+    return out
+
+
+def load_all_roof_schedules(year: int):
+    out = {}
+    for team, url in ROOF_SCHEDULE_URLS.items():
+        out[team] = fetch_roof_schedule(team, url, year)
+    return out
 
 
 def fetch(url, timeout=30):
@@ -207,12 +261,30 @@ def main():
         except Exception as e:
             print(f"  could not read prior weather: {e}")
 
-    # Fetch forecasts in parallel (one per unique grid point), but skip any
-    # home team whose game has started — we won't need a fresh forecast.
-    unique_teams = {
-        g["home"] for g in schedule
-        if g["home"] in NWS_GRIDS and not game_has_started(g.get("status", ""))
-    }
+    # Retractable roof status per date (currently ARI only — only mlb.com
+    # page that exposes a public schedule). If a game's date is tagged "open"
+    # we override the DOMES check and treat as outdoor.
+    year = datetime.date.today().year
+    roof_by_team = load_all_roof_schedules(year)
+
+    def is_roof_open(home, game_date_iso):
+        sched = roof_by_team.get(home, {})
+        return sched.get(game_date_iso) == "open"
+
+    # Fetch forecasts in parallel (one per unique grid point). Include teams
+    # whose roofs are OPEN today even if they're in DOMES.
+    unique_teams = set()
+    for g in schedule:
+        if g["home"] not in NWS_GRIDS: continue
+        if game_has_started(g.get("status", "")): continue
+        # ET date of this game (for roof-schedule lookup)
+        try:
+            gd_et = (datetime.datetime.fromisoformat(g["game_time"].replace("Z","+00:00"))
+                     - datetime.timedelta(hours=4)).date().isoformat()
+        except Exception:
+            gd_et = None
+        if g["home"] not in DOMES or (gd_et and is_roof_open(g["home"], gd_et)):
+            unique_teams.add(g["home"])
     forecasts = {}
 
     def _load(team):
@@ -225,6 +297,7 @@ def main():
 
     games_out = []
     frozen = 0
+    roof_open_count = 0
     for g in schedule:
         home = g["home"]
         # FREEZE — if the game has started, reuse the prior snapshot verbatim
@@ -232,7 +305,16 @@ def main():
             games_out.append(prior_by_pk[g["game_pk"]])
             frozen += 1
             continue
-        if home in DOMES:
+        # ET date for roof-schedule lookup
+        try:
+            gd_et = (datetime.datetime.fromisoformat(g["game_time"].replace("Z","+00:00"))
+                     - datetime.timedelta(hours=4)).date().isoformat()
+        except Exception:
+            gd_et = None
+        roof_open = gd_et and is_roof_open(home, gd_et)
+        # If this is a retractable-roof park but roof is OPEN for the date,
+        # fall through to normal forecast/V8 path.
+        if home in DOMES and not roof_open:
             games_out.append({
                 "game_pk": g["game_pk"],
                 "matchup": f"{g['away']} @ {home}",
@@ -243,6 +325,8 @@ def main():
                 "note": "Dome / retractable roof — weather adjustment minimal",
             })
             continue
+        if roof_open:
+            roof_open_count += 1
         fc = forecasts.get(home)
         hour = extract_hour(fc, g["game_time"])
         # Compute V8 if weather available
@@ -266,6 +350,7 @@ def main():
             "venue": g["venue"],
             "game_time": g["game_time"],
             "is_dome": False,
+            "roof_open": True if roof_open else None,
             "weather": hour,
             "v8": v8,
             "note": None if hour else "NWS forecast unavailable",
@@ -274,7 +359,7 @@ def main():
     payload = {
         "generated_at": now,
         "source": "NWS (api.weather.gov) hourly forecast",
-        "method_note": "Raw weather inputs for V8 compute. V8 run-impact scoring pending integration.",
+        "method_note": "Raw weather inputs for V8 compute. Retractable roofs treated as outdoor when team roof-schedule page marks the date Open.",
         "games": games_out,
     }
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
@@ -282,7 +367,8 @@ def main():
         json.dump(payload, f, indent=2)
     print(f"  wrote {len(games_out)} games to {OUTPUT}")
     good = sum(1 for g in games_out if g.get("weather"))
-    print(f"  weather resolved: {good}/{len(games_out)} · frozen mid-game: {frozen}")
+    print(f"  weather resolved: {good}/{len(games_out)} · frozen mid-game: {frozen} · "
+          f"retractable roof open: {roof_open_count}")
 
 
 if __name__ == "__main__":
