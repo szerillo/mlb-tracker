@@ -119,6 +119,14 @@ def main():
 
     # Track per-team -> pitcher -> 5-day array
     usage = defaultdict(lambda: defaultdict(lambda: [0, 0, 0, 0, 0]))
+    # Track per-team freshness metadata so the UI can show "Thru Wed" markers.
+    # last_final = latest date (ISO) that has a Final game counted into usage
+    # pending    = True if any scheduled/in-progress game today hasn't Final'd yet
+    team_meta = defaultdict(lambda: {"last_final": None, "pending_today": False})
+    today_iso = dates[-1]
+    FINAL_STATUSES = ("Final", "Game Over", "Completed Early")
+    PENDING_STATUSES = ("Scheduled", "Pre-Game", "Warmup", "Delayed Start",
+                        "In Progress", "Manager challenge")
     for idx, date in enumerate(dates):
         games = get_pks(date)
         if not games:
@@ -126,12 +134,17 @@ def main():
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
             boxes = list(ex.map(get_box, [g[0] for g in games]))
         for (_, a, h, status), b in zip(games, boxes):
+            # Note freshness per team before filtering.
+            if status in FINAL_STATUSES:
+                for team in (a, h):
+                    cur = team_meta[team]["last_final"]
+                    if cur is None or date > cur:
+                        team_meta[team]["last_final"] = date
+            if date == today_iso and status in PENDING_STATUSES:
+                team_meta[a]["pending_today"] = True
+                team_meta[h]["pending_today"] = True
             # Skip any game that hasn't reached a reliable box-score state.
-            # "In Progress" is excluded so partial-game pitch counts don't
-            # bleed in — once the game hits Final/Game Over the next run
-            # picks it up.
-            if status in ("Postponed", "Cancelled", "Scheduled", "Pre-Game",
-                          "Warmup", "Delayed Start", "In Progress", "Manager challenge"):
+            if status in ("Postponed", "Cancelled") or status in PENDING_STATUSES:
                 continue
             for team, pitchers in extract_relievers(b).items():
                 for n, p in pitchers.items():
@@ -171,12 +184,23 @@ def main():
         if rows:
             out_teams[team] = rows
 
+    # Serialize team_meta for teams present in out_teams (plus any team that
+    # had a Final / pending game even if they had no bullpen usage recorded).
+    team_meta_out = {}
+    for team in set(list(out_teams.keys()) + list(team_meta.keys())):
+        m = team_meta.get(team, {})
+        team_meta_out[team] = {
+            "last_final": m.get("last_final"),
+            "pending_today": bool(m.get("pending_today", False)),
+        }
+
     payload = {
         "generated_at": today.isoformat(),
         "window": {"start": dates[0], "end": dates[-1]},
         "day_labels": dates,
         "source": "MLB Stats API (box scores)",
         "teams": out_teams,
+        "team_meta": team_meta_out,
     }
 
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
