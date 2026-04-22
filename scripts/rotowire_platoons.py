@@ -116,8 +116,12 @@ def main():
     with open(infile) as f:
         doc = json.load(f)
 
-    date_iso = today_iso()
-    mlb_games = mlb_sched_today(date_iso)
+    # Today and tomorrow in ET — so next-day platoon projections get
+    # filled during the prior evening.
+    today_date = today_iso()
+    tomorrow_date = (datetime.date.fromisoformat(today_date)
+                     + datetime.timedelta(days=1)).isoformat()
+    mlb_games = mlb_sched_today(today_date) + mlb_sched_today(tomorrow_date)
 
     # Scrape every team's platoon lineups once (reuse across multiple games)
     print(f"[rotowire] scraping {len(RW_TEAM_CODES)} teams…", file=sys.stderr)
@@ -128,7 +132,7 @@ def main():
     scraped = sum(1 for d in team_platoons.values() if d.get("R") or d.get("L"))
     print(f"[rotowire] got platoons for {scraped}/{len(RW_TEAM_CODES)} teams", file=sys.stderr)
 
-    # Index today's games by game_pk for quick merge
+    # Index games by game_pk for quick merge (both today and tomorrow)
     by_pk = {g.get("game_pk"): g for g in doc.get("games", [])}
 
     def mlb_to_rw(abbr):
