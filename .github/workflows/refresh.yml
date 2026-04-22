@@ -74,6 +74,11 @@ jobs:
           python scripts/refresh_pitcher_stats_enrich.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
         continue-on-error: true
 
+      - name: Enrich pitcher_stats with projected FIP (ATC / BatX / OOPSY / ZiPS)
+        run: |
+          python scripts/refresh_projections.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
+        continue-on-error: true
+
       - name: Enrich pitcher_stats with Savant HR/9 / GB% / Whiff% / HH%
         run: |
           python scripts/refresh_pitcher_savant.py data/pitcher_stats.json > /tmp/ps.json && mv /tmp/ps.json data/pitcher_stats.json || true
