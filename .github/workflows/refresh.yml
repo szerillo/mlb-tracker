@@ -18,6 +18,7 @@ on:
   push:
     paths:
       - ".manual-trigger"
+      - ".train-now"
 
 concurrency:
   group: refresh
@@ -144,6 +145,14 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      - name: BARTOLO train GBM (gated on .train-now file)
+        if: hashFiles('.train-now') != ''
+        timeout-minutes: 30
+        run: |
+          python scripts/bartolo_train.py
+          rm -f .train-now
+        continue-on-error: true
+
       - name: BARTOLO daily WP sim (gated on model pickle)
         run: python scripts/bartolo_daily.py
         continue-on-error: true
@@ -155,6 +164,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/*.json
+          [ -f scripts/bartolo/bartolo_model.pkl ] && git add scripts/bartolo/bartolo_model.pkl || true
+          git add -u .train-now 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
