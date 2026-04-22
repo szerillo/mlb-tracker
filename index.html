@@ -976,17 +976,13 @@ function blendedWxPct(game) {
     if (bp?.bp_weather_runs_pct != null) bpVal = bp.bp_weather_runs_pct;
   }
 
-  if (bpVal != null) {
-    // BP is the headline. V8 (NWS-based) goes in the delta for comparison.
-    const delta = v8Val != null ? Math.round((v8Val - bpVal) * 10) / 10 : null;
-    return {
-      isDome: false, value: bpVal, source: "BP",
-      v8: v8Val,        // NWS-based alternate
-      delta,            // v8 − bp, ie "if you trust NWS this many points higher/lower"
-    };
-  }
+  // V8 is our combined NWS + BP park calibration — prefer it whenever available.
   if (v8Val != null) {
     return { isDome: false, value: v8Val, source: "V8" };
+  }
+  // Only fall back to BP's own adjustment if V8 is missing.
+  if (bpVal != null) {
+    return { isDome: false, value: bpVal, source: "BP" };
   }
   return { isDome: false, value: null };
 }
@@ -2821,21 +2817,6 @@ function renderWeatherDetail(wx, home_park_code, game) {
   const pct = blended.value;
   const pctCls = pct == null ? "neutral" : (pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral");
   const sign = pct >= 0 ? "+" : "";
-  const src = blended.source || "";
-  // Show an alt source comparison when we have both BP (headline) and V8
-  let deltaPill = "";
-  if (blended.source === "BP" && blended.v8 != null) {
-    const v8Sign = blended.v8 >= 0 ? "+" : "";
-    const dSign  = blended.delta != null && blended.delta >= 0 ? "+" : "";
-    const dAbs   = blended.delta != null ? Math.abs(blended.delta) : null;
-    const dCls   = dAbs == null ? "" : (dAbs < 1 ? "match" : dAbs < 3 ? "minor" : "major");
-    const title  = `BP headline uses BP's own forecast. V8 (NWS-based) gives ${v8Sign}${blended.v8.toFixed(1)}%. Delta ${dSign}${blended.delta != null ? blended.delta.toFixed(1) : '—'}% = how much NWS's forecast differs from BP's.`;
-    deltaPill = `<span class="wx-alt-pill ${dCls}" title="${title.replace(/"/g,'&quot;')}">
-      NWS (V8) ${v8Sign}${blended.v8.toFixed(1)}%
-      ${blended.delta != null ? `<span class="wx-alt-delta">(Δ ${dSign}${blended.delta.toFixed(1)})</span>` : ''}
-    </span>`;
-  }
-
   return `
     <div class="wx-top">
       <div class="wx-text">
@@ -2844,11 +2825,9 @@ function renderWeatherDetail(wx, home_park_code, game) {
         </div>
         <div class="wx-forecast">${w.short_forecast||''}</div>
         <div class="wx-v8">
-          <span class="ump-pct ${pctCls}" style="font-size:1.05rem;" title="${src === 'BP' ? 'BallparkPal run adjustment for this matchup (their forecast, their model)' : 'V8 run adjustment: temp Δ + wind + dew point + pressure + precip + park carry, run through per-park calibration. Based on NWS hourly forecast.'}">
+          <span class="ump-pct ${pctCls}" style="font-size:1.05rem;" title="Combined NWS/BP weather run adjustment: NWS hourly forecast (temp Δ, wind, dew, pressure, precip) run through per-park calibration.">
             Weather Run Adj ${pct != null ? sign+pct.toFixed(1)+"%" : "—"}
-            ${src ? `<span class="wx-src">${src}</span>` : ''}
           </span>
-          ${deltaPill}
         </div>
       </div>
       ${home_park_code ? renderFieldDiagram(w.wind_dir, w.wind_speed_mph, home_park_code, 130) : ""}
