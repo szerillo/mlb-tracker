@@ -615,8 +615,36 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
     display: none; overflow-y: auto; padding: 2rem 1rem; }
   .modal-bg.active { display: block; }
-  .modal { max-width: 920px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border);
+  .modal { max-width: 1080px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border);
     border-radius: 10px; padding: 1.25rem 1.5rem 1.5rem; position: relative; }
+
+  /* Game selector strip at top of modal */
+  .m-game-nav { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: -0.25rem 0 0.9rem; padding-right: 2.5rem; }
+  .m-game-chip { display: inline-flex; align-items: center; gap: 0.3rem;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+    padding: 0.25rem 0.65rem; font-size: 0.72rem; color: var(--muted); cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+  .m-game-chip:hover { background: var(--panel-hover); color: var(--text); }
+  .m-game-chip.active { background: rgba(94, 234, 212, 0.12); border-color: var(--accent);
+    color: var(--accent); font-weight: 600; }
+  .m-game-chip .time { font-family: var(--mono); font-size: 0.66rem; opacity: 0.8; }
+  .m-game-chip .score { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; margin-left: 0.15rem; }
+
+  /* Pitcher arsenal table in modal */
+  .m-sp-arsenal { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
+    font-size: 0.74rem; table-layout: fixed; }
+  .m-sp-arsenal th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 0.18rem 0.25rem; text-align: right; font-weight: 500; }
+  .m-sp-arsenal th:first-child { text-align: left; }
+  .m-sp-arsenal td { padding: 0.2rem 0.25rem; text-align: right; font-family: var(--mono);
+    border-top: 1px solid var(--border); }
+  .m-sp-arsenal td:first-child { text-align: left; font-family: inherit; color: var(--text); font-weight: 500; }
+  .m-sp-arsenal td.elite { color: var(--tier-elite); font-weight: 700; }
+  .m-sp-arsenal td.good  { color: var(--tier-good); font-weight: 600; }
+  .m-sp-arsenal td.bad   { color: var(--tier-bad); }
+  .m-sp-arsenal td.worst { color: var(--tier-worst); font-weight: 700; }
+  .m-sp-arsenal-hdr { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-top: 0.75rem; font-weight: 600; }
   .modal-close { position: absolute; top: 0.75rem; right: 1rem; background: none; border: none;
     color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
   .modal-close:hover { color: var(--text); }
@@ -2974,7 +3002,30 @@ function renderSPBox(name, teamAbbrStr) {
         ${renderSplitRow("vs LHB", sp.vs_l)}
       </tbody>
     </table>` : ""}
+    ${renderModalArsenal(name)}
   </div>`;
+}
+
+function renderModalArsenal(spName) {
+  const ar = PITCHER_ARSENAL?.pitchers?.[normName(spName)];
+  if (!ar?.pitches?.length) return "";
+  const arsRows = ar.pitches.slice(0, 6).map(function(p) {
+    var usage = p.usage != null ? p.usage.toFixed(1) + "%" : "—";
+    var velo  = p.velo  != null ? p.velo.toFixed(1)       : "—";
+    var whf   = p.whiff != null ? p.whiff.toFixed(0) + "%" : "—";
+    var kp    = p.k_pct != null ? p.k_pct.toFixed(0) + "%" : "—";
+    var xw    = p.xwoba != null ? p.xwoba.toFixed(3)       : "—";
+    var whfCls = p.whiff != null ? tier(p.whiff, {elite:40,good:32,bad:22,worst:15}, true) : "";
+    var kpCls  = p.k_pct != null ? tier(p.k_pct, {elite:30,good:23,bad:14,worst:10}, true) : "";
+    var xwCls  = p.xwoba != null ? tier(p.xwoba, {elite:0.270,good:0.300,bad:0.340,worst:0.370}, false) : "";
+    return "<tr><td>" + (p.name || p.type) + "</td>"
+         + "<td>" + usage + "</td>"
+         + "<td>" + velo + "</td>"
+         + "<td class=\"" + whfCls + "\">" + whf + "</td>"
+         + "<td class=\"" + kpCls + "\">" + kp + "</td>"
+         + "<td class=\"" + xwCls + "\">" + xw + "</td></tr>";
+  }).join("");
+  return '<div class="m-sp-arsenal-hdr">Arsenal</div><table class="m-sp-arsenal"><colgroup><col style="width:28%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:20%"></colgroup><thead><tr><th>Pitch</th><th>Usage</th><th>Velo</th><th>Whf%</th><th>K%</th><th>xwOBA</th></tr></thead><tbody>' + arsRows + '</tbody></table>';
 }
 
 // Team avg projected wRC+ vs opposing SP's hand — chip next to team header
@@ -2998,6 +3049,23 @@ function teamWrcSpan(game, side) {
   const thr = HITTERS?.thresholds?.wrc_splits || {elite:140,good:115,bad:80,worst:65};
   const cls = tier(avg, thr, true);
   return `<span class="m-team-wrc">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
+}
+
+function renderGameNav(currentGame) {
+  if (!CURRENT_GAMES || CURRENT_GAMES.length <= 1) return "";
+  const chips = CURRENT_GAMES.map(function(g) {
+    var a = teamAbbr(g.teams.away.team.name);
+    var h = teamAbbr(g.teams.home.team.name);
+    var isActive = g.gamePk === currentGame.gamePk;
+    var st = g.status && g.status.detailedState;
+    var isFinal = st === "Final" || st === "Game Over";
+    var fs = g._finalScore;
+    var right;
+    if (isFinal && fs) right = '<span class="score">' + fs.away + '–' + fs.home + '</span>';
+    else right = '<span class="time">' + fmtTime(g.gameDate) + '</span>';
+    return '<span class="m-game-chip ' + (isActive?'active':'') + '" data-pk="' + g.gamePk + '">' + a + ' @ ' + h + ' ' + right + '</span>';
+  }).join("");
+  return '<div class="m-game-nav">' + chips + '</div>';
 }
 
 async function openModal(game) {
@@ -3063,7 +3131,9 @@ async function openModal(game) {
   }
   const venueLine = `${venue} · ${timeOrScore}`;
 
+  const gameNavHtml = renderGameNav(game);
   body.innerHTML = `
+    ${gameNavHtml}
     <div class="m-matchup-bar">
       <div class="m-team away">
         <div class="m-team-label">Away</div>
@@ -3183,6 +3253,13 @@ function closeModal() {
   document.body.style.overflow = "";
 }
 document.getElementById("modal-close").onclick = closeModal;
+  document.querySelectorAll(".m-game-chip").forEach(function(chip) {
+    chip.onclick = function() {
+      var pk = parseInt(chip.dataset.pk, 10);
+      var next = CURRENT_GAMES.find(function(g) { return g.gamePk === pk; });
+      if (next && next.gamePk !== game.gamePk) openModal(next);
+    };
+  });
 document.getElementById("modal-bg").onclick = (e) => {
   if (e.target.id === "modal-bg") closeModal();
 };
