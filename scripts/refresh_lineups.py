@@ -168,23 +168,35 @@ def _extract_team_names_from_html(html):
 
 
 # MLB Stats API helpers
+def _et_today_iso():
+    """Treat the MLB business day in ET, not UTC."""
+    et_now = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
+    return et_now.date().isoformat()
+
+
 def get_today_schedule():
-    today = datetime.date.today().isoformat()
-    yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
-    # Hydrate linescore for first pitch times + previous day's games for catcher D-after-N
-    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}"
+    """Pull today + tomorrow (ET business days) so next-day projections are
+    ready during the prior evening. Also pull yesterday for catcher-DAN logic.
+    """
+    today = _et_today_iso()
+    yesterday = (datetime.date.fromisoformat(today) - datetime.timedelta(days=1)).isoformat()
+    tomorrow  = (datetime.date.fromisoformat(today) + datetime.timedelta(days=1)).isoformat()
+    # Range fetch covers today + tomorrow in one call
+    url = (f"https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+           f"&startDate={today}&endDate={tomorrow}")
     req = urllib.request.Request(url, headers={"User-Agent":"u/1.0"})
     with urllib.request.urlopen(req, timeout=30) as r:
         d = json.load(r)
     games = []
-    for g in d.get("dates", [{}])[0].get("games", []):
-        games.append({
-            "game_pk": g["gamePk"],
-            "away": g["teams"]["away"]["team"]["name"],
-            "home": g["teams"]["home"]["team"]["name"],
-            "time": g["gameDate"],
-        })
-    # Also fetch yesterday to support catcher-DAN logic
+    for day in d.get("dates", []):
+        for g in day.get("games", []):
+            games.append({
+                "game_pk": g["gamePk"],
+                "away": g["teams"]["away"]["team"]["name"],
+                "home": g["teams"]["home"]["team"]["name"],
+                "time": g["gameDate"],
+            })
+    # Yesterday for catcher-DAN logic
     y_url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={yesterday}"
     try:
         with urllib.request.urlopen(urllib.request.Request(y_url, headers={"User-Agent":"u/1.0"}), timeout=30) as r:
