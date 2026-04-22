@@ -2458,18 +2458,26 @@ function renderPitcherDeepSP(spName, teamName) {
     hasXfip ? pill("xFIP", s.xfip, thr.xfip || thr.fip, false, "", "xFIP — Expected FIP (HR-normalized, lower=better)") : '',
     pill("xERA", s?.xera, thr.xera, false, "", "xERA — Expected ERA (lower=better)"),
     s?.siera != null ? pill("SIERA", s.siera, thr.xfip || thr.fip, false, "", "SIERA — Skill-Interactive ERA (lower=better)") : '',
-    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
-  // Projection: pFIP (ATC/Steamer)
+  // Projection: FIP from each major system (ATC / BatX / OOPSY / ZiPS)
   const projPills = [
-    s?.fip_proj != null ? pill("pFIP", s.fip_proj, thr.fip, false, "", "pFIP — Projected FIP (ATC/Steamer, lower=better)") : '',
+    s?.fip_atc   != null ? pill("ATC",   s.fip_atc,   thr.fip, false, "", "ATC projected FIP (composite; lower=better)") : '',
+    s?.fip_batx  != null ? pill("BatX",  s.fip_batx,  thr.fip, false, "", "The BAT X projected FIP (Derek Carty; lower=better)") : '',
+    s?.fip_oopsy != null ? pill("OOPSY", s.fip_oopsy, thr.fip, false, "", "OOPSY projected FIP (Sean Dolinar; lower=better)") : '',
+    s?.fip_zips  != null ? pill("ZiPS",  s.fip_zips,  thr.fip, false, "", "ZiPS projected FIP (Dan Szymborski; lower=better)") : '',
   ].filter(Boolean).join('');
+  // Back-compat: if none of the per-system projections are present, fall back
+  // to the legacy fip_proj field so caches still render something useful.
+  const projPillsFinal = projPills || (s?.fip_proj != null
+    ? pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)")
+    : '');
   // Pitch-model grades (100 = league avg)
   const plusBands2 = { elite: 115, good: 105, bad: 95, worst: 85 };
   const modelChips = [
     s?.stuff_plus != null ? plusChip("STF+", s.stuff_plus, true) : '',
     s?.location_plus != null ? plusChip("LOC+", s.location_plus, true) : '',
     s?.pitching_plus != null ? plusChip("PIT+", s.pitching_plus, true) : '',
+    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
   // Rate
   const ratePills = [
@@ -2497,9 +2505,9 @@ function renderPitcherDeepSP(spName, teamName) {
       <div class="pt-group-label">Expected (season)</div>
       <div class="pt-pills">${expectedPills}</div>
     </div>` : '',
-    projPills ? `<div class="pt-stat-group">
+    projPillsFinal ? `<div class="pt-stat-group">
       <div class="pt-group-label">Projection</div>
-      <div class="pt-pills">${projPills}</div>
+      <div class="pt-pills">${projPillsFinal}</div>
     </div>` : '',
     modelChips ? `<div class="pt-stat-group">
       <div class="pt-group-label">Pitch Models</div>
