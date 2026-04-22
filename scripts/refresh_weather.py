@@ -79,8 +79,17 @@ def get_forecast(office, x, y):
     return fetch(url)
 
 
+def _mlb_business_date():
+    """MLB 'business day' — treat games from midnight ET onward as today.
+    Runs on UTC, so subtract 4h (5h in EST) to align the 'new day' boundary
+    with actual overnight ET rollover.
+    """
+    et_now = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
+    return et_now.date().isoformat()
+
+
 def get_today_schedule():
-    today = datetime.date.today().isoformat()
+    today = _mlb_business_date()
     d = fetch(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}")
     if not d or not d.get("dates"):
         return []
