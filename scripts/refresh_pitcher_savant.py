@@ -37,7 +37,8 @@ SAVANT_URL = (
     "?year={year}&type=pitcher&min=1"
     "&selections=p_formatted_ip,p_total_pitches,p_home_run,"
     "whiff_percent,xwoba,xba,xiso,hard_hit_percent,barrel_batted_rate,"
-    "groundballs_percent,flyballs_percent,f_strike_percent,edge_percent"
+    "groundballs_percent,flyballs_percent,f_strike_percent,edge_percent,"
+    "meatball_percent"
     "&chart=false&x=p_formatted_ip&y=p_formatted_ip&r=no&csv=true"
 )
 
@@ -105,6 +106,8 @@ def build_enrichment(text: str):
         if fstr is not None:              e["f_strike_pct"] = fstr
         edge = _f(row.get("edge_percent"))
         if edge is not None:              e["edge_pct"]    = edge
+        meat = _f(row.get("meatball_percent"))
+        if meat is not None:              e["meatball_pct"] = meat
         if e:
             out[k] = e
     return out
@@ -127,7 +130,8 @@ def main():
 
     matched = 0
     fields = ("hr_per_9","gb_pct","fb_pct","whiff_pct","hard_hit_pct",
-              "barrel_pct","xwoba_savant","xba_savant","f_strike_pct","edge_pct")
+              "barrel_pct","xwoba_savant","xba_savant","f_strike_pct",
+              "edge_pct","meatball_pct")
     for key, entry in (ps.get("pitchers") or {}).items():
         e = enrichment.get(key)
         if not e: continue
