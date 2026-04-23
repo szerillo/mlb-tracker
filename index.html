@@ -295,9 +295,9 @@
   .pt-plus-line .plus-chip { font-size: 0.78rem; padding: 0.18rem 0.55rem; }
   .pt-plus-line .plus-chip b { font-size: 0.9rem; }
 
-  /* Grouped stat layout — 4 labeled tiles (Actual / Expected / Pitching Model / Projections).
-     2×2 on desktop, 1 column on mobile. */
-  .pt-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr);
+  /* Grouped stat layout — labeled tiles (Expected / Projection / Models / Rate / Command / Contact).
+     3 columns on a typical desktop, 2 on narrow, 1 on mobile. */
+  .pt-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem; margin: 0.35rem 0 0.6rem; }
   .pt-stat-group { background: rgba(0, 0, 0, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.03);
@@ -310,6 +310,9 @@
     letter-spacing: 0.12em; text-transform: uppercase;
     margin: 0.7rem 0 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.04);
     padding-top: 0.55rem; }
+  @media (max-width: 1100px) {
+    .pt-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 620px) {
     .pt-stat-grid { grid-template-columns: 1fr; }
   }
@@ -904,6 +907,20 @@
   .rk-sp-wrap::-webkit-scrollbar-track { background: rgba(36, 46, 58, 0.3); }
   .rk-sp-wrap::-webkit-scrollbar-thumb { background: rgba(139, 149, 161, 0.25); border-radius: 4px; }
   .rk-right { display: flex; flex-direction: column; gap: 1rem; }
+  /* Side-by-side split sub-tables inside a single rk-box (used for Lineup vs R/L) */
+  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.6rem; align-items: start; }
+  .rk-split-body::before { content: ''; grid-column: 2; align-self: stretch;
+    background: var(--border); width: 1px; }
+  .rk-split-col { min-width: 0; }
+  .rk-split-col:nth-child(2) { grid-column: 3; }
+  .rk-split-hdr { font-size: 0.66rem; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;
+    padding-bottom: 0.22rem; border-bottom: 1px solid var(--border); text-align: center; }
+  @media (max-width: 620px) {
+    .rk-split-body { grid-template-columns: 1fr; }
+    .rk-split-body::before { display: none; }
+    .rk-split-col:nth-child(2) { grid-column: 1; border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.4rem; }
+  }
   .rk-filter { display: flex; gap: 0.3rem; margin-bottom: 0.4rem; }
   .rk-filter button { background: none; border: 1px solid var(--border); color: var(--muted);
     padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; cursor: pointer;
@@ -972,6 +989,25 @@
     border: 1px solid rgba(110, 255, 148, 0.3); }
   .wp-edge-pill.total { background: rgba(91, 184, 245, 0.12); color: var(--tier-bad);
     border: 1px solid rgba(91, 184, 245, 0.3); }
+
+  /* Action Network PRO projections banner above scoreboard */
+  .an-proj-banner { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
+    background: rgba(94, 234, 212, 0.07); border: 1px solid rgba(94, 234, 212, 0.25);
+    border-radius: 8px; padding: 0.55rem 0.9rem; margin: 0 0 0.85rem; }
+  .an-proj-lbl { font-size: 0.66rem; color: var(--accent); font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; }
+  .an-proj-link { color: var(--text); font-weight: 700; font-size: 0.92rem;
+    text-decoration: none; border: 1px solid var(--accent);
+    background: rgba(94, 234, 212, 0.12); padding: 0.25rem 0.75rem;
+    border-radius: 5px; letter-spacing: 0.02em;
+    transition: background 0.15s, transform 0.1s; }
+  .an-proj-link:hover { background: rgba(94, 234, 212, 0.2); transform: translateY(-1px); }
+  .an-proj-arrow { font-size: 0.8rem; margin-left: 0.15rem; }
+  .an-proj-note { color: var(--muted); font-size: 0.72rem; font-style: italic;
+    flex: 1 1 300px; min-width: 0; }
+  @media (max-width: 620px) {
+    .an-proj-note { flex: 1 1 100%; font-size: 0.7rem; }
+  }
 
   /* Scoreboard Final-game WP link */
   .sb-wp-link { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.5rem;
@@ -1139,6 +1175,13 @@
 
 <main class="content">
   <section id="tab-scoreboard" class="tab-content">
+    <div class="an-proj-banner">
+      <span class="an-proj-lbl">Today's projections</span>
+      <a class="an-proj-link" href="https://www.actionnetwork.com/mlb/projections" target="_blank" rel="noopener">
+        Action Network PRO <span class="an-proj-arrow">↗</span>
+      </a>
+      <span class="an-proj-note">We hold PRO numbers on the scoreboard until each game finals, so you'll see current-day projections here.</span>
+    </div>
     <div id="scoreboard-list" class="loading">Loading today's slate…</div>
   </section>
 
@@ -2987,40 +3030,64 @@ function renderPitcherDeepSP(spName, teamName) {
   const projPillsFinal = projPills || (s?.fip_proj != null
     ? pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)")
     : '');
-  // Pitching Model — STF+ / LOC+ / PIT+ (100 = avg), then botERA.
+  // Pitch Models — STF+ / LOC+ / PIT+ (100 = avg), then botERA.
   const modelChips = [
     s?.stuff_plus    != null ? plusChip("STF+", s.stuff_plus,    true) : '',
     s?.location_plus != null ? plusChip("LOC+", s.location_plus, true) : '',
     s?.pitching_plus != null ? plusChip("PIT+", s.pitching_plus, true) : '',
     s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
-  // Actual — ERA · K-BB% · xwOBA · HR/9 (current-season real outcomes)
-  const actualPills = [
-    pill("ERA",   s?.era,        thr.era   || {elite:3.00,good:3.75,bad:4.25,worst:4.75},           false, "",  "Season ERA (lower = better)"),
-    pill("K-BB%", s?.k_bb_pct,   thr.k_bb  || {elite:22,good:16,bad:10,worst:6},                    true,  "%", "K% − BB% (higher = better)"),
-    pill("xwOBA", s?.xwoba,      thr.xwoba || {elite:0.275,good:0.300,bad:0.330,worst:0.360},       false, "",  "Expected wOBA allowed (lower = better)"),
-    pill("HR/9",  s?.hr_per_9,   thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60},        false, "",  "Home runs allowed per 9 IP (lower = better)"),
+  // Rate — K% / BB% / Whf% / HR/9 (deep view; scoreboard modal uses compressed K-BB%)
+  const kPctCls  = tier(s?.k_pct,  thr.k_pct, true);
+  const bbPctCls = tier(s?.bb_pct, {elite:5, good:7, bad:9, worst:11}, false);
+  const whiffOvrCls = tier(s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true);
+  const hr9Cls  = tier(s?.hr_per_9, thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false);
+  const ratePills = [
+    pill("K%",   s?.k_pct,     thr.k_pct, true, "%", "Strikeout rate (higher=better)"),
+    pill("BB%",  s?.bb_pct,    {elite:5,good:7,bad:9,worst:11}, false, "%", "Walk rate (lower=better)"),
+    pill("Whf%", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%", "Whiff per swing (higher=better)"),
+    pill("HR/9", s?.hr_per_9,  thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false, "", "Home runs allowed per 9 IP (lower=better)"),
+  ].join('');
+  // Command — 1st-K / Edge / Meat (Savant plate discipline)
+  const cmdPills = [
+    s?.f_strike_pct != null ? pill("1st-K", s.f_strike_pct, {elite:65,good:61,bad:57,worst:54}, true, "%", "First-pitch strike rate (higher=better)") : '',
+    s?.edge_pct     != null ? pill("Edge",  s.edge_pct,     {elite:44,good:41,bad:37,worst:34}, true, "%", "% of pitches on the strike-zone edge (higher=better)") : '',
+    s?.meatball_pct != null ? pill("Meat",  s.meatball_pct, {elite:5.5,good:6.5,bad:7.5,worst:8.5}, false, "%", "% of pitches left middle-middle (lower=better)") : '',
+  ].filter(Boolean).join('');
+  // Contact Allowed — Barrel / HardHit / GB%
+  const contactPills = [
+    pill("Barrel",  s?.barrel_pct,   thr.barrel_pct   || {elite:5,good:7,bad:9,worst:12},        false, "%", "Barrel rate allowed (lower=better)"),
+    pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48},     false, "%", "Hard-Hit rate allowed (lower=better)"),
+    pill("GB%",     s?.gb_pct,       thr.gb_pct       || {elite:52,good:46,bad:38,worst:34},     true,  "%", "Ground-ball rate (higher=better)"),
   ].join('');
 
   const ipTxt = s?.ip != null ? `${s.ip} IP` : (ar?.total_pitches ? `${ar.total_pitches}p` : '');
-  // Modal sections: Actual · Expected · Pitching Model · Projections (in that order)
+  // Deep Pitchers-tab view: 6 sections in a 3-col grid.
   const tiles = [
-    `<div class="pt-stat-group">
-      <div class="pt-group-label">Actual</div>
-      <div class="pt-pills pt-pills-line">${actualPills}</div>
-    </div>`,
     expectedPills ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Expected</div>
-      <div class="pt-pills pt-pills-line">${expectedPills}</div>
-    </div>` : '',
-    modelChips ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Pitching Model</div>
-      <div class="pt-pills pt-pills-line">${modelChips}</div>
+      <div class="pt-group-label">Expected (season)</div>
+      <div class="pt-pills">${expectedPills}</div>
     </div>` : '',
     projPillsFinal ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Projections</div>
-      <div class="pt-pills pt-pills-line">${projPillsFinal}</div>
+      <div class="pt-group-label">Projection</div>
+      <div class="pt-pills">${projPillsFinal}</div>
     </div>` : '',
+    modelChips ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Pitch Models</div>
+      <div class="pt-pills">${modelChips}</div>
+    </div>` : '',
+    `<div class="pt-stat-group">
+      <div class="pt-group-label">Rate</div>
+      <div class="pt-pills">${ratePills}</div>
+    </div>`,
+    cmdPills ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Command</div>
+      <div class="pt-pills">${cmdPills}</div>
+    </div>` : '',
+    `<div class="pt-stat-group">
+      <div class="pt-group-label">Contact Allowed</div>
+      <div class="pt-pills">${contactPills}</div>
+    </div>`,
   ].filter(Boolean).join('');
 
   return `<div class="pt-sp-card">
@@ -3396,18 +3463,30 @@ function renderSPStatRows(s, thr) {
   var n2 = function(v) { return v.toFixed(2); };
   var pctFmt = function(v) { return v.toFixed(v % 1 === 0 ? 0 : 1) + "%"; };
   var woFmt = function(v) { return ("." + Math.round(v * 1000)).slice(0, 4); };
+  // Modal layout: Actual / Expected / Pitching Model / Projections (4 rows)
   var actual = [
     chip("ERA",   s.era,       tier(s.era, eraB, false),        n2,     "Season ERA (lower=better)"),
-    chip("K%",    s.k_pct,     tier(s.k_pct, kBnds, true),      pctFmt, "Season K%"),
-    chip("BB%",   s.bb_pct,    tier(s.bb_pct, bbBnds, false),   pctFmt, "Season BB%"),
-    chip("K-BB%", s.k_bb_pct,  tier(s.k_bb_pct, kbbBnds, true), pctFmt, "K% minus BB%"),
-    chip("xwOBA", s.xwoba,     tier(s.xwoba, xwB, false),       woFmt,  "Expected wOBA allowed"),
-    chip("HR/9",  s.hr_per_9,  tier(s.hr_per_9, hr9B, false),   n2,     "HR per 9 IP"),
+    chip("K-BB%", s.k_bb_pct,  tier(s.k_bb_pct, kbbBnds, true), pctFmt, "K% minus BB% (higher=better)"),
+    chip("xwOBA", s.xwoba,     tier(s.xwoba, xwB, false),       woFmt,  "Expected wOBA allowed (lower=better)"),
+    chip("HR/9",  s.hr_per_9,  tier(s.hr_per_9, hr9B, false),   n2,     "HR per 9 IP (lower=better)"),
   ].filter(Boolean).join("");
   var expected = [
-    chip("xFIP",   s.xfip,    tier(s.xfip, xfipB, false), n2, "Expected FIP (lower=better)"),
-    chip("xERA",   s.xera,    tier(s.xera, eraB, false),  n2, "Expected ERA (lower=better)"),
+    chip("xFIP",   s.xfip,    tier(s.xfip, xfipB, false),  n2, "Expected FIP (lower=better)"),
+    chip("xERA",   s.xera,    tier(s.xera, eraB, false),   n2, "Expected ERA (lower=better)"),
     chip("SIERA",  s.siera,   tier(s.siera, xfipB, false), n2, "SIERA (lower=better)"),
+  ].filter(Boolean).join("");
+  // "Plus" stats are rendered with the same chip shell but use a higher-is-better
+  // class (STF+/LOC+/PIT+ all ≥100 is good). botERA is lower-is-better.
+  var plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+  var modelChip = function(label, val, hib, fmtFn, title) {
+    if (val == null) return "";
+    var cls = tier(val, plusBands, hib);
+    return '<span class="plus-chip ' + cls + '" title="' + (title||'').replace(/"/g,'&quot;') + '">' + label + ' <b>' + fmtFn(val) + '</b></span>';
+  };
+  var pitchingModel = [
+    modelChip("STF+", s.stuff_plus,    true, function(v){return Math.round(v);}, "Stuff+ (100=avg, higher=better)"),
+    modelChip("LOC+", s.location_plus, true, function(v){return Math.round(v);}, "Location+ (100=avg, higher=better)"),
+    modelChip("PIT+", s.pitching_plus, true, function(v){return Math.round(v);}, "Pitching+ (100=avg, higher=better)"),
     chip("botERA", s.bot_era, tier(s.bot_era, eraB, false), n2, "FG Pitcher Bot ERA (lower=better)"),
   ].filter(Boolean).join("");
   var projections = [
@@ -3421,7 +3500,8 @@ function renderSPStatRows(s, thr) {
     return '<div class="m-sp-row"><div class="m-sp-row-label">' + label + '</div><div class="m-sp-row-pills">' + pills + '</div></div>';
   }
   var ipLine = s.ip != null ? '<div class="m-sp-sub" style="margin-top:0.4rem;">' + s.ip + ' IP season</div>' : '';
-  return row("Actual", actual) + row("Expected", expected) + row("Projections", projections) + ipLine;
+  return row("Actual", actual) + row("Expected", expected)
+       + row("Pitching Model", pitchingModel) + row("Projections", projections) + ipLine;
 }
 
 function renderSPBox(name, teamAbbrStr) {
@@ -3869,12 +3949,14 @@ function renderRankingsTab() {
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
         <div class="rk-right">
-          <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">team avg · xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
+          <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">today's active-roster relievers only (not season team totals) · avg of each pitcher's season xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Lineup vs RHP <span class="rk-sub">today's lineup · PA-weighted wRC+ vs R</span></h3>
-            <div id="rk-luR-body"></div></div>
-          <div class="rk-box"><h3>Lineup vs LHP <span class="rk-sub">today's lineup · PA-weighted wRC+ vs L</span></h3>
-            <div id="rk-luL-body"></div></div>
+          <div class="rk-box"><h3>Lineup Rankings <span class="rk-sub">today's lineup · PA-weighted 3-yr wRC+ (k=100 shrunk) · vs RHP | vs LHP side-by-side</span></h3>
+            <div class="rk-split-body">
+              <div class="rk-split-col"><div class="rk-split-hdr">vs RHP</div><div id="rk-luR-body"></div></div>
+              <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
+            </div>
+          </div>
           <div class="rk-box"><h3>Defense + Baserunning <span class="rk-sub">today's lineup · sum of FLD + BSR runs</span></h3>
             <div id="rk-def-body"></div></div>
         </div>
