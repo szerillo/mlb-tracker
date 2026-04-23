@@ -908,14 +908,20 @@
   .rk-sp-wrap::-webkit-scrollbar-thumb { background: rgba(139, 149, 161, 0.25); border-radius: 4px; }
   .rk-right { display: flex; flex-direction: column; gap: 1rem; }
   /* Side-by-side split sub-tables inside a single rk-box (used for Lineup vs R/L) */
-  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.6rem; align-items: start; }
+  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.4rem; align-items: start; }
   .rk-split-body::before { content: ''; grid-column: 2; align-self: stretch;
     background: var(--border); width: 1px; }
   .rk-split-col { min-width: 0; }
   .rk-split-col:nth-child(2) { grid-column: 3; }
-  .rk-split-hdr { font-size: 0.66rem; color: var(--muted); font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;
-    padding-bottom: 0.22rem; border-bottom: 1px solid var(--border); text-align: center; }
+  .rk-split-col .rk-table { font-size: 0.74rem; }
+  .rk-split-col .rk-table th { font-size: 0.55rem; padding: 0.2rem 0.15rem; }
+  .rk-split-col .rk-table td { padding: 0.22rem 0.2rem; }
+  .rk-split-col .rk-table td.rank { width: 20px; font-size: 0.68rem; padding-right: 0.1rem; }
+  .rk-split-col .rk-table td.team img { margin-right: 0.15rem !important; }
+  .rk-split-col .rk-table td.comp { font-weight: 700; }
+  .rk-split-hdr { font-size: 0.62rem; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem;
+    padding-bottom: 0.18rem; border-bottom: 1px solid var(--border); text-align: center; }
   @media (max-width: 620px) {
     .rk-split-body { grid-template-columns: 1fr; }
     .rk-split-body::before { display: none; }
@@ -1275,6 +1281,7 @@ let PITCHER_SPLITS = null;
 let PITCHER_ARSENAL = null;
 let HITTER_PCT = null;
 let HITTER_SPLITS = null;  // data/hitter_splits.json — 3-yr weighted wRC+ splits (empirical Bayes k=100)
+let PITCHER_ROLES = null;  // data/pitcher_roles.json — Steamer-projected SP/RP classifier
 
 let CURRENT_GAMES = [];
 let CURRENT_SERIES_NEXT = [];
@@ -1286,6 +1293,19 @@ let ROSTERS_CACHE = {};
 // Set of pitcher names known to be starters (built each load from probablePitcher across 7 days).
 // Keys: normName(fullName). Used to exclude SPs from bullpen views.
 let KNOWN_STARTERS = new Set();
+
+// SP/RP classifier — prefers Steamer projections (data/pitcher_roles.json)
+// when available, falls back to KNOWN_STARTERS (set built from probable
+// pitchers over the last 7 days). Steamer is stricter and catches openers
+// like Grant Taylor that the probable-pitcher heuristic misclassifies.
+function isStarter(normalizedName) {
+  if (!normalizedName) return false;
+  if (PITCHER_ROLES && PITCHER_ROLES.pitchers) {
+    const r = PITCHER_ROLES.pitchers[normalizedName];
+    if (r && r.role) return r.role === "SP";
+  }
+  return KNOWN_STARTERS.has(normalizedName);
+}
 
 // Live lineup cache from MLB feed/live (keyed by gamePk).
 let LIVE_LINEUPS = {};
@@ -1300,7 +1320,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1315,10 +1335,11 @@ async function loadStaticData() {
     fetchJSON(`data/pitcher_arsenal.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_splits.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/pitcher_roles.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
-  HITTER_SPLITS = hsplits;
+  HITTER_SPLITS = hsplits; PITCHER_ROLES = proles;
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -2784,7 +2805,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const spKey = normName(probableSP);
   const bullpen = roster.filter(p => {
     const k = normName(p.name);
-    return k !== spKey && !KNOWN_STARTERS.has(k);
+    return k !== spKey && !isStarter(k);
   });
 
   const fatigueRows = (FATIGUE?.teams?.[teamName]) || [];
@@ -3119,7 +3140,7 @@ function renderTeamBpAggregate(teamId, teamName, probableSP) {
   const rhp = [], lhp = [];
   for (const p of roster) {
     const k = normName(p.name);
-    if (k === spKey || KNOWN_STARTERS.has(k)) continue;
+    if (k === spKey || isStarter(k)) continue;
     const ar = PITCHER_ARSENAL.pitchers[k];
     if (!ar) continue;
     (p.hand === "L" ? lhp : rhp).push(ar);
@@ -3951,7 +3972,7 @@ function renderRankingsTab() {
         <div class="rk-right">
           <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">today's active-roster relievers only (not season team totals) · avg of each pitcher's season xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Lineup Rankings <span class="rk-sub">today's lineup · PA-weighted 3-yr wRC+ (k=100 shrunk) · vs RHP | vs LHP side-by-side</span></h3>
+          <div class="rk-box"><h3>Lineup Rankings <span class="rk-sub">splits vs RHP and LHP</span></h3>
             <div class="rk-split-body">
               <div class="rk-split-col"><div class="rk-split-hdr">vs RHP</div><div id="rk-luR-body"></div></div>
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
@@ -4010,10 +4031,15 @@ function _spCompositeKey(s) {
 function computeSPRanks() {
   if (SP_RANK_CACHE) return SP_RANK_CACHE;
   const pitchers = PITCHER_STATS?.pitchers || {};
-  if (!KNOWN_STARTERS || KNOWN_STARTERS.size === 0) return { byKey: new Map(), total: 0 };
+  // Guard: need at least one classifier available. PITCHER_ROLES covers ~5000
+  // pitchers; KNOWN_STARTERS is the probable-pitcher fallback. If both empty,
+  // we have no SP universe to rank yet.
+  const hasRoles = PITCHER_ROLES && PITCHER_ROLES.pitchers && Object.keys(PITCHER_ROLES.pitchers).length > 0;
+  const hasKnown = KNOWN_STARTERS && KNOWN_STARTERS.size > 0;
+  if (!hasRoles && !hasKnown) return { byKey: new Map(), total: 0 };
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (!KNOWN_STARTERS.has(k)) return;
+    if (!isStarter(k)) return;
     const metrics = { xfip: s.xfip, siera: s.siera, xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct };
     const present = Object.values(metrics).filter(v => v != null).length;
     if (present < 3) return;
@@ -4055,7 +4081,7 @@ function computeBullpenRanks() {
   const byTeam = {};
   teams.forEach(t => { byTeam[t.id] = { team: t, pitchers: [] }; });
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (KNOWN_STARTERS && KNOWN_STARTERS.has(k)) return;
+    if (isStarter(k)) return;
     const t = nameToTeam[k]; if (!t || !byTeam[t.id]) return;
     if (s.xfip == null && s.siera == null && s.xera == null && s.bot_era == null && s.k_bb_pct == null) return;
     byTeam[t.id].pitchers.push(s);
@@ -4135,7 +4161,7 @@ function renderSPRankings(pitchers, nameToTeam) {
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
     // Gate: must be a known starter
-    if (!(KNOWN_STARTERS && KNOWN_STARTERS.has(k))) return;
+    if (!isStarter(k)) return;
     const ip = s.ip || 0;
     if (qualifiedMode && ip < 20) return;
     // Composite metrics: xFIP, SIERA, xERA, botERA, K-BB% — 20% each
@@ -4215,7 +4241,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
   const qualifiedMode = RANKINGS_RP_FILTER === "qualified";
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (KNOWN_STARTERS && KNOWN_STARTERS.has(k)) return;  // starters excluded
+    if (isStarter(k)) return;  // starters excluded
     const ip = s.ip || 0;
     if (qualifiedMode && ip < 10) return;
     const metrics = {
@@ -4277,7 +4303,7 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
   teams.forEach(t => { byTeam[t.id] = { team: t, pitchers: [] }; });
   // Aggregate by team: use all pitchers NOT in KNOWN_STARTERS (bullpen-ish)
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (KNOWN_STARTERS && KNOWN_STARTERS.has(k)) return;
+    if (isStarter(k)) return;
     const t = nameToTeam[k];
     if (!t) return;
     // Only include if they're actually on the roster (nameToTeam already filters for that)
