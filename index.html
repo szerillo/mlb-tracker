@@ -274,6 +274,11 @@
     font-family: var(--mono); }
   .pt-pills { display: flex; flex-wrap: wrap; gap: 0.45rem 0.75rem;
     margin: 0.2rem 0 0; }
+  /* One-line variant — used by modal pitcher sections (Expected, Pitch
+     Modeling, Projection, Rate). Falls back to wrap on narrow viewports. */
+  .pt-pills.pt-pills-line { flex-wrap: nowrap; overflow-x: auto;
+    gap: 0.4rem 0.55rem; }
+  @media (max-width: 640px) { .pt-pills.pt-pills-line { flex-wrap: wrap; } }
   .pt-pill { font-family: var(--mono); font-size: 0.86rem;
     display: inline-flex; align-items: baseline; gap: 0.32rem;
     padding: 0.18rem 0.5rem; border-radius: 4px;
@@ -465,23 +470,24 @@
   .lu-sp-opener { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
     padding: 0.05rem 0.4rem; border-radius: 3px;
     background: rgba(229, 164, 73, 0.2); color: var(--projected); }
-  .lu-sp-stats { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
-  .lu-sp-stat { font-family: var(--mono); font-size: 0.8rem;
-    display: inline-flex; gap: 0.3rem; align-items: baseline;
-    padding: 0.15rem 0.4rem; border-radius: 3px;
-    background: rgba(0, 0, 0, 0.22); }
-  .lu-sp-stat .lbl { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em;
+  .lu-sp-stats { display: flex; gap: 0.25rem; flex-wrap: nowrap; justify-content: flex-end; overflow: hidden; }
+  .lu-sp-stat { font-family: var(--mono); font-size: 0.7rem;
+    display: inline-flex; gap: 0.2rem; align-items: baseline;
+    padding: 0.1rem 0.3rem; border-radius: 3px;
+    background: rgba(0, 0, 0, 0.22); white-space: nowrap; }
+  .lu-sp-stat .lbl { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--muted); }
-  .lu-sp-stat .val { font-weight: 700; color: var(--text); font-size: 0.88rem; }
+  .lu-sp-stat .val { font-weight: 700; color: var(--text); font-size: 0.78rem; }
   .lu-sp-stat .val.elite { color: var(--tier-elite); }
   .lu-sp-stat .val.good  { color: var(--tier-good); }
   .lu-sp-stat .val.bad   { color: var(--tier-bad); }
   .lu-sp-stat .val.worst { color: var(--tier-worst); }
-  .lu-sp-plus { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .lu-sp-plus { display: flex; gap: 0.2rem; flex-wrap: nowrap; }
+  .lu-sp-plus .plus-mini { font-size: 0.62rem; padding: 0.05rem 0.35rem; white-space: nowrap; }
   .lu-sp-none { color: var(--muted); font-style: italic; font-size: 0.78rem; }
   @media (max-width: 720px) {
     .lu-sp { grid-template-columns: 1fr; }
-    .lu-sp-stats { justify-content: flex-start; }
+    .lu-sp-stats { justify-content: flex-start; flex-wrap: wrap; }
   }
 
   /* Lineups tab layout */
@@ -1743,7 +1749,7 @@ async function inferHPFromPrior(game) {
     if (projName) {
       return {
         name: projName,
-        projectedFrom: `${rotPos[daysBack - 1].replace('Base','B')} Ump of ${daysBack === 1 ? 'G Prior' : `G-${daysBack} Prior`}`,
+        projectedFrom: `${["1B","2B","3B"][daysBack - 1]} Ump of ${daysBack === 1 ? 'G Prior' : `G-${daysBack} Prior`}`,
         daysBack,
         anchorOfficials: off,
       };
@@ -2089,10 +2095,9 @@ function renderScoreboard() {
 // "stat" (Savant percentile columns — flipped for hitter-negative stats).
 let LU_VIEW = "proj";
 
-// Build a single team-avg Statcast table — one row per team that's playing
-// today, columns = percentile categories. Team avg = mean of each player's
-// percentile across the 9-man lineup (or however many are posted).
-// Sorted by xwOBA descending so the best offenses sit at top.
+// Statcast view = per-game matchup rows (away team vs home team side-by-side).
+// Each team row = avg of Savant percentiles across that game's posted lineup.
+// Games sorted by start time ascending so earliest first pitch is on top.
 function renderStatcastTeamAvgTable(games) {
   if (!HITTER_PCT) return '<div class="coming-soon">Statcast percentiles not loaded</div>';
   const metrics = [
@@ -2109,35 +2114,7 @@ function renderStatcastTeamAvgTable(games) {
     ["BB%",     "bb_pct",  false],
     ["Sprint",  "sprint",  false],
   ];
-  // Gather lineups → team rows
-  const teamRows = [];
-  for (const g of games) {
-    const lg = lineupsForGame(g);
-    ['away','home'].forEach(side => {
-      const players = lg?.lineups?.[side]?.players || [];
-      if (!players.length) return;
-      const team = g.teams[side].team;
-      const catMeans = {};
-      for (const [, key] of metrics) {
-        const vals = players
-          .map(p => HITTER_PCT.hitters?.[normName(p.name || "")]?.[key])
-          .filter(v => v != null);
-        catMeans[key] = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
-      }
-      teamRows.push({ team, catMeans, nPlayers: players.length, side, gamePk: g.gamePk });
-    });
-  }
-  if (!teamRows.length) return '<div class="coming-soon">No lineups posted yet</div>';
-  // Dedup — if a team appears twice (unlikely in a single day), keep first
-  const seen = new Set();
-  const rows = teamRows.filter(r => {
-    if (seen.has(r.team.id)) return false;
-    seen.add(r.team.id); return true;
-  });
-  // Sort descending by xwOBA percentile (best offense first)
-  rows.sort((a, b) => (b.catMeans.xwoba ?? -1) - (a.catMeans.xwoba ?? -1));
-
-  const pCls = (v, lb) => {
+  const pCls = (v) => {
     if (v == null) return "";
     if (v >= 70) return "elite";
     if (v >= 55) return "good";
@@ -2145,32 +2122,68 @@ function renderStatcastTeamAvgTable(games) {
     if (v <= 35) return "bad";
     return "";
   };
+  // Compute team avg across players with percentile data
+  function teamAvg(players) {
+    const out = {};
+    for (const [, key] of metrics) {
+      const vals = players
+        .map(p => HITTER_PCT.hitters?.[normName(p.name || "")]?.[key])
+        .filter(v => v != null);
+      out[key] = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
+    }
+    return out;
+  }
+  // Sort games by game time ascending
+  const sorted = games.slice().sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
+  // Build one row pair per game
   const headers = metrics.map(([lbl, , lb]) =>
-    `<th class="right" style="width:54px;" title="${lb ? 'Lower raw is better (Chase/Whiff/K%) — percentile already flipped so higher = better' : 'Higher = better'}">${lbl}</th>`
+    `<th class="right" style="width:48px;" title="${lb ? 'Lower raw is better — percentile already flipped' : 'Higher = better'}">${lbl}</th>`
   ).join("");
-  const bodyRows = rows.map((r, i) => {
-    const cells = metrics.map(([, key, lb]) => {
-      const v = r.catMeans[key];
+  let rowsHTML = "";
+  let n_games_with_data = 0;
+  for (const g of sorted) {
+    const lg = lineupsForGame(g);
+    const awayP = lg?.lineups?.away?.players || [];
+    const homeP = lg?.lineups?.home?.players || [];
+    if (!awayP.length && !homeP.length) continue;  // skip un-posted games
+    n_games_with_data++;
+    const awayAvg = teamAvg(awayP);
+    const homeAvg = teamAvg(homeP);
+    const gt = fmtTime(g.gameDate);
+    const makeCells = (avgs) => metrics.map(([, key]) => {
+      const v = avgs[key];
       return v == null
         ? `<td class="split" style="color:var(--muted);opacity:0.4;">—</td>`
-        : `<td class="split split-chip ${pCls(v, lb)}">${Math.round(v)}</td>`;
+        : `<td class="split split-chip ${pCls(v)}">${Math.round(v)}</td>`;
     }).join("");
-    return `<tr>
-      <td class="rank">${i + 1}</td>
-      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbreviation || teamAbbr(r.team.name)}</td>
-      <td class="n" style="color:var(--muted);font-size:0.72rem;">${r.nPlayers}</td>
-      ${cells}
+    // Game header row
+    rowsHTML += `<tr class="sc-game-hdr">
+      <td colspan="${metrics.length + 2}" style="padding:0.4rem 0.3rem 0.15rem;
+          font-size:0.72rem;color:var(--muted);letter-spacing:0.04em;">
+        ${teamAbbr(g.teams.away.team.name)} @ ${teamAbbr(g.teams.home.team.name)} · ${gt}
+      </td>
     </tr>`;
-  }).join("");
-  return `<div class="lu-sc-note">Team avg of Savant percentiles across the posted lineup · 0–100 scale · sorted by xwOBA descending</div>
+    // Two team rows
+    rowsHTML += `<tr>
+      <td class="team" style="padding-left:1.2rem;">${teamLogo(g.teams.away.team.id, 16)} ${g.teams.away.team.abbreviation || teamAbbr(g.teams.away.team.name)}</td>
+      <td style="color:var(--muted);font-size:0.68rem;text-align:right;padding-right:0.3rem;">${awayP.length ? awayP.length + ' bat' : '—'}</td>
+      ${makeCells(awayAvg)}
+    </tr>`;
+    rowsHTML += `<tr>
+      <td class="team" style="padding-left:1.2rem;">${teamLogo(g.teams.home.team.id, 16)} ${g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name)}</td>
+      <td style="color:var(--muted);font-size:0.68rem;text-align:right;padding-right:0.3rem;">${homeP.length ? homeP.length + ' bat' : '—'}</td>
+      ${makeCells(homeAvg)}
+    </tr>`;
+  }
+  if (!n_games_with_data) return '<div class="coming-soon">No lineups posted yet</div>';
+  return `<div class="lu-sc-note">Team-avg Savant percentiles across <b>today's posted lineup</b> · 0–100 scale · matchups grouped by game time</div>
     <table class="lineup-table" style="width:100%;">
       <thead><tr>
-        <th class="center" style="width:28px;">#</th>
-        <th class="left" style="width:70px;">Team</th>
-        <th class="right" style="width:30px;" title="Players with percentile data">N</th>
+        <th class="left" style="width:90px;">Team</th>
+        <th style="width:46px;"></th>
         ${headers}
       </tr></thead>
-      <tbody>${bodyRows}</tbody>
+      <tbody>${rowsHTML}</tbody>
     </table>`;
 }
 
@@ -2474,7 +2487,12 @@ function renderLineupTable(side, opts={}) {
     try {
       const nm = (p && p.name) || "";
       const h  = lookupHitter(nm);
-      const vR = h?.wrc_vs_r; const vL = h?.wrc_vs_l;
+      // Split sanity: real MLB wRC+ splits sit roughly [20, 250]. Values outside
+      // this band are small-sample noise (rookies, tiny career PA vs a hand).
+      // Show "—" for those until backend pulls properly-gated multi-year splits.
+      const _sane = v => (v == null || v < 20 || v > 260) ? null : v;
+      const vR = _sane(h?.wrc_vs_r);
+      const vL = _sane(h?.wrc_vs_l);
       const vRCls   = tier(vR, wBands, true);
       const vLCls   = tier(vL, wBands, true);
       const defCell = h ? defBsrCell(h.fld, fldBands, "DEF") : `<td class="chip"></td>`;
@@ -2519,11 +2537,12 @@ function renderLineupTable(side, opts={}) {
         ? `Actual wOBA ${wobaActual.toFixed(3)} (${h?.pa_actual||0} PA this season)`
         : (wobaProj != null ? `Projected wOBA ${wobaProj.toFixed(3)} (no season PA yet)` : "no data");
       // Barrel% — raw Savant barrel rate (0–20% typical, elite >12%). First stat after Player.
-      // Falls back to percentile display if raw rate not yet emitted by backend.
+      // Requires updated refresh_hitter_percentiles.py (emits barrel_pct). If
+      // backend hasn't refreshed yet, cell shows "—" rather than a percentile
+      // that'd confuse (user wants actual % only).
       const hpct = lookupHitterPct(nm);
-      const barrelRaw = hpct?.barrel_pct;  // raw rate from Savant statcast leaderboard
-      const barrelPctile = hpct?.barrel;   // fallback percentile (0–100)
-      let barrelCls = "", barrelStr = "—", barrelTitle = "no Savant data";
+      const barrelRaw = hpct?.barrel_pct;
+      let barrelCls = "", barrelStr = "—", barrelTitle = "Savant barrel rate pending";
       if (barrelRaw != null) {
         // Tier by raw rate: elite ≥12%, good ≥9%, bad ≤6%, worst ≤4% (MLB avg ~8%)
         barrelCls = barrelRaw >= 12 ? "elite"
@@ -2532,12 +2551,6 @@ function renderLineupTable(side, opts={}) {
                   : barrelRaw <= 6  ? "bad" : "";
         barrelStr = barrelRaw.toFixed(1) + "%";
         barrelTitle = `Savant barrel rate ${barrelRaw.toFixed(1)}%`;
-      } else if (barrelPctile != null) {
-        // Old data — show percentile with a note so user knows backend needs update
-        barrelCls = barrelPctile >= 80 ? "elite" : barrelPctile >= 60 ? "good"
-                  : barrelPctile <= 20 ? "worst" : barrelPctile <= 40 ? "bad" : "";
-        barrelStr = "p" + Math.round(barrelPctile);
-        barrelTitle = `Savant barrel percentile ${Math.round(barrelPctile)} (raw % pending backend refresh)`;
       }
       const barrelCell = `<td class="split split-chip ${barrelCls}" title="${barrelTitle}">${barrelStr}</td>`;
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
@@ -2566,8 +2579,8 @@ function renderLineupTable(side, opts={}) {
         ${barrelCell}${kbbCells}
         ${wobaCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
-        <td class="split split-chip ${vLCls}">${vL != null ? Math.round(vL) : "—"}</td>
+        <td class="split split-chip ${vRCls}" title="${vR != null ? `Career wRC+ vs RHP ${Math.round(vR)}` : 'Insufficient sample vs RHP'}">${vR != null ? Math.round(vR) : "—"}</td>
+        <td class="split split-chip ${vLCls}" title="${vL != null ? `Career wRC+ vs LHP ${Math.round(vL)}` : 'Insufficient sample vs LHP'}">${vL != null ? Math.round(vL) : "—"}</td>
         ${defCell}
         ${bsrCell}
       </tr>`;
@@ -2941,9 +2954,7 @@ function renderPitcherDeepSP(spName, teamName) {
     arsenalTable = `<div class="pt-no-arsenal">Savant arsenal data unavailable</div>`;
   }
 
-  // Expected (season-level): xFIP, xERA, SIERA, botERA
-  // (xFIP/xERA/SIERA are regressed season stats; botERA is FG Pitcher Bot's
-  // predicted ERA. pFIP is the ATC/Steamer-style projection — separated.)
+  // Expected (season-level): xFIP, xERA, SIERA — 3 core regressed metrics.
   const hasXfip = s?.xfip != null && (s?.ip ?? 0) >= 10;
   const expectedPills = [
     hasXfip ? pill("xFIP", s.xfip, thr.xfip || thr.fip, false, "", "xFIP — Expected FIP (HR-normalized, lower=better)") : '',
@@ -2962,20 +2973,19 @@ function renderPitcherDeepSP(spName, teamName) {
   const projPillsFinal = projPills || (s?.fip_proj != null
     ? pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)")
     : '');
-  // Pitch-model grades (100 = league avg)
-  const plusBands2 = { elite: 115, good: 105, bad: 95, worst: 85 };
+  // Pitch Modeling — botERA first, then the three "plus" grades (100 = avg).
   const modelChips = [
-    s?.stuff_plus != null ? plusChip("STF+", s.stuff_plus, true) : '',
+    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
+    s?.stuff_plus    != null ? plusChip("STF+", s.stuff_plus,    true) : '',
     s?.location_plus != null ? plusChip("LOC+", s.location_plus, true) : '',
     s?.pitching_plus != null ? plusChip("PIT+", s.pitching_plus, true) : '',
-    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
-  // Rate
+  // Rate — compressed to K-BB% / xwOBA / HR/9 / ERA (dropped standalone K% + BB%)
   const ratePills = [
-    pill("K%",   s?.k_pct,     thr.k_pct, true, "%", "Strikeout rate (higher=better)"),
-    pill("BB%",  s?.bb_pct,    {elite:5,good:7,bad:9,worst:11}, false, "%", "Walk rate (lower=better)"),
-    pill("Whf%", s?.whiff_pct, thr.whiff_pct || {elite:32,good:27,bad:22,worst:18}, true, "%", "Whiff per swing (higher=better)"),
-    pill("HR/9", s?.hr_per_9,  thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60}, false, "", "Home runs allowed per 9 IP (lower=better)"),
+    pill("K-BB%", s?.k_bb_pct,   thr.k_bb  || {elite:22,good:16,bad:10,worst:6},                    true,  "%", "K% − BB% (higher = better)"),
+    pill("xwOBA", s?.xwoba,      thr.xwoba || {elite:0.275,good:0.300,bad:0.330,worst:0.360},       false, "",  "Expected wOBA allowed (lower = better)"),
+    pill("HR/9",  s?.hr_per_9,   thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60},        false, "",  "Home runs allowed per 9 IP (lower = better)"),
+    pill("ERA",   s?.era,        thr.era   || {elite:3.00,good:3.75,bad:4.25,worst:4.75},           false, "",  "Season ERA (lower = better)"),
   ].join('');
   // Command
   const cmdPills = [
@@ -2994,19 +3004,19 @@ function renderPitcherDeepSP(spName, teamName) {
   const tiles = [
     expectedPills ? `<div class="pt-stat-group">
       <div class="pt-group-label">Expected (season)</div>
-      <div class="pt-pills">${expectedPills}</div>
+      <div class="pt-pills pt-pills-line">${expectedPills}</div>
+    </div>` : '',
+    modelChips ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Pitch Modeling</div>
+      <div class="pt-pills pt-pills-line">${modelChips}</div>
     </div>` : '',
     projPillsFinal ? `<div class="pt-stat-group">
       <div class="pt-group-label">Projection</div>
-      <div class="pt-pills">${projPillsFinal}</div>
-    </div>` : '',
-    modelChips ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Pitch Models</div>
-      <div class="pt-pills">${modelChips}</div>
+      <div class="pt-pills pt-pills-line">${projPillsFinal}</div>
     </div>` : '',
     `<div class="pt-stat-group">
       <div class="pt-group-label">Rate</div>
-      <div class="pt-pills">${ratePills}</div>
+      <div class="pt-pills pt-pills-line">${ratePills}</div>
     </div>`,
     cmdPills ? `<div class="pt-stat-group">
       <div class="pt-group-label">Command</div>
@@ -3866,11 +3876,11 @@ function renderRankingsTab() {
         <div class="rk-right">
           <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">team avg · xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Lineup vs RHP <span class="rk-sub">top-9 · wRC+ vs R</span></h3>
+          <div class="rk-box"><h3>Lineup vs RHP <span class="rk-sub">today's lineup · PA-weighted wRC+ vs R</span></h3>
             <div id="rk-luR-body"></div></div>
-          <div class="rk-box"><h3>Lineup vs LHP <span class="rk-sub">top-9 · wRC+ vs L</span></h3>
+          <div class="rk-box"><h3>Lineup vs LHP <span class="rk-sub">today's lineup · PA-weighted wRC+ vs L</span></h3>
             <div id="rk-luL-body"></div></div>
-          <div class="rk-box"><h3>Defense + Baserunning <span class="rk-sub">top-9 · FLD + BSR runs</span></h3>
+          <div class="rk-box"><h3>Defense + Baserunning <span class="rk-sub">today's lineup · sum of FLD + BSR runs</span></h3>
             <div id="rk-def-body"></div></div>
         </div>
       </div>
@@ -4261,24 +4271,51 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
   </table>`;
 }
 
+// Build map of teamId → array of hitter objects from today's posted lineup.
+// Falls back to top-9 by PA when lineup hasn't been posted yet.
+function _todaysLineupHittersByTeam(hitters) {
+  const byTeam = {};
+  (CURRENT_GAMES || []).forEach(g => {
+    const lg = lineupsForGame(g);
+    ['away','home'].forEach(side => {
+      const players = lg?.lineups?.[side]?.players || [];
+      if (!players.length) return;
+      const team = g.teams[side].team;
+      const list = [];
+      for (const p of players) {
+        const h = hitters[normName(p.name || "")];
+        if (h) list.push({ name: p.name, hitter: h, order: p.order || 99 });
+      }
+      if (list.length) {
+        list.sort((a, b) => a.order - b.order);  // by batting order
+        byTeam[team.id] = { team: { id: team.id, abbr: team.abbreviation || teamAbbr(team.name), name: team.name }, list, _fromLineup: true };
+      }
+    });
+  });
+  return byTeam;
+}
+
+// Lineup rankings — based on TODAY's posted lineup for each team.
+// If a team hasn't posted yet, they're omitted from the ranking (not padded
+// with season top-9), so the table reflects only actionable data.
 function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId) {
   const body = document.getElementById(elementId);
   if (!body) return;
-  const byTeam = {};
-  teams.forEach(t => { byTeam[t.id] = { team: t, hitters: [] }; });
-  Object.entries(hitters).forEach(([k, h]) => {
-    const t = nameToTeam[k];
-    if (!t || !byTeam[t.id]) return;
-    if (h[splitField] == null) return;
-    byTeam[t.id].hitters.push({ val: h[splitField], pa: h.pa || 0 });
-  });
+  const byTeam = _todaysLineupHittersByTeam(hitters);
   const teamRows = Object.values(byTeam).map(tb => {
-    if (tb.hitters.length === 0) return null;
-    // Top 9 by projected PA
-    const top = tb.hitters.sort((a, b) => b.pa - a.pa).slice(0, 9);
-    if (top.length < 5) return null;
-    const avg = top.reduce((a, b) => a + b.val, 0) / top.length;
-    return { team: tb.team, n: top.length, score: avg };
+    const vals = tb.list.map(x => x.hitter[splitField]).filter(v => v != null);
+    if (vals.length < 5) return null;
+    // PA-weighted by lineup slot (top-of-order bats more than bottom)
+    let wsum = 0, tw = 0;
+    tb.list.forEach((x, i) => {
+      const v = x.hitter[splitField];
+      if (v == null) return;
+      const d = (i >= 0 && i < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[i] : 0;
+      const w = SLOT_BASE_PA + d;
+      wsum += v * w; tw += w;
+    });
+    const avg = tw > 0 ? wsum / tw : vals.reduce((a,b)=>a+b,0) / vals.length;
+    return { team: tb.team, n: vals.length, score: avg };
   }).filter(Boolean);
   teamRows.sort((a, b) => b.score - a.score);
 
@@ -4292,28 +4329,23 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
       <td class="comp ${tierCls}">${Math.round(r.score)}</td>
     </tr>`;
   }).join("");
-
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th>wRC+</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="3" class="rk-empty">No lineup data.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="3" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
   </table>`;
 }
 
+// DEF + BSR — sum of FLD + BSR values across today's lineup, ranked.
 function renderDefRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-def-body");
   if (!body) return;
-  const byTeam = {};
-  teams.forEach(t => { byTeam[t.id] = { team: t, hitters: [] }; });
-  Object.entries(hitters).forEach(([k, h]) => {
-    const t = nameToTeam[k];
-    if (!t || !byTeam[t.id]) return;
-    byTeam[t.id].hitters.push({ fld: h.fld, bsr: h.bsr, pa: h.pa || 0 });
-  });
+  const byTeam = _todaysLineupHittersByTeam(hitters);
   const teamRows = Object.values(byTeam).map(tb => {
-    if (tb.hitters.length === 0) return null;
-    const top = tb.hitters.sort((a, b) => b.pa - a.pa).slice(0, 9);
-    const fld = top.map(h => h.fld).filter(v => v != null).reduce((a, b) => a + b, 0);
-    const bsr = top.map(h => h.bsr).filter(v => v != null).reduce((a, b) => a + b, 0);
+    const fldVals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
+    const bsrVals = tb.list.map(x => x.hitter.bsr).filter(v => v != null);
+    if (!fldVals.length && !bsrVals.length) return null;
+    const fld = fldVals.reduce((a, b) => a + b, 0);
+    const bsr = bsrVals.reduce((a, b) => a + b, 0);
     return { team: tb.team, fld, bsr, composite: fld + bsr };
   }).filter(Boolean);
   teamRows.sort((a, b) => b.composite - a.composite);
@@ -4331,10 +4363,9 @@ function renderDefRankings(hitters, nameToTeam, teams) {
       <td>${fmt(r.bsr)}</td>
     </tr>`;
   }).join("");
-
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th>Total</th><th>DEF</th><th>BSR</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="5" class="rk-empty">No defense data.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="5" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
   </table>`;
 }
 
