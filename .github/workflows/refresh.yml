@@ -45,6 +45,19 @@ jobs:
       - name: Install deps for enrichment scripts
         run: pip install requests beautifulsoup4 unidecode pandas numpy scikit-learn pyarrow pybaseball
 
+      - name: Migrate misplaced files (idempotent self-heal)
+        run: |
+          mkdir -p data/odds_archive scripts
+          if ls data/2026-*.json >/dev/null 2>&1; then
+            echo "Moving odds archive JSONs from data/ to data/odds_archive/"
+            mv data/2026-*.json data/odds_archive/
+          fi
+          if [ -f data/scrape_action_archive.py ]; then
+            echo "Moving scrape_action_archive.py from data/ to scripts/"
+            mv data/scrape_action_archive.py scripts/
+          fi
+        continue-on-error: true
+
       - name: Refresh umpire stats
         run: python scripts/refresh_umps.py
         continue-on-error: true
