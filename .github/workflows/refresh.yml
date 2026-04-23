@@ -186,7 +186,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/*.json data/odds_archive/*.json
+          git add data/*.json || true
+          if ls data/odds_archive/*.json >/dev/null 2>&1; then git add data/odds_archive/*.json || true; fi
           [ -f scripts/bartolo/bartolo_model.pkl ] && git add scripts/bartolo/bartolo_model.pkl || true
           [ -d data/archive ] && git add data/archive || true
           git add -u .train-now 2>/dev/null || true
