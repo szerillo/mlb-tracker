@@ -295,9 +295,9 @@
   .pt-plus-line .plus-chip { font-size: 0.78rem; padding: 0.18rem 0.55rem; }
   .pt-plus-line .plus-chip b { font-size: 0.9rem; }
 
-  /* Grouped stat layout — labeled tiles (Expected / Projection / Models / Rate / Command / Contact).
-     3 columns on a typical desktop, 2 on narrow, 1 on mobile. */
-  .pt-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+  /* Grouped stat layout — 4 labeled tiles (Actual / Expected / Pitching Model / Projections).
+     2×2 on desktop, 1 column on mobile. */
+  .pt-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem; margin: 0.35rem 0 0.6rem; }
   .pt-stat-group { background: rgba(0, 0, 0, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.03);
@@ -310,9 +310,6 @@
     letter-spacing: 0.12em; text-transform: uppercase;
     margin: 0.7rem 0 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.04);
     padding-top: 0.55rem; }
-  @media (max-width: 1100px) {
-    .pt-stat-grid { grid-template-columns: repeat(2, 1fr); }
-  }
   @media (max-width: 620px) {
     .pt-stat-grid { grid-template-columns: 1fr; }
   }
@@ -2990,59 +2987,40 @@ function renderPitcherDeepSP(spName, teamName) {
   const projPillsFinal = projPills || (s?.fip_proj != null
     ? pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)")
     : '');
-  // Pitch Modeling — botERA first, then the three "plus" grades (100 = avg).
+  // Pitching Model — STF+ / LOC+ / PIT+ (100 = avg), then botERA.
   const modelChips = [
-    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
     s?.stuff_plus    != null ? plusChip("STF+", s.stuff_plus,    true) : '',
     s?.location_plus != null ? plusChip("LOC+", s.location_plus, true) : '',
     s?.pitching_plus != null ? plusChip("PIT+", s.pitching_plus, true) : '',
+    s?.bot_era != null ? pill("botERA", s.bot_era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "FG Pitcher Bot ERA (lower=better)") : '',
   ].filter(Boolean).join('');
-  // Rate — compressed to K-BB% / xwOBA / HR/9 / ERA (dropped standalone K% + BB%)
-  const ratePills = [
+  // Actual — ERA · K-BB% · xwOBA · HR/9 (current-season real outcomes)
+  const actualPills = [
+    pill("ERA",   s?.era,        thr.era   || {elite:3.00,good:3.75,bad:4.25,worst:4.75},           false, "",  "Season ERA (lower = better)"),
     pill("K-BB%", s?.k_bb_pct,   thr.k_bb  || {elite:22,good:16,bad:10,worst:6},                    true,  "%", "K% − BB% (higher = better)"),
     pill("xwOBA", s?.xwoba,      thr.xwoba || {elite:0.275,good:0.300,bad:0.330,worst:0.360},       false, "",  "Expected wOBA allowed (lower = better)"),
     pill("HR/9",  s?.hr_per_9,   thr.hr_per_9 || {elite:0.85,good:1.10,bad:1.35,worst:1.60},        false, "",  "Home runs allowed per 9 IP (lower = better)"),
-    pill("ERA",   s?.era,        thr.era   || {elite:3.00,good:3.75,bad:4.25,worst:4.75},           false, "",  "Season ERA (lower = better)"),
-  ].join('');
-  // Command
-  const cmdPills = [
-    s?.f_strike_pct != null ? pill("1st-K", s.f_strike_pct, {elite:65,good:61,bad:57,worst:54}, true, "%", "First-pitch strike rate (higher=better)") : '',
-    s?.edge_pct != null ? pill("Edge", s.edge_pct, {elite:44,good:41,bad:37,worst:34}, true, "%", "% of pitches on the strike-zone edge (higher=better)") : '',
-    s?.meatball_pct != null ? pill("Meat", s.meatball_pct, {elite:5.5,good:6.5,bad:7.5,worst:8.5}, false, "%", "% of pitches left middle-middle (lower=better)") : '',
-  ].filter(Boolean).join('');
-  // Contact
-  const contactPills = [
-    pill("Barrel",  s?.barrel_pct,   thr.barrel_pct || {elite:5,good:7,bad:9,worst:12}, false, "%", "Barrel rate allowed (lower=better)"),
-    pill("HardHit", s?.hard_hit_pct, thr.hard_hit_pct || {elite:34,good:38,bad:44,worst:48}, false, "%", "Hard-Hit rate allowed (lower=better)"),
-    pill("GB%",     s?.gb_pct,       thr.gb_pct || {elite:52,good:46,bad:38,worst:34}, true, "%", "Ground-ball rate (higher=better)"),
   ].join('');
 
   const ipTxt = s?.ip != null ? `${s.ip} IP` : (ar?.total_pitches ? `${ar.total_pitches}p` : '');
+  // Modal sections: Actual · Expected · Pitching Model · Projections (in that order)
   const tiles = [
+    `<div class="pt-stat-group">
+      <div class="pt-group-label">Actual</div>
+      <div class="pt-pills pt-pills-line">${actualPills}</div>
+    </div>`,
     expectedPills ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Expected (season)</div>
+      <div class="pt-group-label">Expected</div>
       <div class="pt-pills pt-pills-line">${expectedPills}</div>
     </div>` : '',
     modelChips ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Pitch Modeling</div>
+      <div class="pt-group-label">Pitching Model</div>
       <div class="pt-pills pt-pills-line">${modelChips}</div>
     </div>` : '',
     projPillsFinal ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Projection</div>
+      <div class="pt-group-label">Projections</div>
       <div class="pt-pills pt-pills-line">${projPillsFinal}</div>
     </div>` : '',
-    `<div class="pt-stat-group">
-      <div class="pt-group-label">Rate</div>
-      <div class="pt-pills pt-pills-line">${ratePills}</div>
-    </div>`,
-    cmdPills ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Command</div>
-      <div class="pt-pills">${cmdPills}</div>
-    </div>` : '',
-    `<div class="pt-stat-group">
-      <div class="pt-group-label">Contact Allowed</div>
-      <div class="pt-pills">${contactPills}</div>
-    </div>`,
   ].filter(Boolean).join('');
 
   return `<div class="pt-sp-card">
