@@ -1173,6 +1173,18 @@
   <section id="tab-winprob" class="tab-content" hidden>
     <div id="winprob-root" class="loading">Loading post-game win probability…</div>
   </section>
+
+  <footer class="methodology-note" style="max-width: 1100px; margin: 2.5rem auto 1.5rem;
+       padding: 0.85rem 1.1rem; border-top: 1px solid var(--border);
+       color: var(--muted); font-size: 0.72rem; line-height: 1.55; font-style: italic;">
+    <strong style="color: var(--text); font-style: normal; letter-spacing: 0.04em;">Methodology notes</strong> ·
+    wRC+ vs RHP / LHP are <b>weighted 3-year multi-year averages</b> (FanGraphs splits
+    leaderboard, Total = most recent 3 seasons) with empirical-Bayes shrinkage toward
+    league mean (k=100 PAs) so small-sample rookies/call-ups don't skew rankings.
+    Team avg wRC+ shown on Lineup pills is PA-weighted by batting-order slot. Full
+    methodology index coming — ping <a href="https://twitter.com/SeanZerillo" target="_blank"
+    style="color: var(--accent); text-decoration: none;">@SeanZerillo</a> with questions.
+  </footer>
 </main>
 
 <!-- Game detail modal -->
@@ -1222,6 +1234,7 @@ let BP_WEATHER = null;
 let PITCHER_SPLITS = null;
 let PITCHER_ARSENAL = null;
 let HITTER_PCT = null;
+let HITTER_SPLITS = null;  // data/hitter_splits.json — 3-yr weighted wRC+ splits (empirical Bayes k=100)
 
 let CURRENT_GAMES = [];
 let CURRENT_SERIES_NEXT = [];
@@ -1247,7 +1260,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1261,9 +1274,11 @@ async function loadStaticData() {
     fetchJSON(`data/pitcher_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_arsenal.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/hitter_splits.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
+  HITTER_SPLITS = hsplits;
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -2487,12 +2502,14 @@ function renderLineupTable(side, opts={}) {
     try {
       const nm = (p && p.name) || "";
       const h  = lookupHitter(nm);
-      // Split sanity: real MLB wRC+ splits sit roughly [20, 250]. Values outside
-      // this band are small-sample noise (rookies, tiny career PA vs a hand).
-      // Show "—" for those until backend pulls properly-gated multi-year splits.
-      const _sane = v => (v == null || v < 20 || v > 260) ? null : v;
-      const vR = _sane(h?.wrc_vs_r);
-      const vL = _sane(h?.wrc_vs_l);
+      // Prefer empirical-Bayes-shrunk wRC+ splits from data/hitter_splits.json
+      // (3-yr FG "Total", k=100 regression). Falls back to the legacy
+      // hitters.json values when a player isn't in the splits file.
+      const splitEntry = HITTER_SPLITS?.hitters?.[normName(nm)];
+      const vR = splitEntry?.wrc_vs_r ?? h?.wrc_vs_r;
+      const vL = splitEntry?.wrc_vs_l ?? h?.wrc_vs_l;
+      const vR_raw = splitEntry?.wrc_vs_r_raw; const vR_pa = splitEntry?.pa_vs_r;
+      const vL_raw = splitEntry?.wrc_vs_l_raw; const vL_pa = splitEntry?.pa_vs_l;
       const vRCls   = tier(vR, wBands, true);
       const vLCls   = tier(vL, wBands, true);
       const defCell = h ? defBsrCell(h.fld, fldBands, "DEF") : `<td class="chip"></td>`;
@@ -2579,8 +2596,8 @@ function renderLineupTable(side, opts={}) {
         ${barrelCell}${kbbCells}
         ${wobaCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        <td class="split split-chip ${vRCls}" title="${vR != null ? `Career wRC+ vs RHP ${Math.round(vR)}` : 'Insufficient sample vs RHP'}">${vR != null ? Math.round(vR) : "—"}</td>
-        <td class="split split-chip ${vLCls}" title="${vL != null ? `Career wRC+ vs LHP ${Math.round(vL)}` : 'Insufficient sample vs LHP'}">${vL != null ? Math.round(vL) : "—"}</td>
+        <td class="split split-chip ${vRCls}" title="${vR != null ? `Shrunk ${Math.round(vR)} wRC+ vs RHP${vR_raw != null ? ` · raw ${Math.round(vR_raw)} over ${vR_pa} PA (3-yr)` : ''}` : 'No vs-RHP data'}">${vR != null ? Math.round(vR) : "—"}</td>
+        <td class="split split-chip ${vLCls}" title="${vL != null ? `Shrunk ${Math.round(vL)} wRC+ vs LHP${vL_raw != null ? ` · raw ${Math.round(vL_raw)} over ${vL_pa} PA (3-yr)` : ''}` : 'No vs-LHP data'}">${vL != null ? Math.round(vL) : "—"}</td>
         ${defCell}
         ${bsrCell}
       </tr>`;
