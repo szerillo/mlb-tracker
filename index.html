@@ -112,9 +112,10 @@
   /* SP cell (left/right flank of matchup) */
   .sb-sp-cell { font-size: 0.82rem; line-height: 1.35; text-align: left; }
   .sb-sp-cell.home { text-align: right; }
-  .sb-sp-name { font-weight: 600; font-size: 0.92rem; color: var(--text); }
+  .sb-sp-name { font-weight: 600; font-size: 0.92rem; color: var(--text);
+    display: inline-flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
   .sb-sp-hand { font-size: 0.7rem; font-weight: 600; color: var(--muted);
-    letter-spacing: 0.04em; margin-left: 0.25rem; }
+    letter-spacing: 0.04em; }
   .sb-sp-stats { display: flex; gap: 0.35rem; margin-top: 0.2rem;
     font-family: var(--mono); font-size: 0.78rem; }
   .sb-sp-cell.home .sb-sp-stats { justify-content: flex-end; }
@@ -3590,15 +3591,15 @@ function renderRankingsTab() {
     root.innerHTML = `
       <div class="rk-grid">
         <div class="rk-box">
-          <h3>SP Power Rankings <span class="rk-sub">equal-weighted composite · ATC / xFIP / xERA / botERA</span></h3>
+          <h3>SP Power Rankings <span class="rk-sub">equal-weighted composite · xFIP / SIERA / xERA / botERA / K-BB% · starters only</span></h3>
           <div class="rk-filter" id="rk-sp-filter">
-            <button data-flt="qualified" class="${RANKINGS_SP_FILTER==='qualified'?'active':''}">Qualified (≥10 IP)</button>
-            <button data-flt="all" class="${RANKINGS_SP_FILTER==='all'?'active':''}">All</button>
+            <button data-flt="qualified" class="${RANKINGS_SP_FILTER==='qualified'?'active':''}">Qualified (≥20 IP)</button>
+            <button data-flt="all" class="${RANKINGS_SP_FILTER==='all'?'active':''}">All SPs</button>
           </div>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
         </div>
         <div class="rk-right">
-          <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">team avg · xFIP / xERA / botERA / K-BB%</span></h3>
+          <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">team avg · xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
             <div id="rk-bp-body"></div></div>
           <div class="rk-box"><h3>Lineup vs RHP <span class="rk-sub">top-9 · wRC+ vs R</span></h3>
             <div id="rk-luR-body"></div></div>
@@ -3635,35 +3636,41 @@ function renderRankingsTab() {
 function renderSPRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-sp-wrap");
   if (!wrap) return;
-  // Filter: qualified = IP ≥ 10 AND has all four metrics; all = has at least 2 metrics.
+  // Filter: only "known starters" (pitchers assigned as probable SP in current/recent windows)
+  // + qualified tier requires ≥20 IP for stability, else "all SPs" mode.
   const qualifiedMode = RANKINGS_SP_FILTER === "qualified";
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
+    // Gate: must be a known starter
+    if (!(KNOWN_STARTERS && KNOWN_STARTERS.has(k))) return;
     const ip = s.ip || 0;
-    const metrics = { atc: s.fip_atc, xfip: s.xfip, xera: s.xera, bot: s.bot_era };
+    if (qualifiedMode && ip < 20) return;
+    // Composite metrics: xFIP, SIERA, xERA, botERA, K-BB% — 20% each
+    const metrics = {
+      xfip: s.xfip, siera: s.siera, xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
+    };
     const present = Object.values(metrics).filter(v => v != null).length;
-    if (qualifiedMode) {
-      if (ip < 10) return;
-      if (present < 3) return;
-    } else {
-      if (present < 2) return;
-    }
+    // Need at least 3 of 5 to avoid garbage rankings from 1-2 noisy stats
+    if (present < 3) return;
     pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
   });
 
-  // Z-score each metric across the pool
-  const metrics = ["atc", "xfip", "xera", "bot"];
+  // Z-score each metric across the starter pool
+  // xfip/siera/xera/bot: lower is better. kbb: higher is better (sign flipped below).
+  const metricKeys = ["xfip", "siera", "xera", "bot", "kbb"];
   const stats = {};
-  metrics.forEach(m => {
+  metricKeys.forEach(m => {
     stats[m] = zScores(pool.map(p => p.metrics[m]));
   });
 
-  // Composite = avg of available z-scores (lower = better)
+  // Composite = avg of available z-scores (lower = better overall).
+  // K-BB% gets its sign flipped so "higher K-BB%" reduces the composite.
   pool.forEach(p => {
     const zs = [];
-    metrics.forEach(m => {
+    metricKeys.forEach(m => {
       if (p.metrics[m] != null && stats[m]) {
-        zs.push((p.metrics[m] - stats[m].mean) / stats[m].sd);
+        const z = (p.metrics[m] - stats[m].mean) / stats[m].sd;
+        zs.push(m === "kbb" ? -z : z);
       }
     });
     p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
@@ -3673,6 +3680,7 @@ function renderSPRankings(pitchers, nameToTeam) {
 
   const total = pool.length;
   const fmt = v => v == null ? "—" : v.toFixed(2);
+  const fmtPct = v => v == null ? "—" : v.toFixed(1) + "%";
   const rows = pool.map((p, i) => {
     const rank = i + 1;
     const t = nameToTeam[p.key];
@@ -3682,21 +3690,22 @@ function renderSPRankings(pitchers, nameToTeam) {
       <td class="name">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
-      <td>${fmt(p.metrics.atc)}</td>
       <td>${fmt(p.metrics.xfip)}</td>
+      <td>${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
+      <td>${fmtPct(p.metrics.kbb)}</td>
       <td style="color:var(--muted);font-size:0.75rem;">${p.ip || 0}</td>
     </tr>`;
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:36px"><col><col style="width:44px"><col style="width:58px"><col style="width:54px"><col style="width:54px"><col style="width:54px"><col style="width:58px"><col style="width:40px"></colgroup>
+    <colgroup><col style="width:36px"><col><col style="width:44px"><col style="width:58px"><col style="width:54px"><col style="width:54px"><col style="width:54px"><col style="width:58px"><col style="width:56px"><col style="width:40px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
-      <th>Comp</th><th>ATC</th><th>xFIP</th><th>xERA</th><th>botERA</th><th>IP</th>
+      <th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No pitchers matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -3717,7 +3726,7 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
     if (!t) return;
     // Only include if they're actually on the roster (nameToTeam already filters for that)
     if (!byTeam[t.id]) return;
-    if (s.xfip == null && s.xera == null && s.bot_era == null && s.k_bb_pct == null) return;
+    if (s.xfip == null && s.siera == null && s.xera == null && s.bot_era == null && s.k_bb_pct == null) return;
     byTeam[t.id].pitchers.push(s);
   });
 
@@ -3733,26 +3742,29 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
       team: tb.team,
       n: ps.length,
       xfip: mean("xfip"),
+      siera: mean("siera"),
       xera: mean("xera"),
       bot: mean("bot_era"),
       kbb: mean("k_bb_pct"),
     };
   }).filter(Boolean);
 
-  // Z-score: xfip/xera/bot lower better; kbb higher better
+  // Z-score: xfip/siera/xera/bot lower better; kbb higher better
   const zs = {
-    xfip: zScores(teamRows.map(r => r.xfip)),
-    xera: zScores(teamRows.map(r => r.xera)),
-    bot:  zScores(teamRows.map(r => r.bot)),
-    kbb:  zScores(teamRows.map(r => r.kbb)),
+    xfip:  zScores(teamRows.map(r => r.xfip)),
+    siera: zScores(teamRows.map(r => r.siera)),
+    xera:  zScores(teamRows.map(r => r.xera)),
+    bot:   zScores(teamRows.map(r => r.bot)),
+    kbb:   zScores(teamRows.map(r => r.kbb)),
   };
   teamRows.forEach(r => {
     const zList = [];
-    if (r.xfip != null && zs.xfip) zList.push((r.xfip - zs.xfip.mean) / zs.xfip.sd);
-    if (r.xera != null && zs.xera) zList.push((r.xera - zs.xera.mean) / zs.xera.sd);
-    if (r.bot  != null && zs.bot)  zList.push((r.bot  - zs.bot.mean)  / zs.bot.sd);
+    if (r.xfip  != null && zs.xfip)  zList.push((r.xfip  - zs.xfip.mean)  / zs.xfip.sd);
+    if (r.siera != null && zs.siera) zList.push((r.siera - zs.siera.mean) / zs.siera.sd);
+    if (r.xera  != null && zs.xera)  zList.push((r.xera  - zs.xera.mean)  / zs.xera.sd);
+    if (r.bot   != null && zs.bot)   zList.push((r.bot   - zs.bot.mean)   / zs.bot.sd);
     // kbb: higher is better → invert sign
-    if (r.kbb  != null && zs.kbb)  zList.push(-((r.kbb  - zs.kbb.mean) / zs.kbb.sd));
+    if (r.kbb   != null && zs.kbb)   zList.push(-((r.kbb - zs.kbb.mean)   / zs.kbb.sd));
     r.composite = zList.length ? zList.reduce((a, b) => a + b, 0) / zList.length : null;
   });
   teamRows.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
@@ -3767,6 +3779,7 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
       <td class="comp ${tierCls}">${r.composite != null ? r.composite.toFixed(2) : "—"}</td>
       <td>${fmt(r.xfip)}</td>
+      <td>${fmt(r.siera)}</td>
       <td>${fmt(r.xera)}</td>
       <td>${fmt(r.bot)}</td>
       <td>${r.kbb != null ? r.kbb.toFixed(1) + '%' : '—'}</td>
@@ -3774,8 +3787,8 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
   }).join("");
 
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>Comp</th><th>xFIP</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="7" class="rk-empty">No bullpen data.</td></tr>'}</tbody>
+    <thead><tr><th>#</th><th class="left">Team</th><th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" class="rk-empty">No bullpen data.</td></tr>'}</tbody>
   </table>`;
 }
 
