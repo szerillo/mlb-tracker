@@ -3859,7 +3859,7 @@ function renderDefRankings(hitters, nameToTeam, teams) {
 // ============================================================================
 // WIN PROB TAB (BARTOLO post-game simulator)
 // ============================================================================
-let WINPROB_DATA = null;      // data/winprob.json once published
+let WINPROB_DATA = null;      // data/bartolo_wp.json — per-game sim summaries
 let WINPROB_BACKTEST = null;  // data/bartolo_backtest.json — season-to-date calibration
 let WINPROB_SELECTED = null;  // gamePk of currently-shown detail
 let WINPROB_RENDERED = false;
@@ -3988,10 +3988,10 @@ async function renderWinprobTab() {
   const root = document.getElementById("winprob-root");
   if (!root) return;
 
-  // Try to fetch data/winprob.json (published by the post-game simulator).
+  // Try to fetch data/bartolo_wp.json (published by scripts/bartolo_daily.py).
   if (WINPROB_DATA === null) {
     try {
-      const r = await fetch("data/winprob.json?t=" + Date.now());
+      const r = await fetch("data/bartolo_wp.json?t=" + Date.now());
       WINPROB_DATA = r.ok ? await r.json() : { games: {} };
     } catch (e) {
       WINPROB_DATA = { games: {} };
