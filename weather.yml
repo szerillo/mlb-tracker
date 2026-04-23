@@ -1,0 +1,71 @@
+name: Weather refresh
+
+# Lightweight pass for weather only. The main "Data refresh" workflow already
+# handles weather during game hours (every 15 min noon–2 AM ET). This fills
+# the morning gap so forecasts don't go 9+ hours stale between overnight and
+# first pitch.
+#
+# Schedule (UTC → ET):
+#   09:00 UTC = 05:00 ET
+#   11:00 UTC = 07:00 ET
+#   13:00 UTC = 09:00 ET
+#   14:00 UTC = 10:00 ET
+#   15:00 UTC = 11:00 ET
+# (Note: during EDT, subtract 4; during EST, subtract 5. Cron is UTC — these
+#  times float ±1 hour across DST transitions, which is fine for weather.)
+
+on:
+  schedule:
+    - cron: "0 9,11,13,14,15 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: weather-refresh
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests beautifulsoup4
+
+      - name: Refresh weather forecasts
+        run: python scripts/refresh_weather.py
+        env:
+          FORCE_RUN: "1"
+
+      - name: Refresh BP daily weather (best-effort)
+        run: python scripts/refresh_park_data.py
+        continue-on-error: true
+        env:
+          FORCE_RUN: "1"
+
+      - name: Commit changed data (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in data/weather.json data/bp_weather.json data/park_factors.json; do
+            if [ -f "$f" ]; then
+              git add "$f" || true
+            fi
+          done
+          if git diff --cached --quiet; then
+            echo "No weather changes to commit."
+          else
+            git commit -m "Weather refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git push
+          fi
