@@ -932,6 +932,76 @@
     font-family: var(--body); font-weight: 600; }
   .sb-wp-link:hover { background: rgba(94, 234, 212, 0.12); }
 
+  /* ─── Win Prob backtest sub-section ─── */
+  .wp-backtest { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.9rem 1.1rem 1rem; margin-bottom: 1.5rem; }
+  .wp-backtest-hdr { display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem; }
+  .wp-backtest-hdr h3 { margin: 0; font-family: var(--display); font-size: 1rem;
+    letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); }
+  .wp-backtest-hdr .wpb-meta { font-size: 0.72rem; color: var(--muted); font-family: var(--mono); }
+  .wpb-headline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
+    margin-bottom: 0.4rem; }
+  @media (max-width: 600px) { .wpb-headline { grid-template-columns: repeat(2, 1fr); } }
+  .wpb-stat { background: rgba(36, 46, 58, 0.4); border-radius: 6px; padding: 0.55rem 0.75rem; }
+  .wpb-stat .wpb-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600; }
+  .wpb-stat .wpb-val { font-family: var(--mono); font-size: 1.35rem; font-weight: 700;
+    color: var(--text); margin-top: 0.15rem; }
+  .wpb-stat .wpb-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+  .wpb-stat.good .wpb-val { color: var(--tier-good); }
+  .wpb-stat.warm .wpb-val { color: var(--tier-bad); }
+
+  .wpb-row { margin: 0.9rem 0 0.4rem; font-size: 0.7rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+
+  /* Reliability diagram (horizontal bar chart) */
+  .wpb-reliab { display: grid; grid-template-columns: 66px 1fr auto; gap: 0.3rem 0.6rem;
+    font-family: var(--mono); font-size: 0.7rem; align-items: center; }
+  .wpb-reliab .wpb-rbin { color: var(--muted); text-align: right; }
+  .wpb-reliab .wpb-rbars { position: relative; height: 12px; background: rgba(10,14,19,0.4);
+    border-radius: 3px; overflow: hidden; }
+  .wpb-reliab .wpb-rpred { position: absolute; top: 0; left: 0; height: 100%;
+    background: rgba(94, 234, 212, 0.3); }
+  .wpb-reliab .wpb-ract  { position: absolute; top: 0; left: 0; height: 100%;
+    background: rgba(110, 255, 148, 0.55); mix-blend-mode: screen; }
+  .wpb-reliab .wpb-rtxt { color: var(--text); white-space: nowrap; }
+  .wpb-reliab .wpb-rtxt .delta { color: var(--muted); margin-left: 0.25rem; font-size: 0.62rem; }
+
+  /* Hit-rate threshold pills */
+  .wpb-thresholds { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+  .wpb-thpill { display: inline-flex; align-items: baseline; gap: 0.3rem;
+    padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.7rem;
+    border: 1px solid var(--border); background: rgba(36,46,58,0.35); }
+  .wpb-thpill .wpb-thlbl { color: var(--muted); font-family: var(--mono); font-weight: 600; }
+  .wpb-thpill .wpb-thval { font-family: var(--mono); font-weight: 700; color: var(--text); }
+  .wpb-thpill .wpb-thn   { color: var(--muted); font-size: 0.62rem; }
+  .wpb-thpill.hot  { border-color: rgba(110,255,148,0.45); }
+  .wpb-thpill.hot  .wpb-thval { color: var(--tier-good); }
+  .wpb-thpill.warm { border-color: rgba(234,197,94,0.4); }
+
+  /* 7-day rolling Brier sparkline */
+  .wpb-sparkwrap { display: grid; grid-template-columns: 1fr auto; gap: 0.8rem;
+    align-items: flex-end; margin-top: 0.3rem; }
+  .wpb-spark { display: flex; align-items: flex-end; height: 44px; gap: 2px;
+    background: rgba(10,14,19,0.35); padding: 0.35rem; border-radius: 6px; }
+  .wpb-spark .wpb-sbar { flex: 1; min-width: 3px; border-radius: 2px 2px 0 0;
+    background: var(--accent); opacity: 0.55; }
+  .wpb-spark .wpb-sbar.latest { opacity: 1; background: var(--tier-good); }
+  .wpb-spark .wpb-sbar:hover { opacity: 1; }
+  .wpb-spark-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--muted);
+    white-space: nowrap; text-align: right; }
+  .wpb-spark-meta .wpb-sval { color: var(--text); font-weight: 700; font-size: 1rem;
+    display: block; }
+
+  .wpb-empty { color: var(--muted); font-style: italic; font-size: 0.82rem;
+    padding: 0.4rem 0; }
+  .wpb-toggle { font-size: 0.68rem; color: var(--accent); background: none;
+    border: none; cursor: pointer; font-family: inherit; padding: 0; letter-spacing: 0.04em; }
+  .wpb-toggle:hover { text-decoration: underline; }
+  .wpb-detail { margin-top: 0.4rem; }
+  .wp-backtest.collapsed .wpb-detail { display: none; }
+
 </style>
 </head>
 <body>
@@ -3790,10 +3860,128 @@ function renderDefRankings(hitters, nameToTeam, teams) {
 // WIN PROB TAB (BARTOLO post-game simulator)
 // ============================================================================
 let WINPROB_DATA = null;      // data/winprob.json once published
+let WINPROB_BACKTEST = null;  // data/bartolo_backtest.json — season-to-date calibration
 let WINPROB_SELECTED = null;  // gamePk of currently-shown detail
 let WINPROB_RENDERED = false;
 
 function invalidateWinprob() { WINPROB_RENDERED = false; }
+
+// ─── Season-to-date backtest sub-section ────────────────────────────────────
+function renderWinprobBacktest(bt) {
+  if (!bt || bt.status !== "ok" || !bt.headline) {
+    return `<div class="wp-backtest">
+      <div class="wp-backtest-hdr"><h3>Season Calibration</h3></div>
+      <div class="wpb-empty">Backtest will appear once the simulator has run on ≥1 archived day. The workflow auto-regenerates <code>data/bartolo_backtest.json</code> every refresh cycle.</div>
+    </div>`;
+  }
+
+  const brier   = bt.headline.brier != null ? bt.headline.brier.toFixed(3) : "—";
+  const logloss = bt.headline.log_loss != null ? bt.headline.log_loss.toFixed(3) : "—";
+  const favHit  = bt.headline.fav_hit_rate != null ? (bt.headline.fav_hit_rate * 100).toFixed(1) + "%" : "—";
+  const n       = bt.n_games || 0;
+  const dStart  = bt.date_range?.start || "";
+  const dEnd    = bt.date_range?.end || "";
+
+  // Brier classification: <0.15 = excellent (good), <0.20 = solid, >=0.25 = warm
+  const brierVal = bt.headline.brier || 0;
+  const brierCls = brierVal < 0.15 ? "good" : brierVal < 0.20 ? "" : "warm";
+  const favCls   = (bt.headline.fav_hit_rate || 0) >= 0.75 ? "good"
+                 : (bt.headline.fav_hit_rate || 0) >= 0.65 ? "" : "warm";
+
+  // Reliability diagram (horizontal bars: predicted vs actual per bucket)
+  const reliabRows = (bt.reliability || []).map(r => {
+    const predPct = (r.predicted_mean * 100).toFixed(0);
+    const actPct  = (r.actual_rate * 100).toFixed(0);
+    const delta   = r.actual_rate - r.predicted_mean;
+    const deltaStr = (delta >= 0 ? "+" : "") + (delta * 100).toFixed(0) + "pp";
+    const nStr    = `n=${r.n}`;
+    return `<div class="wpb-rbin">${r.bin}</div>
+      <div class="wpb-rbars" title="Predicted ${predPct}% vs actual ${actPct}% (${nStr})">
+        <div class="wpb-rpred" style="width:${predPct}%"></div>
+        <div class="wpb-ract"  style="width:${actPct}%"></div>
+      </div>
+      <div class="wpb-rtxt">${actPct}% act <span class="delta">${deltaStr} · ${nStr}</span></div>`;
+  }).join("");
+
+  // Hit rate by confidence threshold pills
+  const threshOrder = ["55pct", "60pct", "65pct", "70pct", "75pct", "80pct"];
+  const threshPills = threshOrder.map(k => {
+    const t = bt.thresholds?.[k];
+    if (!t) return "";
+    const pct = (t.hit_rate * 100).toFixed(0);
+    const cls = t.hit_rate >= 0.90 ? "hot" : t.hit_rate >= 0.80 ? "warm" : "";
+    const lbl = "≥" + k.replace("pct", "%");
+    return `<span class="wpb-thpill ${cls}">
+      <span class="wpb-thlbl">${lbl}</span>
+      <span class="wpb-thval">${pct}%</span>
+      <span class="wpb-thn">n=${t.n}</span>
+    </span>`;
+  }).join("");
+
+  // Rolling 7-day Brier sparkline
+  const rolling = bt.rolling_7d || [];
+  let sparkHtml = "";
+  if (rolling.length) {
+    const briers = rolling.map(d => d.brier_7d || 0);
+    const maxB = Math.max(...briers, 0.001);
+    const minB = Math.min(...briers);
+    const lastIdx = rolling.length - 1;
+    const last = rolling[lastIdx];
+    const bars = rolling.map((d, i) => {
+      const h = Math.max(8, Math.round((d.brier_7d / maxB) * 100));
+      const cls = i === lastIdx ? "wpb-sbar latest" : "wpb-sbar";
+      return `<div class="${cls}" style="height:${h}%" title="${d.date}: Brier ${d.brier_7d.toFixed(3)} (n=${d.n_games})"></div>`;
+    }).join("");
+    sparkHtml = `<div class="wpb-row">Rolling 7-Day Brier · ${rolling.length} days</div>
+      <div class="wpb-sparkwrap">
+        <div class="wpb-spark">${bars}</div>
+        <div class="wpb-spark-meta">
+          <span class="wpb-sval">${last.brier_7d.toFixed(3)}</span>
+          latest · min ${minB.toFixed(3)} · max ${maxB.toFixed(3)}
+        </div>
+      </div>`;
+  }
+
+  return `<div class="wp-backtest collapsed">
+    <div class="wp-backtest-hdr">
+      <h3>Season Calibration · ${n} games</h3>
+      <span class="wpb-meta">${dStart} → ${dEnd}
+        <button class="wpb-toggle" type="button">Show details</button>
+      </span>
+    </div>
+    <div class="wpb-headline">
+      <div class="wpb-stat ${brierCls}">
+        <div class="wpb-label">Brier Score</div>
+        <div class="wpb-val">${brier}</div>
+        <div class="wpb-sub">lower is better · perfect = 0</div>
+      </div>
+      <div class="wpb-stat">
+        <div class="wpb-label">Log Loss</div>
+        <div class="wpb-val">${logloss}</div>
+        <div class="wpb-sub">lower is better</div>
+      </div>
+      <div class="wpb-stat ${favCls}">
+        <div class="wpb-label">Fav Hit Rate</div>
+        <div class="wpb-val">${favHit}</div>
+        <div class="wpb-sub">when model picks winner</div>
+      </div>
+      <div class="wpb-stat">
+        <div class="wpb-label">Sample</div>
+        <div class="wpb-val">${n}</div>
+        <div class="wpb-sub">backtested games</div>
+      </div>
+    </div>
+    <div class="wpb-detail">
+      <div class="wpb-row">Hit Rate by Confidence</div>
+      <div class="wpb-thresholds">${threshPills}</div>
+
+      <div class="wpb-row">Reliability (predicted vs actual win rate)</div>
+      <div class="wpb-reliab">${reliabRows}</div>
+
+      ${sparkHtml}
+    </div>
+  </div>`;
+}
 
 async function renderWinprobTab() {
   if (WINPROB_RENDERED && WINPROB_SELECTED == null) return;
@@ -3824,10 +4012,18 @@ async function renderWinprobTab() {
     resamples batted-ball outcomes via a gradient-boosted classifier trained on ~250K Statcast events,
     then subtracts the HP umpire's called-zone favor to produce an ump-neutral win probability.
     Edges shown against Action Network PRO projections and the current market.
-    <span style="display:block;margin-top:0.4rem;color:var(--muted);">
-      <em>Simulator pipeline currently runs in demo mode; the Python port to the refresh workflow is pending.</em>
-    </span>
   </div>`;
+
+  // Load backtest (season-to-date calibration vs. actual game outcomes)
+  if (WINPROB_BACKTEST === null) {
+    try {
+      const r = await fetch("data/bartolo_backtest.json?t=" + Date.now());
+      WINPROB_BACKTEST = r.ok ? await r.json() : { status: "missing" };
+    } catch (e) {
+      WINPROB_BACKTEST = { status: "missing" };
+    }
+  }
+  const backtestHtml = renderWinprobBacktest(WINPROB_BACKTEST);
 
   // No finals today? Try past dates from WINPROB_DATA
   const completedPks = Object.keys(WINPROB_DATA.games || {});
@@ -3858,9 +4054,20 @@ async function renderWinprobTab() {
   }
 
   root.innerHTML = intro
+    + backtestHtml
     + '<h3 style="margin:0 0 0.5rem;font-family:var(--display);font-size:1rem;letter-spacing:0.02em;color:var(--muted);text-transform:uppercase;">Today\'s Finals</h3>'
     + '<div class="wp-games">' + (cards || '<div class="wp-empty">No finals today yet.</div>') + '</div>'
     + detailHtml;
+
+  // Wire backtest "Details" toggle
+  const toggle = document.querySelector("#winprob-root .wpb-toggle");
+  const bt = document.querySelector("#winprob-root .wp-backtest");
+  if (toggle && bt) {
+    toggle.onclick = () => {
+      bt.classList.toggle("collapsed");
+      toggle.textContent = bt.classList.contains("collapsed") ? "Show details" : "Hide details";
+    };
+  }
 
   // Wire card clicks
   document.querySelectorAll("#winprob-root .wp-game-card").forEach(card => {
