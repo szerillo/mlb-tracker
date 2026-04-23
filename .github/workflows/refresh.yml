@@ -116,6 +116,12 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      - name: Scrape AN archive (prior day finalized odds + PRO where public)
+        run: python scripts/scrape_action_archive.py --start yesterday --end yesterday
+        continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
+
       - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
         run: |
           if [ ! -s data/odds.json ] || ! python -c "import json; d=json.load(open('data/odds.json')); exit(0 if d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) else 1)" 2>/dev/null; then
@@ -180,7 +186,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/*.json
+          git add data/*.json data/odds_archive/*.json
           [ -f scripts/bartolo/bartolo_model.pkl ] && git add scripts/bartolo/bartolo_model.pkl || true
           [ -d data/archive ] && git add data/archive || true
           git add -u .train-now 2>/dev/null || true
