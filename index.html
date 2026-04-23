@@ -39,9 +39,18 @@
   .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.2rem;
     flex-wrap: wrap; }
   .tab { background: none; border: none; color: var(--muted); padding: 0.7rem 1rem;
-    font: inherit; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    font: inherit; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    position: relative; }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  /* Depth cue: tiny ↗ on the right indicates this tab goes deeper than a modal popup */
+  .tab::after { content: "↗"; position: absolute; top: 0.3rem; right: 0.25rem;
+    font-size: 0.55rem; opacity: 0.45; transition: opacity 0.15s; }
+  .tab:hover::after, .tab.active::after { opacity: 0.9; }
+  .tabs-hint { font-size: 0.68rem; color: var(--muted); padding: 0.35rem 1rem 0;
+    font-style: italic; letter-spacing: 0.02em; }
+  .tabs-hint code { background: rgba(36,46,58,0.4); padding: 1px 5px; border-radius: 3px;
+    font-family: var(--mono); font-style: normal; }
 
   /* Controls */
   .controls { display: flex; gap: 0.5rem; align-items: center; padding: 0.8rem 1.5rem;
@@ -116,6 +125,24 @@
     display: inline-flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
   .sb-sp-hand { font-size: 0.7rem; font-weight: 600; color: var(--muted);
     letter-spacing: 0.04em; }
+
+  /* Rank chips — SP + team bullpen rank shown on scoreboard & pitcher tab. */
+  .rank-chip { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 999px;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+    font-family: var(--mono); vertical-align: middle;
+    background: rgba(36,46,58,0.45); color: var(--muted); border: 1px solid var(--border);
+    white-space: nowrap; margin-left: 0.35rem; }
+  .rank-chip.sp.elite  { background: rgba(110,255,148,0.18); color: #6eff94; border-color: rgba(110,255,148,0.35); }
+  .rank-chip.sp.good   { background: rgba(94,234,212,0.14); color: var(--accent); border-color: rgba(94,234,212,0.28); }
+  .rank-chip.sp.mid    { background: rgba(139,149,161,0.12); color: var(--muted); }
+  .rank-chip.sp.bad    { background: rgba(234,197,94,0.12); color: var(--tier-bad); border-color: rgba(234,197,94,0.28); }
+  .rank-chip.sp.worst  { background: rgba(248,113,113,0.12); color: var(--tier-worst); border-color: rgba(248,113,113,0.28); }
+  .rank-chip.bp.elite  { background: rgba(110,255,148,0.14); color: #6eff94; border-color: rgba(110,255,148,0.28); }
+  .rank-chip.bp.good   { background: rgba(94,234,212,0.12); color: var(--accent); border-color: rgba(94,234,212,0.24); }
+  .rank-chip.bp.mid    { background: rgba(139,149,161,0.10); color: var(--muted); }
+  .rank-chip.bp.bad    { background: rgba(234,197,94,0.10); color: var(--tier-bad); border-color: rgba(234,197,94,0.22); }
+  .rank-chip.bp.worst  { background: rgba(248,113,113,0.10); color: var(--tier-worst); border-color: rgba(248,113,113,0.22); }
+  .rank-chip.na { opacity: 0.6; font-style: italic; }
   .sb-sp-stats { display: flex; gap: 0.35rem; margin-top: 0.2rem;
     font-family: var(--mono); font-size: 0.78rem; }
   .sb-sp-cell.home .sb-sp-stats { justify-content: flex-end; }
@@ -649,6 +676,23 @@
   .m-sp-arsenal td.worst { color: var(--tier-worst); font-weight: 700; }
   .m-sp-arsenal-hdr { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.1em;
     text-transform: uppercase; margin-top: 0.75rem; font-weight: 600; }
+  /* Modal arrow navigation — scrolls between today's games in chronological order */
+  .modal-nav { position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(36,46,58,0.6); color: var(--text); border: 1px solid var(--border);
+    width: 40px; height: 80px; font-size: 1.8rem; line-height: 1; cursor: pointer;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s; z-index: 2; font-family: var(--body); }
+  .modal-nav:hover { background: rgba(94,234,212,0.15); border-color: var(--accent); color: var(--accent); }
+  .modal-nav.prev { left: -52px; }
+  .modal-nav.next { right: -52px; }
+  @media (max-width: 900px) {
+    .modal-nav { width: 34px; height: 60px; font-size: 1.4rem; }
+    .modal-nav.prev { left: 0.25rem; }
+    .modal-nav.next { right: 0.25rem; }
+  }
+  .modal-counter { position: absolute; top: 0.85rem; left: 1.1rem;
+    font-size: 0.72rem; color: var(--muted); font-family: var(--mono); letter-spacing: 0.04em;
+    text-transform: uppercase; z-index: 2; }
   .modal-close { position: absolute; top: 0.75rem; right: 1rem; background: none; border: none;
     color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
   .modal-close:hover { color: var(--text); }
@@ -1009,14 +1053,53 @@
 
 <header>
   <div class="brand">
-    <svg class="brand-logo" viewBox="0 0 60 60" width="52" height="52" aria-hidden="true">
-      <circle cx="30" cy="30" r="28" fill="#1f3a68"/>
-      <ellipse cx="30" cy="38" rx="13" ry="10" fill="#f7f0e2"/>
-      <circle cx="32" cy="21" r="5" fill="#c99a6a"/>
-      <path d="M 27 19 Q 28 14 32 14 Q 36 15 37 19 L 37 22 L 27 22 Z" fill="#0d1f3d"/>
-      <path d="M 40 32 Q 46 27 48 22 Q 48 19 45 20 Q 42 25 38 30 Z" fill="#f7f0e2"/>
-      <circle cx="48" cy="22" r="3" fill="#ffffff" stroke="#a01f1f" stroke-width="0.6"/>
-      <text x="30" y="42" font-family="Georgia, serif" font-size="9" font-weight="bold" fill="#1f3a68" text-anchor="middle">40</text>
+    <!-- Pancho the baseball donkey — Colón's childhood pet, reimagined as a chonky mascot -->
+    <svg class="brand-logo" viewBox="0 0 100 100" width="84" height="84" aria-hidden="true">
+      <circle cx="50" cy="50" r="48" fill="#1f3a68" stroke="#0d1f3d" stroke-width="1.5"/>
+      <!-- Back legs (stubby, chonky) -->
+      <rect x="28" y="68" width="9" height="18" rx="2.5" fill="#6b4f37" stroke="#3a2a1d" stroke-width="0.8"/>
+      <rect x="63" y="68" width="9" height="18" rx="2.5" fill="#6b4f37" stroke="#3a2a1d" stroke-width="0.8"/>
+      <!-- Front legs -->
+      <rect x="37" y="68" width="9" height="18" rx="2.5" fill="#7a5d44" stroke="#3a2a1d" stroke-width="0.8"/>
+      <rect x="54" y="68" width="9" height="18" rx="2.5" fill="#7a5d44" stroke="#3a2a1d" stroke-width="0.8"/>
+      <!-- Hoof caps -->
+      <rect x="28" y="82" width="9" height="4" fill="#0d1f3d"/>
+      <rect x="37" y="82" width="9" height="4" fill="#0d1f3d"/>
+      <rect x="54" y="82" width="9" height="4" fill="#0d1f3d"/>
+      <rect x="63" y="82" width="9" height="4" fill="#0d1f3d"/>
+      <!-- Body (round, baseball-shaped) -->
+      <ellipse cx="50" cy="58" rx="27" ry="18" fill="#f7f0e2" stroke="#3a2a1d" stroke-width="1.5"/>
+      <!-- Baseball seams on body — bolder red stitch rows -->
+      <path d="M 26 54 Q 50 46 74 54" stroke="#a01f1f" stroke-width="1.8" fill="none"
+            stroke-dasharray="2.8,1.8" stroke-linecap="round"/>
+      <path d="M 26 64 Q 50 72 74 64" stroke="#a01f1f" stroke-width="1.8" fill="none"
+            stroke-dasharray="2.8,1.8" stroke-linecap="round"/>
+      <!-- Tail (little tuft) -->
+      <path d="M 76 54 Q 85 52 85 44 Q 87 50 82 60 Z" fill="#6b4f37" stroke="#3a2a1d" stroke-width="0.8"/>
+      <!-- Neck + head (tilted toward viewer) -->
+      <ellipse cx="32" cy="38" rx="11" ry="9" fill="#7a5d44" stroke="#3a2a1d" stroke-width="1.2"/>
+      <!-- Snout -->
+      <ellipse cx="21" cy="42" rx="7" ry="5" fill="#c99a6a" stroke="#3a2a1d" stroke-width="1"/>
+      <!-- Nostril -->
+      <ellipse cx="18" cy="42" rx="1.2" ry="0.9" fill="#0d1f3d"/>
+      <!-- Mouth -->
+      <path d="M 16 46 Q 19 48 22 46" stroke="#0d1f3d" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <!-- Eye (bigger, more expressive) -->
+      <circle cx="34" cy="35" r="2.8" fill="#ffffff" stroke="#0d1f3d" stroke-width="0.8"/>
+      <circle cx="34.5" cy="35" r="1.8" fill="#0d1f3d"/>
+      <circle cx="35.2" cy="34.3" r="0.7" fill="#ffffff"/>
+      <!-- Ears (pointy, stand-up) -->
+      <path d="M 26 30 L 23 16 L 30 26 Z" fill="#6b4f37" stroke="#3a2a1d" stroke-width="1"/>
+      <path d="M 35 30 L 37 16 L 40 30 Z" fill="#7a5d44" stroke="#3a2a1d" stroke-width="1"/>
+      <!-- Inner ear details -->
+      <path d="M 26.5 26 L 25 19 L 28 25 Z" fill="#c99a6a"/>
+      <path d="M 36.5 27 L 37.5 20 L 39 28 Z" fill="#c99a6a"/>
+      <!-- Mane tuft between ears -->
+      <path d="M 30 25 Q 32 19 35 25 Q 33 22 30 25" stroke="#3a2a1d" stroke-width="1.2" fill="#3a2a1d"/>
+      <!-- Baseball in mouth (bigger, clearer) -->
+      <circle cx="13" cy="43" r="3.2" fill="#ffffff" stroke="#a01f1f" stroke-width="1"/>
+      <path d="M 11 44 Q 13 42 15 44" stroke="#a01f1f" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+      <path d="M 11 42 Q 13 44 15 42" stroke="#a01f1f" stroke-width="0.7" fill="none" stroke-linecap="round"/>
     </svg>
     <div class="brand-text">
       <h1>B.A.R.T.O.L.O.</h1>
@@ -1036,6 +1119,9 @@
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
     <button class="tab" data-tab="rankings" role="tab">Rankings</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
+  </div>
+  <div class="tabs-hint">
+    Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
   </div>
 </header>
 
@@ -1086,7 +1172,10 @@
 <!-- Game detail modal -->
 <div id="modal-bg" class="modal-bg" role="dialog" aria-modal="true">
   <div class="modal" id="modal">
+    <button class="modal-nav prev" id="modal-prev" aria-label="Previous game (←)" title="Previous game (←)">‹</button>
+    <button class="modal-nav next" id="modal-next" aria-label="Next game (→)" title="Next game (→)">›</button>
     <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+    <div id="modal-counter" class="modal-counter"></div>
     <div id="modal-body"></div>
   </div>
 </div>
@@ -1169,6 +1258,8 @@ async function loadStaticData() {
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
+  // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
+  if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
   document.getElementById("data_age").textContent = UMP_STATS.generated_at || "—";
 }
@@ -1652,7 +1743,7 @@ async function inferHPFromPrior(game) {
     if (projName) {
       return {
         name: projName,
-        projectedFrom: `${rotPos[daysBack - 1].replace('Base','B')} of G${daysBack} prior`,
+        projectedFrom: `${rotPos[daysBack - 1].replace('Base','B')} Ump of ${daysBack === 1 ? 'G Prior' : `G-${daysBack} Prior`}`,
         daysBack,
         anchorOfficials: off,
       };
@@ -1798,7 +1889,7 @@ function spMiniCell(name, teamName, sideCls) {
 
   if (!s) {
     return `<div class="sb-sp-cell ${sideCls}">
-      <div class="sb-sp-name">${name}${handTag}</div>
+      <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
       <span class="sb-sp-none">no stats</span>
       ${penLine}
     </div>`;
@@ -1824,7 +1915,7 @@ function spMiniCell(name, teamName, sideCls) {
     </div>` : '';
 
   return `<div class="sb-sp-cell ${sideCls}">
-    <div class="sb-sp-name">${name}${handTag}</div>
+    <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
     <div class="sb-sp-stats">
       ${cell(primary.label, primary.val, primaryCls)}
       ${cell("xERA", s.xera, xeraCls)}
@@ -2201,7 +2292,7 @@ function renderLineupSPHeader(spName, prefix="vs") {
     return `<div class="lu-sp">
       <div class="lu-sp-left">
         <span class="lu-sp-label">${prefix}</span>
-        <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}
+        <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
       </div>
       <div><span class="lu-sp-none">no stats loaded</span></div>
     </div>`;
@@ -2817,6 +2908,7 @@ function renderPitcherDeepSP(spName, teamName) {
       <span class="pt-sp-team">${teamAbbr(teamName)}</span>
       <span class="pt-sp-name">${spName}</span>
       ${headerHand}${headerOpener}
+      ${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
       ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
     <div class="pt-stat-grid">${tiles}</div>
@@ -2829,8 +2921,10 @@ function renderPitcherDeepSP(spName, teamName) {
 // their average velo / whiff.
 function renderTeamBpAggregate(teamId, teamName, probableSP) {
   const roster = ROSTERS_CACHE[teamId] || [];
+  const bpRank = getBullpenRank(teamId);
+  const bpChip = bpRank ? rankChipHtml(bpRank.rank, bpRank.total, 'bp') : rankChipHtml(null, null, 'bp');
   if (!roster.length || !PITCHER_ARSENAL) {
-    return `<div class="pt-bp-card"><h4>${teamName} bullpen</h4>
+    return `<div class="pt-bp-card"><h4>${teamName} bullpen ${bpChip}</h4>
       <div class="pt-sp-none">${!PITCHER_ARSENAL ? 'arsenal data loading…' : 'roster loading…'}</div></div>`;
   }
   // Reliever set: active roster minus today's SP and known starters
@@ -3330,13 +3424,39 @@ function teamWrcSpan(game, side) {
 }
 
 
+let MODAL_GAME_PK = null;
+
+function modalGamesInOrder() {
+  // All games on the current scoreboard, sorted by start time.
+  return (CURRENT_GAMES || []).slice()
+    .sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
+}
+function modalAdvance(dir) {
+  const games = modalGamesInOrder();
+  if (!games.length) return;
+  let idx = games.findIndex(g => g.gamePk === MODAL_GAME_PK);
+  if (idx === -1) idx = 0;
+  const next = (idx + dir + games.length) % games.length;
+  openModal(games[next]);
+}
+function updateModalCounter() {
+  const counter = document.getElementById("modal-counter");
+  if (!counter) return;
+  const games = modalGamesInOrder();
+  const idx = games.findIndex(g => g.gamePk === MODAL_GAME_PK);
+  if (idx === -1 || !games.length) { counter.textContent = ""; return; }
+  counter.textContent = `Game ${idx + 1} of ${games.length}`;
+}
+
 async function openModal(game) {
+  MODAL_GAME_PK = game.gamePk;
   const bg = document.getElementById("modal-bg");
   const body = document.getElementById("modal-body");
   // Show modal immediately with a loading shim, then fill in once rosters are ready
   body.innerHTML = `<div class="loading">Loading game detail…</div>`;
   bg.classList.add("active");
   document.body.style.overflow = "hidden";
+  updateModalCounter();
   // Prefetch both team rosters for the Bullpens section
   await Promise.all([
     getTeamRoster(game.teams.away.team.id),
@@ -3516,7 +3636,15 @@ document.getElementById("modal-close").onclick = closeModal;
 document.getElementById("modal-bg").onclick = (e) => {
   if (e.target.id === "modal-bg") closeModal();
 };
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+document.getElementById("modal-prev").onclick = (e) => { e.stopPropagation(); modalAdvance(-1); };
+document.getElementById("modal-next").onclick = (e) => { e.stopPropagation(); modalAdvance(1); };
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+  // Arrow nav only active while modal is open
+  if (!document.getElementById("modal-bg").classList.contains("active")) return;
+  if (e.key === "ArrowLeft")  { e.preventDefault(); modalAdvance(-1); }
+  if (e.key === "ArrowRight") { e.preventDefault(); modalAdvance(1); }
+});
 
 // ============================================================================
 // RANKINGS TAB
@@ -3631,6 +3759,139 @@ function renderRankingsTab() {
     console.error("rankings render failed", err);
     root.innerHTML = '<div class="rk-empty">Rankings failed to load: ' + (err.message || err) + '</div>';
   });
+}
+
+// ─── Shared rank caches (used by scoreboard SP cells + pitcher tab) ────────
+// Computed from the same composite formula as the Rankings tab:
+//   SP Rank: 20% each xFIP / SIERA / xERA / botERA / K-BB% · starters only
+//   Bullpen Rank: team avg of same 5 metrics · non-starters only
+// Each cache keyed by normalized name (SP) or team abbr (bullpen).
+let SP_RANK_CACHE = null;      // { byKey: Map<normName, {rank, total}>, total: N }
+let BP_RANK_CACHE = null;      // { byAbbr: Map<abbr, {rank, total}>, total: N }
+
+function _spCompositeKey(s) {
+  // Must mirror the metrics used in renderSPRankings. Returns z-score avg
+  // (lower = better). Pre-normalized z-scores are computed against a starter-only pool.
+  return null; // populated by compute below
+}
+
+function computeSPRanks() {
+  if (SP_RANK_CACHE) return SP_RANK_CACHE;
+  const pitchers = PITCHER_STATS?.pitchers || {};
+  if (!KNOWN_STARTERS || KNOWN_STARTERS.size === 0) return { byKey: new Map(), total: 0 };
+  const pool = [];
+  Object.entries(pitchers).forEach(([k, s]) => {
+    if (!KNOWN_STARTERS.has(k)) return;
+    const metrics = { xfip: s.xfip, siera: s.siera, xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct };
+    const present = Object.values(metrics).filter(v => v != null).length;
+    if (present < 3) return;
+    pool.push({ key: k, metrics });
+  });
+  if (!pool.length) return { byKey: new Map(), total: 0 };
+  // Z-score each metric; kbb sign-flipped (higher=better)
+  const keys = ["xfip", "siera", "xera", "bot", "kbb"];
+  const stats = {};
+  keys.forEach(m => { stats[m] = zScores(pool.map(p => p.metrics[m])); });
+  pool.forEach(p => {
+    const zs = [];
+    keys.forEach(m => {
+      if (p.metrics[m] != null && stats[m]) {
+        const z = (p.metrics[m] - stats[m].mean) / stats[m].sd;
+        zs.push(m === "kbb" ? -z : z);
+      }
+    });
+    p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
+  });
+  pool.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  const byKey = new Map();
+  const total = pool.length;
+  pool.forEach((p, i) => { byKey.set(p.key, { rank: i + 1, total }); });
+  SP_RANK_CACHE = { byKey, total };
+  return SP_RANK_CACHE;
+}
+
+function computeBullpenRanks() {
+  if (BP_RANK_CACHE) return BP_RANK_CACHE;
+  const pitchers = PITCHER_STATS?.pitchers || {};
+  const teams = ALL_TEAMS_CACHE || [];
+  if (!teams.length) return { byAbbr: new Map(), byId: new Map(), total: 0 };
+  const nameToTeam = {};
+  teams.forEach(t => {
+    const r = (typeof ROSTERS_CACHE !== 'undefined' && ROSTERS_CACHE[t.id]) || [];
+    r.forEach(p => { nameToTeam[normName(p.name)] = t; });
+  });
+  const byTeam = {};
+  teams.forEach(t => { byTeam[t.id] = { team: t, pitchers: [] }; });
+  Object.entries(pitchers).forEach(([k, s]) => {
+    if (KNOWN_STARTERS && KNOWN_STARTERS.has(k)) return;
+    const t = nameToTeam[k]; if (!t || !byTeam[t.id]) return;
+    if (s.xfip == null && s.siera == null && s.xera == null && s.bot_era == null && s.k_bb_pct == null) return;
+    byTeam[t.id].pitchers.push(s);
+  });
+  const teamRows = Object.values(byTeam).map(tb => {
+    const ps = tb.pitchers;
+    if (ps.length === 0) return null;
+    const mean = (field) => {
+      const v = ps.map(p => p[field]).filter(x => x != null);
+      return v.length ? v.reduce((a,b)=>a+b,0) / v.length : null;
+    };
+    const row = { team: tb.team, xfip: mean("xfip"), siera: mean("siera"),
+                  xera: mean("xera"), bot: mean("bot_era"), kbb: mean("k_bb_pct") };
+    // Require ≥3 of 5 metrics present to rank (else bias due to partial aggregation)
+    const present = ["xfip","siera","xera","bot","kbb"].filter(k => row[k] != null).length;
+    row._present = present;
+    return row;
+  }).filter(r => r && r._present >= 3);
+  const zs = {
+    xfip: zScores(teamRows.map(r => r.xfip)),
+    siera: zScores(teamRows.map(r => r.siera)),
+    xera: zScores(teamRows.map(r => r.xera)),
+    bot:  zScores(teamRows.map(r => r.bot)),
+    kbb:  zScores(teamRows.map(r => r.kbb)),
+  };
+  teamRows.forEach(r => {
+    const zList = [];
+    if (r.xfip  != null && zs.xfip)  zList.push((r.xfip  - zs.xfip.mean)  / zs.xfip.sd);
+    if (r.siera != null && zs.siera) zList.push((r.siera - zs.siera.mean) / zs.siera.sd);
+    if (r.xera  != null && zs.xera)  zList.push((r.xera  - zs.xera.mean)  / zs.xera.sd);
+    if (r.bot   != null && zs.bot)   zList.push((r.bot   - zs.bot.mean)   / zs.bot.sd);
+    if (r.kbb   != null && zs.kbb)   zList.push(-((r.kbb - zs.kbb.mean)   / zs.kbb.sd));
+    r.composite = zList.length ? zList.reduce((a,b)=>a+b,0) / zList.length : null;
+  });
+  teamRows.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  const byAbbr = new Map();
+  const byId = new Map();
+  const total = teamRows.length;
+  teamRows.forEach((r, i) => {
+    byAbbr.set(r.team.abbr, { rank: i + 1, total });
+    byId.set(r.team.id, { rank: i + 1, total });
+  });
+  BP_RANK_CACHE = { byAbbr, byId, total };
+  return BP_RANK_CACHE;
+}
+
+// Invalidate caches when pitcher stats refresh
+function invalidateRankCaches() { SP_RANK_CACHE = null; BP_RANK_CACHE = null; }
+
+// Public helpers for rendering
+function getSpRank(spName) {
+  if (!spName) return null;
+  const c = computeSPRanks();
+  return c.byKey.get(normName(spName)) || null;
+}
+function getBullpenRank(teamAbbrOrId) {
+  const c = computeBullpenRanks();
+  if (typeof teamAbbrOrId === 'number') return c.byId.get(teamAbbrOrId) || null;
+  return c.byAbbr.get(teamAbbrOrId) || null;
+}
+function rankChipHtml(rank, total, kind) {
+  // kind: 'sp' or 'bp' — styles via class
+  if (!rank || !total) return `<span class="rank-chip ${kind} na" title="${kind==='sp'?'SP':'Bullpen'} rank unavailable">${kind==='sp'?'SP':'BP'} #N/A</span>`;
+  // Tier by percentile (top ~20% elite, top 40% good, bottom 20% worst)
+  const pct = rank / total;
+  const tier = pct <= 0.2 ? 'elite' : pct <= 0.4 ? 'good' : pct <= 0.6 ? 'mid' : pct <= 0.8 ? 'bad' : 'worst';
+  const label = kind === 'sp' ? 'SP' : 'BP';
+  return `<span class="rank-chip ${kind} ${tier}" title="${kind==='sp'?'Starter':'Team bullpen'} rank · 20% each xFIP/SIERA/xERA/botERA/K-BB%">${label} #${rank}</span>`;
 }
 
 function renderSPRankings(pitchers, nameToTeam) {
