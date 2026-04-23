@@ -21,6 +21,112 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPTS_DIR.parent
 ARCHIVE_DIR = REPO_ROOT / "data" / "archive"
 OUTPUT = REPO_ROOT / "data" / "bartolo_backtest.json"
+# Flat per-game WP file — frontend reads this for the Win Prob detail view.
+# Normalized to the key names the frontend expects (see `_frontend_shape`).
+FLAT_WP_OUTPUT = REPO_ROOT / "data" / "bartolo_wp.json"
+
+
+def _frontend_shape(game_date: str, game_pk: str, g: dict) -> dict | None:
+    """Translate a raw archive/daily game summary into the keys the frontend reads.
+
+    Backend emits: away_win_prob, sim_away_mean, ump_adjusted_away_wp,
+    umpire_name, ump_favor_away_runs, etc.
+    Frontend reads: away_wp, away_exp_runs, ump_adj_away_wp, ump_name,
+    ump_favor_away, etc.
+
+    Drops games with no win-prob data.
+    """
+    awp = g.get("away_win_prob")
+    hwp = g.get("home_win_prob")
+    if awp is None or hwp is None:
+        return None
+    return {
+        "game_date": game_date,
+        "game_pk": str(game_pk),
+        "away_team": g.get("away_team"),
+        "home_team": g.get("home_team"),
+        "actual_away_runs": g.get("actual_away_runs"),
+        "actual_home_runs": g.get("actual_home_runs"),
+        "away_wp": awp,
+        "home_wp": hwp,
+        "away_exp_runs": g.get("sim_away_mean"),
+        "home_exp_runs": g.get("sim_home_mean"),
+        "ump_name": g.get("umpire_name"),
+        "ump_favor_away": g.get("ump_favor_away_runs"),
+        "ump_favor_home": g.get("ump_favor_home_runs"),
+        "ump_adj_away_wp": g.get("ump_adjusted_away_wp"),
+        "ump_adj_home_wp": g.get("ump_adjusted_home_wp"),
+        "venue": g.get("venue"),
+        "n_batted_balls": g.get("n_batted_balls"),
+        # Histograms aren't in archives today; frontend renders empty state if missing
+        "away_hist": g.get("away_hist"),
+        "home_hist": g.get("home_hist"),
+        "away_actual_idx": g.get("away_actual_idx"),
+        "home_actual_idx": g.get("home_actual_idx"),
+        # Edges come from Action Network scrape — placeholder empty list for now
+        "edges": g.get("edges", []),
+    }
+
+
+def _build_flat_wp_map() -> dict:
+    """Walk data/archive/*/bartolo_wp.json and the current data/bartolo_wp.json,
+    merge into a single games map keyed by gamePk (normalized for frontend).
+    Today's entries win over archived copies of the same gamePk."""
+    out: dict[str, dict] = {}
+    # Archive first (oldest → newest)
+    if ARCHIVE_DIR.exists():
+        for date_dir in sorted(ARCHIVE_DIR.iterdir()):
+            if not date_dir.is_dir():
+                continue
+            f = date_dir / "bartolo_wp.json"
+            if not f.exists():
+                continue
+            try:
+                payload = json.loads(f.read_text())
+            except Exception as e:
+                print(f"[backtest] skip archive {date_dir.name}: {e}", file=sys.stderr)
+                continue
+            for pk, g in (payload.get("games") or {}).items():
+                shaped = _frontend_shape(date_dir.name, pk, g)
+                if shaped is not None:
+                    out[str(pk)] = shaped
+    # Today's flat file (overrides archive copies for same gamePk)
+    if FLAT_WP_OUTPUT.exists():
+        try:
+            today = json.loads(FLAT_WP_OUTPUT.read_text())
+            wd = today.get("window_date", "")
+            for pk, g in (today.get("games") or {}).items():
+                shaped = _frontend_shape(wd, pk, g)
+                if shaped is not None:
+                    out[str(pk)] = shaped
+        except Exception as e:
+            print(f"[backtest] skip today's flat file: {e}", file=sys.stderr)
+    return out
+
+
+def _write_flat_wp_file(games_map: dict) -> None:
+    """Write the frontend-shaped flat file, preserving any existing top-level
+    status/window_date written by bartolo_daily.py (for debugging), but
+    with the merged archive+today games map."""
+    preserved = {}
+    if FLAT_WP_OUTPUT.exists():
+        try:
+            prev = json.loads(FLAT_WP_OUTPUT.read_text())
+            preserved = {k: v for k, v in prev.items() if k in ("window_date", "model_path")}
+        except Exception:
+            pass
+    payload = {
+        "generated_at": datetime.datetime.now(datetime.timezone.utc)
+                                          .isoformat(timespec="seconds"),
+        **preserved,
+        "status": "ok",
+        "n_games": len(games_map),
+        "games": games_map,
+    }
+    FLAT_WP_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    FLAT_WP_OUTPUT.write_text(json.dumps(payload, indent=2))
+    print(f"[backtest] wrote {FLAT_WP_OUTPUT.relative_to(REPO_ROOT)} "
+          f"— n_games={len(games_map)} (archive + today merged)")
 
 
 def _winner(g):
@@ -214,6 +320,15 @@ def main() -> int:
     OUTPUT.write_text(json.dumps(payload, indent=2))
     print(f"[backtest] wrote {OUTPUT.relative_to(REPO_ROOT)} — n={n}, brier={brier:.4f}, "
           f"log_loss={logloss:.4f}, fav_hit={fav_hit_rate:.4f}")
+
+    # Also emit the frontend-shaped flat bartolo_wp.json so past-date games
+    # light up in the Win Prob detail view (not just today's).
+    try:
+        flat_map = _build_flat_wp_map()
+        _write_flat_wp_file(flat_map)
+    except Exception as e:
+        print(f"[backtest] flat-wp merge failed (non-fatal): {e}", file=sys.stderr)
+
     return 0
 
 
