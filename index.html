@@ -272,13 +272,12 @@
   .pt-sp-name { font-weight: 700; font-size: 1.02rem; }
   .pt-sp-ip { margin-left: auto; color: var(--muted); font-size: 0.8rem;
     font-family: var(--mono); }
-  .pt-pills { display: flex; flex-wrap: wrap; gap: 0.45rem 0.75rem;
+  .pt-pills { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem;
     margin: 0.2rem 0 0; }
-  /* One-line variant — used by modal pitcher sections (Expected, Pitch
-     Modeling, Projection, Rate). Falls back to wrap on narrow viewports. */
-  .pt-pills.pt-pills-line { flex-wrap: nowrap; overflow-x: auto;
-    gap: 0.4rem 0.55rem; }
-  @media (max-width: 640px) { .pt-pills.pt-pills-line { flex-wrap: wrap; } }
+  /* pt-pills-line: tighter gap, still wraps — nowrap was blowing out the
+     3-column .pt-stat-grid because intrinsic min-content won. Let the grid
+     cell sit at its 1fr width and wrap the pill row when it has to. */
+  .pt-pills.pt-pills-line { gap: 0.3rem 0.45rem; }
   .pt-pill { font-family: var(--mono); font-size: 0.86rem;
     display: inline-flex; align-items: baseline; gap: 0.32rem;
     padding: 0.18rem 0.5rem; border-radius: 4px;
@@ -302,7 +301,8 @@
     gap: 0.5rem; margin: 0.35rem 0 0.6rem; }
   .pt-stat-group { background: rgba(0, 0, 0, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 6px; padding: 0.35rem 0.55rem 0.45rem; }
+    border-radius: 6px; padding: 0.35rem 0.55rem 0.45rem;
+    min-width: 0; }
   .pt-group-label { font-size: 0.58rem; color: var(--muted); font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem;
     padding-bottom: 0.22rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }

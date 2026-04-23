@@ -82,21 +82,57 @@ def extract_relievers(box):
 
 
 def classify(days):
+    """Classify reliever availability based on 5-day usage array [d1..d5]
+    where d5 is the most recent day (yesterday if target=today, today if
+    target=tomorrow).
+
+    TIERS:
+      LIKELY OUT — clearly unavailable:
+        • Pitched yesterday AND day-before (any combined workload)
+        • Any single outing in last 2 days ≥ 30 pitches
+        • 3+ appearances in last 4 days
+        • Total ≥ 60 pitches across 5 days
+      FATIGUED — usable but risky:
+        • 2+ appearances in last 3 days
+        • 2+ appearances in last 5 days with a ≥ 20-pitch outing yesterday or day-before
+        • 3+ appearances in last 5 days
+        • Total ≥ 40 pitches across 5 days
+      AVAILABLE — rested.
+
+    This fixes gaps in the old logic, e.g. single-heavy-outing-yesterday
+    (25p) was slipping to AVAILABLE because it wasn't quite b2b.
+    """
     d1, d2, d3, d4, d5 = days
     total = sum(days)
+    apps_last3 = sum(1 for x in (d3, d4, d5) if x > 0)
     apps_last4 = sum(1 for x in (d2, d3, d4, d5) if x > 0)
-    apps_5 = sum(1 for x in days if x > 0)
-    b2b = (d4 > 0 and d5 > 0)
+    apps_5     = sum(1 for x in days if x > 0)
+    # "Last 2 days" = d4 + d5 for the classifier. B2B = pitched in both.
+    b2b_last2 = (d4 > 0 and d5 > 0)
+    max_last2 = max(d4, d5)
     reasons = []
     tier = "AVAILABLE"
-    if apps_last4 >= 3: reasons.append(f"{apps_last4}-in-4"); tier = "LIKELY OUT"
-    if b2b and (d4 + d5) >= 30: reasons.append(f"B2B {d4}+{d5}"); tier = "LIKELY OUT"
-    if d5 > 30: reasons.append(f"{d5}p yesterday"); tier = "LIKELY OUT"
-    if total >= 60: reasons.append(f"{total}p/5d"); tier = "LIKELY OUT"
+
+    # ───── LIKELY OUT ─────
+    if b2b_last2:
+        reasons.append(f"B2B {d4}+{d5}"); tier = "LIKELY OUT"
+    if max_last2 >= 30:
+        reasons.append(f"{max_last2}p in last 2d"); tier = "LIKELY OUT"
+    if apps_last4 >= 3:
+        reasons.append(f"{apps_last4}-in-4"); tier = "LIKELY OUT"
+    if total >= 60:
+        reasons.append(f"{total}p/5d"); tier = "LIKELY OUT"
+
+    # ───── FATIGUED (only if not already LIKELY OUT) ─────
     if tier != "LIKELY OUT":
-        if b2b: reasons.append(f"B2B {d4}+{d5}"); tier = "FATIGUED"
-        elif apps_5 >= 3: reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
-        elif total >= 45: reasons.append(f"{total}p/5d"); tier = "FATIGUED"
+        if apps_last3 >= 2:
+            reasons.append(f"{apps_last3}-in-3"); tier = "FATIGUED"
+        elif apps_5 >= 3:
+            reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
+        elif max_last2 >= 20:
+            reasons.append(f"{max_last2}p in last 2d"); tier = "FATIGUED"
+        elif total >= 40:
+            reasons.append(f"{total}p/5d"); tier = "FATIGUED"
     return tier, reasons
 
 
