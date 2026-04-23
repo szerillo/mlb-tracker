@@ -457,7 +457,7 @@
   .lu-sp-label { color: var(--accent); font-size: 0.65rem; font-weight: 700;
     letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.9; }
   .lu-sp-name { font-weight: 700; color: var(--text); font-size: 0.95rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    white-space: nowrap; min-width: 0; }
   .lu-sp-hand { font-size: 0.66rem; font-weight: 700; color: var(--muted);
     padding: 0.08rem 0.4rem; border-radius: 3px; letter-spacing: 0.06em;
     background: rgba(139, 149, 161, 0.14); }
@@ -2362,6 +2362,10 @@ function renderLineupTable(side, opts={}) {
     if (!HITTERS) return null;
     return HITTERS.hitters[normName(name)] || null;
   }
+  function lookupHitterPct(name) {
+    if (!HITTER_PCT) return null;
+    return HITTER_PCT.hitters?.[normName(name)] || null;
+  }
   // 4-tier DEF/BSR chip: single + / − glyphs; color carries tier intensity
   function defBsrCell(v, bands, label) {
     if (v === null || v === undefined || !bands) return `<td class="chip"></td>`;
@@ -2426,6 +2430,20 @@ function renderLineupTable(side, opts={}) {
       const wobaTitle  = wobaActual != null
         ? `Actual wOBA ${wobaActual.toFixed(3)} (${h?.pa_actual||0} PA this season)`
         : (wobaProj != null ? `Projected wOBA ${wobaProj.toFixed(3)} (no season PA yet)` : "no data");
+      // Barrel% — Savant percentile (0-100, higher = better). First stat after Player.
+      const hpct = lookupHitterPct(nm);
+      const barrelPct = hpct?.barrel;
+      // Tier by percentile: 80+=elite, 60+=good, 40-=bad, 20-=worst
+      const barrelCls = barrelPct == null ? ""
+        : barrelPct >= 80 ? "elite"
+        : barrelPct >= 60 ? "good"
+        : barrelPct <= 20 ? "worst"
+        : barrelPct <= 40 ? "bad" : "";
+      const barrelStr = barrelPct == null ? "—" : Math.round(barrelPct);
+      const barrelTitle = barrelPct != null
+        ? `Savant barrel-rate percentile ${Math.round(barrelPct)}`
+        : "no Savant percentile";
+      const barrelCell = `<td class="split split-chip ${barrelCls}" title="${barrelTitle}">${barrelStr}</td>`;
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
       // modal renders a slimmer table. Order: BB% first, then K%.
       let kbbCells = "";
@@ -2448,7 +2466,8 @@ function renderLineupTable(side, opts={}) {
         <td class="order">${p.order || ""}</td>
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>${kbbCells}
+        <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>
+        ${barrelCell}${kbbCells}
         ${wobaCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         <td class="split split-chip ${vRCls}">${vR != null ? Math.round(vR) : "—"}</td>
@@ -2458,7 +2477,7 @@ function renderLineupTable(side, opts={}) {
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
-      rowsHTML += `<tr><td colspan="6" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
+      rowsHTML += `<tr><td colspan="7" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
     }
   }
 
@@ -2484,7 +2503,8 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:22px;">#</th>
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
-    <th class="left">Player</th>${kbbHeaders}
+    <th class="left">Player</th>
+    <th class="right" style="width:46px;" title="Savant barrel-rate percentile (0–100, higher = better)">Brl</th>${kbbHeaders}
     ${wobaHeader}
     <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
     <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (Steamer)">vR</th>
@@ -2573,11 +2593,11 @@ async function renderBullpenTab() {
       </h3>
       <div class="m-split">
         <div class="m-bp-box">
-          <h4>${awayName}</h4>
+          <h4>${awayName} ${(() => { const r = getBullpenRank(awayId); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>
           ${renderBullpenForTeam(awayId, awayName, awaySP)}
         </div>
         <div class="m-bp-box">
-          <h4>${homeName}</h4>
+          <h4>${homeName} ${(() => { const r = getBullpenRank(homeId); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>
           ${renderBullpenForTeam(homeId, homeName, homeSP)}
         </div>
       </div>
@@ -2675,8 +2695,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const _tip = 'Usage counted through ' + _meta.last_final +
                  (_meta.pending_today ? ' · later game(s) today not yet Final' : '');
     thruPill = '<span class="bpt-thru' + (_meta.pending_today ? ' pending' : '') +
-               '" title="' + _tip + '">Thru ' + dayAbbr(_meta.last_final) +
-               (_meta.pending_today ? ' · pending' : '') + '</span>';
+               '" title="' + _tip + '">Thru ' + dayAbbr(_meta.last_final) + '</span>';
   }
 
   return `
@@ -3610,8 +3629,8 @@ async function openModal(game) {
         return `${base} · ${diff}d behind`;
       })()}</span></div>
     <div class="m-split">
-      <div class="m-bp-box"><h4>${away}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true})}</div>
-      <div class="m-bp-box"><h4>${home}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true})}</div>
+      <div class="m-bp-box"><h4>${away} ${(() => { const r = getBullpenRank(game.teams.away.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true})}</div>
+      <div class="m-bp-box"><h4>${home} ${(() => { const r = getBullpenRank(game.teams.home.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true})}</div>
     </div>
 
     <div class="m-section-header"><span>Lineups</span></div>
