@@ -1781,7 +1781,10 @@ let PLAYER_INFO = {};
 async function getTeamRoster(teamId) {
   if (ROSTERS_CACHE[teamId]) return ROSTERS_CACHE[teamId];
   try {
-    const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=40Man&hydrate=person`);
+    // Use ACTIVE roster (26-man) for bullpen fatigue display — keeps it lean.
+    // Rankings-tab team-name mapping uses getTeamRoster40Man() below so we can
+    // still catch IL/outrighted pitchers there.
+    const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=active&hydrate=person`);
     const all = (d.roster || []).map(r => ({
       id: r.person?.id,
       name: r.person?.fullName,
@@ -1801,6 +1804,26 @@ async function getTeamRoster(teamId) {
     return pitchers;
   } catch (e) {
     console.warn("Roster fetch failed for team", teamId, e);
+    return [];
+  }
+}
+
+// Separate 40-man fetch used ONLY for rankings-tab team-name mapping.
+// Includes IL/DFA/optioned pitchers that are off the active 26-man so their
+// team designation populates. Should NOT be used anywhere that renders a
+// "current roster" list (bullpen fatigue, etc.) — it leaks non-active arms.
+const ROSTERS_40MAN_CACHE = {};
+async function getTeamRoster40Man(teamId) {
+  if (ROSTERS_40MAN_CACHE[teamId]) return ROSTERS_40MAN_CACHE[teamId];
+  try {
+    const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=40Man&hydrate=person`);
+    const pitchers = (d.roster || [])
+      .filter(r => (r.position?.code) === "1")
+      .map(r => ({ id: r.person?.id, name: r.person?.fullName }));
+    ROSTERS_40MAN_CACHE[teamId] = pitchers;
+    return pitchers;
+  } catch (e) {
+    console.warn("40-man roster fetch failed for team", teamId, e);
     return [];
   }
 }
@@ -3935,20 +3958,27 @@ function renderRankingsTab() {
     fetchAllTeams(),
     // Ensure we have at least our own game teams' rosters (for bullpen/lineup)
     // Pull rosters for every team so bullpen/lineup rankings are complete.
+    // Active roster for bullpen/lineup, 40-man for rankings team mapping.
     (async () => {
       const teams = await fetchAllTeams();
-      await Promise.all(teams.map(t => getTeamRoster(t.id).catch(() => null)));
+      await Promise.all([
+        ...teams.map(t => getTeamRoster(t.id).catch(() => null)),
+        ...teams.map(t => getTeamRoster40Man(t.id).catch(() => null)),
+      ]);
     })(),
   ]).then(() => {
     const pitchers = (PITCHER_STATS && PITCHER_STATS.pitchers) || {};
     const hitters  = (HITTERS && HITTERS.hitters) || {};
     const teams    = ALL_TEAMS_CACHE || [];
 
-    // Build name->team map from rosters (authoritative: MLB 40-man API).
+    // Build name->team map from rosters (authoritative: MLB 40-man, then active).
+    // Use 40-man to catch IL/optioned pitchers the active roster misses.
     const nameToTeam = {};
     teams.forEach(t => {
-      const r = ROSTERS_CACHE[t.id] || [];
-      r.forEach(p => { nameToTeam[normName(p.name)] = t; });
+      const r40 = ROSTERS_40MAN_CACHE[t.id] || [];
+      r40.forEach(p => { nameToTeam[normName(p.name)] = t; });
+      const rActive = ROSTERS_CACHE[t.id] || [];
+      rActive.forEach(p => { nameToTeam[normName(p.name)] = t; });
     });
     // Fallback: PITCHER_ROLES (Steamer) team abbr for pitchers absent from any
     // 40-man (e.g. outrighted to AAA, 60-day IL edge cases, recently claimed).
