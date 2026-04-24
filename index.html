@@ -922,7 +922,7 @@
   .rk-split-hdr { font-size: 0.62rem; color: var(--muted); font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem;
     padding-bottom: 0.18rem; border-bottom: 1px solid var(--border); text-align: center; }
-  @media (max-width: 620px) {
+  @media (max-width: 440px) {
     .rk-split-body { grid-template-columns: 1fr; }
     .rk-split-body::before { display: none; }
     .rk-split-col:nth-child(2) { grid-column: 1; border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.4rem; }
@@ -1005,7 +1005,7 @@
   .an-proj-link { color: var(--text); font-weight: 700; font-size: 0.92rem;
     text-decoration: none; border: 1px solid var(--accent);
     background: rgba(94, 234, 212, 0.12); padding: 0.25rem 0.75rem;
-    border-radius: 5px; letter-spacing: 0.02em;
+    border-radius: 5px; letter-spacing: 0.02em; margin-top: 3px;
     transition: background 0.15s, transform 0.1s; }
   .an-proj-link:hover { background: rgba(94, 234, 212, 0.2); transform: translateY(-1px); }
   .an-proj-arrow { font-size: 0.8rem; margin-left: 0.15rem; }
@@ -1186,7 +1186,7 @@
       <a class="an-proj-link" href="https://www.actionnetwork.com/mlb/projections" target="_blank" rel="noopener">
         Action Network PRO <span class="an-proj-arrow">↗</span>
       </a>
-      <span class="an-proj-note">We hold PRO numbers on the scoreboard until each game finals, so you'll see current-day projections here.</span>
+      <span class="an-proj-note">Full PRO projections for upcoming games live at the link above. Here on the scoreboard we reveal PRO projection accuracy and post-game win expectancy as each game finals.</span>
     </div>
     <div id="scoreboard-list" class="loading">Loading today's slate…</div>
   </section>
@@ -1203,7 +1203,7 @@
     <div id="lineups-summary"></div>
     <div class="lu-view-toggle" role="tablist" aria-label="Lineup view">
       <button class="lu-view-btn active" data-lu-view="proj">Stats</button>
-      <button class="lu-view-btn"        data-lu-view="stat">Statcast %</button>
+      <button class="lu-view-btn"        data-lu-view="stat">Statcast</button>
     </div>
     <div id="lineups-list" class="loading">Loading lineups…</div>
   </section>
