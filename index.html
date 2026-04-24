@@ -908,14 +908,16 @@
   .rk-sp-wrap::-webkit-scrollbar-thumb { background: rgba(139, 149, 161, 0.25); border-radius: 4px; }
   .rk-right { display: flex; flex-direction: column; gap: 1rem; }
   /* Side-by-side split sub-tables inside a single rk-box (used for Lineup vs R/L).
-     Force side-by-side at ALL viewports — the tables are compact (3 cols) and
-     fit even at mobile ~320px. Stacking is worse than cramped. */
-  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.3rem; align-items: start; }
-  .rk-split-body::before { content: ''; grid-column: 2; align-self: stretch;
-    background: var(--border); width: 1px; }
-  .rk-split-col { min-width: 0; }
-  .rk-split-col:nth-child(2) { grid-column: 3; }
-  .rk-split-col .rk-table { font-size: 0.7rem; }
+     FLEXBOX version — bulletproof side-by-side at ALL viewports, including
+     mobile ~320px. The previous grid-template-columns: 1fr 1px 1fr with a
+     ::before pseudo-divider was apparently not reliably rendering side-by-side.
+     Flex with nowrap + flex: 1 guarantees two equal columns, border on child
+     2 gives us the visual divider. */
+  .rk-split-body { display: flex !important; flex-direction: row !important;
+    flex-wrap: nowrap !important; gap: 0.4rem; align-items: stretch; }
+  .rk-split-col { flex: 1 1 0 !important; min-width: 0 !important; width: 50% !important; }
+  .rk-split-col:nth-child(2) { border-left: 1px solid var(--border); padding-left: 0.35rem; }
+  .rk-split-col .rk-table { font-size: 0.7rem; width: 100%; table-layout: fixed; }
   .rk-split-col .rk-table th { font-size: 0.52rem; padding: 0.18rem 0.1rem; }
   .rk-split-col .rk-table td { padding: 0.18rem 0.15rem; }
   .rk-split-col .rk-table td.rank { width: 18px; font-size: 0.64rem; padding-right: 0.08rem; }
