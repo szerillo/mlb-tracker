@@ -907,26 +907,23 @@
   .rk-sp-wrap::-webkit-scrollbar-track { background: rgba(36, 46, 58, 0.3); }
   .rk-sp-wrap::-webkit-scrollbar-thumb { background: rgba(139, 149, 161, 0.25); border-radius: 4px; }
   .rk-right { display: flex; flex-direction: column; gap: 1rem; }
-  /* Side-by-side split sub-tables inside a single rk-box (used for Lineup vs R/L) */
-  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.4rem; align-items: start; }
+  /* Side-by-side split sub-tables inside a single rk-box (used for Lineup vs R/L).
+     Force side-by-side at ALL viewports — the tables are compact (3 cols) and
+     fit even at mobile ~320px. Stacking is worse than cramped. */
+  .rk-split-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0.3rem; align-items: start; }
   .rk-split-body::before { content: ''; grid-column: 2; align-self: stretch;
     background: var(--border); width: 1px; }
   .rk-split-col { min-width: 0; }
   .rk-split-col:nth-child(2) { grid-column: 3; }
-  .rk-split-col .rk-table { font-size: 0.74rem; }
-  .rk-split-col .rk-table th { font-size: 0.55rem; padding: 0.2rem 0.15rem; }
-  .rk-split-col .rk-table td { padding: 0.22rem 0.2rem; }
-  .rk-split-col .rk-table td.rank { width: 20px; font-size: 0.68rem; padding-right: 0.1rem; }
-  .rk-split-col .rk-table td.team img { margin-right: 0.15rem !important; }
+  .rk-split-col .rk-table { font-size: 0.7rem; }
+  .rk-split-col .rk-table th { font-size: 0.52rem; padding: 0.18rem 0.1rem; }
+  .rk-split-col .rk-table td { padding: 0.18rem 0.15rem; }
+  .rk-split-col .rk-table td.rank { width: 18px; font-size: 0.64rem; padding-right: 0.08rem; }
+  .rk-split-col .rk-table td.team img { margin-right: 0.12rem !important; width: 13px; height: 13px; }
   .rk-split-col .rk-table td.comp { font-weight: 700; }
-  .rk-split-hdr { font-size: 0.62rem; color: var(--muted); font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem;
-    padding-bottom: 0.18rem; border-bottom: 1px solid var(--border); text-align: center; }
-  @media (max-width: 440px) {
-    .rk-split-body { grid-template-columns: 1fr; }
-    .rk-split-body::before { display: none; }
-    .rk-split-col:nth-child(2) { grid-column: 1; border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.4rem; }
-  }
+  .rk-split-hdr { font-size: 0.58rem; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.25rem;
+    padding-bottom: 0.15rem; border-bottom: 1px solid var(--border); text-align: center; }
   .rk-filter { display: flex; gap: 0.3rem; margin-bottom: 0.4rem; }
   .rk-filter button { background: none; border: 1px solid var(--border); color: var(--muted);
     padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; cursor: pointer;
@@ -3945,12 +3942,30 @@ function renderRankingsTab() {
     const hitters  = (HITTERS && HITTERS.hitters) || {};
     const teams    = ALL_TEAMS_CACHE || [];
 
-    // Build name->team map from rosters
+    // Build name->team map from rosters (authoritative: MLB 40-man API).
     const nameToTeam = {};
     teams.forEach(t => {
       const r = ROSTERS_CACHE[t.id] || [];
       r.forEach(p => { nameToTeam[normName(p.name)] = t; });
     });
+    // Fallback: PITCHER_ROLES (Steamer) team abbr for pitchers absent from any
+    // 40-man (e.g. outrighted to AAA, 60-day IL edge cases, recently claimed).
+    // Steamer team can be slightly stale post-trade but it's the only source
+    // covering MiLB-assigned arms still ranked here. MLB API wins when present.
+    if (PITCHER_ROLES && PITCHER_ROLES.pitchers) {
+      // FanGraphs uses non-standard abbrs vs MLB Stats API; remap.
+      const FG_TO_MLB = {
+        ATH: 'OAK', KCR: 'KC', CHW: 'CWS', SDP: 'SD',
+        SFG: 'SF',  TBR: 'TB', WSN: 'WSH',
+      };
+      const abbrToTeam = {};
+      teams.forEach(t => { abbrToTeam[t.abbr] = t; });
+      Object.entries(PITCHER_ROLES.pitchers).forEach(([k, r]) => {
+        if (nameToTeam[k] || !r || !r.team) return;
+        const mlbAbbr = FG_TO_MLB[r.team] || r.team;
+        if (abbrToTeam[mlbAbbr]) nameToTeam[k] = abbrToTeam[mlbAbbr];
+      });
+    }
 
     root.innerHTML = `
       <div class="rk-grid">
@@ -4219,7 +4234,7 @@ function renderSPRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:36px"><col><col style="width:44px"><col style="width:58px"><col style="width:54px"><col style="width:54px"><col style="width:54px"><col style="width:58px"><col style="width:56px"><col style="width:40px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
       <th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
@@ -4287,7 +4302,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:36px"><col><col style="width:44px"><col style="width:58px"><col style="width:54px"><col style="width:54px"><col style="width:54px"><col style="width:58px"><col style="width:56px"><col style="width:40px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
       <th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
