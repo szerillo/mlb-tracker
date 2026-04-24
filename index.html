@@ -1782,7 +1782,7 @@ let PLAYER_INFO = {};
 async function getTeamRoster(teamId) {
   if (ROSTERS_CACHE[teamId]) return ROSTERS_CACHE[teamId];
   try {
-    const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=active&hydrate=person`);
+    const d = await fetchJSON(`${API}/teams/${teamId}/roster?rosterType=40Man&hydrate=person`);
     const all = (d.roster || []).map(r => ({
       id: r.person?.id,
       name: r.person?.fullName,
