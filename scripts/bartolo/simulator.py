@@ -12,7 +12,7 @@ The approach:
        simple bases-out run-scoring model
     4. Tabulate the win-probability distribution across all simulations
 
-This is NOT a pitch-by-pitch simulator â it's an event-level resampler. That
+This is NOT a pitch-by-pitch simulator — it's an event-level resampler. That
 makes it MUCH faster than a Monte Carlo approach while still capturing the
 outcome uncertainty that matters most (batted ball luck).
 """
@@ -29,7 +29,7 @@ from .model import BattedBallModel, OUTCOMES
 # -------------------------------------------------------------------
 # Event-to-runs conversion (simplified)
 # -------------------------------------------------------------------
-# Approximate run values â in a full build, use actual base/out state
+# Approximate run values — in a full build, use actual base/out state
 # transition matrix. This is fine for v1.
 OUTCOME_RUN_VALUES = {
     "out":      -0.03,  # small negative (uses an out)
@@ -41,6 +41,9 @@ OUTCOME_RUN_VALUES = {
     "strikeout":-0.27,
     "hbp":      +0.34,
 }
+
+# Precomputed run-value vector in OUTCOMES order (for vectorized model ops)
+_BB_RUN_VALUES = np.array([OUTCOME_RUN_VALUES[o] for o in OUTCOMES])
 
 
 @dataclass
@@ -120,7 +123,7 @@ def simulate_team_runs(events: GameEvents, model: BattedBallModel,
                        n_sims: int = 10000, rng=None) -> np.ndarray:
     """Resample batted-ball outcomes and estimate run distribution for one team.
 
-    Uses OUTCOME_RUN_VALUES to map event â expected runs added, then sums
+    Uses OUTCOME_RUN_VALUES to map event → expected runs added, then sums
     + adds walks/Ks/HBPs as fixed run-value contributions + team's other_runs_scored.
     This is a *linear-weights approximation*; for v2, replace with base/out
     state simulation.
@@ -141,9 +144,8 @@ def simulate_team_runs(events: GameEvents, model: BattedBallModel,
     # Sample outcome indices
     outcomes = model.sample_outcomes(events.batted_balls, n_sims=n_sims,
                                      catch_prob=events.catch_prob, rng=rng)
-    # Vectorized run calc: map outcome idx â run value
-    run_values = np.array([OUTCOME_RUN_VALUES[o] for o in OUTCOMES])
-    bb_runs = run_values[outcomes].sum(axis=1)  # shape (n_sims,)
+    # Vectorized run calc: map outcome idx → run value
+    bb_runs = _BB_RUN_VALUES[outcomes].sum(axis=1)  # shape (n_sims,)
     return bb_runs + fixed
 
 
@@ -159,11 +161,20 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
         home_team=game_payload["home_team"],
         away_team=game_payload["away_team"],
     )
-    # "Other runs scored" = actual runs minus linear-weights estimate of
-    # batted-ball + walks/Ks/HBP contribution. We calibrate this per game so
-    # the simulator roughly anchors to what happened, then resamples variance.
-    away_lw = estimate_linear_weights(away_events)
-    home_lw = estimate_linear_weights(home_events)
+    # Anchor residual to the MODEL's expected run value for these batted balls
+    # (not to the ACTUAL events' LW sum). This ensures E[sim_total] = actual_runs
+    # exactly — otherwise any mismatch between the model's per-BB outcome
+    # distribution and the actual outcomes introduces a systematic bias in
+    # sim_mean that compounds into ~+5 runs/game across a full MLB slate.
+    #
+    # Rationale: since bb_runs_sim is drawn from model.predict_proba(), its
+    # expected value is sum of (model EV per ball). Anchoring on that expectation
+    # rather than the realized LW cancels out cleanly in the simulator math:
+    #   fixed = walks*lw + Ks*lw + HBP*lw + (actual - model_bb_ev - event_lws)
+    #   E[sim_total] = E[bb_runs_sim] + fixed
+    #                = model_bb_ev + (actual - model_bb_ev)  = actual  ✓
+    away_lw = estimate_model_expected_lw(away_events, model)
+    home_lw = estimate_model_expected_lw(home_events, model)
     away_events.other_runs_scored = game_payload["actual_away_runs"] - away_lw
     home_events.other_runs_scored = game_payload["actual_home_runs"] - home_lw
 
@@ -182,8 +193,13 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
 
 
 def estimate_linear_weights(events: GameEvents) -> float:
-    """Estimate expected runs from events using linear weights. Used to anchor
-    the simulator to the actual game's context-free run contribution."""
+    """Estimate expected runs from events using ACTUAL outcomes' linear weights.
+
+    DEPRECATED for use as the simulator anchor — kept for reference/diagnostics.
+    Anchoring the residual on this quantity causes a systematic ~+5 runs/game
+    bias because the model's resampling distribution does not exactly match
+    the actual outcome distribution. Use estimate_model_expected_lw() instead.
+    """
     from .model import EVENT_TO_OUTCOME
     if len(events.batted_balls) == 0:
         return (events.walks * OUTCOME_RUN_VALUES["walk"]
@@ -195,3 +211,25 @@ def estimate_linear_weights(events: GameEvents) -> float:
                  + events.walks * OUTCOME_RUN_VALUES["walk"]
                  + events.strikeouts * OUTCOME_RUN_VALUES["strikeout"]
                  + events.hit_by_pitches * OUTCOME_RUN_VALUES["hbp"])
+
+
+def estimate_model_expected_lw(events: GameEvents, model: BattedBallModel) -> float:
+    """Expected linear-weights run value using the MODEL's per-BB outcome
+    distribution (NOT the actual realized outcomes).
+
+    For each batted ball, compute Σ_k P_model(outcome_k | ball_features) * lw_k.
+    Sum across the team's BBs and add the deterministic walks/Ks/HBP lw
+    contributions. Walks, Ks, and HBPs are held fixed (not resampled) so their
+    lw values go into the residual anchor directly, exactly cancelling in the
+    sim math — E[sim_total] = actual_runs.
+    """
+    fixed_event_lw = (events.walks * OUTCOME_RUN_VALUES["walk"]
+                      + events.strikeouts * OUTCOME_RUN_VALUES["strikeout"]
+                      + events.hit_by_pitches * OUTCOME_RUN_VALUES["hbp"])
+    if len(events.batted_balls) == 0:
+        return fixed_event_lw
+    # Model predicts per-BB probability vector (n_bb, 5) in OUTCOMES order.
+    p = model.predict_proba(events.batted_balls, catch_prob=events.catch_prob)
+    # Expected run value per BB = dot(p_row, lw_vector); sum across BBs.
+    bb_model_lw = float((p * _BB_RUN_VALUES).sum())
+    return bb_model_lw + fixed_event_lw
