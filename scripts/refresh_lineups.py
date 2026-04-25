@@ -47,7 +47,7 @@ class RotowireParser(HTMLParser):
 
     def __init__(self):
         super().__init__()
-        self.games = []           # list of {away, home, lineups: {away: [...], home: [...]}, ...}
+        self.games = []           # list of {away_abbr, home_abbr, lineups: {away: [...], home: [...]}, ...}
         self._game = None
         self._side = None         # "away" or "home"
         self._lineup_status = None
@@ -59,6 +59,12 @@ class RotowireParser(HTMLParser):
         self._in_highlight_name = False
         self._current_player = None
         self._current_pitcher = None
+        # Per-game team-abbr capture state. Set when we see <div class="lineup__team is-visit">
+        # so the NEXT <div class="lineup__abbr"> within that scope routes to away_abbr.
+        # Replaces the brittle global regex-pair scheme that drifted out of alignment when
+        # Rotowire's HTML had stray lineup__abbr nodes (widgets, headers, etc.).
+        self._team_scope_side = None   # "away" | "home" | None
+        self._in_abbr = False          # currently capturing text inside a lineup__abbr div
 
     def handle_starttag(self, tag, attrs):
         attrs_d = dict(attrs)
@@ -68,14 +74,24 @@ class RotowireParser(HTMLParser):
         if "lineup is-mlb" in cls or "lineup is-tools" in cls:
             # Commit prior game
             self._commit_game()
-            self._game = {"away": None, "home": None, "lineups": {"away": [], "home": []},
-                          "pitchers": {"away": None, "home": None}, "status": "unknown"}
-        # Game time / status may be in lineup__time block
-        # Team sides
+            self._game = {"away_abbr": None, "home_abbr": None,
+                          "lineups": {"away": [], "home": []},
+                          "pitchers": {"away": None, "home": None},
+                          "status": "unknown"}
+            self._team_scope_side = None  # reset between games
+        # The matchup-header sub-block — sets WHICH side the next abbr belongs to.
+        # Rotowire markup: <div class="lineup__team is-visit"><div class="lineup__abbr">CHC</div>...</div>
+        if "lineup__team" in cls and "is-visit" in cls:
+            self._team_scope_side = "away"
+        elif "lineup__team" in cls and "is-home" in cls:
+            self._team_scope_side = "home"
+        # Lineup list (player rows) — also tracks side for player ingestion.
         if cls == "lineup__list is-visit":
             self._side = "away"
+            self._team_scope_side = None  # past the matchup header now
         elif cls == "lineup__list is-home":
             self._side = "home"
+            self._team_scope_side = None
         # Status
         elif cls.startswith("lineup__status"):
             if "is-confirmed" in cls: self._lineup_status = "confirmed"
@@ -95,21 +111,14 @@ class RotowireParser(HTMLParser):
         elif cls == "lineup__player-highlight-name":
             self._in_highlight_name = True
             self._current_pitcher = {"name": None, "throws": None}
+        # Team abbr — only capture when we're inside a lineup__team scope AND inside a current game.
+        # Bare lineup__abbr divs outside a team scope (widgets, sidebars) are ignored.
+        if cls.startswith("lineup__abbr") and self._game is not None and self._team_scope_side:
+            self._in_abbr = True
+            self._text_buffer = ""
         # Player name from <a title="...">
         if self._in_player and tag == "a" and attrs_d.get("title"):
             self._current_player["name"] = attrs_d["title"]
-        if self._in_highlight_name and tag == "a":
-            # The href contains player slug; we grab the inner text below
-            pass
-        # Team names often appear in lineup__abbr or lineup__mteam
-        if cls.startswith("lineup__mteam") or cls == "lineup__team-name":
-            self._text_buffer = ""
-            self._capturing_team = True
-        else:
-            self._capturing_team = False
-        # Matchup header: often <div class="lineup__teams"> with two "lineup__team" children
-        if cls.startswith("lineup__abbr"):
-            self._text_buffer = ""; self._capturing_team = True
 
     def handle_endtag(self, tag):
         if self._in_pos:
@@ -124,6 +133,15 @@ class RotowireParser(HTMLParser):
             if self._current_pitcher is not None:
                 self._current_pitcher["throws"] = self._text_buffer.strip()
             self._in_throws = False
+        elif self._in_abbr:
+            # Finished capturing a team abbreviation in the matchup header.
+            abbr = self._text_buffer.strip()
+            if self._game is not None and self._team_scope_side and abbr:
+                key = f"{self._team_scope_side}_abbr"
+                # Only set the FIRST abbr seen per side per game (avoid logo+text duplicates).
+                if not self._game.get(key):
+                    self._game[key] = abbr
+            self._in_abbr = False
         if tag == "li" and self._in_player:
             if self._game and self._side and self._current_player and self._current_player.get("name"):
                 self._current_player["order"] = len(self._game["lineups"][self._side]) + 1
@@ -133,7 +151,7 @@ class RotowireParser(HTMLParser):
             self._current_player = None
 
     def handle_data(self, data):
-        if self._in_pos or self._in_bats or self._in_throws:
+        if self._in_pos or self._in_bats or self._in_throws or self._in_abbr:
             self._text_buffer += data
         if self._in_highlight_name and self._current_pitcher is not None and self._current_pitcher["name"] is None:
             name = data.strip()
@@ -144,10 +162,10 @@ class RotowireParser(HTMLParser):
 
     def _commit_game(self):
         if self._game and (self._game["lineups"]["away"] or self._game["lineups"]["home"]):
-            # Try to infer team names from pitcher team buttons elsewhere — fallback: use index
             self.games.append(self._game)
         self._game = None
         self._side = None
+        self._team_scope_side = None
 
     def close(self):
         self._commit_game()
@@ -296,15 +314,16 @@ def main():
         return
     print("Scraping Rotowire projected lineups...")
     html = fetch(ROTOWIRE_URL)
-    abbrs_pairs = _extract_team_names_from_html(html)
     parser = RotowireParser()
     parser.feed(html); parser.close()
     parsed_games = parser.games
-    # Align abbrs pairs to parsed games
-    for i, g in enumerate(parsed_games):
-        if i < len(abbrs_pairs):
-            g["away_abbr"], g["home_abbr"] = abbrs_pairs[i]
-    print(f"  Rotowire games parsed: {len(parsed_games)} (with {len(abbrs_pairs)} team pairs)")
+    # Team abbrs are now captured per-game inside the parser. The legacy global
+    # regex pairing (_extract_team_names_from_html) drifted out of alignment when
+    # Rotowire HTML had stray lineup__abbr nodes — that was the root cause of
+    # cross-game lineup contamination. The per-game capture is bound to each
+    # game's <div class="lineup is-mlb"> scope so it can't cross-contaminate.
+    n_with_abbrs = sum(1 for g in parsed_games if g.get("away_abbr") and g.get("home_abbr"))
+    print(f"  Rotowire games parsed: {len(parsed_games)} ({n_with_abbrs} with both team abbrs captured)")
 
     print("Fetching MLB schedule + confirmed lineups...")
     mlb_games, y_games = get_today_schedule()
@@ -349,20 +368,42 @@ def main():
                 dan_flags[team] = {"yesterday_catcher": y_c,
                                    "note": f"Played night game yesterday — {y_c} may sit today"}
 
+    # MLB-team-name → Rotowire-abbr mapping. Strict equality with this canonical
+    # map prevents the "DET in DETROIT TIGERS = match" false-positive that was
+    # letting the wrong parsed game attach to the wrong MLB game.
+    NAME_TO_ABBR = {
+        "Arizona Diamondbacks":"ARI", "Atlanta Braves":"ATL", "Baltimore Orioles":"BAL",
+        "Boston Red Sox":"BOS", "Chicago Cubs":"CHC", "Chicago White Sox":"CWS",
+        "Cincinnati Reds":"CIN", "Cleveland Guardians":"CLE", "Colorado Rockies":"COL",
+        "Detroit Tigers":"DET", "Houston Astros":"HOU", "Kansas City Royals":"KC",
+        "Los Angeles Angels":"LAA", "Los Angeles Dodgers":"LAD", "Miami Marlins":"MIA",
+        "Milwaukee Brewers":"MIL", "Minnesota Twins":"MIN", "New York Mets":"NYM",
+        "New York Yankees":"NYY", "Athletics":"OAK", "Oakland Athletics":"OAK",
+        "Philadelphia Phillies":"PHI", "Pittsburgh Pirates":"PIT", "San Diego Padres":"SD",
+        "Seattle Mariners":"SEA", "San Francisco Giants":"SF", "St. Louis Cardinals":"STL",
+        "Tampa Bay Rays":"TB", "Texas Rangers":"TEX", "Toronto Blue Jays":"TOR",
+        "Washington Nationals":"WSH",
+    }
+    # Some Rotowire abbrs differ from MLB API style — normalize Rotowire side too.
+    RW_ABBR_NORM = {"WAS":"WSH", "KCR":"KC", "CHW":"CWS", "SDP":"SD", "SFG":"SF",
+                    "TBR":"TB", "WSN":"WSH", "ATH":"OAK"}
+
     # Build final output
     games_out = []
     for g in mlb_games:
         pk = g["game_pk"]
-        # Try matching to parsed Rotowire game by abbr
+        away_abbr = NAME_TO_ABBR.get(g["away"])
+        home_abbr = NAME_TO_ABBR.get(g["home"])
+        # Strict abbr equality match — every parsed Rotowire game now has its OWN
+        # captured away_abbr/home_abbr from the matchup header (not regex-derived).
         rw = None
-        for pg in parsed_games:
-            if pg.get("away_abbr") and pg.get("home_abbr"):
-                # Match via abbreviation (loose — we'll accept any match)
-                aw_match = pg["away_abbr"].upper() in g["away"].upper() or \
-                           g["away"].split()[-1].upper() in pg["away_abbr"].upper()
-                hm_match = pg["home_abbr"].upper() in g["home"].upper() or \
-                           g["home"].split()[-1].upper() in pg["home_abbr"].upper()
-                if aw_match and hm_match:
+        if away_abbr and home_abbr:
+            for pg in parsed_games:
+                pg_aw = RW_ABBR_NORM.get((pg.get("away_abbr") or "").upper(),
+                                         (pg.get("away_abbr") or "").upper())
+                pg_hm = RW_ABBR_NORM.get((pg.get("home_abbr") or "").upper(),
+                                         (pg.get("home_abbr") or "").upper())
+                if pg_aw == away_abbr and pg_hm == home_abbr:
                     rw = pg
                     break
 
