@@ -120,9 +120,6 @@ def main():
             hitters[norm_name(name)] = entry
 
     # Try prior year as a fallback pool when current-season row is blank.
-    # Early-season percentiles are noisy and often blank; carry last year's
-    # number if the current-year row is empty, so the team aggregates
-    # aren't a sea of dashes.
     if year > 2020:
         prior_url = URL.format(year=year - 1)
         try:
@@ -153,14 +150,6 @@ def main():
                         e[dest] = pc[dest]
                         e["_backfilled"] = True
                         backfilled += 1
-            # Also add prior-year-only hitters so unmatched lineup players
-            # still get coverage before their 2026 percentiles are posted.
-            added = 0
-            for k, pc in prior.items():
-                if k in hitters: continue
-                nm = pc.get("name") if isinstance(pc, dict) else None
-                # `prior` dict values are metric dicts, not full entries
-                pass  # skip — player_id/name not in prior dict here
             print(f"[percentiles] backfilled {backfilled} cells from {year-1}",
                   file=sys.stderr)
         except Exception as e:
@@ -168,9 +157,6 @@ def main():
                   file=sys.stderr)
 
     # ── 2nd pass: enrich with raw rates from Savant's statcast leaderboard ──
-    # The percentile-rankings CSV only has 0–100 ranks. Pull the statcast
-    # leaderboard for raw rates (barrel %, hard-hit %, whiff %). Merge by
-    # mlbam_id where possible, name otherwise.
     try:
         req = urllib.request.Request(STATCAST_URL.format(year=year), headers={"User-Agent": UA})
         with urllib.request.urlopen(req, timeout=45) as r:
@@ -185,20 +171,22 @@ def main():
                 nm_std = f"{first} {last}"
             else:
                 nm_std = raw_name.strip()
-            # Raw rate columns vary — try a few candidates
-            raw_barrel = (row.get("barrel_batted_rate") or row.get("brl_percent")
-                          or row.get("barrels_per_pa_percent"))
-            raw_hh     = (row.get("hard_hit_percent") or row.get("hh_percent")
-                          or row.get("exit_velocity_hard_hit"))
-            raw_whiff  = (row.get("whiff_percent") or row.get("whiffs_percent"))
+            # Verified Savant column names (statcast leaderboard 2026):
+            # barrel %  → "brl_percent"   (barrels per batted-ball event)
+            # barrel/PA → "brl_pa"        (barrels per PA — includes Ks in denom)
+            # hard-hit  → "ev95percent"   (% of BBE with EV ≥ 95 mph)
+            # whiff %   → not on this endpoint; lives on percentile-rankings only
+            raw_barrel    = row.get("brl_percent")
+            raw_barrel_pa = row.get("brl_pa")
+            raw_hh        = row.get("ev95percent")
             def _f(v):
                 if v in (None, ""): return None
                 try: return float(v)
                 except ValueError: return None
             entry = {}
-            if _f(raw_barrel) is not None: entry["barrel_pct"]    = _f(raw_barrel)
-            if _f(raw_hh)     is not None: entry["hard_hit_pct"]  = _f(raw_hh)
-            if _f(raw_whiff)  is not None: entry["whiff_pct_raw"] = _f(raw_whiff)
+            if _f(raw_barrel)    is not None: entry["barrel_pct"]    = _f(raw_barrel)
+            if _f(raw_barrel_pa) is not None: entry["barrel_per_pa"] = _f(raw_barrel_pa)
+            if _f(raw_hh)        is not None: entry["hard_hit_pct"]  = _f(raw_hh)
             if not entry: continue
             if pid is not None: by_id[pid] = entry
             if nm_std: by_norm[norm_name(nm_std)] = entry
@@ -223,7 +211,7 @@ def main():
         "year": year,
         "source": f"Savant percentile-rankings + statcast leaderboard {year}" + (
             f" (+ {year-1} percentile backfill)" if year > 2020 else ""),
-        "note": "0–100 percentiles (xwoba/barrel/etc.) + raw rates (barrel_pct, hard_hit_pct, whiff_pct_raw).",
+        "note": "0–100 percentiles + raw rates (barrel_pct, barrel_per_pa, hard_hit_pct).",
         "hitters": hitters,
     }
     json.dump(payload, sys.stdout, indent=2)
