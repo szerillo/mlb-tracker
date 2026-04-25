@@ -39,6 +39,13 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
 URL = ("https://baseballsavant.mlb.com/leaderboard/percentile-rankings"
        "?type=batter&year={year}&abs=50&csv=true")
 
+# Savant's statcast leaderboard returns raw rates (barrel %, hard-hit %, etc.)
+# alongside the counting stats. We merge this into each hitter entry so the
+# frontend can show e.g. "Brl 12.3%" instead of "Brl p85" (percentile).
+STATCAST_URL = ("https://baseballsavant.mlb.com/leaderboard/statcast"
+                "?type=batter&year={year}&player_type=resp_batter_id&min=q"
+                "&csv=true")
+
 # Savant CSV column name → cleaner key we use in JSON
 COLS = {
     "xwoba":            "xwoba",
@@ -160,12 +167,63 @@ def main():
             print(f"[percentiles] prior-year backfill failed: {e}",
                   file=sys.stderr)
 
+    # ── 2nd pass: enrich with raw rates from Savant's statcast leaderboard ──
+    # The percentile-rankings CSV only has 0–100 ranks. Pull the statcast
+    # leaderboard for raw rates (barrel %, hard-hit %, whiff %). Merge by
+    # mlbam_id where possible, name otherwise.
+    try:
+        req = urllib.request.Request(STATCAST_URL.format(year=year), headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=45) as r:
+            raw_text = r.read().decode("utf-8", errors="replace").lstrip("\ufeff")
+        by_id = {}
+        by_norm = {}
+        for row in csv.DictReader(io.StringIO(raw_text)):
+            pid = _i(row.get("player_id"))
+            raw_name = row.get("last_name, first_name") or row.get("player_name") or ""
+            if "," in raw_name:
+                last, first = [p.strip() for p in raw_name.split(",", 1)]
+                nm_std = f"{first} {last}"
+            else:
+                nm_std = raw_name.strip()
+            # Raw rate columns vary — try a few candidates
+            raw_barrel = (row.get("barrel_batted_rate") or row.get("brl_percent")
+                          or row.get("barrels_per_pa_percent"))
+            raw_hh     = (row.get("hard_hit_percent") or row.get("hh_percent")
+                          or row.get("exit_velocity_hard_hit"))
+            raw_whiff  = (row.get("whiff_percent") or row.get("whiffs_percent"))
+            def _f(v):
+                if v in (None, ""): return None
+                try: return float(v)
+                except ValueError: return None
+            entry = {}
+            if _f(raw_barrel) is not None: entry["barrel_pct"]    = _f(raw_barrel)
+            if _f(raw_hh)     is not None: entry["hard_hit_pct"]  = _f(raw_hh)
+            if _f(raw_whiff)  is not None: entry["whiff_pct_raw"] = _f(raw_whiff)
+            if not entry: continue
+            if pid is not None: by_id[pid] = entry
+            if nm_std: by_norm[norm_name(nm_std)] = entry
+        merged = 0
+        for k, e in hitters.items():
+            extra = None
+            if e.get("mlbam_id") is not None and e["mlbam_id"] in by_id:
+                extra = by_id[e["mlbam_id"]]
+            elif k in by_norm:
+                extra = by_norm[k]
+            if extra:
+                e.update(extra)
+                merged += 1
+        print(f"[percentiles] merged raw rates into {merged} hitters",
+              file=sys.stderr)
+    except Exception as e:
+        print(f"[percentiles] raw-rate merge failed (non-fatal): {e}",
+              file=sys.stderr)
+
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "year": year,
-        "source": f"Savant percentile-rankings {year}" + (
-            f" + {year-1} backfill" if year > 2020 else ""),
-        "note": "0–100 percentiles. Early-season blanks filled with prior-year percentile where available.",
+        "source": f"Savant percentile-rankings + statcast leaderboard {year}" + (
+            f" (+ {year-1} percentile backfill)" if year > 2020 else ""),
+        "note": "0–100 percentiles (xwoba/barrel/etc.) + raw rates (barrel_pct, hard_hit_pct, whiff_pct_raw).",
         "hitters": hitters,
     }
     json.dump(payload, sys.stdout, indent=2)
