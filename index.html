@@ -143,6 +143,30 @@
   .rank-chip.bp.bad    { background: rgba(234,197,94,0.10); color: var(--tier-bad); border-color: rgba(234,197,94,0.22); }
   .rank-chip.bp.worst  { background: rgba(248,113,113,0.10); color: var(--tier-worst); border-color: rgba(248,113,113,0.22); }
   .rank-chip.na { opacity: 0.6; font-style: italic; }
+
+  /* Unified score chip — single weighted z-score (0.45 proj / 0.45 expected / 0.10 model)
+     Surfaced in the SP card header, scoreboard SP cell, lineup SP overlay, and
+     the rankings tables. Tier color matches existing tier-* palette. */
+  .uni-chip { display: inline-flex; align-items: baseline; gap: 0.22rem;
+    padding: 0.05rem 0.42rem; border-radius: 999px; font-size: 0.62rem;
+    font-weight: 700; letter-spacing: 0.04em; font-family: var(--mono);
+    vertical-align: middle; margin-left: 0.35rem; white-space: nowrap;
+    background: rgba(36,46,58,0.45); color: var(--muted);
+    border: 1px solid var(--border); cursor: help; }
+  .uni-chip b { font-family: var(--mono); font-weight: 700; font-size: 0.7rem; }
+  .uni-chip.elite { background: rgba(255,145,64,0.16); color: var(--tier-elite); border-color: rgba(255,145,64,0.35); }
+  .uni-chip.elite b { color: var(--tier-elite); }
+  .uni-chip.good  { background: rgba(110,255,148,0.14); color: var(--tier-good); border-color: rgba(110,255,148,0.28); }
+  .uni-chip.good b { color: var(--tier-good); }
+  .uni-chip.avg   { background: rgba(139,149,161,0.10); color: var(--muted); }
+  .uni-chip.bad   { background: rgba(91,184,245,0.12); color: var(--tier-bad); border-color: rgba(91,184,245,0.28); }
+  .uni-chip.bad b { color: var(--tier-bad); }
+  .uni-chip.worst { background: rgba(248,113,113,0.14); color: var(--tier-worst); border-color: rgba(248,113,113,0.32); }
+  .uni-chip.worst b { color: var(--tier-worst); }
+  /* Compact variant for tables — no left margin, slightly tighter */
+  .uni-chip.tight { margin-left: 0; padding: 0.04rem 0.32rem; font-size: 0.66rem; }
+  .uni-chip.tight b { font-size: 0.74rem; }
+
   .sb-sp-stats { display: flex; gap: 0.35rem; margin-top: 0.2rem;
     font-family: var(--mono); font-size: 0.78rem; }
   .sb-sp-cell.home .sb-sp-stats { justify-content: flex-end; }
@@ -2019,7 +2043,7 @@ function spMiniCell(name, teamName, sideCls) {
     </div>` : '';
 
   return `<div class="sb-sp-cell ${sideCls}">
-    <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
+    <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}${unifiedScoreChip(s)}</div>
     <div class="sb-sp-stats">
       ${cell(primary.label, primary.val, primaryCls)}
       ${cell("xERA", s.xera, xeraCls)}
@@ -2525,7 +2549,7 @@ function renderLineupSPHeader(spName, prefix="vs") {
   return `<div class="lu-sp">
     <div class="lu-sp-left">
       <span class="lu-sp-label">${prefix}</span>
-      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
+      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}${unifiedScoreChip(s)}
       ${plusLine}
     </div>
     <div class="lu-sp-stats">
@@ -2671,12 +2695,14 @@ function renderLineupTable(side, opts={}) {
       const wobaCell = expanded
         ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
         : "";
+      // Unified hitter score chip — slots between Player and Brl%
+      const scoreCell = `<td class="split">${unifiedScoreChip(h, {tight:true,label:""}) || '<span style="color:var(--muted);font-size:0.75rem;">—</span>'}</td>`;
       rowsHTML += `<tr>
         <td class="order">${p.order || ""}</td>
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
         <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>
-        ${barrelCell}${kbbCells}
+        ${scoreCell}${barrelCell}${kbbCells}
         ${wobaCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         <td class="split split-chip ${vRCls}" title="${vR != null ? `Shrunk ${Math.round(vR)} wRC+ vs RHP${vR_raw != null ? ` · raw ${Math.round(vR_raw)} over ${vR_pa} PA (3-yr)` : ''}` : 'No vs-RHP data'}">${vR != null ? Math.round(vR) : "—"}</td>
@@ -2713,6 +2739,7 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
+    <th class="right" style="width:54px;" title="Unified hitter score — single weighted z (proj 45 / expected 45 / bat-track 10). Built from woba projection + xwOBA + barrel% + hard-hit% + bat speed.">Score</th>
     <th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${kbbHeaders}
     ${wobaHeader}
     <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
@@ -3139,6 +3166,7 @@ function renderPitcherDeepSP(spName, teamName) {
       <span class="pt-sp-name">${spName}</span>
       ${headerHand}${headerOpener}
       ${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
+      ${unifiedScoreChip(s)}
       ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
     <div class="pt-stat-grid">${tiles}</div>
@@ -4189,6 +4217,24 @@ function getBullpenRank(teamAbbrOrId) {
   if (typeof teamAbbrOrId === 'number') return c.byId.get(teamAbbrOrId) || null;
   return c.byAbbr.get(teamAbbrOrId) || null;
 }
+// Unified score chip — single weighted z-score from data/{pitcher_stats,hitters}.json.
+// Pulls `unified_score` (z) + `unified_tier` (Elite/Good/Avg/Bad/Worst) directly
+// from the entry. opts.tight = compact variant for table cells; opts.label
+// overrides the "S" prefix; falls back to nothing if no score is present.
+function unifiedScoreChip(entry, opts={}) {
+  if (!entry || entry.unified_score == null) return "";
+  const z = entry.unified_score;
+  const tierLabel = entry.unified_tier || "Avg";
+  const cls = (tierLabel || "Avg").toLowerCase();
+  const cov = entry.unified_weight_covered;
+  const sign = z >= 0 ? "+" : "";
+  const text = `${sign}${z.toFixed(2)}`;
+  const tightCls = opts.tight ? " tight" : "";
+  const label = opts.label || "S";
+  const title = `Unified score ${text} · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · z-score blend (proj 45% / expected 45% / model 10%)`;
+  return `<span class="uni-chip ${cls}${tightCls}" title="${title}">${label} <b>${text}</b></span>`;
+}
+
 function rankChipHtml(rank, total, kind) {
   // kind: 'sp' or 'bp' — styles via class
   if (!rank || !total) return `<span class="rank-chip ${kind} na" title="${kind==='sp'?'SP':'Bullpen'} rank unavailable">${kind==='sp'?'SP':'BP'} #N/A</span>`;
@@ -4251,11 +4297,13 @@ function renderSPRankings(pitchers, nameToTeam) {
     const rank = i + 1;
     const t = nameToTeam[p.key];
     const tierCls = tierByPercentile(rank, total);
+    const pEntry = pitchers[p.key];
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="name">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
+      <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
       <td>${fmt(p.metrics.xfip)}</td>
       <td>${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
@@ -4266,12 +4314,14 @@ function renderSPRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:60px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
-      <th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
+      <th title="Composite z-score across xFIP / SIERA / xERA / botERA / K-BB% (lower=better, this view)">Comp</th>
+      <th title="Unified score — single weighted z (proj 45 / expected 45 / model 10)">Score</th>
+      <th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="11" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -4319,11 +4369,13 @@ function renderReliverRankings(pitchers, nameToTeam) {
     const rank = i + 1;
     const t = nameToTeam[p.key];
     const tierCls = tierByPercentile(rank, total);
+    const pEntry = pitchers[p.key];
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="name">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
+      <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
       <td>${fmt(p.metrics.xfip)}</td>
       <td>${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
@@ -4334,12 +4386,14 @@ function renderReliverRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:60px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
-      <th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
+      <th title="Composite z-score · this view">Comp</th>
+      <th title="Unified score — single weighted z (proj 45 / expected 45 / model 10)">Score</th>
+      <th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="11" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
