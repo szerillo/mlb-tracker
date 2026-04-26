@@ -4217,22 +4217,25 @@ function getBullpenRank(teamAbbrOrId) {
   if (typeof teamAbbrOrId === 'number') return c.byId.get(teamAbbrOrId) || null;
   return c.byAbbr.get(teamAbbrOrId) || null;
 }
-// Unified score chip — single weighted z-score from data/{pitcher_stats,hitters}.json.
-// Pulls `unified_score` (z) + `unified_tier` (Elite/Good/Avg/Bad/Worst) directly
-// from the entry. opts.tight = compact variant for table cells; opts.label
-// overrides the "S" prefix; falls back to nothing if no score is present.
+// Unified score chip. Auto-detects scale by value range:
+//   < 10  → pitcher (weighted FIP projection — lower better; e.g. 3.85)
+//   ≥ 30  → hitter (wRC+ scale — 100 = pool avg, higher better; e.g. 125)
+// Reads `unified_score` + `unified_tier` from the entry. opts.tight = compact
+// variant for table cells; opts.label overrides the auto-prefix.
 function unifiedScoreChip(entry, opts={}) {
   if (!entry || entry.unified_score == null) return "";
-  const z = entry.unified_score;
+  const score = entry.unified_score;
   const tierLabel = entry.unified_tier || "Avg";
   const cls = (tierLabel || "Avg").toLowerCase();
   const cov = entry.unified_weight_covered;
-  const sign = z >= 0 ? "+" : "";
-  const text = `${sign}${z.toFixed(2)}`;
+  const isFip = score < 10;
+  const text = isFip ? score.toFixed(2) : Math.round(score).toString();
   const tightCls = opts.tight ? " tight" : "";
-  const label = opts.label || "S";
-  const title = `Unified score ${text} · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · z-score blend (proj 45% / expected 45% / model 10%)`;
-  return `<span class="uni-chip ${cls}${tightCls}" title="${title}">${label} <b>${text}</b></span>`;
+  const label = (opts.label !== undefined) ? opts.label : (isFip ? "FIP" : "wRC+");
+  const title = isFip
+    ? `Weighted FIP projection ${text} (lower = better) · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 45% Steamer fip_proj + 15% xFIP + 15% SIERA + 15% xERA + 10% botERA`
+    : `Unified hitter rating ${text} (wRC+ scale, 100 = avg) · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 45% wOBA proj + 25% xwOBA + 10% barrel% + 10% hard-hit% + 10% bat-speed`;
+  return `<span class="uni-chip ${cls}${tightCls}" title="${title}">${label ? label + ' ' : ''}<b>${text}</b></span>`;
 }
 
 function rankChipHtml(rank, total, kind) {
