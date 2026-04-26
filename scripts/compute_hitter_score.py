@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Compute a unified hitter quality score by blending projection, expected,
-and bat-tracking metrics into a single weighted z-score.
+Compute a unified hitter quality value on the wRC+ scale (100 = avg, higher
+= better, ~25-pt SD). It's a weighted z-score blend of 5 component metrics
+linearly mapped to the wRC+ axis: score = 100 + 25 * weighted_avg_z.
 
-Mirrors compute_pitcher_score.py — same structure, different fields.
+So a hitter with all five inputs at the league mean gets ~100, +1 standard
+deviation across the board → ~125, +2 SD → ~150, etc. — same intuition as
+real wRC+ where SD ≈ 25 pts.
 
 Reads:
     data/hitters.json            (Steamer projection + season actuals)
@@ -20,20 +23,16 @@ Weights (mirrors the pitcher 45/45/10 split):
                        hard_hit_pct (Savant raw hard-hit %)              10%
     Bat-track  10%  →  bat_speed    (Savant percentile rank, 0–100)      10%
 
-All five inputs are HIGHER-IS-BETTER (unlike pitcher inputs which are all
-lower-is-better).
+All five inputs are HIGHER-IS-BETTER. Pool: only hitters with ≥ 30 PA
+actual (`pa_actual`) are in the z-score reference pool; the score is
+computed for ALL hitters but only against the qualified pool's distribution.
 
-Pool: only hitters with ≥ 30 PA actual (`pa_actual`) are in the z-score
-reference pool. The score is computed for ALL hitters, but only against the
-qualified pool's distribution — so a 5-PA call-up with weak xwOBA still gets
-a "Worst" tier without dragging the reference points.
-
-Tier thresholds:
-    z ≥  1.00  → "Elite"
-    z ≥  0.50  → "Good"
-    z ≥ -0.50  → "Avg"
-    z ≥ -1.00  → "Bad"
-    z <  -1.00 → "Worst"
+Tier thresholds (wRC+ scale — higher is better):
+    val ≥ 140  → "Elite"
+    val ≥ 115  → "Good"
+    val ≥  85  → "Avg"
+    val ≥  70  → "Bad"
+    val <  70  → "Worst"
 
 USAGE:
     python scripts/compute_hitter_score.py
@@ -50,25 +49,29 @@ HERE = os.path.dirname(__file__)
 HITTERS_PATH     = os.path.join(HERE, "..", "data", "hitters.json")
 PERCENTILES_PATH = os.path.join(HERE, "..", "data", "hitter_percentiles.json")
 
-# (field_name, weight_pct, lower_is_better, source_file)
+# (field_name, weight_pct, source_file)
 # source_file: "h" = hitters.json (Steamer + actuals), "p" = hitter_percentiles.json (Savant)
 COMPONENTS = [
-    ("woba",          45.0, False, "h"),
-    ("xwoba_actual",  25.0, False, "h"),
-    ("barrel_pct",    10.0, False, "p"),
-    ("hard_hit_pct",  10.0, False, "p"),
-    ("bat_speed",     10.0, False, "p"),
+    ("woba",          45.0, "h"),
+    ("xwoba_actual",  25.0, "h"),
+    ("barrel_pct",    10.0, "p"),
+    ("hard_hit_pct",  10.0, "p"),
+    ("bat_speed",     10.0, "p"),
 ]
-TOTAL_WEIGHT = sum(w for _, w, _, _ in COMPONENTS)  # 100.0
+TOTAL_WEIGHT = sum(w for _, w, _ in COMPONENTS)  # 100.0
 MIN_WEIGHT_COVERED = 50.0
+QUALIFIED_PA = 30.0
 
-QUALIFIED_PA = 30.0  # min PA-actual to be in the reference pool
+# wRC+ axis: 100 = pool average, 25 = one SD across blended z.
+WRC_BASE = 100.0
+WRC_PER_Z = 25.0
 
+# Tier on the wRC+ scale (higher = better)
 TIERS = [
-    ( 1.00, "Elite"),
-    ( 0.50, "Good"),
-    (-0.50, "Avg"),
-    (-1.00, "Bad"),
+    (140, "Elite"),
+    (115, "Good"),
+    ( 85, "Avg"),
+    ( 70, "Bad"),
     (float("-inf"), "Worst"),
 ]
 
@@ -106,7 +109,6 @@ def main() -> int:
         return 0
     print(f"[hscore] loaded {len(hitters)} hitters", file=sys.stderr)
 
-    # Load percentiles (optional — degrades gracefully if missing)
     pcts = {}
     if os.path.exists(PERCENTILES_PATH):
         try:
@@ -120,8 +122,6 @@ def main() -> int:
         print("[hscore] no hitter_percentiles.json — Savant fields will be missing",
               file=sys.stderr)
 
-    # Build a name-normalized index into pcts. Keys in hitter_percentiles are
-    # already norm_name'd, but `hitters.json` keys vary — match on h["name"].
     pcts_by_norm = {}
     for k, v in pcts.items():
         if isinstance(v, dict):
@@ -133,7 +133,6 @@ def main() -> int:
     def get_field(h_entry, field, source):
         if source == "h":
             return _f(h_entry.get(field))
-        # percentiles: try direct map by hitter key, fall back to name match
         nm = h_entry.get("name") or ""
         pc = pcts_by_norm.get(norm_name(nm))
         if pc is None: return None
@@ -141,7 +140,7 @@ def main() -> int:
 
     # --- Build qualified reference pool stats per metric -------------------
     pool_stats = {}
-    for field, _, lower_better, source in COMPONENTS:
+    for field, _, source in COMPONENTS:
         vals = []
         for h in hitters.values():
             if not isinstance(h, dict): continue
@@ -151,12 +150,12 @@ def main() -> int:
             if v is None: continue
             vals.append(v)
         if len(vals) < 10:
-            print(f"[hscore] {field}: only {len(vals)} qualified — skipping (insufficient pool)",
+            print(f"[hscore] {field}: only {len(vals)} qualified — skipping",
                   file=sys.stderr)
             continue
         m = statistics.mean(vals)
         s = statistics.stdev(vals)
-        pool_stats[field] = (m, s, lower_better, source)
+        pool_stats[field] = (m, s, source)
         print(f"[hscore]   {field:14}  pool n={len(vals):4d}  mean={m:7.3f}  sd={s:6.3f}",
               file=sys.stderr)
 
@@ -164,24 +163,23 @@ def main() -> int:
         print("[hscore] no metrics had a usable pool — aborting", file=sys.stderr)
         return 0
 
-    # --- Score every hitter (using pool reference) -------------------------
+    # --- Score every hitter ------------------------------------------------
     n_scored = 0
     n_sparse = 0
     tier_counts = {label: 0 for _, label in TIERS}
     for k, h in hitters.items():
         if not isinstance(h, dict): continue
-        weighted_sum = 0.0
+        weighted_sum_z = 0.0
         weight_avail = 0.0
         components = {}
-        for field, weight, _, source in COMPONENTS:
+        for field, weight, source in COMPONENTS:
             if field not in pool_stats: continue
-            m, s, lower_better, _src = pool_stats[field]
+            m, s, _src = pool_stats[field]
             v = get_field(h, field, source)
             if v is None: continue
-            z = (v - m) / s if s > 0 else 0.0
-            if lower_better: z = -z
+            z = (v - m) / s if s > 0 else 0.0  # all higher-is-better
             components[field] = round(z, 3)
-            weighted_sum += weight * z
+            weighted_sum_z += weight * z
             weight_avail += weight
 
         if weight_avail < MIN_WEIGHT_COVERED:
@@ -191,29 +189,31 @@ def main() -> int:
             n_sparse += 1
             continue
 
-        score = weighted_sum / weight_avail
+        avg_z = weighted_sum_z / weight_avail
+        score = WRC_BASE + WRC_PER_Z * avg_z  # wRC+ scale
+
         tier = TIERS[-1][1]
         for thr, label in TIERS:
             if score >= thr:
                 tier = label; break
 
-        h["unified_score"] = round(score, 3)
-        h["unified_tier"]  = tier
+        h["unified_score"]          = round(score, 1)
+        h["unified_tier"]           = tier
         h["unified_components"]     = components
         h["unified_weight_covered"] = round(weight_avail, 1)
         n_scored += 1
         tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
-    # --- Bookkeeping -------------------------------------------------------
     hd.setdefault("scoring", {})
     hd["scoring"]["unified_score"] = {
         "computed_at": datetime.datetime.utcnow().isoformat() + "Z",
-        "weights": {f: w for f, w, _, _ in COMPONENTS},
+        "scale": f"wRC+-style (100 = pool average, +/-{WRC_PER_Z} per SD; higher = better)",
+        "weights": {f: w for f, w, _ in COMPONENTS},
         "qualified_pa_threshold": QUALIFIED_PA,
-        "tier_thresholds": [{"min_z": t, "label": l}
+        "tier_thresholds": [{"min_val": t, "label": l}
                             for t, l in TIERS if t > float("-inf")],
         "pool_stats": {f: {"mean": round(m, 3), "sd": round(s, 3)}
-                       for f, (m, s, _lb, _src) in pool_stats.items()},
+                       for f, (m, s, _src) in pool_stats.items()},
         "n_scored": n_scored,
         "n_too_sparse": n_sparse,
         "tier_counts": tier_counts,
@@ -221,7 +221,7 @@ def main() -> int:
 
     with open(HITTERS_PATH, "w") as f:
         json.dump(hd, f, indent=2)
-    print(f"[hscore] scored {n_scored} hitters ({n_sparse} too sparse to score)",
+    print(f"[hscore] scored {n_scored} hitters ({n_sparse} too sparse)",
           file=sys.stderr)
     print("[hscore] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
           file=sys.stderr)
