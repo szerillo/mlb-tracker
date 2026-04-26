@@ -125,6 +125,19 @@ jobs:
           python scripts/refresh_hitter_percentiles.py > /tmp/hp.json && mv /tmp/hp.json data/hitter_percentiles.json || true
         continue-on-error: true
 
+      # Re-apply unified scores after every overnight refresh.
+      # refresh_pitcher_stats.py overwrites the whole `pitchers` map from a
+      # fresh FG dump, dropping unified_score keys; same risk on hitters when
+      # refresh_hitter_stats_enrich.py rewrites entries. These are cheap
+      # in-place computes (no network) so just run them after every pass.
+      - name: Compute unified pitcher score
+        run: python scripts/compute_pitcher_score.py
+        continue-on-error: true
+
+      - name: Compute unified hitter score
+        run: python scripts/compute_hitter_score.py
+        continue-on-error: true
+
       - name: Refresh betting odds (ActionNetwork scrape)
         run: python scripts/refresh_odds.py
         continue-on-error: true
