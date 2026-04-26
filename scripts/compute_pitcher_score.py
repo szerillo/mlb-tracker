@@ -1,79 +1,71 @@
 #!/usr/bin/env python3
 """
-Compute a unified pitcher quality score by blending expected, projection,
-and modeling metrics into a single weighted z-score.
+Compute a unified pitcher quality value: a weighted average of FIP-style
+metrics that lands on the same scale as the inputs (≈2.5–6.0, lower = better).
+This is *not* a z-score — it's the actual blended FIP projection number.
 
 Reads:  data/pitcher_stats.json
 Writes: data/pitcher_stats.json (enriched with `unified_score`, `unified_tier`,
-        `unified_components` per pitcher)
+        `unified_components`, `unified_weight_covered` per pitcher)
 
 Weights (Sean's 4/25 spec, after ~5 starts into the season):
     Expected   45%  →  xFIP 15%, SIERA 15%, xERA 15%
     Projection 45%  →  fip_proj 45% (already avg of ATC/BatX/OOPSY/ZiPS)
     Modeling   10%  →  bot_era 10%
 
-Scoring:
-    For each metric, z = (val − pool_mean) / pool_sd, then flipped so higher z
-    is better (all five inputs are lower-is-better). Score is a weighted average
-    of available z-scores; if a pitcher has < half the weight covered,
-    score = None (too sparse). Renormalization by available weight makes the
-    score scale consistent regardless of which metrics are missing.
+Score = Σ(weight_i × value_i) / Σ(weight_i_available)
+        ≈ a single FIP-equivalent number (lower = better).
 
-Tier thresholds:
-    z ≥  1.00  → "Elite"
-    z ≥  0.50  → "Good"
-    z ≥ -0.50  → "Avg"
-    z ≥ -1.00  → "Bad"
-    z <  -1.00 → "Worst"
+If a pitcher has < half the total weight in available metrics the score is
+omitted (too sparse). Renormalization by available weight makes the value
+scale consistent regardless of which metrics are missing.
 
-Pool: only pitchers with ≥ 5 IP (a stand-in for "qualified enough to be in the
-sample"). This keeps the z-scores stable from the noise of 1-IP rookies. The
-score is computed for ALL pitchers but only against the qualified pool's
-distribution — so a 2-IP rookie with a brutal SIERA still gets a "Worst" tier
-without dragging down everyone else's reference points.
+Tier thresholds (FIP scale — lower is better):
+    val ≤ 3.25  → "Elite"
+    val ≤ 3.75  → "Good"
+    val ≤ 4.25  → "Avg"
+    val ≤ 4.75  → "Bad"
+    val >  4.75 → "Worst"
 
 USAGE:
     python scripts/compute_pitcher_score.py
 """
 from __future__ import annotations
+import datetime
 import json
 import os
-import statistics
 import sys
-import datetime
 
 INPUT  = os.path.join(os.path.dirname(__file__), "..", "data", "pitcher_stats.json")
 OUTPUT = INPUT  # in-place enrichment
 
-# --- Component definition ------------------------------------------------
-# (field_name, weight_pct, lower_is_better)
+# (field_name, weight_pct)
 COMPONENTS = [
-    ("xfip",      15.0, True),
-    ("siera",     15.0, True),
-    ("xera",      15.0, True),
-    ("fip_proj",  45.0, True),
-    ("bot_era",   10.0, True),
+    ("xfip",      15.0),
+    ("siera",     15.0),
+    ("xera",      15.0),
+    ("fip_proj",  45.0),
+    ("bot_era",   10.0),
 ]
-TOTAL_WEIGHT = sum(w for _, w, _ in COMPONENTS)  # 100.0
+TOTAL_WEIGHT = sum(w for _, w in COMPONENTS)  # 100.0
 MIN_WEIGHT_COVERED = 50.0  # need at least half the weight in available metrics
 
-QUALIFIED_IP = 5.0  # min IP to be in the z-score reference pool
-
+# Tier on the FIP scale (lower = better)
 TIERS = [
-    ( 1.00, "Elite"),
-    ( 0.50, "Good"),
-    (-0.50, "Avg"),
-    (-1.00, "Bad"),
-    (float("-inf"), "Worst"),
+    (3.25, "Elite"),
+    (3.75, "Good"),
+    (4.25, "Avg"),
+    (4.75, "Bad"),
+    (float("inf"), "Worst"),
 ]
 
 
 def _f(v):
-    """Coerce to float, returning None for missing/non-numeric."""
+    """Coerce to float, returning None for missing/non-numeric/NaN."""
     if v is None: return None
     try:
         v = float(v)
-        return v if v == v else None  # filter NaN
+        return v if v == v else None
     except (TypeError, ValueError):
         return None
 
@@ -91,31 +83,6 @@ def main() -> int:
         return 0
     print(f"[score] loaded {len(pitchers)} pitchers", file=sys.stderr)
 
-    # --- Build qualified reference pool stats per metric -------------------
-    pool_stats = {}
-    for field, _, lower_better in COMPONENTS:
-        vals = []
-        for p in pitchers.values():
-            if not isinstance(p, dict): continue
-            ip = _f(p.get("ip")) or 0
-            v  = _f(p.get(field))
-            if v is None or ip < QUALIFIED_IP: continue
-            vals.append(v)
-        if len(vals) < 10:
-            print(f"[score] {field}: only {len(vals)} qualified — skipping (insufficient pool)",
-                  file=sys.stderr)
-            continue
-        m = statistics.mean(vals)
-        s = statistics.stdev(vals)
-        pool_stats[field] = (m, s, lower_better)
-        print(f"[score]   {field:10}  pool n={len(vals):4d}  mean={m:6.3f}  sd={s:5.3f}",
-              file=sys.stderr)
-
-    if not pool_stats:
-        print("[score] no metrics had a usable pool — aborting", file=sys.stderr)
-        return 0
-
-    # --- Score every pitcher (using pool reference) ------------------------
     n_scored = 0
     n_sparse = 0
     tier_counts = {label: 0 for _, label in TIERS}
@@ -124,49 +91,42 @@ def main() -> int:
         weighted_sum = 0.0
         weight_avail = 0.0
         components = {}
-        for field, weight, _ in COMPONENTS:
-            if field not in pool_stats: continue
-            m, s, lower_better = pool_stats[field]
+        for field, weight in COMPONENTS:
             v = _f(p.get(field))
             if v is None: continue
-            z = (v - m) / s if s > 0 else 0.0
-            if lower_better: z = -z   # flip so higher z = better
-            components[field] = round(z, 3)
-            weighted_sum += weight * z
+            components[field] = round(v, 3)
+            weighted_sum += weight * v
             weight_avail += weight
 
         if weight_avail < MIN_WEIGHT_COVERED:
-            # Too sparse — clear any prior values
-            p.pop("unified_score", None)
-            p.pop("unified_tier", None)
-            p.pop("unified_components", None)
-            p.pop("unified_weight_covered", None)
+            for key in ("unified_score", "unified_tier",
+                        "unified_components", "unified_weight_covered"):
+                p.pop(key, None)
             n_sparse += 1
             continue
 
-        score = weighted_sum / weight_avail  # weighted avg z-score
-        # Tier
+        score = weighted_sum / weight_avail  # weighted FIP projection
+
+        # Tier (lower = better)
         tier = TIERS[-1][1]
         for thr, label in TIERS:
-            if score >= thr:
+            if score <= thr:
                 tier = label; break
 
-        p["unified_score"] = round(score, 3)
-        p["unified_tier"]  = tier
-        p["unified_components"]      = components
-        p["unified_weight_covered"]  = round(weight_avail, 1)
+        p["unified_score"]          = round(score, 2)
+        p["unified_tier"]           = tier
+        p["unified_components"]     = components
+        p["unified_weight_covered"] = round(weight_avail, 1)
         n_scored += 1
         tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
-    # --- Bookkeeping --------------------------------------------------------
     d.setdefault("scoring", {})
     d["scoring"]["unified_score"] = {
         "computed_at": datetime.datetime.utcnow().isoformat() + "Z",
-        "weights": {f: w for f, w, _ in COMPONENTS},
-        "qualified_ip_threshold": QUALIFIED_IP,
-        "tier_thresholds": [{"min_z": t, "label": l} for t, l in TIERS if t > float("-inf")],
-        "pool_stats": {f: {"mean": round(m, 3), "sd": round(s, 3)}
-                       for f, (m, s, _) in pool_stats.items()},
+        "scale": "FIP (weighted average — lower = better)",
+        "weights": {f: w for f, w in COMPONENTS},
+        "tier_thresholds": [{"max_val": t, "label": l}
+                            for t, l in TIERS if t < float("inf")],
         "n_scored": n_scored,
         "n_too_sparse": n_sparse,
         "tier_counts": tier_counts,
@@ -174,9 +134,9 @@ def main() -> int:
 
     with open(OUTPUT, "w") as f:
         json.dump(d, f, indent=2)
-    print(f"[score] scored {n_scored} pitchers ({n_sparse} too sparse to score)",
+    print(f"[score] scored {n_scored} pitchers ({n_sparse} too sparse)",
           file=sys.stderr)
-    print(f"[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
+    print("[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
           file=sys.stderr)
     return 0
 
