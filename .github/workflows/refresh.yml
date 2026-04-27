@@ -84,6 +84,15 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      # Apply platoon-aware projections (vs RHP/LHP) for every game in the
+      # lookahead window (today + 5 days). Skips sides where MLB confirmed
+      # already exists, and skips entirely when opposing-SP hand is unknown
+      # (rather than wrong-handing the lineup).
+      - name: Apply Rotowire platoon projections (today + 5-day lookahead)
+        run: |
+          python scripts/rotowire_platoons.py data/lineups.json > /tmp/l.json && mv /tmp/l.json data/lineups.json || true
+        continue-on-error: true
+
       - name: Refresh pitcher stats (overnight only)
         run: python scripts/refresh_pitcher_stats.py
         continue-on-error: true
