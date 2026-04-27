@@ -94,12 +94,40 @@ def mlb_sched_today(date_iso: str):
     return (d.get("dates") or [{}])[0].get("games", [])
 
 
+_HAND_CACHE: Dict[int, Optional[str]] = {}
+
+
+def _lookup_pitcher_hand(pid: int) -> Optional[str]:
+    """Hit /people/{id} for the pitcher's hand. The /schedule hydration sometimes
+    drops pitchHand for next-day probables (e.g. Steven Matz on a 24-hour-out
+    schedule pull) — /people always has it. Cached per-process."""
+    if pid in _HAND_CACHE:
+        return _HAND_CACHE[pid]
+    try:
+        url = f"{MLB_API}/people/{pid}"
+        with urllib.request.urlopen(
+            urllib.request.Request(url, headers={"User-Agent": UA}), timeout=10) as r:
+            data = json.load(r)
+        ppl = data.get("people", [])
+        hand = ppl[0].get("pitchHand", {}).get("code") if ppl else None
+    except Exception:
+        hand = None
+    _HAND_CACHE[pid] = hand
+    return hand
+
+
 def probable_pitcher_hand(g, side: str) -> Optional[str]:
-    """Returns 'R' or 'L' for the side's probable pitcher, if known."""
+    """Returns 'R' or 'L' for the side's probable pitcher, if known.
+    Falls back to a direct /people/{id} lookup when the schedule
+    hydration didn't include pitchHand."""
     p = g["teams"][side].get("probablePitcher")
     if not p:
         return None
-    return p.get("pitchHand", {}).get("code")
+    hand = p.get("pitchHand", {}).get("code")
+    if hand:
+        return hand
+    pid = p.get("id")
+    return _lookup_pitcher_hand(pid) if pid else None
 
 
 def today_iso() -> str:
@@ -146,9 +174,12 @@ def main():
         away_rw = mlb_to_rw(away_abbr)
         home_rw = mlb_to_rw(home_abbr)
 
-        # Opposing SP hand (default to R if unknown — most pitchers are RHP)
-        away_opp_hand = probable_pitcher_hand(g, "home") or "R"
-        home_opp_hand = probable_pitcher_hand(g, "away") or "R"
+        # Opposing SP hand. If unknown, we LEAVE the lineup unfilled rather
+        # than assuming RHP — guessing wrong was the original bug (e.g. Matz/
+        # Messick on TB@CLE 4/27 had hand=None in schedule hydration, so both
+        # teams got vs-RHP when they should've been vs-LHP).
+        away_opp_hand = probable_pitcher_hand(g, "home")
+        home_opp_hand = probable_pitcher_hand(g, "away")
 
         entry = by_pk.get(pk)
         if not entry:
@@ -172,6 +203,9 @@ def main():
             # DON'T overwrite MLB-confirmed or Rotowire "expected" lineups
             if existing.get("players") and \
                existing.get("status") in ("confirmed", "expected"):
+                continue
+            # Unknown opposing-SP hand → skip rather than guess
+            if opp_hand not in ("R", "L"):
                 continue
             platoon = team_platoons.get(rw_code, {}).get(opp_hand)
             if not platoon:
