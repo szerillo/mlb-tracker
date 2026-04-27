@@ -144,12 +144,22 @@ def main():
     with open(infile) as f:
         doc = json.load(f)
 
-    # Today and tomorrow in ET — so next-day platoon projections get
-    # filled during the prior evening.
+    # Lookahead: today + next 5 days (in ET) so projections populate well
+    # ahead. Days where MLB hasn't set the probable SP yet stay unfilled
+    # rather than wrong-handed (see hand check below).
     today_date = today_iso()
-    tomorrow_date = (datetime.date.fromisoformat(today_date)
-                     + datetime.timedelta(days=1)).isoformat()
-    mlb_games = mlb_sched_today(today_date) + mlb_sched_today(tomorrow_date)
+    base = datetime.date.fromisoformat(today_date)
+    LOOKAHEAD_DAYS = 5
+    dates = [(base + datetime.timedelta(days=i)).isoformat()
+             for i in range(LOOKAHEAD_DAYS + 1)]
+    mlb_games = []
+    for d in dates:
+        try:
+            mlb_games += mlb_sched_today(d)
+        except Exception as e:
+            print(f"[rotowire] schedule fetch failed for {d}: {e}", file=sys.stderr)
+    print(f"[rotowire] looking at {len(mlb_games)} games across {len(dates)} days "
+          f"({dates[0]} → {dates[-1]})", file=sys.stderr)
 
     # Scrape every team's platoon lineups once (reuse across multiple games)
     print(f"[rotowire] scraping {len(RW_TEAM_CODES)} teams…", file=sys.stderr)
