@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>152nd Kentucky Derby — Race Simulator</title>
+<style>
+:root {
+  color-scheme: light only;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html, body { background: #ffffff; margin: 0; padding: 0; color-scheme: light;
+  font-family: var(--font-sans); color: #1a1a1a; }
+.sim-frame { max-width: 1200px; margin: 0 auto; padding: 12px; box-sizing: border-box; }
+.sim-doc-header {
+  position: relative;
+  background: #000000;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  margin-bottom: 0;
+  border-bottom: 3px solid #11c75c;
+}
+.sim-doc-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+.sim-doc-subtitle { font-size: 11px; opacity: 0.7; margin: 0; }
+.sim-doc-byline { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+.sim-doc-byline a { color: #11c75c; text-decoration: none; font-weight: 600; border-bottom: 1px dotted rgba(17,199,92,0.5); }
+.sim-doc-byline a:hover { border-bottom-style: solid; }
+.action-brand { position: absolute; top: 12px; right: 14px; display: inline-flex; align-items: center; gap: 5px; }
+.action-brand-text { font-weight: 900; font-size: 14px; color: #fff; }
+.action-brand-check { width: 16px; height: 16px; border-radius: 50%; background: #11c75c; display: inline-flex; align-items: center; justify-content: center; }
+.action-brand-check svg { width: 10px; height: 10px; }
+.dt { background: #f6f4f0; border-radius: 0 0 8px 8px; padding-bottom: 0; }
+.dt-hint {
+  flex: 1;
+  font-size: 11px;
+  color: #1a1a1a;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+.dt-hint.hidden { display: none; }
+@media (max-width: 600px) {
+  .action-brand { position: static; justify-content: center; margin-bottom: 6px; }
+  .sim-doc-title { font-size: 16px; }
+  .sim-frame { padding: 8px; }
+  .dt-hint { font-size: 10px; }
+  /* Mobile leaderboard: hide names, show silks only — fits 4 in 360px */
+  .leaderboard-name { display: none; }
+  .leaderboard { gap: 10px !important; padding: 5px 10px !important; }
+  .leaderboard-item { gap: 4px !important; }
+  /* On narrowest screens, hide the hint to save horizontal space */
+  .dt-hint { display: none; }
+}
+
+.dt { font-family: var(--font-sans); position: relative; }
+.dt-stage { background: #f6f4f0; border-radius: 8px; padding: 12px; }
+.dt-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dt-leaderboard-row { margin-bottom: 10px; }
+.dt-leaderboard-row.hidden { display: none; }
+.dt-swap { position: relative; }
+.dt-track-area { display: block; position: relative; }
+.dt-track-area.hidden { display: none; }
+.dt-toteboard { display: none; }
+.dt-toteboard.show { display: block; animation: toteSlideIn 0.45s ease-out; }
+@keyframes toteSlideIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+.dt-buttons { display: flex; gap: 6px; margin-left: auto; }
+
+.dt-play-btn { padding: 0 22px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: #160E05; color: #FFD400; border: 1px solid #8a7035; border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.8px; text-transform: uppercase; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.dt-play-btn:hover:not(:disabled) { background: #2a1808; color: #FFE066; border-color: #b89752; }
+.dt-play-btn:active { background: #0d0904; }
+.dt-play-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.dt-replay-btn { padding: 0 14px; flex-shrink: 0; height: 34px; box-sizing: border-box; background: transparent; color: rgba(245, 200, 75, 0.7); border: 1px solid rgba(245, 200, 75, 0.35); border-radius: 4px; cursor: pointer; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.15s; }
+.dt-replay-btn:hover:not(:disabled) { background: rgba(245, 200, 75, 0.08); color: #FFD400; border-color: rgba(245, 200, 75, 0.6); }
+.dt-replay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.skip-link { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: rgba(245,200,75,0.85); padding: 4px 10px; border-radius: 4px; font-size: 10px; letter-spacing: 1.2px; cursor: pointer; opacity: 0; pointer-events: none; z-index: 6; border: 1px solid rgba(245,200,75,0.35); transition: opacity 0.2s, background 0.15s, color 0.15s; font-family: var(--font-sans); user-select: none; }
+.skip-link.show { opacity: 1; pointer-events: auto; }
+.skip-link:hover { background: rgba(0,0,0,0.85); color: #FFD400; border-color: rgba(245,200,75,0.7); }
+
+.leaderboard { display: flex; align-items: center; gap: 18px; padding: 6px 14px; background: rgba(22,14,5,0.92); border: 1px solid rgba(245,200,75,0.3); border-radius: 4px; width: 100%; height: 34px; box-sizing: border-box; flex-wrap: nowrap; overflow: hidden; }
+.leaderboard-title { color: rgba(245,200,75,0.6); letter-spacing: 1.2px; font-size: 9px; flex-shrink: 0; }
+.leaderboard-placeholder { color: rgba(245,200,75,0.35); letter-spacing: 4px; font-size: 11px; }
+.leaderboard-item { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; min-width: 0; }
+.leaderboard-pos { color: rgba(245,200,75,0.6); font-size: 10px; font-variant-numeric: tabular-nums; min-width: 8px; }
+.lb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 2px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; flex-shrink: 0; }
+.leaderboard-name { color: rgba(255,255,255,0.92); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.3px; }
+
+.pace-badge { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; height: 28px; background: rgba(22,14,5,0.92); border: 1px solid rgba(245,200,75,0.3); border-radius: 4px; box-sizing: border-box; flex-shrink: 0; }
+.pace-badge.hidden { display: none; }
+.pace-badge-lbl { font-size: 9px; color: rgba(245,200,75,0.55); letter-spacing: 1.5px; }
+.pace-badge-val { font-size: 12px; font-weight: 500; letter-spacing: 1.2px; color: rgba(245,200,75,0.4); }
+.pace-badge.pace-fast .pace-badge-val { color: #F26B1F; }
+.pace-badge.pace-honest .pace-badge-val { color: #FFD400; }
+.pace-badge.pace-slow .pace-badge-val { color: #6FA8DC; }
+
+.race-script { background: rgba(22,14,5,0.92); border: 1px solid rgba(245,200,75,0.25); border-radius: 4px; padding: 10px 14px; margin-top: 12px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(245,200,75,0.9); min-height: 44px; }
+.race-script-empty { font-style: italic; color: rgba(245,200,75,0.4); font-size: 11px; text-align: center; padding: 6px 0; }
+.script-entry { display: flex; gap: 14px; padding: 6px 0; border-bottom: 0.5px solid rgba(245,200,75,0.08); animation: scriptIn 0.35s ease-out; }
+.script-entry:last-child { border-bottom: none; }
+.script-phase { flex: 0 0 88px; color: rgba(245,200,75,0.5); font-size: 10px; letter-spacing: 1px; padding-top: 1px; }
+.script-text { flex: 1; color: rgba(245,200,75,0.78); line-height: 1.45; }
+.script-entry.is-newest .script-text { color: #FFE066; }
+.script-entry.wire .script-text { color: #FFFFFF; font-weight: 500; }
+@keyframes scriptIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+.gate-bell { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #000; color: #FFD400; padding: 10px 20px; border-radius: 4px; font-size: 16px; font-weight: 500; letter-spacing: 3px; opacity: 0; pointer-events: none; z-index: 7; border: 2px solid #FFD400; }
+.gate-bell.show { opacity: 1; animation: bellPulse 0.6s ease-in-out; }
+@keyframes bellPulse { 0% { transform: translate(-50%,-50%) scale(0.7); opacity: 0; } 30% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; } 70% { transform: translate(-50%,-50%) scale(1); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+
+.photo-finish { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); background: rgba(0,0,0,0.85); color: #FFD400; padding: 12px 28px; border-radius: 4px; font-size: 18px; font-weight: 500; letter-spacing: 4px; border: 2px solid #FFD400; opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 8; pointer-events: none; }
+.photo-finish.show { opacity: 1; transform: translate(-50%,-50%) scale(1); animation: photoFlash 0.5s ease-in-out 2 alternate; }
+@keyframes photoFlash { from { background: rgba(0,0,0,0.85); color: #FFD400; } to { background: rgba(255,255,255,0.95); color: #000; } }
+
+.winner-flash { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.85); background: rgba(22,14,5,0.96); border: 2px solid #FFD400; border-radius: 6px; padding: 14px 24px; text-align: center; opacity: 0; transition: opacity 0.35s, transform 0.35s; z-index: 9; pointer-events: none; min-width: 240px; }
+.winner-flash.show { opacity: 1; transform: translate(-50%,-50%) scale(1); animation: winnerPulse 1.6s ease-in-out; }
+@keyframes winnerPulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,212,0,0); } 50% { box-shadow: 0 0 20px rgba(255,212,0,0.4); } }
+.winner-emoji { font-size: 26px; display: block; margin-bottom: 4px; }
+.winner-label { font-size: 10px; color: rgba(245,200,75,0.7); letter-spacing: 2.5px; margin-bottom: 8px; }
+.winner-name-row { font-size: 18px; color: #FFFFFF; font-weight: 500; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.winner-silk { display: inline-block; width: 30px; height: 30px; border-radius: 4px; line-height: 30px; font-size: 13px; font-weight: 500; border: 1px solid rgba(0,0,0,0.4); }
+
+.horse-tooltip { position: absolute; pointer-events: none; z-index: 10; background: rgba(22,14,5,0.97); border: 1px solid rgba(245,200,75,0.4); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #FFD400; opacity: 0; transition: opacity 0.15s; min-width: 170px; max-width: 230px; display: none; }
+.horse-tooltip.show { opacity: 1; display: block; }
+.tip-name { font-weight: 500; color: #FFFFFF; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 1.5px 0; color: rgba(245,200,75,0.85); font-variant-numeric: tabular-nums; }
+.tip-lbl { color: rgba(245,200,75,0.55); font-size: 10px; }
+
+.tb { background: #160E05; color: #F5C84B; padding: 16px 22px; border-radius: 6px; border: 1px solid #5a4a25; font-family: 'Helvetica Neue', Arial, sans-serif; }
+.tb-title { font-size: 17px; font-weight: 500; text-align: center; letter-spacing: 2px; color: #FFFFFF; margin-bottom: 4px; }
+.tb-sub { font-size: 11px; text-align: center; color: rgba(245,200,75,0.7); letter-spacing: 1.5px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(245,200,75,0.2); }
+.tb-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tb-tbl th { font-size: 10px; font-weight: 500; color: rgba(245,200,75,0.55); text-align: right; padding: 6px 5px; letter-spacing: 1px; }
+.tb-tbl th.l { text-align: left; }
+.tb-tbl td { padding: 9px 5px; font-variant-numeric: tabular-nums; text-align: right; }
+.tb-tbl td.l { text-align: left; }
+.tb-tbl td.silk { width: 28px; }
+.tb-tbl td.name { font-weight: 500; color: #FFFFFF; letter-spacing: 0.4px; }
+.tb-tbl td.margin { color: rgba(245,200,75,0.65); font-size: 11px; font-style: italic; }
+.tb-silk { display: inline-block; width: 22px; height: 22px; border-radius: 3px; text-align: center; line-height: 22px; font-size: 11px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
+.tb-exotics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; border-top: 0.5px solid rgba(245,200,75,0.25); padding-top: 12px; margin-top: 8px; }
+.tb-exotic { text-align: center; }
+.tb-exotic-lbl { font-size: 10px; color: rgba(245,200,75,0.6); letter-spacing: 1px; margin-bottom: 4px; }
+.tb-exotic-combo { font-size: 13px; color: #FFFFFF; margin-bottom: 3px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+.tb-exotic-pay { font-size: 15px; color: #F5C84B; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tb-rest { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0 4px; border-top: 0.5px solid rgba(245,200,75,0.18); margin-top: 12px; }
+.tb-rest-lbl { font-size: 10px; color: rgba(245,200,75,0.55); letter-spacing: 1px; align-self: center; margin-right: 4px; }
+.tb-rest-item { display: inline-flex; align-items: center; gap: 4px; }
+.tb-rest-pos { font-size: 10px; color: rgba(245,200,75,0.55); font-variant-numeric: tabular-nums; }
+.tb-rest-silk { display: inline-block; width: 20px; height: 20px; border-radius: 3px; text-align: center; line-height: 20px; font-size: 10px; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.4); cursor: help; }
+.tb-disclaimer { font-size: 9px; color: rgba(245,200,75,0.55); margin-top: 12px; padding-top: 8px; border-top: 0.5px solid rgba(245,200,75,0.12); font-style: italic; text-align: center; line-height: 1.4; }
+.tb-meta { font-size: 9px; color: rgba(245,200,75,0.4); margin-top: 6px; letter-spacing: 0.5px; text-align: center; }
+
+@media (max-width: 600px) {
+  .dt-top-bar { gap: 6px; }
+  .dt-buttons { gap: 4px; }
+  .dt-play-btn { padding: 0 14px; font-size: 10px; letter-spacing: 1px; }
+  .dt-replay-btn { padding: 0 10px; font-size: 9px; letter-spacing: 1px; }
+  .pace-badge { padding: 0 8px; height: 26px; gap: 6px; }
+  .pace-badge-lbl { font-size: 8px; }
+  .pace-badge-val { font-size: 11px; }
+  .leaderboard { padding: 5px 8px; height: auto; min-height: 30px; gap: 10px; }
+  .leaderboard-title { font-size: 8px; letter-spacing: 1px; }
+  .leaderboard-item { gap: 4px; }
+  .leaderboard-pos { font-size: 9px; }
+  .lb-silk { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+  .leaderboard-name { font-size: 10px; }
+  .skip-link { font-size: 9px; padding: 3px 8px; bottom: 6px; right: 6px; }
+  .gate-bell { padding: 8px 14px; font-size: 13px; letter-spacing: 2px; }
+  .photo-finish { padding: 10px 22px; font-size: 15px; letter-spacing: 3px; }
+  .winner-flash { padding: 10px 16px; min-width: 200px; }
+  .winner-emoji { font-size: 22px; }
+  .winner-name-row { font-size: 14px; }
+  .winner-silk { width: 24px; height: 24px; line-height: 24px; font-size: 11px; }
+  .race-script { font-size: 11px; padding: 8px 10px; }
+  .script-phase { flex: 0 0 64px; font-size: 9px; }
+  .script-entry { padding: 5px 0; gap: 10px; }
+  .tb { padding: 12px 14px; }
+  .tb-title { font-size: 14px; letter-spacing: 1.2px; }
+  .tb-tbl td { padding: 6px 3px; font-size: 11px; }
+  .tb-tbl th { font-size: 8px; padding: 4px 2px; }
+  .tb-silk { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+  .tb-exotics { gap: 6px; }
+  .tb-exotic-lbl { font-size: 8px; letter-spacing: 0.5px; }
+  .tb-exotic-combo { font-size: 11px; }
+  .tb-exotic-pay { font-size: 12px; }
+  .tb-disclaimer { font-size: 8px; line-height: 1.35; }
+  .tb-meta { font-size: 8px; }
+}
+
+</style>
+</head>
+<body>
+<div class="sim-frame">
+  <div class="sim-doc-header">
+    <div class="action-brand">
+  <span class="action-brand-text">ACTION</span>
+  <span class="action-brand-check"><svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path d="M3 7.2 L6 10 L11 4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+    <div class="sim-doc-title">152nd Kentucky Derby — Race Simulator</div>
+    <div class="sim-doc-subtitle">1 1/4 miles · Churchill Downs</div>
+    <div class="sim-doc-byline">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+  </div>
+  <div class="dt">
+  <div class="dt-stage">
+    <div class="dt-top-bar">
+      <span class="sim-counter" id="sim-counter" style="font-size:11px;color:#1a1a1a;font-weight:600;font-family:var(--font-sans);flex-shrink:0;">Loading 10,000 sims…</span>
+      <span class="dt-hint" id="dt-hint">Tap any horse # for odds, jockey + projected win %</span>
+      <div class="pace-badge" id="pace-badge"><span class="pace-badge-lbl">PACE</span><span class="pace-badge-val">—</span></div>
+      <div class="dt-buttons">
+        <button class="dt-replay-btn" id="dt-replay" disabled>Replay</button>
+        <button class="dt-play-btn" id="dt-play" disabled>New Sim</button>
+      </div>
+    </div>
+    <div class="dt-leaderboard-row" id="dt-leaderboard-row">
+      <div class="leaderboard" id="leaderboard"></div>
+    </div>
+    <div class="dt-swap">
+      <div class="dt-track-area" id="dt-track-area"></div>
+      <div class="dt-toteboard" id="dt-toteboard"></div>
+    </div>
+    <div class="race-script" id="race-script"><div class="race-script-empty">Race transcript appears here as the call unfolds (newest on top)</div></div>
+  </div>
+  <div class="horse-tooltip" id="horse-tooltip"></div>
+</div>
+
+<script>
+(function() {
+  const horses = [{"post":1,"name":"Renegade","tw":"#E11A1A","nm":"#FFFFFF","style":"S","ability":90.7,"ml":"4-1","ml_dec":4,"jockey":"Ortiz I Jr","trainer":"Pletcher","simWin":17.2,"boardPct":46.5},{"post":2,"name":"Albus","tw":"#FFFFFF","nm":"#000000","style":"EP","ability":74.4,"ml":"30-1","ml_dec":30,"jockey":"Franco","trainer":"R Mott","simWin":0.0,"boardPct":0.7},{"post":3,"name":"Intrepido","tw":"#1B4FB0","nm":"#FFFFFF","style":"P","ability":72.2,"ml":"50-1","ml_dec":50,"jockey":"Berrios","trainer":"Mullins","simWin":0.1,"boardPct":0.5},{"post":4,"name":"Litmus Test","tw":"#F4DA15","nm":"#000000","style":"E","ability":77.1,"ml":"50-1","ml_dec":50,"jockey":"Garcia M","trainer":"Baffert","simWin":0.2,"boardPct":1.9},{"post":5,"name":"Right to Party","tw":"#1F8A3A","nm":"#FFFFFF","style":"S","ability":68.3,"ml":"30-1","ml_dec":30,"jockey":"Elliott","trainer":"McPeek","simWin":0.0,"boardPct":0.1},{"post":6,"name":"Commandment","tw":"#000000","nm":"#FFD400","style":"P","ability":91.6,"ml":"6-1","ml_dec":6,"jockey":"Saez","trainer":"Cox","simWin":19.9,"boardPct":50.5},{"post":7,"name":"Danon Bourbon","tw":"#F26B1F","nm":"#000000","style":"P","ability":72.4,"ml":"20-1","ml_dec":20,"jockey":"Nishimura","trainer":"Ikezoe (Jpn)","simWin":0.8,"boardPct":3.5},{"post":8,"name":"So Happy","tw":"#FFADC8","nm":"#000000","style":"EP","ability":89.4,"ml":"15-1","ml_dec":15,"jockey":"Smith M E","trainer":"Glatt","simWin":6.6,"boardPct":24.1},{"post":9,"name":"The Puma","tw":"#1FD9E8","nm":"#000000","style":"P","ability":88.9,"ml":"10-1","ml_dec":10,"jockey":"Castellano","trainer":"Delgado","simWin":7.7,"boardPct":27.3},{"post":10,"name":"Wonder Dean","tw":"#7B1FA2","nm":"#FFFFFF","style":"P","ability":79.0,"ml":"30-1","ml_dec":30,"jockey":"Sakai","trainer":"Takayanagi (Jpn)","simWin":1.2,"boardPct":5.1},{"post":11,"name":"Incredibolt","tw":"#9E9E9E","nm":"#E11A1A","style":"P","ability":74.3,"ml":"20-1","ml_dec":20,"jockey":"Torres J A","trainer":"R Mott","simWin":0.1,"boardPct":0.8},{"post":12,"name":"Chief Wallabee","tw":"#B6E04C","nm":"#000000","style":"P","ability":92.4,"ml":"8-1","ml_dec":8,"jockey":"Alvarado","trainer":"W Mott","simWin":14.9,"boardPct":42.6},{"post":13,"name":"Silent Tactic","tw":"#4A2C1A","nm":"#FFFFFF","style":"S","ability":79.7,"ml":"20-1","ml_dec":20,"jockey":"Torres C A","trainer":"Casse","simWin":1.0,"boardPct":5.8},{"post":14,"name":"Potente","tw":"#6F1010","nm":"#FFD400","style":"EP","ability":87.1,"ml":"20-1","ml_dec":20,"jockey":"Hernandez J J","trainer":"Baffert","simWin":3.9,"boardPct":17.4},{"post":15,"name":"Emerging Market","tw":"#C9B98A","nm":"#000000","style":"P","ability":87.0,"ml":"15-1","ml_dec":15,"jockey":"Prat","trainer":"C Brown","simWin":4.0,"boardPct":17.1},{"post":16,"name":"Pavlovian","tw":"#6FA8DC","nm":"#F26B1F","style":"EP","ability":73.8,"ml":"30-1","ml_dec":30,"jockey":"Maldonado","trainer":"O'Neill","simWin":0.1,"boardPct":0.4},{"post":17,"name":"Six Speed","tw":"#0B1F4D","nm":"#FFFFFF","style":"E","ability":65.8,"ml":"50-1","ml_dec":50,"jockey":"Hernandez B J Jr","trainer":"Seemar (UAE)","simWin":0.0,"boardPct":0.1},{"post":18,"name":"Further Ado","tw":"#0E3F1A","nm":"#FFD400","style":"EP","ability":97.5,"ml":"6-1","ml_dec":6,"jockey":"Velazquez","trainer":"Cox","simWin":20.5,"boardPct":45.8},{"post":19,"name":"Golden Tempo","tw":"#6F8FAF","nm":"#E11A1A","style":"S","ability":80.0,"ml":"30-1","ml_dec":30,"jockey":"Ortiz J L","trainer":"DeVaux","simWin":1.0,"boardPct":5.5},{"post":20,"name":"Fulleffort","tw":"#E91E8C","nm":"#FFD400","style":"S","ability":78.6,"ml":"20-1","ml_dec":20,"jockey":"Gaffalione","trainer":"Cox","simWin":0.8,"boardPct":4.3}];
+  const horseByPost = {}; horses.forEach(h => horseByPost[h.post] = h);
+  // --- v3.2: Real database of 10,000 sims (Option A) ---
+  let SIMS_DATA = null;
+  let currentSimIdx = null;
+  fetch('data/derby_sims.json').then(r => r.json()).then(d => {
+    SIMS_DATA = d;
+    document.getElementById('dt-play').disabled = false;
+    const counterEl = document.getElementById('sim-counter');
+    if (counterEl) counterEl.textContent = d.sims.length.toLocaleString() + ' SIMS';
+  }).catch(e => {
+    console.error('Failed to load sims data:', e);
+    const counterEl = document.getElementById('sim-counter');
+    if (counterEl) counterEl.textContent = 'Failed to load';
+  });
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const RACE_DURATION_MS = 30000;
+
+  const W = 680, H = 240;
+  const cx = W / 2, cy = 120;
+  const L = 380, R = 80, ringWidth = 48;
+  const wireOffset = 50;
+  const halfL = L / 2;
+  const SEG = 60;
+  // Chute length (visual): gate is positioned this far WEST of the wire on the bottom rail.
+  // 1¼ mile race adds ~1/4 mile of "chute" before the wire. Visual chute = 120px on the rail.
+  const CHUTE_LEN = 120;
+  // Small gallop-out extension past the wire so the freeze frame at finish has horses
+  // slightly past the wire (matches reality after the 4 finishers cross).
+  const EXTENSION = 0.08;
+  const RACE_PROG_MAX = 1 + EXTENSION;
+
+  function visiblePath() {
+    const wireX = cx + wireOffset, wireY = cy + R;
+    let d = `M ${wireX},${wireY} L ${cx + halfL},${cy + R}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${cx - halfL},${cy - R}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${wireX},${wireY}`;
+    return d;
+  }
+  function railPath(R_use) {
+    const wireX = cx + wireOffset, wireY = cy + R_use;
+    let d = `M ${wireX},${wireY} L ${cx + halfL},${cy + R_use}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R_use * Math.sin(t)).toFixed(2)},${(cy + R_use * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${cx - halfL},${cy - R_use}`;
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R_use * Math.sin(t)).toFixed(2)},${(cy - R_use * Math.cos(t)).toFixed(2)}`; }
+    d += ` L ${wireX},${wireY}`;
+    return d;
+  }
+  function animPath() {
+    // Animation path: starts at the GATE (CHUTE_LEN west of wire), runs east passing
+    // the wire mid-race, then around the full CCW loop back to the wire (finish).
+    // Then a small gallop-out extension east past the wire on the bottom rail
+    // (so the freeze frame after the 4th finisher crosses has horses slightly past wire).
+    const wireX = cx + wireOffset, wireY = cy + R;
+    const gateX = wireX - CHUTE_LEN;
+    let d = `M ${gateX},${wireY}`;
+    // East across bottom: gate → past wire → bottom-right corner
+    d += ` L ${cx + halfL},${cy + R}`;
+    // Right turn arc up to top-right corner
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx + halfL + R * Math.sin(t)).toFixed(2)},${(cy + R * Math.cos(t)).toFixed(2)}`; }
+    // Top straight west
+    d += ` L ${cx - halfL},${cy - R}`;
+    // Left turn arc down to bottom-left corner
+    for (let i = 1; i <= SEG; i++) { const t = (i / SEG) * Math.PI; d += ` L ${(cx - halfL - R * Math.sin(t)).toFixed(2)},${(cy - R * Math.cos(t)).toFixed(2)}`; }
+    // Bottom east, FINISH at wire
+    d += ` L ${wireX},${wireY}`;
+    // Gallop-out extension: continue east past wire on the bottom rail (small)
+    const arcLen = Math.PI * R, loopLen = 2 * L + 2 * arcLen, wirePos = CHUTE_LEN + loopLen;
+    const extLen = EXTENSION * wirePos;
+    const distWireToRight = halfL - wireOffset;
+    if (extLen <= distWireToRight) {
+      d += ` L ${(wireX + extLen).toFixed(2)},${cy + R}`;
+    } else {
+      // If extension is longer than rail-to-corner distance, cap at corner
+      d += ` L ${cx + halfL},${cy + R}`;
+    }
+    return d;
+  }
+
+  let raf = null, simCount = 0, isRunning = false, lastSimState = null, currentSim = null;
+  const trackArea = document.getElementById('dt-track-area');
+  const toteEl = document.getElementById('dt-toteboard');
+  const playBtn = document.getElementById('dt-play');
+  const replayBtn = document.getElementById('dt-replay');
+  const leaderboardEl = document.getElementById('leaderboard');
+  const leaderboardRow = document.getElementById('dt-leaderboard-row');
+  const paceBadge = document.getElementById('pace-badge');
+  playBtn.addEventListener('click', () => { if (isRunning) return; cancelAnimationFrame(raf); runSim(false); });
+  replayBtn.addEventListener('click', () => { if (isRunning || !lastSimState) return; cancelAnimationFrame(raf); runSim(true); });
+
+  function showTrack() {
+    toteEl.classList.remove('show');
+    toteEl.style.display = 'none';
+    trackArea.classList.remove('hidden');
+    leaderboardRow.classList.remove('hidden');
+    paceBadge.classList.remove('hidden');
+  }
+  function showToteSwap(html) {
+    trackArea.classList.add('hidden');
+    leaderboardRow.classList.add('hidden');
+    paceBadge.classList.add('hidden');
+    toteEl.innerHTML = html;
+    toteEl.style.display = 'block';
+    requestAnimationFrame(() => toteEl.classList.add('show'));
+  }
+  function showSkipLink() { const s = document.getElementById('skip-link'); if (s) s.classList.add('show'); }
+  function hideSkipLink() { const s = document.getElementById('skip-link'); if (s) s.classList.remove('show'); }
+
+  function renderTrack() {
+    let svg = `<svg width="100%" viewBox="0 0 ${W} ${H}" role="img"><title>Derby simulator track</title><desc>Stadium track with twin spires + Derby branding in the infield.</desc>`;
+    svg += `<path d="${visiblePath()}" fill="none" stroke="#D9C3A3" stroke-width="${ringWidth}" stroke-linejoin="round"/>`;
+    svg += `<path d="${railPath(R + ringWidth/2)}" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="0.6" stroke-linejoin="round"/>`;
+    svg += `<path d="${railPath(R - ringWidth/2)}" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="0.6" stroke-linejoin="round"/>`;
+    svg += `<path id="anim-path" d="${animPath()}" fill="none" stroke="none"/>`;
+    svg += `<g id="branding" opacity="0.6">`;
+    svg += `<rect x="${cx - 24}" y="${cy - 30}" width="10" height="22" fill="#B49164"/>`;
+    svg += `<polygon points="${cx-24},${cy-30} ${cx-19},${cy-44} ${cx-14},${cy-30}" fill="#B49164"/>`;
+    svg += `<rect x="${cx + 14}" y="${cy - 30}" width="10" height="22" fill="#B49164"/>`;
+    svg += `<polygon points="${cx+14},${cy-30} ${cx+19},${cy-44} ${cx+24},${cy-30}" fill="#B49164"/>`;
+    svg += `<rect x="${cx - 28}" y="${cy - 8}" width="56" height="3" fill="#B49164"/>`;
+    svg += `</g>`;
+    svg += `<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="11" fill="rgba(180,145,100,0.7)" font-family="serif" letter-spacing="2.5">152ND KENTUCKY DERBY</text>`;
+    svg += `<text x="${cx}" y="${cy + 28}" text-anchor="middle" font-size="9" fill="rgba(180,145,100,0.55)" font-family="serif" letter-spacing="3">CHURCHILL DOWNS</text>`;
+    svg += `</svg>`;
+    const overlays = `
+      <div class="gate-bell" id="gate-bell">BELL!</div>
+      <div class="photo-finish" id="photo-finish">PHOTO</div>
+      <div class="winner-flash" id="winner-flash">
+        <span class="winner-emoji">🌹</span>
+        <span class="winner-label">WINNER</span>
+        <span class="winner-name-row">
+          <span class="winner-silk" id="winner-silk"></span>
+          <span id="winner-name-text"></span>
+        </span>
+      </div>
+      <div class="skip-link" id="skip-link">Skip ▶▶</div>
+    `;
+    trackArea.innerHTML = svg + overlays;
+    document.getElementById('skip-link').addEventListener('click', skipRace);
+
+    const pathEl = document.getElementById('anim-path');
+    const visTotal = pathEl.getTotalLength() / RACE_PROG_MAX;
+    const svgEl = trackArea.querySelector('svg');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    function tickAt(loopFrac, label, opts) {
+      opts = opts || {};
+      // Tick positions are along the LOOP (after the chute prefix). Skip the chute.
+      const len = CHUTE_LEN + loopFrac * (visTotal - CHUTE_LEN);
+      const pt = pathEl.getPointAtLength(len);
+      const ahead = pathEl.getPointAtLength(Math.min(pathEl.getTotalLength(), len + 1));
+      const dx = ahead.x - pt.x, dy = ahead.y - pt.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const innerNX = dy / mag, innerNY = -dx / mag;
+      const halfW = ringWidth/2 - 2;
+      const inner = { x: pt.x + innerNX * halfW, y: pt.y + innerNY * halfW };
+      const outer = { x: pt.x - innerNX * halfW, y: pt.y - innerNY * halfW };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', opts.thick ? '#1a1a1a' : 'rgba(255,255,255,0.85)');
+      line.setAttribute('stroke-width', opts.thick ? '2.6' : '1.5');
+      svgEl.appendChild(line);
+      if (opts.thick) {
+        const overlay = document.createElementNS(NS, 'line');
+        overlay.setAttribute('x1', inner.x); overlay.setAttribute('y1', inner.y);
+        overlay.setAttribute('x2', outer.x); overlay.setAttribute('y2', outer.y);
+        overlay.setAttribute('stroke', 'rgba(255,255,255,0.6)'); overlay.setAttribute('stroke-width', '0.8'); overlay.setAttribute('stroke-dasharray', '3,3');
+        svgEl.appendChild(overlay);
+      }
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', pt.x + innerNX * (ringWidth/2 + 6));
+      dot.setAttribute('cy', pt.y + innerNY * (ringWidth/2 + 6));
+      dot.setAttribute('r', '2.2');
+      dot.setAttribute('fill', opts.thick ? '#1a1a1a' : '#6b6b6b');
+      svgEl.appendChild(dot);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', pt.x + innerNX * (ringWidth/2 + (opts.thick ? 22 : 16)));
+      text.setAttribute('y', pt.y + innerNY * (ringWidth/2 + (opts.thick ? 22 : 16)) + 4);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', opts.thick ? '12' : '11');
+      text.setAttribute('font-weight', opts.thick ? '500' : '400');
+      text.setAttribute('fill', '#6b6b6b');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = label;
+      svgEl.appendChild(text);
+    }
+    tickAt(0.0001, 'Wire', { thick: true });
+    tickAt(0.20, '1/4', {});
+    tickAt(0.40, '1/2', {});
+    tickAt(0.60, '3/4', {});
+    tickAt(0.80, 'Stretch', {});
+
+    // Gate marker — small tick + label at gate position (CHUTE_LEN west of wire on bottom rail)
+    {
+      const wireX = cx + wireOffset;
+      const gateX = wireX - CHUTE_LEN;
+      const gateY = cy + R;
+      const inner = { x: gateX, y: gateY - (ringWidth/2 - 2) };
+      const outer = { x: gateX, y: gateY + (ringWidth/2 - 2) };
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', inner.x); line.setAttribute('y1', inner.y);
+      line.setAttribute('x2', outer.x); line.setAttribute('y2', outer.y);
+      line.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+      line.setAttribute('stroke-width', '1.8');
+      line.setAttribute('stroke-dasharray', '3,2');
+      svgEl.appendChild(line);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('x', gateX);
+      text.setAttribute('y', gateY + ringWidth/2 + 12);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '10');
+      text.setAttribute('fill', '#6b6b6b');
+      text.setAttribute('font-family', 'var(--font-sans)');
+      text.textContent = 'GATE';
+      svgEl.appendChild(text);
+    }
+
+    horses.forEach((h, i) => {
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'horse-h');
+      g.setAttribute('data-i', i);
+      g.setAttribute('data-post', h.post);
+      g.style.cursor = 'help';
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', '-7'); rect.setAttribute('y', '-7');
+      rect.setAttribute('width', '14'); rect.setAttribute('height', '14');
+      rect.setAttribute('rx', '2'); rect.setAttribute('fill', h.tw);
+      rect.setAttribute('stroke', '#1a1a1a'); rect.setAttribute('stroke-width', '0.6');
+      g.appendChild(rect);
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('y', '3'); text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '8'); text.setAttribute('font-weight', '500');
+      text.setAttribute('fill', h.nm); text.setAttribute('font-family', 'var(--font-sans)'); text.style.pointerEvents = 'none';
+      text.textContent = h.post;
+      g.appendChild(text);
+      svgEl.appendChild(g);
+    });
+    placeAll(horses.map(() => 0));
+    setupTooltips();
+    showLeaderboardPlaceholder();
+  }
+
+  function placeAll(progresses) {
+    const path = document.getElementById('anim-path');
+    if (!path) return;
+    const total = path.getTotalLength();
+    horses.forEach((h, i) => {
+      const raceProg = Math.max(0, Math.min(RACE_PROG_MAX, progresses[i]));
+      const pathFrac = raceProg / RACE_PROG_MAX;
+      const len = pathFrac * total;
+      const pt = path.getPointAtLength(len);
+      const ahead = path.getPointAtLength(Math.min(total, len + 1));
+      const dx = ahead.x - pt.x, dy = ahead.y - pt.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const innerNX = dy / mag, innerNY = -dx / mag;
+      const offsetFromMid = (h.post - 10.5) / 9.5;
+      const laneOffset = -offsetFromMid * 14;
+      const x = pt.x + innerNX * laneOffset;
+      const y = pt.y + innerNY * laneOffset;
+      const el = document.querySelector(`.horse-h[data-i="${i}"]`);
+      if (el) el.setAttribute('transform', `translate(${x.toFixed(2)}, ${y.toFixed(2)})`);
+    });
+  }
+
+  function paceCurve(style, t) {
+    if (style === 'E') return t < 0.7 ? (t/0.7) * 0.76 : 0.76 + ((t-0.7)/0.3) * 0.24;
+    if (style === 'EP') return t < 0.6 ? (t/0.6) * 0.64 : 0.64 + ((t-0.6)/0.4) * 0.36;
+    if (style === 'S') return t < 0.5 ? (t/0.5) * 0.40 : 0.40 + ((t-0.5)/0.5) * 0.60;
+    return t;
+  }
+
+  function clearScript() { document.getElementById('race-script').innerHTML = ''; }
+  function postCall(phase, text, opts) {
+    opts = opts || {};
+    const log = document.getElementById('race-script');
+    const empty = log.querySelector('.race-script-empty');
+    if (empty) empty.remove();
+    const prevNewest = log.querySelector('.script-entry.is-newest');
+    if (prevNewest) prevNewest.classList.remove('is-newest');
+    const entry = document.createElement('div');
+    entry.className = 'script-entry is-newest' + (opts.wire ? ' wire' : '');
+    entry.innerHTML = `<div class="script-phase">${phase}</div><div class="script-text">${text}</div>`;
+    log.insertBefore(entry, log.firstChild);
+  }
+
+  function generateCall(key, ctx, lockedTextMap) {
+    if (lockedTextMap && lockedTextMap[key]) return lockedTextMap[key];
+    const { sortedNow, paceShape, finishOrder } = ctx;
+    const f = (h) => `#${h.post} ${h.name}`;
+    const leader = sortedNow[0], second = sortedNow[1], third = sortedNow[2];
+    let result = '';
+    switch(key) {
+      case 'start':
+        result = pick([
+          "They're off in the 152nd Kentucky Derby!",
+          "They're away in the Run for the Roses!",
+          "And they break cleanly. The 152nd Kentucky Derby is underway!"
+        ]); break;
+      case 'breaking': {
+        const verb = pick(['breaks on top', 'gets first jump', 'hustles up to claim the front', 'shows the way early']);
+        const stalk = pick(['pressing wide', 'tracking from second', 'lying just off the leader']);
+        result = `${f(leader)} ${verb}, ${f(second)} ${stalk}, ${f(third)} settled into a stalking trip`;
+        break;
+      }
+      case 'firstcall': {
+        let pace;
+        if (paceShape === 'fast') pace = pick(['blistering opening fractions', 'a contested early pace', 'a torrid early tempo']);
+        else if (paceShape === 'slow') pace = pick(['unhurried fractions', 'a soft early tempo', 'a walking lead']);
+        else pace = pick(['honest fractions', 'a moderate early pace']);
+        result = `Past the quarter pole with ${pace}. Up close are ${f(leader)}, ${f(second)}, and ${f(third)}.`;
+        break;
+      }
+      case 'halfmile':
+        result = pick([
+          `Through the half, ${f(leader)} dictating terms with ${f(second)} stalking and ${f(third)} along the rail`,
+          `Halfway home, ${f(leader)} on the lead under a hand ride; ${f(second)} stalking patiently`,
+          `Past the half-mile, ${f(leader)} still on top, ${f(second)} tracking close`
+        ]); break;
+      case 'threequarters':
+        result = pick([
+          `After three-quarters, ${f(leader)} clear; ${f(second)} sweeping four-wide on the outside`,
+          `The pace begins to take its toll. ${f(second)} rolling, taking dead aim at ${f(leader)}`,
+          `Three-quarters in, ${f(leader)} starting to feel the heat; ${f(second)} looming menacingly, ${f(third)} digging in`
+        ]); break;
+      case 'stretch':
+        result = pick([
+          `Into the stretch! ${f(leader)} and ${f(second)} locked in a furious duel; ${f(third)} closing under a vigorous ride`,
+          `Down the lane, ${f(leader)} digging in stubbornly; ${f(second)} drawing alongside, refusing to yield`,
+          `Top of the stretch. ${f(leader)} battling, ${f(second)} wearing him down, ${f(third)} looming dangerously`
+        ]); break;
+      case 'wire': {
+        const winner = finishOrder[0];
+        const margin1 = finishOrder[1].lengthsBehind - winner.lengthsBehind;
+        let style;
+        if (margin1 < 0.25) style = pick(['in a desperate driving photo', 'by a head bob']);
+        else if (margin1 < 0.85) style = pick(['gamely under the wire', 'getting up just in time', 'in deep stretch']);
+        else if (margin1 < 2.0) style = pick(['with authority', 'in command', 'comfortably']);
+        else style = pick(['going away', 'kicking on impressively', 'drawing off']);
+        result = `${winner.name.toUpperCase()} wins the 152nd Kentucky Derby ${style}!`;
+        break;
+      }
+    }
+    if (lockedTextMap) lockedTextMap[key] = result;
+    return result;
+  }
+
+  function showLeaderboardPlaceholder() {
+    leaderboardEl.innerHTML = `<span class="leaderboard-title">RUNNING ORDER</span><span class="leaderboard-placeholder">— — — —</span>`;
+  }
+  function updateLeaderboard(sortedNow, label) {
+    label = label || 'RUNNING ORDER';
+    const items = sortedNow.slice(0,4).map((entry, i) => {
+      const h = horseByPost[entry.post];
+      return `<span class="leaderboard-item"><span class="leaderboard-pos">${i+1}</span><span class="lb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span><span class="leaderboard-name">${h.name}</span></span>`;
+    }).join('');
+    leaderboardEl.innerHTML = `<span class="leaderboard-title">${label}</span>${items}`;
+  }
+
+  function updatePaceBadge(shape) {
+    paceBadge.classList.remove('pace-fast','pace-honest','pace-slow');
+    if (shape) {
+      paceBadge.classList.add('pace-' + shape);
+      paceBadge.querySelector('.pace-badge-val').textContent = shape.toUpperCase();
+    } else {
+      paceBadge.querySelector('.pace-badge-val').textContent = '—';
+    }
+  }
+  function ringBell() { const b = document.getElementById('gate-bell'); if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 600); } }
+  function showPhotoFinish() {
+    return new Promise(resolve => {
+      const pf = document.getElementById('photo-finish'); if (!pf) { resolve(); return; }
+      pf.classList.add('show');
+      setTimeout(() => { pf.classList.remove('show'); resolve(); }, 1300);
+    });
+  }
+  function showWinnerFlash(winner) {
+    return new Promise(resolve => {
+      const flash = document.getElementById('winner-flash'); if (!flash) { resolve(); return; }
+      const silk = document.getElementById('winner-silk');
+      silk.textContent = winner.post;
+      silk.style.background = winner.tw;
+      silk.style.color = winner.nm;
+      document.getElementById('winner-name-text').textContent = winner.name.toUpperCase();
+      flash.classList.add('show');
+      setTimeout(() => { flash.classList.remove('show'); resolve(); }, 2500);
+    });
+  }
+  function samplePaceShape() { const r = Math.random(); if (r < 0.65) return 'fast'; if (r < 0.95) return 'honest'; return 'slow'; }
+
+  // Trip-trouble lottery for 20-horse field. Each horse can hit at most one event per sim.
+  function applyTripEvents(h) {
+    let draw = h.ability + (Math.random()-0.5)*22;
+    let tripNote = null;
+    const r = Math.random();
+    // 8% bad break (anyone)
+    if (r < 0.08) {
+      draw -= 12 + Math.random() * 8;
+      tripNote = 'broke poorly';
+    }
+    // E/EP from outside posts trying to clear (tougher trip than just wide)
+    else if ((h.style === 'E' || h.style === 'EP') && h.post >= 15 && Math.random() < 0.30) {
+      draw -= 6 + Math.random() * 6;
+      tripNote = 'used up clearing from outside';
+    }
+    // Outside posts (15-20) get hung wide
+    else if (h.post >= 15 && Math.random() < 0.25) {
+      draw -= 5 + Math.random() * 5;
+      tripNote = 'caught wide';
+    }
+    // Inside posts (1-3) get boxed in / shut off
+    else if (h.post <= 3 && Math.random() < 0.15) {
+      draw -= 4 + Math.random() * 4;
+      tripNote = 'boxed in';
+    }
+    return { ...h, draw, tripNote };
+  }
+
+  function fmtMargin(lengths) {
+    if (lengths < 0.05) return 'nose';
+    if (lengths < 0.20) return 'head';
+    if (lengths < 0.35) return 'neck';
+    if (lengths < 0.65) return '1/2 length';
+    if (lengths < 0.90) return '3/4 length';
+    if (lengths < 1.15) return '1 length';
+    const whole = Math.floor(lengths);
+    const frac = lengths - whole;
+    if (frac < 0.125) return `${whole} lengths`;
+    if (frac < 0.375) return `${whole}¼ lengths`;
+    if (frac < 0.625) return `${whole}½ lengths`;
+    if (frac < 0.875) return `${whole}¾ lengths`;
+    return `${whole + 1} lengths`;
+  }
+
+  function setupTooltips() {
+    const tooltip = document.getElementById('horse-tooltip');
+    const dtRoot = document.querySelector('.dt');
+    function isHoverable(target) {
+      let el = target;
+      while (el && el !== document) {
+        if (el.dataset && el.dataset.post !== undefined) return el;
+        el = el.parentNode;
+      }
+      return null;
+    }
+    function showTip(post, evt) {
+      const h = horseByPost[post]; if (!h) return;
+      const r = dtRoot.getBoundingClientRect();
+      tooltip.innerHTML = `
+        <div class="tip-name"><span class="lb-silk" style="background:${h.tw};color:${h.nm};">${h.post}</span>${h.name}</div>
+        <div class="tip-row"><span class="tip-lbl">ML</span><span>${h.ml}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Jockey</span><span>${h.jockey}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Trainer</span><span>${h.trainer}</span></div>
+        <div class="tip-row"><span class="tip-lbl">Sim win</span><span>${h.simWin.toFixed(1)}%</span></div>
+        <div class="tip-row"><span class="tip-lbl">Hits board</span><span>${h.boardPct.toFixed(1)}%</span></div>
+      `;
+      let left = evt.clientX - r.left + 14, top = evt.clientY - r.top + 14;
+      if (left + 230 > r.width) left = evt.clientX - r.left - 240;
+      tooltip.style.left = left + 'px'; tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+    }
+    function hideTip() { tooltip.classList.remove('show'); }
+    document.addEventListener('mouseover', (e) => { const t = isHoverable(e.target); if (t) showTip(parseInt(t.dataset.post, 10), e); });
+    document.addEventListener('mousemove', (e) => {
+      const t = isHoverable(e.target);
+      if (!t) { hideTip(); return; }
+      const r = dtRoot.getBoundingClientRect();
+      let left = e.clientX - r.left + 14, top = e.clientY - r.top + 14;
+      if (left + 230 > r.width) left = e.clientX - r.left - 240;
+      tooltip.style.left = left + 'px'; tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+    });
+    document.addEventListener('mouseout', (e) => { const t = isHoverable(e.target), rl = isHoverable(e.relatedTarget); if (t && !rl) hideTip(); });
+  }
+
+  function skipRace() {
+    if (!isRunning || !currentSim || currentSim.postRaceTriggered) return;
+    currentSim.postRaceTriggered = true;
+    currentSim.frozen = true;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    hideSkipLink();
+    while (currentSim.phaseIdx < currentSim.phases.length) {
+      const ph = currentSim.phases[currentSim.phaseIdx];
+      postCall(ph.label, generateCall(ph.key, { sortedNow: currentSim.sorted, paceShape: currentSim.paceShape, finishOrder: currentSim.sorted }, currentSim.lockedCalls));
+      currentSim.phaseIdx++;
+    }
+    postCall('WIRE', generateCall('wire', { sortedNow: currentSim.sorted, paceShape: currentSim.paceShape, finishOrder: currentSim.sorted }, currentSim.lockedCalls), { wire: true });
+    updatePaceBadge(currentSim.paceShape);
+    runPostRaceSequence(currentSim.sorted, currentSim.paceShape, currentSim.isPhotoFinish, true);
+  }
+
+  async function runSim(replay) {
+    isRunning = true;
+    playBtn.disabled = true;
+    replayBtn.disabled = true;
+    showTrack();
+    updatePaceBadge(null);
+    clearScript();
+
+    let paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls;
+
+    if (replay && lastSimState) {
+      paceShape = lastSimState.paceShape;
+      sorted = lastSimState.sorted;
+      factorByPost = lastSimState.factorByPost;
+      noiseByPost = lastSimState.noiseByPost;
+      lbByPost = lastSimState.lbByPost;
+      fourthLB = lastSimState.fourthLB;
+      isPhotoFinish = lastSimState.isPhotoFinish;
+      fourthFinishTime = lastSimState.fourthFinishTime;
+      lockedCalls = lastSimState.lockedCalls;
+    } else {
+      // v3.4: Pick a random sim from the 10K database, update counter IMMEDIATELY
+      currentSimIdx = Math.floor(Math.random() * SIMS_DATA.sims.length);
+      const _ctr = document.getElementById('sim-counter');
+      if (_ctr) _ctr.textContent = 'SIM ' + (currentSimIdx + 1).toLocaleString() + ' / ' + SIMS_DATA.sims.length.toLocaleString();
+      const lockedFinish = SIMS_DATA.sims[currentSimIdx];
+      paceShape = samplePaceShape();
+      sorted = lockedFinish.map((post, rank) => {
+        const h = horseByPost[post];
+        // Generate trip narrative from style+post (for storytelling, not finish order)
+        let tripNote = null;
+        const r = Math.random();
+        if (r < 0.05) tripNote = 'broke poorly';
+        else if ((h.style === 'E' || h.style === 'EP') && h.post >= 15 && Math.random() < 0.3) tripNote = 'used up clearing from outside';
+        else if (h.post >= 15 && Math.random() < 0.25) tripNote = 'caught wide';
+        else if (h.post <= 3 && Math.random() < 0.06 && h.style === 'P') tripNote = 'boxed in';
+        return { ...h, rank: rank, tripNote: tripNote, draw: 100 - rank };
+      });
+      const N = sorted.length;
+      // lengthsBehind set below — set it first so factor can reference it
+      sorted.forEach((d, i) => {
+        if (i === 0) d.lengthsBehind = 0;
+        else d.lengthsBehind = Math.pow(i, 0.85) * 0.55 + Math.random() * 0.4;
+      });
+      for (let i = 1; i < N; i++) {
+        if (sorted[i].lengthsBehind <= sorted[i-1].lengthsBehind) sorted[i].lengthsBehind = sorted[i-1].lengthsBehind + 0.3;
+      }
+      // Factor: top 4 derived from lengthsBehind (so gallop-out at racing speed lands at correct lengths past wire)
+      // Back of field: smooth convex extension from rank-3 factor to 1.0 (preserves stretch spread)
+      // T_PER_LENGTH is scaled ~6x physical so finishers separate clearly on the stylized SVG
+      const T_PER_LENGTH = 0.007;
+      const baseFactor = 0.87;
+      const f3 = baseFactor + sorted[3].lengthsBehind * T_PER_LENGTH;
+      sorted.forEach((d, rank) => {
+        if (rank <= 3) {
+          d.raceTimeFactor = baseFactor + d.lengthsBehind * T_PER_LENGTH;
+        } else {
+          const u = (rank - 3) / (N - 1 - 3);
+          d.raceTimeFactor = f3 + (1 - f3) * Math.pow(u, 1.5);
+        }
+      });
+      factorByPost = {};
+      sorted.forEach(d => { factorByPost[d.post] = d.raceTimeFactor; });
+      // Per-horse jockeying noise (subtle position trading during body of race)
+      noiseByPost = {};
+      sorted.forEach(d => {
+        noiseByPost[d.post] = {
+          f1: 1.4 + Math.random() * 0.7,
+          f2: 2.6 + Math.random() * 1.1,
+          p1: Math.random() * Math.PI * 2,
+          p2: Math.random() * Math.PI * 2,
+          amp: 0.0032 + Math.random() * 0.0022
+        };
+      });
+      // lbByPost retained (no longer used in frame, but available for cache/replay)
+      lbByPost = {};
+      sorted.forEach(d => { lbByPost[d.post] = d.lengthsBehind; });
+      simCount++;
+      isPhotoFinish = sorted[1].lengthsBehind < 0.55;
+      fourthFinishTime = sorted[3].raceTimeFactor;
+      fourthLB = sorted[3].lengthsBehind;
+      lockedCalls = {};
+      lastSimState = { paceShape, sorted, factorByPost, noiseByPost, lbByPost, fourthLB, isPhotoFinish, fourthFinishTime, lockedCalls };
+    }
+
+    const phases = [
+      { t: 0.02, key: 'start',         label: 'AT THE START' },
+      { t: 0.10, key: 'breaking',      label: 'OUT OF THE GATE' },
+      { t: 0.22, key: 'firstcall',     label: '1/4 POLE' },
+      { t: 0.42, key: 'halfmile',      label: '1/2 MILE' },
+      { t: 0.62, key: 'threequarters', label: '3/4 MILE' },
+      { t: 0.82, key: 'stretch',       label: 'STRETCH' }
+    ];
+
+    currentSim = { sorted, paceShape, factorByPost, isPhotoFinish, fourthFinishTime, lockedCalls, phases, phaseIdx: 0, frozen: false, postRaceTriggered: false };
+
+    let paceShown = false, wireLogged = false;
+    ringBell();
+    showSkipLink();
+
+    const start = performance.now();
+    let lastLb = 0;
+
+    function frame(now) {
+      if (currentSim.frozen) return;
+      const t = Math.min(1, (now - start) / RACE_DURATION_MS);
+      // stretchWeight: 0 early (everyone bunched), ramps to 1 by t=0.8 (full factor effect by stretch)
+      const swRaw = Math.max(0, Math.min(1, (t - 0.4) / 0.4));
+      const stretchWeight = swRaw * swRaw * (3 - 2 * swRaw); // smoothstep
+      const progresses = horses.map(h => {
+        const factor = factorByPost[h.post];
+        // Effective time blends uniform-pace early with full factor effect in stretch
+        const effT = t * (1 + (1/factor - 1) * stretchWeight);
+        let prog;
+        if (effT <= 1.0) {
+          prog = paceCurve(h.style, effT);
+        } else {
+          // Past wire: continue at racing speed (1/factor). With factor derived from lengthsBehind for top 4,
+          // visual position past wire = lengthsBehind exactly at freeze time.
+          prog = Math.min(1 + EXTENSION, effT);
+        }
+        // Jockeying noise: subtle smooth oscillation, peaks mid-race, fades at gate/wire
+        const n = noiseByPost && noiseByPost[h.post];
+        if (n && prog > 0.02 && prog < 0.97) {
+          const edgeFade = Math.min(1, (prog - 0.02) / 0.1) * Math.min(1, (0.97 - prog) / 0.12);
+          const jitter = (
+            Math.sin(t * n.f1 * 6.2832 + n.p1) +
+            Math.sin(t * n.f2 * 6.2832 + n.p2) * 0.7
+          ) * n.amp * edgeFade;
+          prog += jitter;
+        }
+        return prog;
+      });
+      placeAll(progresses);
+
+      if (now - lastLb > 120) {
+        const order = horses.map((h, i) => ({ post: h.post, prog: progresses[i] })).sort((a,b) => b.prog - a.prog);
+        updateLeaderboard(order, 'RUNNING ORDER');
+        lastLb = now;
+      }
+
+      while (currentSim.phaseIdx < phases.length && t >= phases[currentSim.phaseIdx].t) {
+        const ph = phases[currentSim.phaseIdx];
+        const order = horses.map((h, i) => ({ post: h.post, prog: progresses[i] })).sort((a,b) => b.prog - a.prog).map(o => ({ post: o.post, name: horseByPost[o.post].name }));
+        postCall(ph.label, generateCall(ph.key, { sortedNow: order, paceShape, finishOrder: sorted }, lockedCalls));
+        currentSim.phaseIdx++;
+      }
+
+      if (!paceShown) {
+        const leaderProgress = Math.max.apply(null, progresses);
+        if (leaderProgress >= 0.20) { updatePaceBadge(paceShape); paceShown = true; }
+      }
+
+      if (!currentSim.postRaceTriggered && t >= fourthFinishTime) {
+        currentSim.postRaceTriggered = true;
+        currentSim.frozen = true;
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        hideSkipLink();
+        if (!wireLogged) {
+          postCall('WIRE', generateCall('wire', { sortedNow: sorted, paceShape, finishOrder: sorted }, lockedCalls), { wire: true });
+          wireLogged = true;
+        }
+        runPostRaceSequence(sorted, paceShape, isPhotoFinish, false);
+        return;
+      }
+
+      if (t < 1) raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  async function runPostRaceSequence(sortedFinish, paceShape, isPhotoFinish, skipped) {
+    if (!skipped) await sleep(1500);
+    if (isPhotoFinish && !skipped) await showPhotoFinish();
+    await showWinnerFlash(sortedFinish[0]);
+    swapToToteboard(sortedFinish, paceShape);
+    isRunning = false;
+    playBtn.disabled = false;
+    replayBtn.disabled = false;
+  }
+
+  function fmtMoney(x) { return '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtOdds(ml) { return ml.replace('-', '/'); }
+
+  function swapToToteboard(finishOrder, paceShape) {
+    const w = finishOrder[0], s = finishOrder[1], t = finishOrder[2], f = finishOrder[3];
+    const wD = w.ml_dec + 1, sD = s.ml_dec + 1, tD = t.ml_dec + 1, fD = f.ml_dec + 1;
+    const winPay = wD*2.0, winPlace = wD*1.05+1.5, winShow = wD*0.65+1.5;
+    const sPlace = sD*0.55+1.0, sShow = sD*0.40+1.0, tShow = tD*0.45+1.0;
+    const exacta = wD*sD*1.7, trifecta = wD*sD*tD*1.0, superfecta = wD*sD*tD*fD*0.55;
+    const finalTime = `2:0${Math.floor(Math.random()*4)}.${(Math.floor(Math.random()*100)).toString().padStart(2,'0')}`;
+    const silk = h => `<span class="tb-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
+    const restSilk = h => `<span class="tb-rest-silk" data-post="${h.post}" style="background:${h.tw};color:${h.nm};">${h.post}</span>`;
+    const wMargin = `won by ${fmtMargin(s.lengthsBehind - w.lengthsBehind)}`;
+    const sMargin = fmtMargin(s.lengthsBehind - w.lengthsBehind);
+    const tMargin = fmtMargin(t.lengthsBehind - s.lengthsBehind);
+    let restHtml = '';
+    for (let i = 3; i < finishOrder.length; i++) {
+      const hh = finishOrder[i];
+      restHtml += `<span class="tb-rest-item"><span class="tb-rest-pos">${(i+1)+'th'}</span>${restSilk(hh)}</span>`;
+    }
+    const html = `
+      <div class="tb">
+        <div class="tb-title">152ND KENTUCKY DERBY</div>
+        <div class="tb-sub">SIMULATED RESULTS &nbsp;·&nbsp; FINAL TIME: ${finalTime} &nbsp;·&nbsp; ${paceShape.toUpperCase()} PACE</div>
+        <table class="tb-tbl">
+          <thead><tr><th class="l"></th><th class="l"></th><th class="l">MARGIN</th><th>ODDS</th><th>WIN</th><th>PLACE</th><th>SHOW</th></tr></thead>
+          <tbody>
+            <tr><td class="silk l">${silk(w)}</td><td class="name l">${w.name.toUpperCase()}</td><td class="margin l">${wMargin}</td><td>${fmtOdds(w.ml)}</td><td>${fmtMoney(winPay)}</td><td>${fmtMoney(winPlace)}</td><td>${fmtMoney(winShow)}</td></tr>
+            <tr><td class="silk l">${silk(s)}</td><td class="name l">${s.name.toUpperCase()}</td><td class="margin l">${sMargin}</td><td>${fmtOdds(s.ml)}</td><td></td><td>${fmtMoney(sPlace)}</td><td>${fmtMoney(sShow)}</td></tr>
+            <tr><td class="silk l">${silk(t)}</td><td class="name l">${t.name.toUpperCase()}</td><td class="margin l">${tMargin}</td><td>${fmtOdds(t.ml)}</td><td></td><td></td><td>${fmtMoney(tShow)}</td></tr>
+          </tbody>
+        </table>
+        <div class="tb-exotics">
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$2.00 EXACTA</div><div class="tb-exotic-combo">${w.post}-${s.post}</div><div class="tb-exotic-pay">${fmtMoney(exacta)}</div></div>
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 TRIFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}</div><div class="tb-exotic-pay">${fmtMoney(trifecta)}</div></div>
+          <div class="tb-exotic"><div class="tb-exotic-lbl">$1.00 SUPERFECTA</div><div class="tb-exotic-combo">${w.post}-${s.post}-${t.post}-${f.post}</div><div class="tb-exotic-pay">${fmtMoney(superfecta)}</div></div>
+        </div>
+        <div class="tb-rest"><span class="tb-rest-lbl">FULL ORDER&nbsp;</span>${restHtml}</div>
+        <div class="tb-disclaimer">Approximate payouts modeled from Morning Line odds &amp; 30 years of Derby board finishers</div>
+        <div class="tb-meta">SIM ${(currentSimIdx + 1).toLocaleString()} / ${SIMS_DATA.sims.length.toLocaleString()}</div>
+      </div>
+    `;
+    showToteSwap(html);
+  }
+
+  renderTrack();
+})();
+</script>
+</body>
+</html>
