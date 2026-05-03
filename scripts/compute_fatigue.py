@@ -83,29 +83,45 @@ def extract_relievers(box):
 
 def classify(days):
     # days = [4d_ago, 3d_ago, 2d_ago, 1d_ago, today]
-    # i.e. d4 = yesterday, d5 = today.
-    # We're projecting fatigue for an UPCOMING appearance today (pre-game).
-    # Original code defined b2b = (d4>0 AND d5>0) which only fired AFTER the
-    # pitcher had already worked today — useless for pre-game projection.
-    # Redefine: B2B leading into today = pitched yesterday + day-before.
-    # Also flag "pitched today already" separately (any pitches today → OUT
-    # for any subsequent appearance today, e.g. doubleheader game 2).
+    # i.e. d4 = yesterday, d5 = today. Projecting fatigue for an UPCOMING
+    # appearance (typically pre-game today; pre-game tomorrow will see this
+    # data with the window slid forward by 1).
+    #
+    # Tier ladder:
+    #   LIKELY OUT — high-confidence unavailable
+    #   FATIGUED   — likely available but flagged
+    #   AVAILABLE  — fresh
+    #
+    # Thresholds tuned to match Sean's intuition: a single 24-pitch outing
+    # yesterday with no other work should NOT flag — that's a normal day's
+    # work and the pitcher is fine 24h later. Only flag when usage is
+    # genuinely heavy (30+ in a single day, or stacked across multiple days).
     d1, d2, d3, d4, d5 = days
     total = sum(days)
     apps_last4 = sum(1 for x in (d2, d3, d4, d5) if x > 0)
     apps_5 = sum(1 for x in days if x > 0)
-    b2b = (d3 > 0 and d4 > 0)  # pitched 2 consecutive days before today
+    b2b = (d3 > 0 and d4 > 0)  # pitched 2 consecutive days BEFORE today
     reasons = []
     tier = "AVAILABLE"
+    # LIKELY OUT — high-confidence unavailable
     if apps_last4 >= 3: reasons.append(f"{apps_last4}-in-4"); tier = "LIKELY OUT"
-    if b2b and (d3 + d4) >= 30: reasons.append(f"B2B {d3}+{d4}"); tier = "LIKELY OUT"
+    if b2b and (d3 + d4) >= 40:  # heavy stacked B2B (40+ across 2 days)
+        reasons.append(f"B2B {d3}+{d4}"); tier = "LIKELY OUT"
     if d4 > 30: reasons.append(f"{d4}p yesterday"); tier = "LIKELY OUT"
-    if d5 > 0: reasons.append(f"{d5}p today"); tier = "LIKELY OUT"  # already used today
+    if d5 > 30: reasons.append(f"{d5}p today"); tier = "LIKELY OUT"  # heavy load today
     if total >= 60: reasons.append(f"{total}p/5d"); tier = "LIKELY OUT"
+    # FATIGUED — softer flag (not OUT but noted as worked recently)
     if tier != "LIKELY OUT":
-        if b2b: reasons.append(f"B2B {d3}+{d4}"); tier = "FATIGUED"
-        elif apps_5 >= 3: reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
-        elif total >= 45: reasons.append(f"{total}p/5d"); tier = "FATIGUED"
+        if b2b and (d3 + d4) >= 25:  # meaningful B2B workload across the 2 days
+            reasons.append(f"B2B {d3}+{d4}"); tier = "FATIGUED"
+        elif d5 > 20:  # real outing today (not a batter-up cameo)
+            reasons.append(f"{d5}p today"); tier = "FATIGUED"
+        elif d4 > 0 and d5 > 0 and (d4 + d5) >= 20:  # pitched both days, ≥20 combined
+            reasons.append(f"{d4}p yesterday + {d5}p today"); tier = "FATIGUED"
+        elif apps_5 >= 4:  # 4+ appearances over 5 days
+            reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
+        elif total >= 55:  # heavy aggregate workload
+            reasons.append(f"{total}p/5d"); tier = "FATIGUED"
     return tier, reasons
 
 
