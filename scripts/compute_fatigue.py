@@ -82,19 +82,28 @@ def extract_relievers(box):
 
 
 def classify(days):
+    # days = [4d_ago, 3d_ago, 2d_ago, 1d_ago, today]
+    # i.e. d4 = yesterday, d5 = today.
+    # We're projecting fatigue for an UPCOMING appearance today (pre-game).
+    # Original code defined b2b = (d4>0 AND d5>0) which only fired AFTER the
+    # pitcher had already worked today — useless for pre-game projection.
+    # Redefine: B2B leading into today = pitched yesterday + day-before.
+    # Also flag "pitched today already" separately (any pitches today → OUT
+    # for any subsequent appearance today, e.g. doubleheader game 2).
     d1, d2, d3, d4, d5 = days
     total = sum(days)
     apps_last4 = sum(1 for x in (d2, d3, d4, d5) if x > 0)
     apps_5 = sum(1 for x in days if x > 0)
-    b2b = (d4 > 0 and d5 > 0)
+    b2b = (d3 > 0 and d4 > 0)  # pitched 2 consecutive days before today
     reasons = []
     tier = "AVAILABLE"
     if apps_last4 >= 3: reasons.append(f"{apps_last4}-in-4"); tier = "LIKELY OUT"
-    if b2b and (d4 + d5) >= 30: reasons.append(f"B2B {d4}+{d5}"); tier = "LIKELY OUT"
-    if d5 > 30: reasons.append(f"{d5}p yesterday"); tier = "LIKELY OUT"
+    if b2b and (d3 + d4) >= 30: reasons.append(f"B2B {d3}+{d4}"); tier = "LIKELY OUT"
+    if d4 > 30: reasons.append(f"{d4}p yesterday"); tier = "LIKELY OUT"
+    if d5 > 0: reasons.append(f"{d5}p today"); tier = "LIKELY OUT"  # already used today
     if total >= 60: reasons.append(f"{total}p/5d"); tier = "LIKELY OUT"
     if tier != "LIKELY OUT":
-        if b2b: reasons.append(f"B2B {d4}+{d5}"); tier = "FATIGUED"
+        if b2b: reasons.append(f"B2B {d3}+{d4}"); tier = "FATIGUED"
         elif apps_5 >= 3: reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
         elif total >= 45: reasons.append(f"{total}p/5d"); tier = "FATIGUED"
     return tier, reasons
