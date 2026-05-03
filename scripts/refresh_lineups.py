@@ -430,16 +430,21 @@ def main():
             else:
                 lineups[side] = None
 
-            # Apply catcher-DAN flag
+            # Apply catcher-DAN flag — but ONLY when today's projected catcher
+            # is the SAME person who caught yesterday's night game. If the team
+            # already swapped in a backup, the DAN concern doesn't apply.
             if lineups[side] and lineups[side].get("players"):
                 y_c = (dan_flags.get(team) or {}).get("yesterday_catcher")
                 if y_c:
+                    matched = False
                     for p in lineups[side]["players"]:
                         if p.get("pos") == "C" and p.get("name"):
                             # Simple name compare (last-name heuristic)
                             if p["name"].split()[-1] == y_c.split()[-1]:
                                 p["flag"] = "🟡 day after night — may sit"
-                    lineups[side]["dan_note"] = f"Day game after {y_c} caught last night"
+                                matched = True
+                    if matched:
+                        lineups[side]["dan_note"] = f"Day game after {y_c} caught last night"
 
         games_out.append({
             "game_pk": pk,
