@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-03T21:08:43.994183Z",
+  "generated_at": "2026-05-03T23:31:35.231487Z",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "Raw weather inputs for V8 compute. Retractable roofs treated as outdoor when team roof-schedule page marks the date Open.",
   "games": [
@@ -503,6 +503,43 @@
       "note": null
     },
     {
+      "game_pk": 824363,
+      "matchup": "New York Mets @ Colorado Rockies",
+      "venue": "Coors Field",
+      "game_time": "2026-05-04T21:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 68,
+        "humidity_pct": 27,
+        "wind_speed_mph": 10,
+        "wind_dir": "N",
+        "precip_pct": 43,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-05-04T16:00:00-06:00"
+      },
+      "v8": {
+        "run_adj_pct": -5.2,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -7,
+          "t_adj_pct": -3.0,
+          "w_adj_pct": 1.5,
+          "dp_adj_pct": -0.8,
+          "p_adj_pct": -0.6,
+          "precip_adj_pct": -1.8,
+          "carry_pct": 0.1,
+          "wind": {
+            "out_component": -3.58,
+            "dir_rarity": 0,
+            "spd_rarity": 0.34
+          }
+        }
+      },
+      "note": null
+    },
+    {
       "game_pk": 824283,
       "matchup": "Boston Red Sox @ Detroit Tigers",
       "venue": "Comerica Park",
@@ -715,43 +752,6 @@
       "note": "Dome / retractable roof \u2014 weather adjustment minimal"
     },
     {
-      "game_pk": 824363,
-      "matchup": "New York Mets @ Colorado Rockies",
-      "venue": "Coors Field",
-      "game_time": "2026-05-05T00:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 60,
-        "humidity_pct": 44,
-        "wind_speed_mph": 9,
-        "wind_dir": "N",
-        "precip_pct": 74,
-        "short_forecast": "Showers And Thunderstorms Likely",
-        "start_time": "2026-05-04T19:00:00-06:00"
-      },
-      "v8": {
-        "run_adj_pct": -11.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -15,
-          "t_adj_pct": -6.9,
-          "w_adj_pct": 1.3,
-          "dp_adj_pct": -0.2,
-          "p_adj_pct": -0.6,
-          "precip_adj_pct": -3.5,
-          "carry_pct": 0.1,
-          "wind": {
-            "out_component": -3.23,
-            "dir_rarity": 0,
-            "spd_rarity": 0.34
-          }
-        }
-      },
-      "note": null
-    },
-    {
       "game_pk": 824039,
       "matchup": "Chicago White Sox @ Los Angeles Angels",
       "venue": "Angel Stadium",
@@ -763,7 +763,7 @@
         "humidity_pct": 76,
         "wind_speed_mph": 10,
         "wind_dir": "SW",
-        "precip_pct": 15,
+        "precip_pct": 18,
         "short_forecast": "Slight Chance Rain Showers",
         "start_time": "2026-05-04T19:00:00-07:00"
       },
