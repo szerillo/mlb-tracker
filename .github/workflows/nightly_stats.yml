@@ -36,7 +36,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        run: pip install requests beautifulsoup4 lxml
+        run: pip install requests beautifulsoup4 lxml pandas pybaseball
 
       # ── PITCHERS ──────────────────────────────────────────────────────────
       - name: Refresh pitcher stats (FG dump)
@@ -63,6 +63,10 @@ jobs:
       - name: Pull pitcher arsenal (Savant per-pitch-type)
         run: |
           python scripts/refresh_pitcher_arsenal.py > /tmp/pa.json && mv /tmp/pa.json data/pitcher_arsenal.json || true
+
+      - name: Pull SP per-start game logs (FanGraphs + MLB) → pitcher_gamelogs.json
+        run: python scripts/refresh_pitcher_gamelogs.py
+        continue-on-error: true
 
       # ── HITTERS ───────────────────────────────────────────────────────────
       - name: Enrich hitters with projected OPS / K% / BB% / actual wOBA
