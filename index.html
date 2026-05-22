@@ -1115,6 +1115,34 @@
   .wpb-detail { margin-top: 0.4rem; }
   .wp-backtest.collapsed .wpb-detail { display: none; }
 
+  /* ── SP per-start trends (modal SP card + Rankings drill-down) ── */
+  .sp-trends { margin-top:0.55rem; border-top:1px solid var(--border); padding-top:0.45rem; }
+  .sp-trends-hdr { font-size:0.74rem; font-weight:700; letter-spacing:0.03em; color:var(--muted);
+    margin-bottom:0.3rem; text-transform:uppercase; }
+  .sp-trends-sub { font-weight:400; text-transform:none; margin-left:0.4rem; opacity:0.85; }
+  .sp-ls { width:100%; border-collapse:collapse; font-size:0.72rem; margin-bottom:0.45rem; }
+  .sp-ls th { color:var(--muted); font-weight:600; text-align:right; padding:1px 4px;
+    border-bottom:1px solid var(--border); }
+  .sp-ls th:first-child, .sp-ls th:nth-child(2) { text-align:left; }
+  .sp-ls td { text-align:right; padding:1px 4px; }
+  .sp-ls td:first-child, .sp-ls td:nth-child(2) { text-align:left; color:var(--muted); }
+  .sp-sparks { display:flex; gap:6px; flex-wrap:wrap; }
+  .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
+    border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
+  .sp-spark-cell:hover { background:var(--panel-hover); }
+  .sp-spark-top { display:flex; justify-content:space-between; align-items:baseline; }
+  .sp-spark-lbl { font-size:0.64rem; color:var(--muted); font-weight:700; }
+  .sp-spark-val { font-size:0.82rem; font-weight:700; color:var(--text); }
+  .sp-spark-sub { font-size:0.56rem; color:var(--muted); opacity:0.7; margin-top:1px; }
+  svg.spark { display:block; width:100%; height:26px; }
+  .sp-bigchart { margin-top:0.4rem; background:rgba(255,255,255,0.03); border:1px solid var(--border);
+    border-radius:6px; padding:5px 6px; }
+  .sp-bigchart-hdr { font-size:0.66rem; color:var(--muted); font-weight:600; margin-bottom:2px; }
+  .sp-bigsvg { display:block; width:100%; height:auto; }
+  .sp-bigsvg .sp-axis { font-size:8px; fill:var(--muted); }
+  .sp-nochart { font-size:0.7rem; color:var(--muted); padding:6px; }
+  .sp-clickable { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
+  .sp-trend-detail > td { background:rgba(94,234,212,0.04); padding:8px 10px !important; }
 </style>
 </head>
 <body>
@@ -1292,6 +1320,7 @@ const RUNS_PER_PCT = 0.1;
 
 let UMP_STATS = null;
 let FATIGUE = null;
+let GAMELOGS = null;   // data/pitcher_gamelogs.json — per-start SP trends
 let HITTERS = null;
 let PITCHERS = null;
 let WEATHER = null;
@@ -1343,7 +1372,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1359,10 +1388,11 @@ async function loadStaticData() {
     fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_roles.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/pitcher_gamelogs.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
-  HITTER_SPLITS = hsplits; PITCHER_ROLES = proles;
+  HITTER_SPLITS = hsplits; PITCHER_ROLES = proles; GAMELOGS = glogs;
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -1696,18 +1726,42 @@ function dayAbbr(iso) {
 }
 
 // Precise fatigue breakdown: show only days where pitcher actually threw.
-// Input: days array like [0,0,8,0,33]. Uses FATIGUE.day_labels for accurate
+// Resolve the fatigue slice for a given viewed date. compute_fatigue.py now
+// emits a date-keyed payload: FATIGUE.dates["YYYY-MM-DD"] = {window, day_labels,
+// teams, team_meta}, where the window is the 5 COMPLETED days BEFORE that date.
+// Falls back to the old single-snapshot shape so we never break in the gap
+// before fatigue.json regenerates in the new format.
+function fatigueForDate(dateIso) {
+  if (!FATIGUE) return null;
+  if (!FATIGUE.dates) {
+    // legacy single-snapshot payload
+    if (FATIGUE.teams) return { window: FATIGUE.window, day_labels: FATIGUE.day_labels,
+                                teams: FATIGUE.teams, team_meta: FATIGUE.team_meta };
+    return null;
+  }
+  if (dateIso && FATIGUE.dates[dateIso]) return FATIGUE.dates[dateIso];
+  // Nearest key that is <= the requested date (or earliest available).
+  const keys = Object.keys(FATIGUE.dates).sort();
+  if (!keys.length) return null;
+  let best = keys[0];
+  for (const k of keys) { if (!dateIso || k <= dateIso) best = k; }
+  return FATIGUE.dates[best];
+}
+// The slice for the currently-viewed date (defaults to today).
+function activeFatigue() { return fatigueForDate(VIEW_DATE || today()); }
+
+// Input: days array like [0,0,8,0,33]. Uses the slice's day_labels for accurate
 // weekday names aligned to the fatigue window (oldest → newest, last index
 // is the most recent day the pipeline counted).
 // L5 pitch-count breakdown across the 5-day window, oldest → newest.
 // format: "slashes" (compact, used in modal)   → "12/0/15/0/15"
 //         "days"    (labeled, used on bullpen) → "MON 12 · WED 15 · FRI 15"
-function fatigueBreakdown(days, format="days") {
+function fatigueBreakdown(days, format="days", labels=null) {
   if (!days || !days.length) return "";
   if (format === "slashes") {
     return days.map(d => d || 0).join("/");
   }
-  const labels = FATIGUE?.day_labels || [];
+  labels = labels || activeFatigue()?.day_labels || [];
   const last = days.length - 1;
   const parts = [];
   for (let i = 0; i < days.length; i++) {
@@ -1990,8 +2044,9 @@ async function loadForDate(date) {
 // SCOREBOARD
 // ============================================================================
 function penSummaryChip(teamName) {
-  if (!FATIGUE || !FATIGUE.teams) return "";
-  const rows = FATIGUE.teams[teamName];
+  const fd = activeFatigue();
+  if (!fd || !fd.teams) return "";
+  const rows = fd.teams[teamName];
   const out = rows?.filter(r => r.tier === "LIKELY OUT").length || 0;
   const ftg = rows?.filter(r => r.tier === "FATIGUED").length || 0;
   const parts = [];
@@ -2782,35 +2837,21 @@ async function renderBullpenTab() {
   CURRENT_GAMES.forEach(g => { teamIds.add(g.teams.away.team.id); teamIds.add(g.teams.home.team.id); });
   await Promise.all([...teamIds].map(id => getTeamRoster(id)));
 
-  // Freshness header — show the fatigue window + where we are relative
-  // to today's slate, so the user knows if the pen numbers include today's
-  // completed games or are still "through prior day".
+  // Freshness header — the fatigue window is keyed to the VIEWED date: it's the
+  // 5 COMPLETED days BEFORE that date, so it always represents "rest coming into"
+  // the day you're looking at (the viewed day itself is never in its own window).
   let headerHTML = "";
-  if (FATIGUE?.window?.end) {
-    const endIso = FATIGUE.window.end;
+  {
     const viewedDateIso = (CURRENT_DATES && CURRENT_DATES[0]) || today();
-    const viewedDate = new Date(viewedDateIso + "T12:00:00Z");
-    const endDate = new Date(endIso + "T12:00:00Z");
-    // Status:
-    //  "includes today" → fatigue window ends on the viewed date (fresh + still-updating)
-    //  "through prior day" → window ends 1 day before viewed date
-    //  "older" → window is older than 1 day behind viewed date
-    const diffDays = Math.round((viewedDate - endDate) / 86400000);
-    let label, cls;
-    if (diffDays <= 0) {
-      label = `Window includes today (${fmtDateShort(endIso)}) — may still update as night games finish`;
-      cls = "fresh";
-    } else if (diffDays === 1) {
-      label = `Updated through prior day (${fmtDateShort(endIso)}) — tonight's pen use not yet in the numbers`;
-      cls = "priorday";
-    } else {
-      label = `Last computed ${fmtDateShort(endIso)} · ${diffDays} days behind — may be stale`;
-      cls = "stale";
+    const fd = fatigueForDate(viewedDateIso);
+    if (fd?.window?.end) {
+      const whenLabel = viewedDateIso === today() ? "today" : fmtDateShort(viewedDateIso);
+      const gen = (FATIGUE && FATIGUE.generated_at)
+        ? ` · generated ${FATIGUE.generated_at.slice(0,16).replace('T',' ')} UTC` : '';
+      headerHTML = `<div class="bp-fresh fresh">
+        <b>Bullpen fatigue</b> · rest coming into ${whenLabel} · L5 ${fmtDateShort(fd.window.start)} – ${fmtDateShort(fd.window.end)} (the 5 completed days before ${whenLabel})${gen}
+      </div>`;
     }
-    const gen = FATIGUE.generated_at ? ` · generated ${FATIGUE.generated_at.slice(0,16).replace('T',' ')} UTC` : '';
-    headerHTML = `<div class="bp-fresh ${cls}">
-      <b>Bullpen fatigue</b> · L5 ${fmtDateShort(FATIGUE.window.start)} – ${fmtDateShort(endIso)} · ${label}${gen}
-    </div>`;
   }
 
   let html = headerHTML;
@@ -2857,7 +2898,11 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     return k !== spKey && !isStarter(k);
   });
 
-  const fatigueRows = (FATIGUE?.teams?.[teamName]) || [];
+  // Fatigue slice: callers (e.g. the modal) pass an explicit date slice via
+  // opts.fatigueSlice; the standalone bullpen tab uses the active viewed date.
+  const fSlice = opts.fatigueSlice || activeFatigue();
+  const fLabels = fSlice?.day_labels || [];
+  const fatigueRows = (fSlice?.teams?.[teamName]) || [];
   const fatigueByName = {};
   for (const r of fatigueRows) fatigueByName[normName(r.name)] = r;
 
@@ -2891,7 +2936,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
     // Modal (compact) uses slash format; full Bullpen tab uses day abbrev.
-    const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days") : "";
+    const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days", fLabels) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
     const nameShown = compact ? shortName(p.name) : p.name;
     const fipLbl = useXfip ? "xFIP" : "pFIP";
@@ -2925,7 +2970,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   // Freshness marker: "Thru WED" (last counted Final date), "· pending" when a
   // later game today hasn't reached Final yet. Source: FATIGUE.team_meta emitted
   // by scripts/compute_fatigue.py. No-op when meta absent (pre-refresh).
-  const _meta = (FATIGUE && FATIGUE.team_meta) ? FATIGUE.team_meta[teamName] : null;
+  const _meta = (fSlice && fSlice.team_meta) ? fSlice.team_meta[teamName] : null;
   let thruPill = '';
   if (_meta && _meta.last_final) {
     const _tip = 'Usage counted through ' + _meta.last_final +
@@ -3575,6 +3620,151 @@ function renderSPStatRows(s, thr) {
        + row("Pitching Model", pitchingModel) + row("Projections", projections) + ipLine;
 }
 
+// ============================================================================
+// SP PER-START TRENDS  (data/pitcher_gamelogs.json)
+// ============================================================================
+function gameLogsFor(name) {
+  if (!GAMELOGS || !GAMELOGS.pitchers || !name) return null;
+  return GAMELOGS.pitchers[normName(name)] || null;
+}
+
+// Tiny inline sparkline. vals oldest→newest; nulls skipped. Dot on last point.
+function sparkline(vals, opts={}) {
+  const w = opts.w || 104, h = opts.h || 26, pad = 3;
+  const pts = vals.map((v, i) => ({ i, v })).filter(p => p.v != null && isFinite(p.v));
+  if (pts.length < 2) return `<svg class="spark" width="${w}" height="${h}"></svg>`;
+  const xs = vals.length - 1;
+  let min = Math.min(...pts.map(p => p.v)), max = Math.max(...pts.map(p => p.v));
+  if (min === max) { min -= 1; max += 1; }
+  const X = i => pad + (xs ? (i / xs) * (w - 2 * pad) : 0);
+  const Y = v => h - pad - ((v - min) / (max - min)) * (h - 2 * pad);
+  const d = pts.map((p, k) => `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+    <circle cx="${X(last.i).toFixed(1)}" cy="${Y(last.v).toFixed(1)}" r="2.2" fill="var(--accent)"/>
+  </svg>`;
+}
+
+// Larger season chart (used in the tap-to-expand panel) with min/max labels.
+function bigChart(vals) {
+  const w = 320, h = 100, padL = 30, padR = 6, padT = 10, padB = 16;
+  const pts = vals.map((v, i) => ({ i, v })).filter(p => p.v != null && isFinite(p.v));
+  if (pts.length < 2) return `<div class="sp-nochart">not enough data yet</div>`;
+  const xs = vals.length - 1;
+  let min = Math.min(...pts.map(p => p.v)), max = Math.max(...pts.map(p => p.v));
+  if (min === max) { min -= 1; max += 1; }
+  const X = i => padL + (xs ? (i / xs) * (w - padL - padR) : 0);
+  const Y = v => h - padB - ((v - min) / (max - min)) * (h - padT - padB);
+  const d = pts.map((p, k) => `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
+  const dots = pts.map(p => `<circle cx="${X(p.i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="1.8" fill="var(--accent)"/>`).join('');
+  const lab = v => Math.abs(v) < 10 ? v.toFixed(2) : Math.round(v).toString();
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="sp-bigsvg">
+    <text x="2" y="${(Y(max) + 3).toFixed(1)}" class="sp-axis">${lab(max)}</text>
+    <text x="2" y="${Y(min).toFixed(1)}" class="sp-axis">${lab(min)}</text>
+    <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>${dots}
+  </svg>`;
+}
+
+// Trailing-window rolling series. K%/BB% as true ratios, xFIP/SIERA IP-weighted,
+// velo/Stuff+ pitch-weighted — mirrors the python aggregate.
+function spWindowValue(w, field) {
+  if (field === 'k_pct' || field === 'bb_pct') {
+    const num = w.reduce((a, s) => a + ((field === 'k_pct' ? s.k : s.bb) || 0), 0);
+    const den = w.reduce((a, s) => a + (s.tbf || 0), 0);
+    return den ? +(num / den * 100).toFixed(1) : null;
+  }
+  if (field === 'xfip' || field === 'siera') {
+    let num = 0, den = 0;
+    for (const s of w) { if (s[field] != null && s.outs) { num += s[field] * s.outs; den += s.outs; } }
+    return den ? +(num / den).toFixed(2) : null;
+  }
+  let num = 0, den = 0;
+  for (const s of w) { if (s[field] != null && s.pitches) { num += s[field] * s.pitches; den += s.pitches; } }
+  return den ? +(num / den).toFixed(field === 'velo' ? 1 : 0) : null;
+}
+function rollingSeries(starts, field, win = 3) {
+  return starts.map((_, i) => spWindowValue(starts.slice(Math.max(0, i - win + 1), i + 1), field));
+}
+
+function toggleSPChart(id) {
+  const el = document.getElementById('spchart-' + id);
+  if (!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+}
+
+// Core renderer — takes a gamelogs pitcher object.
+function renderSPTrendsHTML(gl) {
+  if (!gl || !gl.starts || !gl.starts.length) return "";
+  const starts = gl.starts;
+  const recent = starts.slice(-5).reverse();   // most recent first
+  const l5 = gl.l5 || {};
+  const uid = (normName(gl.name || "") || ("p" + (gl.mlbam_id || ""))).replace(/[^a-z0-9]/g, "");
+  const xfipB = (PITCHER_STATS && PITCHER_STATS.thresholds && PITCHER_STATS.thresholds.xfip)
+    || { elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75 };
+
+  const lsRows = recent.map(s => `<tr>
+      <td>${s.date ? fmtDateShort(s.date) : '—'}</td>
+      <td>${s.opp || '—'}</td>
+      <td>${s.ip != null ? s.ip : '—'}</td>
+      <td>${s.h ?? '—'}</td><td>${s.r ?? '—'}</td><td>${s.er ?? '—'}</td>
+      <td>${s.bb ?? '—'}</td><td>${s.k ?? '—'}</td><td>${s.hr ?? '—'}</td>
+      <td class="${s.xfip != null ? tier(s.xfip, xfipB, false) : ''}">${s.xfip != null ? s.xfip.toFixed(2) : '—'}</td>
+    </tr>`).join("");
+
+  const metrics = [
+    { key: 'velo', label: 'Velo',   series: starts.map(s => s.velo),       l5: l5.velo,  fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' },
+    { key: 'stuff', label: 'Stuff+', series: starts.map(s => s.stuff),     l5: l5.stuff, fmt: v => v != null ? Math.round(v) : '—', mode: 'by start' },
+    { key: 'k',    label: 'K%',     series: rollingSeries(starts, 'k_pct'), l5: l5.k_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
+    { key: 'bb',   label: 'BB%',    series: rollingSeries(starts, 'bb_pct'), l5: l5.bb_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
+    { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
+  ];
+  const sparkCells = metrics.map(m => `
+    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} (${m.mode}) — tap to expand season chart">
+      <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${m.fmt(m.l5)}</span></div>
+      ${sparkline(m.series)}
+      <div class="sp-spark-sub">L5 · ${m.mode}</div>
+    </div>`).join("");
+  const bigCharts = metrics.map(m => `
+    <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
+      <div class="sp-bigchart-hdr">${m.label} — ${m.mode}, full season (${m.series.filter(v => v != null).length} starts)</div>
+      ${bigChart(m.series)}
+    </div>`).join("");
+
+  const sieraTxt = l5.siera != null ? l5.siera.toFixed(2) : '—';
+  const fbNote = gl.source === 'mlb-fallback' ? ' · line scores only (FG pending)' : '';
+  return `<div class="sp-trends">
+    <div class="sp-trends-hdr">Recent starts
+      <span class="sp-trends-sub">last ${recent.length} · L5 SIERA ${sieraTxt}${fbNote}</span></div>
+    <table class="sp-ls"><thead><tr>
+      <th>Date</th><th>Opp</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th>xFIP</th>
+    </tr></thead><tbody>${lsRows}</tbody></table>
+    <div class="sp-sparks">${sparkCells}</div>
+    ${bigCharts}
+  </div>`;
+}
+function renderSPTrends(name) { return renderSPTrendsHTML(gameLogsFor(name)); }
+function renderSPTrendsByKey(key) {
+  return renderSPTrendsHTML(GAMELOGS && GAMELOGS.pitchers ? GAMELOGS.pitchers[key] : null);
+}
+
+// Rankings drill-down: clicking a starter row toggles an inline trends row.
+function spTrendDelegate(e) {
+  const cell = e.target.closest && e.target.closest('td.sp-clickable');
+  if (!cell) return;
+  const key = cell.getAttribute('data-spkey');
+  const tr = cell.closest('tr');
+  if (!tr) return;
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('sp-trend-detail')) { next.remove(); return; }
+  const html = renderSPTrendsByKey(key);
+  if (!html) return;
+  const det = document.createElement('tr');
+  det.className = 'sp-trend-detail';
+  det.innerHTML = `<td colspan="11">${html}</td>`;
+  tr.parentNode.insertBefore(det, tr.nextElementSibling);
+}
+
 function renderSPBox(name, teamAbbrStr) {
   if (!name) {
     return `<div class="m-sp-box"><div class="m-sp-header">${teamAbbrStr}
@@ -3646,6 +3836,7 @@ function renderSPBox(name, teamAbbrStr) {
       </tbody>
     </table>` : ""}
     ${renderModalArsenal(name)}
+    ${renderSPTrends(name)}
   </div>`;
 }
 
@@ -3885,18 +4076,16 @@ async function openModal(game) {
 
     <div class="m-section-header"><span>Bullpens</span>
       <span class="right-note">${(() => {
-        if (!FATIGUE?.window?.end) return "";
-        const endIso = FATIGUE.window.end;
         const gIso = (game.gameDate || "").slice(0,10);
-        const diff = gIso && endIso ? Math.round((new Date(gIso+"T12Z") - new Date(endIso+"T12Z")) / 86400000) : 0;
-        const base = `L5 ${FATIGUE.window.start} → ${endIso}`;
-        if (diff <= 0) return `${base} · includes today`;
-        if (diff === 1) return `${base} · through prior day`;
-        return `${base} · ${diff}d behind`;
+        const fd = fatigueForDate(gIso);
+        if (!fd?.window?.end) return "";
+        // Identical label wording to the standalone Bullpen tab.
+        const whenLabel = gIso === today() ? "today" : fmtDateShort(gIso);
+        return `rest coming into ${whenLabel} · L5 ${fmtDateShort(fd.window.start)} – ${fmtDateShort(fd.window.end)}`;
       })()}</span></div>
     <div class="m-split">
-      <div class="m-bp-box"><h4>${away} ${(() => { const r = getBullpenRank(game.teams.away.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true})}</div>
-      <div class="m-bp-box"><h4>${home} ${(() => { const r = getBullpenRank(game.teams.home.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true})}</div>
+      <div class="m-bp-box"><h4>${away} ${(() => { const r = getBullpenRank(game.teams.away.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
+      <div class="m-bp-box"><h4>${home} ${(() => { const r = getBullpenRank(game.teams.home.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
     </div>
 
     <div class="m-section-header"><span>Lineups</span></div>
@@ -4303,7 +4492,7 @@ function renderSPRankings(pitchers, nameToTeam) {
     const pEntry = pitchers[p.key];
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name">${p.name}</td>
+      <td class="name${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?' sp-clickable':''}"${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?` data-spkey="${p.key}" title="Tap for recent-start trends"`:''}>${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
       <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
@@ -4375,7 +4564,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
     const pEntry = pitchers[p.key];
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name">${p.name}</td>
+      <td class="name${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?' sp-clickable':''}"${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?` data-spkey="${p.key}" title="Tap for recent-start trends"`:''}>${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
       <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
@@ -4937,6 +5126,10 @@ document.getElementById("prevDayBtn").onclick  = () => loadForDate(addDays(VIEW_
 document.getElementById("nextDayBtn").onclick  = () => loadForDate(addDays(VIEW_DATE || today(), 1));
 document.getElementById("refreshBtn").onclick  = () => loadForDate(VIEW_DATE || today());
 document.getElementById("datePicker").onchange = (e) => { if (e.target.value) loadForDate(e.target.value); };
+
+// Delegated: clicking a starter's name in the Rankings tab toggles an inline
+// per-start trends row. Bound once at startup (survives table re-renders).
+document.addEventListener("click", spTrendDelegate);
 
 loadToday();
 document.addEventListener("visibilitychange", () => {
