@@ -32,12 +32,16 @@ MLB_API = "https://statsapi.mlb.com/api/v1"
 # Most are the same as MLB abbreviations.
 RW_TEAM_CODES = [
     "ARI","ATL","BAL","BOS","CHC","CWS","CIN","CLE","COL","DET",
-    "HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","OAK",
+    "HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","ATH",
     "PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WAS",
 ]
 # MLB API abbreviations (differ in a few cases)
-# MLB now returns 'AZ' for Arizona (was 'ARI' historically), and 'ATH' for Athletics.
-MLB_TO_RW = {"CHW": "CWS", "WSH": "WAS", "ATH": "OAK", "AZ": "ARI"}
+# MLB now returns 'AZ' for Arizona (was 'ARI' historically), and 'ATH' for the
+# (relocated) Athletics. Rotowire ALSO switched the A's page code to ?team=ATH —
+# requesting the old ?team=OAK returns ZERO lineup blocks and Rotowire silently
+# serves the alphabetically-first team (Arizona) instead, which is how the A's
+# projected lineup was showing Marte/Carroll/Perdomo. Map both A's variants → ATH.
+MLB_TO_RW = {"CHW": "CWS", "WSH": "WAS", "ATH": "ATH", "OAK": "ATH", "AZ": "ARI"}
 
 
 def fetch(url: str) -> str:
@@ -166,6 +170,23 @@ def main():
     team_platoons = {}
     for code in RW_TEAM_CODES:
         team_platoons[code] = scrape_team_platoons(code)
+
+    # Guard against Rotowire's silent alphabetical-default behavior: an unknown
+    # ?team= code returns ARI's page rather than 404ing. If any NON-ARI team's
+    # scraped lineup is byte-identical to ARI's, the request fell through to the
+    # default — discard it so we never attach Arizona's lineup to another club.
+    def _names(pl):
+        return tuple(p.get("name") for p in (pl or []))
+    ari = team_platoons.get("ARI", {})
+    ari_sig = (_names(ari.get("R")), _names(ari.get("L")))
+    if ari_sig != ((), ()):
+        for code, pl in list(team_platoons.items()):
+            if code == "ARI":
+                continue
+            if (_names(pl.get("R")), _names(pl.get("L"))) == ari_sig:
+                print(f"[rotowire] {code} returned ARI's default page — discarding",
+                      file=sys.stderr)
+                team_platoons[code] = {}
 
     scraped = sum(1 for d in team_platoons.values() if d.get("R") or d.get("L"))
     print(f"[rotowire] got platoons for {scraped}/{len(RW_TEAM_CODES)} teams", file=sys.stderr)
