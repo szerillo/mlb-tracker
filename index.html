@@ -125,6 +125,9 @@
     display: inline-flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
   .sb-sp-hand { font-size: 0.7rem; font-weight: 600; color: var(--muted);
     letter-spacing: 0.04em; }
+  /* wFIP score chip on its own line so the name row (Name + hand + SP#) stays
+     consistent height across cards regardless of name length. */
+  .sb-sp-score { margin-top: 0.18rem; }
 
   /* Rank chips — SP + team bullpen rank shown on scoreboard & pitcher tab. */
   .rank-chip { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 999px;
@@ -2098,7 +2101,8 @@ function spMiniCell(name, teamName, sideCls) {
     </div>` : '';
 
   return `<div class="sb-sp-cell ${sideCls}">
-    <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}${unifiedScoreChip(s)}</div>
+    <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
+    ${(() => { const u = unifiedScoreChip(s); return u ? `<div class="sb-sp-score">${u}</div>` : ''; })()}
     <div class="sb-sp-stats">
       ${cell(primary.label, primary.val, primaryCls)}
       ${cell("xERA", s.xera, xeraCls)}
@@ -3176,9 +3180,20 @@ function renderPitcherDeepSP(spName, teamName) {
     pill("GB%",     s?.gb_pct,       thr.gb_pct       || {elite:52,good:46,bad:38,worst:34},     true,  "%", "Ground-ball rate (higher=better)"),
   ].join('');
 
+  // Actual (season) — ERA + K-BB% (mirrors the modal's "Actual" row). Per-start
+  // actual results live in the game-log table appended below.
+  const actualPills = [
+    s?.era != null ? pill("ERA", s.era, thr.xera || {elite:3.25,good:3.75,bad:4.25,worst:4.75}, false, "", "Season ERA (lower=better)") : '',
+    s?.k_bb_pct != null ? pill("K-BB%", s.k_bb_pct, thr.k_bb || {elite:18,good:12,bad:7,worst:4}, true, "%", "K% minus BB% (higher=better)") : '',
+  ].filter(Boolean).join('');
+
   const ipTxt = s?.ip != null ? `${s.ip} IP` : (ar?.total_pitches ? `${ar.total_pitches}p` : '');
-  // Deep Pitchers-tab view: 6 sections in a 3-col grid.
+  // Deep Pitchers-tab view: sections in a 3-col grid.
   const tiles = [
+    actualPills ? `<div class="pt-stat-group">
+      <div class="pt-group-label">Actual (season)</div>
+      <div class="pt-pills">${actualPills}</div>
+    </div>` : '',
     expectedPills ? `<div class="pt-stat-group">
       <div class="pt-group-label">Expected (season)</div>
       <div class="pt-pills">${expectedPills}</div>
@@ -3216,6 +3231,7 @@ function renderPitcherDeepSP(spName, teamName) {
     </div>
     <div class="pt-stat-grid">${tiles}</div>
     ${arsenalTable}
+    ${renderSPTrends(spName)}
   </div>`;
 }
 
