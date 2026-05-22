@@ -19,6 +19,43 @@ sys.path.insert(0, os.path.dirname(__file__))
 from v8_weather import compute_v8, TEAM_TO_PARK, nws_wind_to_compass
 
 OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "weather.json")
+BP_WEATHER_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "bp_weather.json")
+
+# ── V9 backend BP integration ────────────────────────────────────────────────
+# We never DISPLAY BallparkPal's raw number, but we use it on the backend two ways:
+#   1. PRESSURE input — BP's barometric pressure is the air-density figure BP's own
+#      runs respond to, so feeding it into the model sharpens our number on covered
+#      games (calibration: MAE 4.83→4.53). NWS doesn't carry pressure; BP does, and
+#      we already scrape it. We keep NWS humidity (BP's humidity hurt our dew-point).
+#   2. WEIGHT — the final published "V9" number is a weighted blend of our physical
+#      model and BP's weather-only runs on the games BP covers. 0 = pure model,
+#      1 = pure BP. 0.5 = equal ensemble: anchors us to BP (a strong reference, but
+#      not ground truth, and it misses ~half the slate) without surrendering to it.
+#      Uncovered games (tomorrow + scrape gaps) stay pure recalibrated model.
+BP_BLEND_WEIGHT = 0.5
+MODEL_VERSION = "v9"
+
+
+def load_bp_weather():
+    """Return (by_venue, bp_et_date) from the existing bp_weather.json (written by
+    the prior refresh cycle). Used to feed BP pressure into the model and to weight
+    the final number toward BP on the games BP covers. Returns ({}, None) if absent."""
+    try:
+        with open(BP_WEATHER_PATH) as f:
+            doc = json.load(f)
+    except Exception as e:
+        print(f"  [v9] no bp_weather.json to integrate ({e})")
+        return {}, None
+    gen = doc.get("generated_at")
+    bp_date = None
+    if gen:
+        try:
+            bp_date = (datetime.datetime.fromisoformat(gen.replace("Z", "+00:00"))
+                       - datetime.timedelta(hours=4)).date().isoformat()
+        except Exception:
+            bp_date = None
+    by_venue = {g["venue"]: g for g in doc.get("games", []) if g.get("venue")}
+    return by_venue, bp_date
 
 # NWS grid points per park (from V8 methodology doc)
 NWS_GRIDS = {
@@ -261,6 +298,11 @@ def main():
         except Exception as e:
             print(f"  could not read prior weather: {e}")
 
+    # V9: load the existing BP scrape (prior cycle) for pressure + blend.
+    bp_by_venue, bp_date = load_bp_weather()
+    print(f"  [v9] BP integration: {len(bp_by_venue)} games on slate {bp_date} "
+          f"(pressure input + {int(BP_BLEND_WEIGHT*100)}% weight on covered games)")
+
     # Retractable roof status per date (currently ARI only — only mlb.com
     # page that exposes a public schedule). If a game's date is tagged "open"
     # we override the DOMES check and treat as outdoor.
@@ -329,12 +371,20 @@ def main():
             roof_open_count += 1
         fc = forecasts.get(home)
         hour = extract_hour(fc, g["game_time"])
-        # Compute V8 if weather available
+        # Compute V9 if weather available
         v8 = None
         park_code = TEAM_TO_PARK.get(home)
         if hour and park_code:
             # Try to get a simple 3-hour trend around game time
             t_hours = _three_hour_trend(fc, g["game_time"])
+            # V9 step 1 — pull BP's barometric pressure for this game (only when
+            # BP's slate matches the game date) and feed it in. Keep NWS humidity.
+            bp_match = bp_by_venue.get(g["venue"]) if (gd_et and gd_et == bp_date) else None
+            bp_pres = None
+            if bp_match:
+                p = bp_match.get("pressure_mb")
+                if isinstance(p, (int, float)) and 970 <= p <= 1050:
+                    bp_pres = p
             wx_in = {
                 "t": hour.get("temp_f"),
                 "hum": hour.get("humidity_pct"),
@@ -343,7 +393,25 @@ def main():
                 "precip": hour.get("precip_pct") or 0,
                 "t_hours": t_hours,
             }
+            if bp_pres is not None:
+                wx_in["pres"] = bp_pres
             v8 = compute_v8(park_code, wx_in)
+            # V9 step 2 — weight the published number toward BP's weather-only runs
+            # on the games BP covers. We never display BP's raw number; this blended
+            # value IS the displayed "V9". Uncovered games stay pure model.
+            model_pct = v8.get("run_adj_pct")
+            bp_runs = bp_match.get("bp_weather_runs_pct") if bp_match else None
+            v8["model_pct"] = model_pct
+            v8["pressure_source"] = "BP" if bp_pres is not None else "default"
+            if model_pct is not None and isinstance(bp_runs, (int, float)):
+                w = BP_BLEND_WEIGHT
+                v8["run_adj_pct"] = round((1.0 - w) * model_pct + w * bp_runs, 1)
+                v8["bp_pct"] = bp_runs
+                v8["bp_blended"] = True
+                v8["blend_weight"] = w
+            else:
+                v8["bp_pct"] = None
+                v8["bp_blended"] = False
         games_out.append({
             "game_pk": g["game_pk"],
             "matchup": f"{g['away']} @ {home}",
@@ -358,8 +426,14 @@ def main():
 
     payload = {
         "generated_at": now,
+        "model_version": MODEL_VERSION,
         "source": "NWS (api.weather.gov) hourly forecast",
-        "method_note": "Raw weather inputs for V8 compute. Retractable roofs treated as outdoor when team roof-schedule page marks the date Open.",
+        "method_note": ("V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, "
+                        "with BallparkPal barometric pressure fed in as the air-density input and "
+                        f"the published number weighted {int(BP_BLEND_WEIGHT*100)}% toward BP's "
+                        "weather-only runs on games BP covers (v8.run_adj_pct = blended; "
+                        "v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. "
+                        "Retractable roofs treated as outdoor when the roof-schedule page marks the date Open."),
         "games": games_out,
     }
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
@@ -367,8 +441,11 @@ def main():
         json.dump(payload, f, indent=2)
     print(f"  wrote {len(games_out)} games to {OUTPUT}")
     good = sum(1 for g in games_out if g.get("weather"))
+    blended = sum(1 for g in games_out if (g.get("v8") or {}).get("bp_blended"))
+    bp_pres_used = sum(1 for g in games_out if (g.get("v8") or {}).get("pressure_source") == "BP")
     print(f"  weather resolved: {good}/{len(games_out)} · frozen mid-game: {frozen} · "
           f"retractable roof open: {roof_open_count}")
+    print(f"  [v9] BP-pressure used: {bp_pres_used} · BP-weighted: {blended} games")
 
 
 if __name__ == "__main__":
