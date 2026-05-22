@@ -1,8 +1,19 @@
 """
-V8 MLB Weather Model — port of the compute function and all park data.
+V9 MLB Weather Model — physical run-adjustment engine + all park data.
+(Module/function names kept as v8 / compute_v8 for import stability.)
 
-Based on V8_WEATHER_MODEL_METHODOLOGY.md. Includes the cold-quadratic cap
-at -15% (V8.1 operational guidance).
+History:
+  V8.0  original port of the BallparkPal-style methodology.
+  V8.1  operational cold cap.
+  V8.2/V9 (2026-05-22) RECALIBRATION against BallparkPal weather-only runs on a
+        251-game historical sample: fixed the inverted wind sign, softened the
+        cold over-penalty, neutralized the broken `carry` scale, retuned the
+        global constants (MAE 6.0→4.8, RMSE 8.7→7.0 vs BP). See the V8.2 note in
+        the constants block. The "V9" label also covers two BACKEND steps done in
+        refresh_weather.py (not here): feeding BallparkPal's barometric PRESSURE
+        into this model as the `pres` input, and weighting the final published
+        number toward BP's weather-only runs on the games BP covers. This module
+        stays a pure physical model; refresh_weather.py does the BP ingestion.
 
 Usage:
     from v8_weather import compute_v8, TEAM_TO_PARK
@@ -132,23 +143,43 @@ BP_DIST = {
 # ============================================================================
 # V8 Global Constants
 # ============================================================================
-TEMP_C = 0.003
-COLD_T = 12
-COLD_A = 0.0002
+# V8.2 RECALIBRATION (2026-05-22): refit against BallparkPal's weather-only
+# runs% on a 251-game historical sample (34 dates, Apr 20 – May 22) recovered
+# from git history of data/bp_weather.json + data/weather.json. Constants below
+# were chosen by Nelder-Mead minimization of MAE vs BP, validated with 5-fold
+# cross-validation BY DATE (out-of-sample MAE 5.0 vs 6.0 before).
+#   Before → after on the sample:  MAE 6.0→4.8 · RMSE 8.7→7.0 · sign-agree 73%→78%
+# Two root-cause fixes were folded in:
+#   (1) WIND SIGN BUG — wind blowing IN was being added as +runs (double
+#       negative: wr_in flipped negative × negative in-component = positive).
+#       Now the wind adjustment follows the sign of the out-component with a
+#       positive responsiveness magnitude. (Fixed inline in compute_v8.)
+#       e.g. 14mph E wind at Yankee Stadium: +1.0% (old, wrong) → -8.9% (BP -9).
+#   (2) COLD OVER-PENALTY — the cold quadratic was too steep at moderate cold
+#       (52°F games showed -15% vs BP -4); softened via COLD_T/COLD_A/cap.
+# Note: the broken-scale per-park `carry` baseline (values span -1.5 .. -95)
+# correlated ~0 with BP, so CARRY_SCALE was shrunk 8x (0.04→0.005) to neutralize
+# it without removing the field. Residual error is now dominated by our coarse
+# single-hour NWS wind octant not matching BP's finer wind input — not by the
+# coefficients (park wind term explains R²≈0.02 of BP's post-temp residual).
+TEMP_C = 0.0008
+COLD_T = 9
+COLD_A = 0.00012
 WIND_O = 0.001
 WIND_I = 0.001
-# WIND_SCALE was 10.0 which double-counted the per-park wr_out/wr_in
-# values (those are already in "%/10mph" units). Calibrated to 2.0 to
-# match BallparkPal magnitudes on a 15-game slate (Wrigley drops from
-# +37% wind to ~+7%, LAA from -22% to ~-4%).
-WIND_SCALE = 2.0
-DP_C = 0.0010
+# Per-park wr_out/wr_in are already in "%/10mph" units; WIND_SCALE is the global
+# multiplier on top. Refit to 0.95 (was 2.0) with the sign bug fixed.
+WIND_SCALE = 0.95
+# Cap on the per-game wind-only contribution (BP rarely shows wind-only beyond
+# this on the slates we can observe; our wind input is too coarse to trust more).
+WIND_CAP = 0.15
+DP_C = 0.0014
 PRES_C = 0.0018
 CARRY_INT = 0.0003
-CARRY_SCALE = 0.04
-T_SENS_FLOOR_HOT = 1.5
-T_SENS_FLOOR_COLD = 0.8
-COLD_MULT_CAP = 4.0
+CARRY_SCALE = 0.005
+T_SENS_FLOOR_HOT = 1.4
+T_SENS_FLOOR_COLD = 1.4
+COLD_MULT_CAP = 0.5
 DOME_DAMP_DEFAULT = 0.15
 
 VARIATION_AMP_COEF = 0.15
@@ -173,8 +204,10 @@ CR_MULT = {"Bad":0.94,"Poor":0.97,"Avg":1.0,"Good":1.04,"Great":1.07}
 CQ_MULT = {"Bad":0.94,"Poor":0.97,"Avg":1.0,"Good":1.04,"Great":1.07}
 OF_MULT = {"Small":0.90,"Medium":1.0,"Variable":1.04,"Large":1.12,"X":1.08}
 
-# V8.1 operational cold cap (user-tuned to -25%, allowing deep cold BP-style penalties)
-COLD_FLOOR_PCT = -25.0
+# Operational cold floor. Refit to -20% (was -25%): the -25 floor was clipping
+# moderate-cold games far below BP. Extreme cold (<42°F) is still allowed to go
+# deeper (the floor is only applied at t >= 42 in compute_v8).
+COLD_FLOOR_PCT = -20.0
 
 # ============================================================================
 # Helpers
@@ -341,21 +374,28 @@ def compute_v8(park, wx):
     wind_info = None
     if wd is not None and ws > 0:
         out_c = _compass_to_out_component(park, wd, ws)
-        wr_use = base["wr_out"] if out_c > 0 else base["wr_in"]
-        # Some legacy per-park wr_out values are sign-flipped (LAA / CIN had
-        # negative out-wind coefs, implying wind blowing to OF *hurts* runs,
-        # which is physically wrong). Force the sign to match the direction:
-        # wind toward OF should help, wind from OF should hurt.
-        wr_use = abs(wr_use) if out_c > 0 else -abs(wr_use)
-        w_adj = out_c * WIND_O * wr_use * WIND_SCALE
+        # out_c already carries direction: positive = wind blowing toward the
+        # outfield (helps runs), negative = blowing in (hurts). So the wind
+        # adjustment must take the SIGN OF out_c and a POSITIVE responsiveness
+        # magnitude (how reactive this park is to wind, per wr_out/wr_in).
+        #
+        # BUG FIXED (V8.2): the old code did `wr_use = -abs(wr_in)` for in-wind
+        # and then `out_c * wr_use`, i.e. negative × negative = POSITIVE — so a
+        # strong wind blowing IN was being scored as +runs. (Comerica with a
+        # 13mph ENE wind read +10% instead of a penalty; Yankee Stadium with a
+        # 14mph E wind read +1.0% vs BallparkPal's -9%.) Using the magnitude of
+        # the appropriate wr and letting out_c supply the sign fixes it.
+        wr_mag = abs(base["wr_out"]) if out_c > 0 else abs(base["wr_in"])
+        w_adj = out_c * WIND_O * wr_mag * WIND_SCALE
         w_adj *= OF_MULT.get(base["of"], 1.0) * (CR_MULT.get(base["cr"], 1.0) + CQ_MULT.get(base["cq"], 1.0)) / 2
         wd_rarity = _wind_dir_rarity(park, wd, ws)
         ws_rarity = _wind_speed_rarity(park, ws)
         rarity_amp = max(wd_rarity * WIND_DIR_RARITY_AMP, ws_rarity * WIND_SPEED_RARITY_AMP)
         w_adj *= (1 + rarity_amp)
         # Cap the per-component wind impact so a single park's bad wr value
-        # can't dominate the total (BP rarely sees wind-only > ±10%).
-        w_adj = max(-0.10, min(0.10, w_adj))
+        # can't dominate the total. Our single-hour NWS wind octant is too
+        # coarse to justify a larger swing than this (see V8.2 calibration note).
+        w_adj = max(-WIND_CAP, min(WIND_CAP, w_adj))
         wind_info = {"out_component": round(out_c, 2), "dir_rarity": round(wd_rarity, 2),
                      "spd_rarity": round(ws_rarity, 2)}
 
