@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-22T21:13:11.041650Z",
+  "generated_at": "2026-05-22T22:17:56.661081Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open.",
@@ -193,33 +193,33 @@
       "is_dome": false,
       "roof_open": null,
       "weather": {
-        "temp_f": 58,
-        "humidity_pct": 75,
-        "wind_speed_mph": 10,
+        "temp_f": 56,
+        "humidity_pct": 83,
+        "wind_speed_mph": 8,
         "wind_dir": "E",
-        "precip_pct": 82,
-        "short_forecast": "Widespread Rain Showers",
+        "precip_pct": 58,
+        "short_forecast": "Light Rain Likely",
         "start_time": "2026-05-22T19:00:00-04:00"
       },
       "v8": {
-        "run_adj_pct": -10.1,
+        "run_adj_pct": -9.8,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -18,
-          "t_adj_pct": -3.5,
-          "w_adj_pct": -0.5,
-          "dp_adj_pct": -1.5,
+          "temp_delta": -20,
+          "t_adj_pct": -3.6,
+          "w_adj_pct": -0.4,
+          "dp_adj_pct": -1.4,
           "p_adj_pct": 0.0,
-          "precip_adj_pct": -3.5,
+          "precip_adj_pct": -3.3,
           "carry_pct": -0.3,
           "wind": {
-            "out_component": -7.55,
+            "out_component": -6.04,
             "dir_rarity": 0.6,
             "spd_rarity": 0.16
           }
         },
-        "model_pct": -10.1,
+        "model_pct": -9.8,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -709,23 +709,23 @@
       "is_dome": false,
       "roof_open": null,
       "weather": {
-        "temp_f": 58,
-        "humidity_pct": 80,
+        "temp_f": 56,
+        "humidity_pct": 90,
         "wind_speed_mph": 14,
         "wind_dir": "E",
-        "precip_pct": 88,
-        "short_forecast": "Light Rain",
+        "precip_pct": 99,
+        "short_forecast": "Rain",
         "start_time": "2026-05-23T16:00:00-04:00"
       },
       "v8": {
-        "run_adj_pct": -9.6,
+        "run_adj_pct": -10.0,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -18,
-          "t_adj_pct": -3.0,
+          "temp_delta": -20,
+          "t_adj_pct": -3.6,
           "w_adj_pct": -0.7,
-          "dp_adj_pct": -1.2,
+          "dp_adj_pct": -1.1,
           "p_adj_pct": 0.0,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.3,
@@ -735,7 +735,7 @@
             "spd_rarity": 0.67
           }
         },
-        "model_pct": -9.6,
+        "model_pct": -10.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
