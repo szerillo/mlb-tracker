@@ -1,11 +1,40 @@
 """
-Compute bullpen fatigue across the last 5 days of MLB games.
-Outputs data/fatigue.json with per-team, per-pitcher tier (LIKELY OUT, FATIGUED, MONITOR).
+Compute bullpen fatigue, keyed by VIEWED DATE.
+
+For each target date D in [today .. today+LOOKAHEAD], the fatigue window is the
+5 COMPLETED calendar days BEFORE D (never D itself). So:
+
+  • Viewing today  → window = [today-5 .. today-1]; today's own usage is NOT shown.
+  • Viewing tomorrow → window = [tomorrow-5 .. tomorrow-1] = [today-4 .. today];
+    "yesterday" relative to tomorrow is today, which fills in once today's games
+    final (0 until then).
+
+This removes the old "everyone is 0 for the most recent day" confusion — the
+target date is never in its own window, so there's no phantom 0 column and no
+"already pitched today" ambiguity.
+
+Output: data/fatigue.json
+{
+  "generated_at": "<ISO>",
+  "source": "MLB Stats API (box scores)",
+  "lookahead_days": 5,
+  "dates": {
+    "2026-05-22": {
+       "window": {"start": "2026-05-17", "end": "2026-05-21"},
+       "day_labels": ["2026-05-17", ... "2026-05-21"],   # 5 days BEFORE the key
+       "teams": { "<team>": [ {name, days, total, tier, reasons}, ... ] },
+       "team_meta": { "<team>": {"last_final": iso|null, "pending_today": bool} }
+    },
+    ...
+  }
+}
 """
 import json, os, datetime, urllib.request, unicodedata, concurrent.futures
 from collections import defaultdict
 
 OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "fatigue.json")
+
+LOOKAHEAD_DAYS = 5   # emit fatigue for today + next 5 days
 
 NAME_MAP = {
     "Emilio Pagán": "Emilio Pagan", "Yoendrys Gómez": "Yoendrys Gomez",
@@ -82,45 +111,37 @@ def extract_relievers(box):
 
 
 def classify(days):
-    # days = [4d_ago, 3d_ago, 2d_ago, 1d_ago, today]
-    # i.e. d4 = yesterday, d5 = today. Projecting fatigue for an UPCOMING
-    # appearance (typically pre-game today; pre-game tomorrow will see this
-    # data with the window slid forward by 1).
+    # days = [D-5, D-4, D-3, D-2, D-1] — the 5 COMPLETED days before target date D.
+    # d5 = D-1 = "yesterday" relative to D. D itself is NOT in the window, so
+    # there's no "pitched today already" case to worry about.
     #
     # Tier ladder:
     #   LIKELY OUT — high-confidence unavailable
-    #   FATIGUED   — likely available but flagged
+    #   FATIGUED   — likely available but worked recently
     #   AVAILABLE  — fresh
     #
-    # Thresholds tuned to match Sean's intuition: a single 24-pitch outing
-    # yesterday with no other work should NOT flag — that's a normal day's
-    # work and the pitcher is fine 24h later. Only flag when usage is
-    # genuinely heavy (30+ in a single day, or stacked across multiple days).
+    # Tuned so a single <=30-pitch outing yesterday with no other work stays
+    # AVAILABLE (a normal day's work; rested the next day). Only flag genuinely
+    # heavy / stacked usage.
     d1, d2, d3, d4, d5 = days
     total = sum(days)
+    apps = sum(1 for x in days if x > 0)
     apps_last4 = sum(1 for x in (d2, d3, d4, d5) if x > 0)
-    apps_5 = sum(1 for x in days if x > 0)
-    b2b = (d3 > 0 and d4 > 0)  # pitched 2 consecutive days BEFORE today
+    b2b = (d4 > 0 and d5 > 0)  # pitched the 2 days immediately before D
     reasons = []
     tier = "AVAILABLE"
-    # LIKELY OUT — high-confidence unavailable
+    # LIKELY OUT
     if apps_last4 >= 3: reasons.append(f"{apps_last4}-in-4"); tier = "LIKELY OUT"
-    if b2b and (d3 + d4) >= 40:  # heavy stacked B2B (40+ across 2 days)
-        reasons.append(f"B2B {d3}+{d4}"); tier = "LIKELY OUT"
-    if d4 > 30: reasons.append(f"{d4}p yesterday"); tier = "LIKELY OUT"
-    if d5 > 30: reasons.append(f"{d5}p today"); tier = "LIKELY OUT"  # heavy load today
+    if b2b and (d4 + d5) >= 40: reasons.append(f"B2B {d4}+{d5}"); tier = "LIKELY OUT"
+    if d5 > 30: reasons.append(f"{d5}p yesterday"); tier = "LIKELY OUT"
     if total >= 60: reasons.append(f"{total}p/5d"); tier = "LIKELY OUT"
-    # FATIGUED — softer flag (not OUT but noted as worked recently)
+    # FATIGUED
     if tier != "LIKELY OUT":
-        if b2b and (d3 + d4) >= 25:  # meaningful B2B workload across the 2 days
-            reasons.append(f"B2B {d3}+{d4}"); tier = "FATIGUED"
-        elif d5 > 20:  # real outing today (not a batter-up cameo)
-            reasons.append(f"{d5}p today"); tier = "FATIGUED"
-        elif d4 > 0 and d5 > 0 and (d4 + d5) >= 20:  # pitched both days, ≥20 combined
-            reasons.append(f"{d4}p yesterday + {d5}p today"); tier = "FATIGUED"
-        elif apps_5 >= 4:  # 4+ appearances over 5 days
-            reasons.append(f"{apps_5} apps/5d"); tier = "FATIGUED"
-        elif total >= 55:  # heavy aggregate workload
+        if b2b and (d4 + d5) >= 25:
+            reasons.append(f"B2B {d4}+{d5}"); tier = "FATIGUED"
+        elif apps >= 4:
+            reasons.append(f"{apps} apps/5d"); tier = "FATIGUED"
+        elif total >= 55:
             reasons.append(f"{total}p/5d"); tier = "FATIGUED"
     return tier, reasons
 
@@ -131,107 +152,119 @@ def main():
     from _common import skip_if_not_in_window
     if skip_if_not_in_window("compute_fatigue"):
         return
-    # Treat "today" as the MLB business day in ET, not UTC — matters around
-    # midnight ET when UTC has already rolled to the next day but late West
-    # Coast games are still finishing.
+
+    # ET business day
     et_now = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
     today = et_now.date()
-    # 5-day rolling window — today back 4 days (so completed games earlier
-    # today are captured on the same evening, not waiting for midnight ET).
-    # Games still in progress / scheduled are skipped by the extract step below.
-    dates = [(today - datetime.timedelta(days=d)).isoformat() for d in range(4, -1, -1)]
-    print(f"Building fatigue for window: {dates[0]} .. {dates[-1]}")
 
-    # Track per-team -> pitcher -> 5-day array
-    usage = defaultdict(lambda: defaultdict(lambda: [0, 0, 0, 0, 0]))
-    # Track per-team freshness metadata so the UI can show "Thru Wed" markers.
-    # last_final = latest date (ISO) that has a Final game counted into usage
-    # pending    = True if any scheduled/in-progress game today hasn't Final'd yet
-    team_meta = defaultdict(lambda: {"last_final": None, "pending_today": False})
-    today_iso = dates[-1]
+    # Calendar dates we need usage for: the union of every target date's window.
+    # Target dates run today .. today+LOOKAHEAD. The earliest window day is
+    # today-5; the latest meaningful one is today (future days have no games yet
+    # -> 0). So pull box scores for [today-5 .. today].
+    earliest = today - datetime.timedelta(days=5)
+    pull_dates = [(earliest + datetime.timedelta(days=i)).isoformat()
+                  for i in range((today - earliest).days + 1)]  # today-5 .. today
+
+    # usage[date_iso][team][pitcher] = pitches
+    usage = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    last_final = {}        # team -> iso (latest Final date counted)
+    pending_today = set()  # teams with a non-final game today
+    today_iso = today.isoformat()
     FINAL_STATUSES = ("Final", "Game Over", "Completed Early")
     PENDING_STATUSES = ("Scheduled", "Pre-Game", "Warmup", "Delayed Start",
                         "In Progress", "Manager challenge")
-    for idx, date in enumerate(dates):
+
+    for date in pull_dates:
         games = get_pks(date)
         if not games:
             continue
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
             boxes = list(ex.map(get_box, [g[0] for g in games]))
         for (_, a, h, status), b in zip(games, boxes):
-            # Note freshness per team before filtering.
             if status in FINAL_STATUSES:
                 for team in (a, h):
-                    cur = team_meta[team]["last_final"]
+                    cur = last_final.get(team)
                     if cur is None or date > cur:
-                        team_meta[team]["last_final"] = date
+                        last_final[team] = date
             if date == today_iso and status in PENDING_STATUSES:
-                team_meta[a]["pending_today"] = True
-                team_meta[h]["pending_today"] = True
-            # Skip any game that hasn't reached a reliable box-score state.
+                pending_today.add(a); pending_today.add(h)
             if status in ("Postponed", "Cancelled") or status in PENDING_STATUSES:
                 continue
             for team, pitchers in extract_relievers(b).items():
                 for n, p in pitchers.items():
                     if p > 0:
-                        usage[team][n][idx] += p
+                        usage[date][team][n] += p
 
-    # Classify per team/pitcher — emit a row for EVERY pitcher with any usage
-    # (frontend shows L5 Days for rested arms too; tier is "OK" when no flag)
-    out_teams = {}
-    for team, pmap in usage.items():
-        rows = []
-        for p, days in pmap.items():
-            tier, reasons = classify(days)
-            if tier == "AVAILABLE":
-                # Emit with tier=null so the frontend can show usage but not
-                # bucket the pitcher into RESTED-vs-flagged incorrectly.
+    # All teams we've seen usage / a game for.
+    all_teams = set()
+    for date in usage:
+        all_teams.update(usage[date].keys())
+    all_teams.update(last_final.keys())
+    all_teams.update(pending_today)
+
+    # Build per-target-date fatigue.
+    out_dates = {}
+    target_dates = [(today + datetime.timedelta(days=i)).isoformat()
+                    for i in range(LOOKAHEAD_DAYS + 1)]
+    for D_iso in target_dates:
+        D = datetime.date.fromisoformat(D_iso)
+        window = [(D - datetime.timedelta(days=k)).isoformat() for k in range(5, 0, -1)]
+        # window = [D-5, D-4, D-3, D-2, D-1]
+
+        teams_out = {}
+        for team in all_teams:
+            names = set()
+            for wd in window:
+                names.update(usage.get(wd, {}).get(team, {}).keys())
+            rows = []
+            for p in names:
+                days = [usage.get(wd, {}).get(team, {}).get(p, 0) for wd in window]
+                if sum(days) == 0:
+                    continue
+                tier, reasons = classify(days)
                 rows.append({
                     "name": p,
                     "days": days,
                     "total": sum(days),
-                    "tier": None,
-                    "reasons": "",
+                    "tier": None if tier == "AVAILABLE" else tier,
+                    "reasons": "" if tier == "AVAILABLE" else "; ".join(reasons),
                 })
-            else:
-                rows.append({
-                    "name": p,
-                    "days": days,
-                    "total": sum(days),
-                    "tier": tier,
-                    "reasons": "; ".join(reasons),
-                })
-        # Sort: LIKELY OUT first, FATIGUED next, then rested — within each by recency
-        def sort_key(r):
-            tier_rank = {"LIKELY OUT": 0, "FATIGUED": 1}.get(r["tier"], 2)
-            return (tier_rank, -r["days"][4], -r["total"])
-        rows.sort(key=sort_key)
-        if rows:
-            out_teams[team] = rows
+            if not rows:
+                continue
 
-    # Serialize team_meta for teams present in out_teams (plus any team that
-    # had a Final / pending game even if they had no bullpen usage recorded).
-    team_meta_out = {}
-    for team in set(list(out_teams.keys()) + list(team_meta.keys())):
-        m = team_meta.get(team, {})
-        team_meta_out[team] = {
-            "last_final": m.get("last_final"),
-            "pending_today": bool(m.get("pending_today", False)),
+            def sort_key(r):
+                rank = {"LIKELY OUT": 0, "FATIGUED": 1}.get(r["tier"], 2)
+                return (rank, -r["days"][4], -r["total"])
+            rows.sort(key=sort_key)
+            teams_out[team] = rows
+
+        meta = {}
+        for team in all_teams:
+            meta[team] = {
+                "last_final": last_final.get(team),
+                "pending_today": (D_iso == today_iso and team in pending_today),
+            }
+
+        out_dates[D_iso] = {
+            "window": {"start": window[0], "end": window[-1]},
+            "day_labels": window,
+            "teams": teams_out,
+            "team_meta": meta,
         }
 
     payload = {
-        "generated_at": today.isoformat(),
-        "window": {"start": dates[0], "end": dates[-1]},
-        "day_labels": dates,
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "source": "MLB Stats API (box scores)",
-        "teams": out_teams,
-        "team_meta": team_meta_out,
+        "lookahead_days": LOOKAHEAD_DAYS,
+        "dates": out_dates,
     }
 
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
-    print(f"  wrote {len(out_teams)} teams to {OUTPUT}")
+    n_today = len(out_dates.get(today_iso, {}).get("teams", {}))
+    print(f"  wrote fatigue for {len(out_dates)} dates "
+          f"({today_iso} -> {target_dates[-1]}); {n_today} teams on today's view")
 
 
 if __name__ == "__main__":
