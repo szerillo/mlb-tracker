@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-23T12:00:18.371549Z",
+  "generated_at": "2026-05-23T14:40:05.737305Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open.",
@@ -87,48 +87,6 @@
       "note": null
     },
     {
-      "game_pk": 823543,
-      "matchup": "Tampa Bay Rays @ New York Yankees",
-      "venue": "Yankee Stadium",
-      "game_time": "2026-05-23T17:35:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 55,
-        "humidity_pct": 69,
-        "wind_speed_mph": 16,
-        "wind_dir": "E",
-        "precip_pct": 77,
-        "short_forecast": "Light Rain",
-        "start_time": "2026-05-23T14:00:00-04:00"
-      },
-      "v8": {
-        "run_adj_pct": -15.5,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -19,
-          "t_adj_pct": -3.3,
-          "w_adj_pct": -4.3,
-          "dp_adj_pct": -1.7,
-          "p_adj_pct": -3.1,
-          "precip_adj_pct": -3.5,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -9.63,
-            "dir_rarity": 0.8,
-            "spd_rarity": 0.31
-          }
-        },
-        "model_pct": -18.0,
-        "pressure_source": "BP",
-        "bp_pct": -13,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
       "game_pk": 824674,
       "matchup": "Houston Astros @ Chicago Cubs",
       "venue": "Wrigley Field",
@@ -139,13 +97,13 @@
         "temp_f": 58,
         "humidity_pct": 83,
         "wind_speed_mph": 10,
-        "wind_dir": "N",
+        "wind_dir": "NNE",
         "precip_pct": 2,
-        "short_forecast": "Mostly Cloudy",
+        "short_forecast": "Patchy Fog",
         "start_time": "2026-05-23T13:00:00-05:00"
       },
       "v8": {
-        "run_adj_pct": -14.6,
+        "run_adj_pct": -14.5,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -157,12 +115,12 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -9.88,
+            "out_component": -9.72,
             "dir_rarity": 0,
             "spd_rarity": 0
           }
         },
-        "model_pct": -9.1,
+        "model_pct": -9.0,
         "pressure_source": "BP",
         "bp_pct": -20,
         "bp_blended": true,
@@ -569,6 +527,48 @@
         "model_pct": -0.7,
         "pressure_source": "BP",
         "bp_pct": 4,
+        "bp_blended": true,
+        "blend_weight": 0.5
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823543,
+      "matchup": "Tampa Bay Rays @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-05-23T17:35:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 55,
+        "humidity_pct": 69,
+        "wind_speed_mph": 16,
+        "wind_dir": "E",
+        "precip_pct": 77,
+        "short_forecast": "Light Rain",
+        "start_time": "2026-05-23T14:00:00-04:00"
+      },
+      "v8": {
+        "run_adj_pct": -15.5,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -19,
+          "t_adj_pct": -3.3,
+          "w_adj_pct": -4.3,
+          "dp_adj_pct": -1.7,
+          "p_adj_pct": -3.1,
+          "precip_adj_pct": -3.5,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -9.63,
+            "dir_rarity": 0.8,
+            "spd_rarity": 0.31
+          }
+        },
+        "model_pct": -18.0,
+        "pressure_source": "BP",
+        "bp_pct": -13,
         "bp_blended": true,
         "blend_weight": 0.5
       },
