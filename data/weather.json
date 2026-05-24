@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-24T20:37:02.437152Z",
+  "generated_at": "2026-05-24T21:39:38.203506Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open.",
@@ -62,33 +62,33 @@
       "is_dome": false,
       "roof_open": null,
       "weather": {
-        "temp_f": 64,
+        "temp_f": 62,
         "humidity_pct": 87,
-        "wind_speed_mph": 5,
+        "wind_speed_mph": 3,
         "wind_dir": "E",
         "precip_pct": 5,
         "short_forecast": "Cloudy",
         "start_time": "2026-05-24T18:00:00-04:00"
       },
       "v8": {
-        "run_adj_pct": -2.4,
+        "run_adj_pct": -3.0,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -12,
-          "t_adj_pct": -1.6,
-          "w_adj_pct": -0.3,
-          "dp_adj_pct": -0.1,
+          "temp_delta": -14,
+          "t_adj_pct": -1.9,
+          "w_adj_pct": -0.2,
+          "dp_adj_pct": -0.4,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.3,
           "wind": {
-            "out_component": -3.77,
+            "out_component": -2.26,
             "dir_rarity": 0.6,
-            "spd_rarity": 0
+            "spd_rarity": 0.64
           }
         },
-        "model_pct": -2.4,
+        "model_pct": -3.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
