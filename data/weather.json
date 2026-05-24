@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-24T15:53:19.556517Z",
+  "generated_at": "2026-05-24T16:01:49.814490Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open.",
@@ -339,7 +339,7 @@
         "start_time": "2026-05-24T13:00:00-05:00"
       },
       "v8": {
-        "run_adj_pct": -9.6,
+        "run_adj_pct": -8.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -347,7 +347,7 @@
           "t_adj_pct": -1.1,
           "w_adj_pct": -1.2,
           "dp_adj_pct": 0.0,
-          "p_adj_pct": -0.4,
+          "p_adj_pct": -0.5,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -356,9 +356,9 @@
             "spd_rarity": 0.07
           }
         },
-        "model_pct": -3.2,
+        "model_pct": -3.5,
         "pressure_source": "BP",
-        "bp_pct": -16,
+        "bp_pct": -13,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -474,7 +474,7 @@
         "start_time": "2026-05-24T16:00:00-04:00"
       },
       "v8": {
-        "run_adj_pct": -3.1,
+        "run_adj_pct": -1.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -482,7 +482,7 @@
           "t_adj_pct": -0.4,
           "w_adj_pct": 1.0,
           "dp_adj_pct": 1.4,
-          "p_adj_pct": -0.5,
+          "p_adj_pct": -0.7,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.2,
           "wind": {
@@ -491,9 +491,9 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -2.2,
+        "model_pct": -2.4,
         "pressure_source": "BP",
-        "bp_pct": -4,
+        "bp_pct": 0,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -516,7 +516,7 @@
         "start_time": "2026-05-24T16:00:00-07:00"
       },
       "v8": {
-        "run_adj_pct": 0.3,
+        "run_adj_pct": 0.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -524,7 +524,7 @@
           "t_adj_pct": -0.4,
           "w_adj_pct": 2.0,
           "dp_adj_pct": -0.5,
-          "p_adj_pct": -0.2,
+          "p_adj_pct": -0.4,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
@@ -533,7 +533,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 0.6,
+        "model_pct": 0.5,
         "pressure_source": "BP",
         "bp_pct": 0,
         "bp_blended": true,
