@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T15:51:20.549233Z",
+  "generated_at": "2026-05-25T16:56:58.706296Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open.",
@@ -148,7 +148,7 @@
       "weather": {
         "temp_f": 84,
         "humidity_pct": 40,
-        "wind_speed_mph": 8,
+        "wind_speed_mph": 9,
         "wind_dir": "SSE",
         "precip_pct": 0,
         "short_forecast": "Sunny",
@@ -167,7 +167,7 @@
           "precip_adj_pct": 0,
           "carry_pct": 0.1,
           "wind": {
-            "out_component": 2.54,
+            "out_component": 2.86,
             "dir_rarity": 0.55,
             "spd_rarity": 0
           }
@@ -234,12 +234,12 @@
         "humidity_pct": 74,
         "wind_speed_mph": 12,
         "wind_dir": "WSW",
-        "precip_pct": 1,
+        "precip_pct": 5,
         "short_forecast": "Partly Sunny",
         "start_time": "2026-05-25T14:00:00-07:00"
       },
       "v8": {
-        "run_adj_pct": -3.4,
+        "run_adj_pct": -4.9,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -258,7 +258,7 @@
         },
         "model_pct": -0.8,
         "pressure_source": "BP",
-        "bp_pct": -6,
+        "bp_pct": -9,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -757,7 +757,7 @@
         "humidity_pct": 46,
         "wind_speed_mph": 8,
         "wind_dir": "ESE",
-        "precip_pct": 3,
+        "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-05-26T19:00:00-05:00"
       },
@@ -895,10 +895,10 @@
       "roof_open": null,
       "weather": {
         "temp_f": 60,
-        "humidity_pct": 67,
-        "wind_speed_mph": 20,
+        "humidity_pct": 68,
+        "wind_speed_mph": 22,
         "wind_dir": "WNW",
-        "precip_pct": 0,
+        "precip_pct": 5,
         "short_forecast": "Mostly Clear",
         "start_time": "2026-05-26T19:00:00-07:00"
       },
@@ -915,7 +915,7 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 13.25,
+            "out_component": 14.58,
             "dir_rarity": 0.55,
             "spd_rarity": 0.94
           }
