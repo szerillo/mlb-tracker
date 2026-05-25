@@ -549,6 +549,13 @@
   .bp-fip.good  { color: var(--tier-good); }
   .bp-fip.bad   { color: var(--tier-bad); }
   .bp-fip.worst { color: var(--tier-worst); }
+  /* Reliever FIP source marker: x = season-actual xFIP, p = projection (pFIP). */
+  .fip-src { font-size: 0.62rem; vertical-align: super; margin-left: 1px; font-family: var(--mono); }
+  .fip-src.proj { color: var(--tier-bad); opacity: 0.85; }
+  .fip-src.act  { color: var(--muted); opacity: 0.6; }
+  /* Available-bullpen quality chip (avg unified wFIP of non-OUT arms). */
+  .bpt-availpen { margin-left: 0.55rem; color: var(--accent); font-size: 0.78rem; white-space: nowrap; }
+  .bpt-availpen b { font-family: var(--mono); }
   .bp-stats { font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
     display: inline-flex; align-items: baseline; gap: 0.25rem; flex-wrap: wrap; }
   .bp-stats .lbl { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
@@ -1143,6 +1150,7 @@
   .sp-bigchart-hdr { font-size:0.66rem; color:var(--muted); font-weight:600; margin-bottom:2px; }
   .sp-bigsvg { display:block; width:100%; height:auto; }
   .sp-bigsvg .sp-axis { font-size:8px; fill:var(--muted); }
+  .sp-bigsvg .sp-ptlab { fill:var(--text); font-size:8.5px; font-weight:700; }
   .sp-nochart { font-size:0.7rem; color:var(--muted); padding:6px; }
   .sp-clickable { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
   .sp-trend-detail > td { background:rgba(94,234,212,0.04); padding:8px 10px !important; }
@@ -2927,6 +2935,16 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const ftg = withMeta.filter(p => p.fatigue?.tier === "FATIGUED").sort(sortKey);
   const avail = withMeta.filter(p => !p.fatigue || p.fatigue.tier == null).sort(sortKey);
 
+  // Available-pen quality: average unified wFIP across the arms that are NOT
+  // LIKELY OUT (i.e. RESTED + FATIGUED). wFIP blends Steamer FIP + xFIP + SIERA
+  // + xERA + botERA, so it's robust even when a reliever has no qualified xFIP.
+  const _availArms = [...avail, ...ftg];
+  const _availWfips = _availArms
+    .map(p => lookupPitcherStats(p.name)?.unified_score)
+    .filter(v => v != null && v < 10);
+  const availWfip = _availWfips.length
+    ? _availWfips.reduce((a, b) => a + b, 0) / _availWfips.length : null;
+
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
 
   const bpRow = (p) => {
@@ -2947,7 +2965,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
-      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}</span></td>
+      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}${useXfip ? ' — season actual (≥10 IP)' : ' — projection (no qualified xFIP yet)'}">${fmt(fipVal)}<sup class="fip-src ${useXfip ? 'act' : 'proj'}">${useXfip ? 'x' : 'p'}</sup></span></td>
       <td class="bpt-stat"><span class="v ${xeraCls}" title="xERA">${fmt(s?.xera)}</span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
@@ -2989,6 +3007,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
+      ${availWfip != null ? `<span class="bpt-availpen" title="Average unified wFIP across the ${_availWfips.length} available (non-OUT) arms — lower is better. wFIP = 45% Steamer FIP + 15% xFIP + 15% SIERA + 15% xERA + 10% botERA.">Avail pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
       ${thruPill}
     </div>
     <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
@@ -3662,9 +3681,13 @@ function sparkline(vals, opts={}) {
   </svg>`;
 }
 
-// Larger season chart (used in the tap-to-expand panel) with min/max labels.
-function bigChart(vals) {
-  const w = 320, h = 100, padL = 30, padR = 6, padT = 10, padB = 16;
+// Larger season chart (tap-to-expand panel). Numeric notations: min/max on the
+// y-axis, value labels on the min / max / latest points, and start-date ticks on
+// the x-axis so the trend is readable without hovering.
+function bigChart(vals, opts={}) {
+  const w = 320, h = 112, padL = 32, padR = 20, padT = 14, padB = 22;
+  const fmtV = opts.fmt || (v => Math.abs(v) < 10 ? v.toFixed(2) : Math.round(v).toString());
+  const dates = opts.dates || [];
   const pts = vals.map((v, i) => ({ i, v })).filter(p => p.v != null && isFinite(p.v));
   if (pts.length < 2) return `<div class="sp-nochart">not enough data yet</div>`;
   const xs = vals.length - 1;
@@ -3675,10 +3698,18 @@ function bigChart(vals) {
   const d = pts.map((p, k) => `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
   const dots = pts.map(p => `<circle cx="${X(p.i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="1.8" fill="var(--accent)"/>`).join('');
   const lab = v => Math.abs(v) < 10 ? v.toFixed(2) : Math.round(v).toString();
+  const first = pts[0], last = pts[pts.length - 1];
+  const maxP = pts.reduce((a, b) => b.v > a.v ? b : a);
+  const minP = pts.reduce((a, b) => b.v < a.v ? b : a);
+  const valLab = (p, dy) => `<text x="${X(p.i).toFixed(1)}" y="${(Y(p.v) + dy).toFixed(1)}" class="sp-axis sp-ptlab" text-anchor="middle">${fmtV(p.v)}</text>`;
+  const dShort = s => s ? s.slice(5).replace('-', '/') : '';
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="sp-bigsvg">
     <text x="2" y="${(Y(max) + 3).toFixed(1)}" class="sp-axis">${lab(max)}</text>
     <text x="2" y="${Y(min).toFixed(1)}" class="sp-axis">${lab(min)}</text>
     <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>${dots}
+    ${valLab(maxP, -4)}${valLab(minP, 9)}${last !== maxP && last !== minP ? valLab(last, -4) : ''}
+    <text x="${X(first.i).toFixed(1)}" y="${h - 5}" class="sp-axis" text-anchor="start">${dShort(dates[first.i])}</text>
+    <text x="${X(last.i).toFixed(1)}" y="${h - 5}" class="sp-axis" text-anchor="end">${dShort(dates[last.i])}</text>
   </svg>`;
 }
 
@@ -3735,16 +3766,23 @@ function renderSPTrendsHTML(gl) {
     { key: 'bb',   label: 'BB%',    series: rollingSeries(starts, 'bb_pct'), l5: l5.bb_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
-  const sparkCells = metrics.map(m => `
-    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} (${m.mode}) — tap to expand season chart">
+  const dateSeries = starts.map(s => s.date);
+  const sparkCells = metrics.map(m => {
+    const sv = m.series.filter(v => v != null && isFinite(v));
+    const lastV = sv.length ? sv[sv.length - 1] : null;
+    const mn = sv.length ? Math.min(...sv) : null;
+    const mx = sv.length ? Math.max(...sv) : null;
+    return `
+    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} (${m.mode}) — L5 ${m.fmt(m.l5)} · latest ${m.fmt(lastV)} · range ${m.fmt(mn)}–${m.fmt(mx)} · tap to expand season chart">
       <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${m.fmt(m.l5)}</span></div>
       ${sparkline(m.series)}
-      <div class="sp-spark-sub">L5 · ${m.mode}</div>
-    </div>`).join("");
+      <div class="sp-spark-sub">last ${m.fmt(lastV)} · ${m.fmt(mn)}–${m.fmt(mx)}</div>
+    </div>`;
+  }).join("");
   const bigCharts = metrics.map(m => `
     <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
       <div class="sp-bigchart-hdr">${m.label} — ${m.mode}, full season (${m.series.filter(v => v != null).length} starts)</div>
-      ${bigChart(m.series)}
+      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries })}
     </div>`).join("");
 
   const sieraTxt = l5.siera != null ? l5.siera.toFixed(2) : '—';
