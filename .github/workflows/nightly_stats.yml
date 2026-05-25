@@ -96,5 +96,16 @@ jobs:
             echo "No nightly stats changes to commit."
           else
             git commit -m "Nightly stats refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
-            git push
+            # Race-proof push: the 15-min Data refresh can push to main while this
+            # ~3-min nightly runs, which makes a bare `git push` fail non-fast-forward
+            # (the nightly + data refresh touch disjoint files, so a rebase merges
+            # cleanly). Retry with rebase up to 5x before giving up.
+            pushed=0
+            for attempt in 1 2 3 4 5; do
+              if git push; then echo "pushed on attempt $attempt"; pushed=1; break; fi
+              echo "push rejected (attempt $attempt) — rebasing onto origin/main and retrying"
+              git pull --rebase --autostash origin main || true
+              sleep $((attempt * 3))
+            done
+            if [ "$pushed" != "1" ]; then echo "::error::nightly push failed after retries"; exit 1; fi
           fi
