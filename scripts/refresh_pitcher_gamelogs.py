@@ -299,6 +299,67 @@ def aggregate(starts):
     }
 
 
+def backfill_pitcher_stats(pitchers):
+    """Write fresh FanGraphs xFIP / Stuff+ / SIERA / IP from these live game logs back
+    into data/pitcher_stats.json, OVERRIDING the season values that came from the
+    _fg_pitch_model.json browser dump.
+
+    Why: FanGraphs' pitch-modeling leaderboard API is 403 server-side, so xFIP/Stuff+/
+    Pitching+/Location+ are sourced from a MANUALLY captured browser dump that does not
+    auto-refresh — it goes stale (e.g. frozen weeks back), so pitchers who debuted,
+    returned from injury, or crossed the qual threshold afterward show NO xFIP/Stuff+,
+    and even covered pitchers show stale values. These per-start game logs ARE pulled
+    live every night and cover the full starter universe, so they're the freshest
+    comprehensive source. We aggregate them (IP-weighted xFIP/SIERA, pitch-weighted
+    Stuff+) and write them over the dump values. Pitching+/Location+ stay dump-only
+    (the game-log feed doesn't expose them). Relievers (no starts) keep dump values.
+    Runs before compute_pitcher_score so the unified score uses fresh numbers."""
+    ps_path = os.path.join(DATA, "pitcher_stats.json")
+    try:
+        with open(ps_path) as f:
+            doc = json.load(f)
+    except Exception as e:
+        print(f"[gamelogs] backfill skipped (pitcher_stats.json unreadable: {e})",
+              file=sys.stderr)
+        return
+    ps = doc.get("pitchers")
+    if not isinstance(ps, dict):
+        print("[gamelogs] backfill skipped (no pitchers dict)", file=sys.stderr)
+        return
+    updated = created = 0
+    for key, g in pitchers.items():
+        if g.get("source") != "fangraphs":
+            continue  # only trust live FG per-start data, not MLB line-score fallback
+        season = g.get("season") or {}
+        xfip, stuff, siera = season.get("xfip"), season.get("stuff"), season.get("siera")
+        ip_outs = season.get("ip_outs")
+        if xfip is None and stuff is None:
+            continue
+        rec = ps.get(key)
+        if rec is None:
+            rec = {"mlbam_id": g.get("mlbam_id"), "hand": None}
+            ps[key] = rec
+            created += 1
+        else:
+            updated += 1
+        if xfip is not None:
+            rec["xfip"] = xfip
+        if stuff is not None:
+            rec["stuff_plus"] = stuff
+        if siera is not None and rec.get("siera") is None:
+            rec["siera"] = siera
+        if ip_outs:
+            rec["ip"] = round(ip_outs / 3, 1)
+        rec["fg_live_source"] = "gamelogs"
+    doc["pitchers"] = ps
+    doc["gamelogs_backfill_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+    doc["gamelogs_backfill_count"] = updated + created
+    with open(ps_path, "w") as f:
+        json.dump(doc, f, indent=2)
+    print(f"[gamelogs] backfilled pitcher_stats: {updated} updated + {created} created "
+          f"with fresh FG xFIP/Stuff+/SIERA (override stale dump)", file=sys.stderr)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0, help="cap pitchers (dev)")
@@ -367,6 +428,9 @@ def main():
         json.dump(payload, f, indent=2)
     print(f"[gamelogs] wrote {len(pitchers)} pitchers → {OUTPUT} "
           f"(fg_ok={fg_ok}, mlb_fb={mlb_fb}, fail={fg_fail})", file=sys.stderr)
+
+    # Push fresh FG xFIP/Stuff+/SIERA into pitcher_stats.json (override stale dump).
+    backfill_pitcher_stats(pitchers)
 
 
 if __name__ == "__main__":
