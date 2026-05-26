@@ -45,6 +45,20 @@ OUTCOME_RUN_VALUES = {
 # Precomputed run-value vector in OUTCOMES order (for vectorized model ops)
 _BB_RUN_VALUES = np.array([OUTCOME_RUN_VALUES[o] for o in OUTCOMES])
 
+# "Deserved runs" calibration. estimate_model_expected_lw() returns the model's
+# expected linear-weight run value for a team's batted balls + fixed events, but
+# the raw LW scale is inflated (~+2 runs/team) because the batted-ball "out" weight
+# is small. Calibrated against 264 team-games (spread across the 2026 season) so
+# deserved_runs recenters on the real league mean (~4.43) and correlates ~0.67 with
+# actual: deserved = A * raw_lw + B, clamped at 0.
+DESERVED_CAL_A = 0.9452
+DESERVED_CAL_B = -1.6018
+
+
+def calibrate_deserved(raw_lw: float) -> float:
+    """Map a raw model linear-weight run estimate to the calibrated runs scale."""
+    return max(0.0, DESERVED_CAL_A * float(raw_lw) + DESERVED_CAL_B)
+
 
 @dataclass
 class GameEvents:
@@ -89,6 +103,10 @@ class SimResult:
     home_team: str = ""
     actual_away_runs: int = 0
     actual_home_runs: int = 0
+    # Calibrated "deserved" runs from quality of contact (un-anchored — unlike the
+    # resampled mean, this is NOT pinned to actual, so it captures luck/sequencing).
+    deserved_away_runs: float = 0.0
+    deserved_home_runs: float = 0.0
 
     @property
     def away_win_prob(self) -> float:
@@ -189,6 +207,8 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
         home_team=game_payload["home_team"],
         actual_away_runs=game_payload["actual_away_runs"],
         actual_home_runs=game_payload["actual_home_runs"],
+        deserved_away_runs=calibrate_deserved(away_lw),
+        deserved_home_runs=calibrate_deserved(home_lw),
     )
 
 
