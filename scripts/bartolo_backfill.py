@@ -159,9 +159,9 @@ def main() -> int:
                 continue
 
             out_games[str(g.game_pk)] = {
-                **adj.summary,
-                "umpire_name": ump_name,
-                "venue": g.venue,
+                **adj.frontend_dict(ump_name=ump_name, venue=g.venue),
+                "game_pk": str(g.game_pk),
+                "game_date": g.game_date.isoformat(),
                 "n_batted_balls": int((gdf["type"] == "X").sum()),
             }
 
@@ -177,7 +177,12 @@ def main() -> int:
         dates_processed += 1
         print(f"[backfill] {target}: wrote {len(out_games)} games to {out_path.relative_to(REPO_ROOT)}")
 
-    print(f"[backfill] DONE — processed {dates_processed} dates, skipped {dates_skipped}, total games={total_games}")
+    # Rebuild the flat data/bartolo_wp.json from the full archive so the Win Prob
+    # tab immediately reflects everything we just wrote.
+    from bartolo.archive import aggregate_archives
+    payload = aggregate_archives(REPO_ROOT)
+    print(f"[backfill] DONE — processed {dates_processed} dates, skipped {dates_skipped}, "
+          f"total games={total_games}; flat bartolo_wp.json now {payload['n_games']} games")
     return 0
 
 
