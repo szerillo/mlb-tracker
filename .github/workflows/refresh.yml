@@ -16,6 +16,18 @@ on:
         description: "Force all refresh steps to run regardless of game window"
         type: boolean
         default: true
+      backfill_start:
+        description: "BARTOLO backfill start date (YYYY-MM-DD); requires .backfill-now present"
+        type: string
+        default: ""
+      backfill_end:
+        description: "BARTOLO backfill end date (YYYY-MM-DD); blank = yesterday"
+        type: string
+        default: ""
+      backfill_force:
+        description: "Re-run BARTOLO backfill over dates whose archive already exists (1 = force)"
+        type: string
+        default: ""
   # Manual trigger: push to .manual-trigger to force a run
   push:
     paths:
