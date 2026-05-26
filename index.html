@@ -2901,15 +2901,18 @@ function renderLineupTable(side, opts={}) {
       const danFlag = p.flag
         ? ` <span style="color:var(--projected);font-size:0.75rem;"
              title="${String(p.flag).replace(/"/g,'&quot;')}">⚠</span>` : "";
-      // OPS cell — use projected OPS if present, tier against standard OPS bands.
-      // Bands: elite >=.900, good >=.800, bad <=.700, worst <=.650.
+      // OPS cell — prefer ACTUAL current-season OPS (Savant on_base_plus_slg);
+      // fall back to the projection. Bands: elite ≥.900, good ≥.800, bad ≤.700.
       const opsBands = hitThr.ops || {elite: 0.900, good: 0.800, bad: 0.700, worst: 0.650};
-      const opsVal = h?.ops;
+      const opsActual = h?.ops_actual;
+      const opsVal = opsActual != null ? opsActual : h?.ops;
       const opsCls = tier(opsVal, opsBands, true);
-      const opsStr = opsVal != null
-        ? ("." + Math.round(opsVal * 1000)).slice(0, 4)
-        : "—";
-      const opsTitle = opsVal != null ? `Projected OPS ${opsVal.toFixed(3)}` : "no projection";
+      const opsStr = opsVal == null ? "—"
+        : (opsVal >= 1 ? opsVal.toFixed(3) : opsVal.toFixed(3).replace(/^0/, ""));
+      const opsTitle = opsVal == null ? "no data"
+        : (opsActual != null
+            ? `OPS ${opsActual.toFixed(3)} — actual season (${h?.pa_actual||0} PA)`
+            : `Projected OPS ${h.ops.toFixed(3)} (no season PA yet)`);
       // wOBA — prefer actual current-season (Savant); fall back to projection
       const wobaActual = h?.woba_actual;
       const wobaProj   = h?.woba;
@@ -2950,14 +2953,17 @@ function renderLineupTable(side, opts={}) {
       if (expanded) {
         const kThr  = hitThr.k_pct  || {elite: 16, good: 20, bad: 26, worst: 30};
         const bbThr = hitThr.bb_pct || {elite: 13, good: 10, bad: 6,  worst: 4};
-        const kVal  = h?.k_pct;
-        const bbVal = h?.bb_pct;
+        // Prefer ACTUAL current-season K%/BB% (Savant); fall back to projection.
+        const kVal  = h?.k_pct_actual  ?? h?.k_pct;
+        const bbVal = h?.bb_pct_actual ?? h?.bb_pct;
         const kCls  = tier(kVal,  kThr,  false);  // lower-is-better
         const bbCls = tier(bbVal, bbThr, true);   // higher-is-better
         const pct = v => v == null ? "—" : (v.toFixed(v % 1 === 0 ? 0 : 1) + "%");
+        const bbLbl = h?.bb_pct_actual != null ? "Season" : "Projected";
+        const kLbl  = h?.k_pct_actual  != null ? "Season" : "Projected";
         kbbCells = `
-        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`Projected BB% ${bbVal}%`:"no projection"}">${pct(bbVal)}</td>
-        <td class="split split-chip ${kCls}"  title="${kVal !=null?`Projected K% ${kVal}%`:"no projection"}">${pct(kVal)}</td>`;
+        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`${bbLbl} BB% ${bbVal}%`:"no data"}">${pct(bbVal)}</td>
+        <td class="split split-chip ${kCls}"  title="${kVal !=null?`${kLbl} K% ${kVal}%`:"no data"}">${pct(kVal)}</td>`;
       }
       const wobaCell = expanded
         ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
@@ -2994,8 +3000,8 @@ function renderLineupTable(side, opts={}) {
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
   const kbbHeaders = expanded ? `
-    <th class="right" style="width:46px;" title="Projected BB% (higher = better)">BB%</th>
-    <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>` : "";
+    <th class="right" style="width:46px;" title="Season BB% — actual (projection fallback); higher = better">BB%</th>
+    <th class="right" style="width:46px;" title="Season K% — actual (projection fallback); lower = better">K%</th>` : "";
   const wobaHeader = expanded
     ? `<th class="right" style="width:50px;" title="Actual current-season wOBA (Savant) — falls back to projection if no PAs yet">wOBA</th>` : "";
   const oppHandHdr = (opts.oppHand || "").toUpperCase();
@@ -3010,7 +3016,7 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
-    <th class="right" style="width:48px;" title="Projected OPS">OPS</th>
+    <th class="right" style="width:48px;" title="Season OPS — actual current-season (projection fallback)">OPS</th>
     ${expanded ? `<th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${kbbHeaders}` : ""}
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
