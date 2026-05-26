@@ -52,10 +52,12 @@ FG_URL = ("https://www.fangraphs.com/api/projections"
 SAVANT_URL_TMPL = ("https://baseballsavant.mlb.com/leaderboard/sprint_speed"
                    "?year={year}&position=&team=&min=0&csv=true")
 
-# Savant batter wOBA leaderboard — current season actual wOBA/xwOBA (no auth)
+# Savant batter custom leaderboard — current-season ACTUAL wOBA/xwOBA + OPS +
+# raw K%/BB% (no auth). NOTE: the populated raw-rate columns are k_percent /
+# bb_percent (the b_-prefixed variants come back blank); OPS is on_base_plus_slg.
 SAVANT_WOBA_TMPL = ("https://baseballsavant.mlb.com/leaderboard/custom"
                     "?year={year}&type=batter&filter=&sort=4&sortDir=desc&min=1"
-                    "&selections=b_total_pa,b_k_percent,b_bb_percent,woba,xwoba"
+                    "&selections=b_total_pa,k_percent,bb_percent,on_base_plus_slg,woba,xwoba"
                     "&chart=false&x=b_total_pa&y=b_total_pa&r=no&csv=true")
 
 SPEED_ELITE_CUTOFF = int(os.environ.get("SPEED_ELITE_CUTOFF", "80"))
@@ -207,12 +209,18 @@ def fetch_savant_woba(year: int):
                 except ValueError: return None
             woba  = f(row.get("woba"))
             xwoba = f(row.get("xwoba"))
+            ops   = f(row.get("on_base_plus_slg"))
+            kpct  = f(row.get("k_percent"))
+            bbpct = f(row.get("bb_percent"))
             pa = row.get("b_total_pa")
             try: pa = int(pa) if pa else 0
             except ValueError: pa = 0
             entry = {}
             if woba  is not None: entry["woba_actual"]  = woba
             if xwoba is not None: entry["xwoba_actual"] = xwoba
+            if ops   is not None: entry["ops_actual"]    = ops
+            if kpct  is not None: entry["k_pct_actual"]  = kpct
+            if bbpct is not None: entry["bb_pct_actual"] = bbpct
             if pa:                entry["pa_actual"]    = pa
             if entry:
                 out[norm_name(std)] = entry
@@ -262,7 +270,8 @@ def main():
         for key, entry in hitters.items():
             e = woba_map.get(key)
             if e:
-                for fld in ("woba_actual", "xwoba_actual", "pa_actual"):
+                for fld in ("woba_actual", "xwoba_actual", "pa_actual",
+                            "ops_actual", "k_pct_actual", "bb_pct_actual"):
                     if fld in e:
                         entry[fld] = e[fld]
                 woba_matched += 1
