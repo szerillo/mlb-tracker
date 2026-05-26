@@ -25,6 +25,24 @@ from dataclasses import dataclass
 from .simulator import SimResult
 
 
+def _run_hist(arr: np.ndarray, actual) -> tuple[list[dict], int]:
+    """Integer-binned run-total distribution for the histogram viz.
+    Returns ([{count,label}, ...], actual_bin_index). Bins span 0..hi where hi
+    covers both the simulated max and the actual result (capped at 18)."""
+    if arr is None or len(arr) == 0:
+        return [], 0
+    r = np.rint(np.clip(arr, 0, None)).astype(int)
+    try:
+        act = int(round(float(actual)))
+    except (TypeError, ValueError):
+        act = 0
+    hi = max(int(r.max()), act, 1)
+    hi = min(hi, 18)
+    counts = np.bincount(np.clip(r, 0, hi), minlength=hi + 1)
+    bins = [{"count": int(c), "label": f"{i} R"} for i, c in enumerate(counts)]
+    return bins, min(max(act, 0), hi)
+
+
 @dataclass
 class UmpAdjustedResult:
     base: SimResult
@@ -59,6 +77,36 @@ class UmpAdjustedResult:
             "ump_adjusted_away_wp": self.ump_adjusted_away_wp,
             "ump_adjusted_home_wp": self.ump_adjusted_home_wp,
             "wp_shift_away": self.wp_shift_away,
+        }
+
+    def frontend_dict(self, ump_name: str = "", venue: str = "") -> dict:
+        """Per-game summary in the exact schema the Win Prob tab renders
+        (away_wp / away_exp_runs / away_hist / away_actual_idx / ump_adj_* /
+        ump_favor_* / ump_name / venue / edges). This is the canonical output
+        for bartolo_daily + bartolo_backfill so the frontend reads it directly."""
+        s = self.base
+        aw_bins, aw_idx = _run_hist(s.away_runs, s.actual_away_runs)
+        hm_bins, hm_idx = _run_hist(s.home_runs, s.actual_home_runs)
+        return {
+            "away_team": s.away_team,
+            "home_team": s.home_team,
+            "actual_away_runs": s.actual_away_runs,
+            "actual_home_runs": s.actual_home_runs,
+            "away_wp": round(s.away_win_prob, 4),
+            "home_wp": round(s.home_win_prob, 4),
+            "away_exp_runs": round(float(s.away_runs.mean()), 3),
+            "home_exp_runs": round(float(s.home_runs.mean()), 3),
+            "away_hist": aw_bins,
+            "home_hist": hm_bins,
+            "away_actual_idx": aw_idx,
+            "home_actual_idx": hm_idx,
+            "ump_adj_away_wp": round(self.ump_adjusted_away_wp, 4),
+            "ump_adj_home_wp": round(self.ump_adjusted_home_wp, 4),
+            "ump_favor_away": round(self.ump_favor_away_runs, 2),
+            "ump_favor_home": round(self.ump_favor_home_runs, 2),
+            "ump_name": ump_name,
+            "venue": venue,
+            "edges": [],
         }
 
 
