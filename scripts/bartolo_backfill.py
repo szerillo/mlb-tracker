@@ -15,6 +15,7 @@ import datetime
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -111,11 +112,21 @@ def main() -> int:
             continue
 
         print(f"[backfill] {target}: pulling Statcast for {len(games)} Finals...")
-        try:
-            day_df = pyb.statcast(start_dt=target.isoformat(), end_dt=target.isoformat())
-        except Exception as e:
-            print(f"[backfill] {target}: statcast error: {e}", file=sys.stderr)
+        # Statcast can rate-limit / transiently fail on a long sequential backfill.
+        # Retry with backoff, and pace requests so a full-season run doesn't get
+        # throttled (which previously left most dates unprocessed).
+        day_df = None
+        for attempt in range(4):
+            try:
+                day_df = pyb.statcast(start_dt=target.isoformat(), end_dt=target.isoformat())
+                break
+            except Exception as e:
+                print(f"[backfill] {target}: statcast error (attempt {attempt+1}/4): {e}", file=sys.stderr)
+                time.sleep(5 * (attempt + 1))
+        if day_df is None:
+            print(f"[backfill] {target}: statcast failed after retries; leaving prior archive", file=sys.stderr)
             continue
+        time.sleep(1.0)  # pace requests to stay under Statcast rate limits
         if day_df is None or len(day_df) == 0:
             print(f"[backfill] {target}: statcast empty")
             date_dir.mkdir(parents=True, exist_ok=True)
