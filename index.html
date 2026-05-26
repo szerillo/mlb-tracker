@@ -4035,7 +4035,9 @@ function renderSPTrendsByKey(key) {
   return renderSPTrendsHTML(GAMELOGS && GAMELOGS.pitchers ? GAMELOGS.pitchers[key] : null);
 }
 
-// Rankings drill-down: clicking a starter row toggles an inline trends row.
+// Rankings drill-down: clicking a pitcher row toggles an inline FULL pitcher
+// card (all metrics, vs-RHB/LHB splits, pitch arsenal, recent starts) — the
+// same card the game modal shows. Falls back to trends-only if no stats.
 function spTrendDelegate(e) {
   const cell = e.target.closest && e.target.closest('td.sp-clickable');
   if (!cell) return;
@@ -4044,11 +4046,16 @@ function spTrendDelegate(e) {
   if (!tr) return;
   const next = tr.nextElementSibling;
   if (next && next.classList.contains('sp-trend-detail')) { next.remove(); return; }
-  const html = renderSPTrendsByKey(key);
+  const name = (cell.textContent || '').trim() || pitcherDisplayName(key);
+  const teamCell = tr.querySelector('td.team');
+  const teamAbbr = teamCell ? teamCell.textContent.trim() : '';
+  const html = lookupPitcherStats(name)
+    ? renderSPBox(name, teamAbbr)
+    : renderSPTrendsByKey(key);
   if (!html) return;
   const det = document.createElement('tr');
   det.className = 'sp-trend-detail';
-  det.innerHTML = `<td colspan="11">${html}</td>`;
+  det.innerHTML = `<td colspan="${tr.children.length || 11}">${html}</td>`;
   tr.parentNode.insertBefore(det, tr.nextElementSibling);
 }
 
@@ -4775,7 +4782,7 @@ function renderSPRankings(pitchers, nameToTeam) {
     const gl = (GAMELOGS && GAMELOGS.pitchers && GAMELOGS.pitchers[p.key]);
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name${gl ? ' sp-clickable' : ''}"${gl ? ` data-spkey="${p.key}" title="Tap for recent-start trends"` : ''}>${p.name}</td>
+      <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
       <td>${fmt(p.metrics.xfip)}</td>
@@ -4848,7 +4855,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
     const gl = (GAMELOGS && GAMELOGS.pitchers && GAMELOGS.pitchers[p.key]);
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name${gl ? ' sp-clickable' : ''}"${gl ? ` data-spkey="${p.key}" title="Tap for recent-start trends"` : ''}>${p.name}</td>
+      <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
       <td>${fmt(p.metrics.xfip)}</td>
