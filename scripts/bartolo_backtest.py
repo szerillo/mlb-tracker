@@ -168,7 +168,10 @@ def collect_games():
         if payload.get("status") != "ok":
             continue
         for pk, g in (payload.get("games") or {}).items():
-            wp = g.get("away_win_prob")
+            # New frontend schema uses away_wp; legacy archives used away_win_prob.
+            wp = g.get("away_wp")
+            if wp is None:
+                wp = g.get("away_win_prob")
             winner = _winner(g)
             if wp is None or winner is None:
                 continue
@@ -180,7 +183,7 @@ def collect_games():
                 "away_wp": float(wp),
                 "away_win": 1 if winner == "away" else 0,
                 "final": (g.get("actual_away_runs"), g.get("actual_home_runs")),
-                "ump_adj_wp": g.get("ump_adjusted_away_wp"),
+                "ump_adj_wp": g.get("ump_adj_away_wp", g.get("ump_adjusted_away_wp")),
             }
 
 
@@ -321,11 +324,15 @@ def main() -> int:
     print(f"[backtest] wrote {OUTPUT.relative_to(REPO_ROOT)} — n={n}, brier={brier:.4f}, "
           f"log_loss={logloss:.4f}, fav_hit={fav_hit_rate:.4f}")
 
-    # Also emit the frontend-shaped flat bartolo_wp.json so past-date games
-    # light up in the Win Prob detail view (not just today's).
+    # Rebuild the flat bartolo_wp.json from the full archive (single source of
+    # truth) so past-date games light up in the Win Prob detail view. The
+    # archives are already frontend-shaped (away_wp / away_hist / ump_*), so we
+    # just merge them — no per-field translation needed.
     try:
-        flat_map = _build_flat_wp_map()
-        _write_flat_wp_file(flat_map)
+        sys.path.insert(0, str(SCRIPTS_DIR))
+        from bartolo.archive import aggregate_archives
+        payload = aggregate_archives(REPO_ROOT)
+        print(f"[backtest] flat bartolo_wp.json rebuilt — {payload['n_games']} games")
     except Exception as e:
         print(f"[backtest] flat-wp merge failed (non-fatal): {e}", file=sys.stderr)
 
