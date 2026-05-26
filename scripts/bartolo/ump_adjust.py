@@ -96,6 +96,8 @@ class UmpAdjustedResult:
             "home_wp": round(s.home_win_prob, 4),
             "away_exp_runs": round(float(s.away_runs.mean()), 3),
             "home_exp_runs": round(float(s.home_runs.mean()), 3),
+            "away_deserved_runs": round(float(s.deserved_away_runs), 2),
+            "home_deserved_runs": round(float(s.deserved_home_runs), 2),
             "away_hist": aw_bins,
             "home_hist": hm_bins,
             "away_actual_idx": aw_idx,
