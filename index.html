@@ -578,6 +578,30 @@
   .def-bsr-chip.worst { background: rgba(248, 113, 113, 0.18); color: var(--tier-worst); }
   .team-none { color: var(--muted); font-style: italic; font-size: 0.82rem; }
 
+  /* Hitter letter grades (vs MLB avg): A green → F red. Used in lineup rows,
+     the team-grade bar, and the Statcast view. */
+  .grade { display: inline-block; min-width: 23px; text-align: center;
+    font-weight: 800; font-size: 0.8rem; line-height: 1.25;
+    padding: 0.05rem 0.32rem; border-radius: 4px; letter-spacing: 0.01em; }
+  .grade.gr-a { background: rgba(110, 255, 148, 0.18); color: #6eff94; }
+  .grade.gr-b { background: rgba(166, 227, 125, 0.15); color: #a6e37d; }
+  .grade.gr-c { background: rgba(148, 163, 184, 0.13); color: #aab3bf; }
+  .grade.gr-d { background: rgba(255, 145, 64, 0.16);  color: #ff9140; }
+  .grade.gr-f { background: rgba(248, 113, 113, 0.18); color: #f87171; }
+  .grade-cell { text-align: center; }
+  .grade-cell .gr-na { color: var(--muted); opacity: 0.5; }
+
+  /* Team-average grade bar under each lineup heading */
+  .team-grade-bar { display: flex; flex-wrap: wrap; align-items: center;
+    gap: 0.4rem 0.5rem; margin: 0.1rem 0 0.5rem; }
+  .team-grade-bar .m-team-wrc { margin-right: 0.1rem; }
+  .tg-chip { display: inline-flex; align-items: center; gap: 0.24rem; }
+  .tg-chip .tg-lbl { color: var(--muted); font-weight: 700;
+    letter-spacing: 0.07em; font-size: 0.6rem; text-transform: uppercase; }
+  .tg-chip .grade { min-width: 21px; font-size: 0.74rem; padding: 0.03rem 0.26rem; }
+  .lu-grade-key { color: var(--muted); font-size: 0.72rem; margin-top: 0.15rem; line-height: 1.4; }
+  .lu-grade-key b { color: var(--text); font-weight: 600; }
+
   .bp-split-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--muted); margin: 0.6rem 0 0.25rem; }
   .bp-split-header.L { color: #5bb8f5; }
@@ -2325,8 +2349,8 @@ function renderStatcastTeamAvgTable(games) {
   // Sort games by game time ascending
   const sorted = games.slice().sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
   // Build one row pair per game
-  const headers = metrics.map(([lbl, , lb]) =>
-    `<th class="right" style="width:48px;" title="${lb ? 'Lower raw is better — percentile already flipped' : 'Higher = better'}">${lbl}</th>`
+  const headers = metrics.map(([lbl]) =>
+    `<th class="center" style="width:40px;" title="Team-avg letter grade vs MLB (percentile-based; high = good). C ≈ avg.">${lbl}</th>`
   ).join("");
   let rowsHTML = "";
   let n_games_with_data = 0;
@@ -2339,11 +2363,11 @@ function renderStatcastTeamAvgTable(games) {
     const awayAvg = teamAvg(awayP);
     const homeAvg = teamAvg(homeP);
     const gt = fmtTime(g.gameDate);
-    const makeCells = (avgs) => metrics.map(([, key]) => {
+    const makeCells = (avgs) => metrics.map(([lbl, key]) => {
       const v = avgs[key];
-      return v == null
-        ? `<td class="split" style="color:var(--muted);opacity:0.4;">—</td>`
-        : `<td class="split split-chip ${pCls(v)}">${Math.round(v)}</td>`;
+      if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
+      const l = gradeLetter(v);
+      return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} (${Math.round(v)}th pct, team avg)">${l}</span></td>`;
     }).join("");
     // Game header row
     rowsHTML += `<tr class="sc-game-hdr">
@@ -2365,7 +2389,7 @@ function renderStatcastTeamAvgTable(games) {
     </tr>`;
   }
   if (!n_games_with_data) return '<div class="coming-soon">No lineups posted yet</div>';
-  return `<div class="lu-sc-note">Team-avg Savant percentiles across <b>today's posted lineup</b> · 0–100 scale · matchups grouped by game time</div>
+  return `<div class="lu-sc-note">Team-avg Savant grades across <b>today's posted lineup</b> · letter grades vs MLB (C ≈ avg) · matchups grouped by game time</div>
     <table class="lineup-table" style="width:100%;">
       <thead><tr>
         <th class="left" style="width:90px;">Team</th>
@@ -2410,6 +2434,7 @@ function renderLineupsTab() {
   }
   sumEl.innerHTML = `<div class="lu-summary">
     <div><b>${confirmed}</b> confirmed · <b>${projected}</b> projected · <b>${total - confirmed - projected}</b> awaiting (of ${total})</div>
+    <div class="lu-grade-key">Grades vs MLB (C ≈ avg): <b>PWR</b>/<b>EYE</b> from Statcast &amp; plate-discipline percentiles · <b>wRC+</b>/<b>BSR</b>/<b>DEF</b> from projections.</div>
     <div>Data generated ${LINEUPS?.generated_at?.slice(0,16).replace('T',' ') || '—'} UTC · refresh page for latest</div>
   </div>`;
 
@@ -2448,18 +2473,20 @@ function renderLineupsTab() {
         </h3>
         <div class="m-lineup-grid">
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name} ${teamWrcSpan(g, 'away')}</h4>
+            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}</h4>
+            ${teamGradeBar(g, 'away')}
             ${renderLineupSPHeader(awaySPName, "vs")}
             ${LU_VIEW === "stat"
               ? renderLineupStatcastTable(lg.lineups?.away)
-              : renderLineupTable(lg.lineups?.away, { expanded: true })}
+              : renderLineupTable(lg.lineups?.away, { expanded: true, oppHand: handOfPitcher(awaySPName) })}
           </div>
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name} ${teamWrcSpan(g, 'home')}</h4>
+            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}</h4>
+            ${teamGradeBar(g, 'home')}
             ${renderLineupSPHeader(homeSPName, "vs")}
             ${LU_VIEW === "stat"
               ? renderLineupStatcastTable(lg.lineups?.home)
-              : renderLineupTable(lg.lineups?.home, { expanded: true })}
+              : renderLineupTable(lg.lineups?.home, { expanded: true, oppHand: handOfPitcher(homeSPName) })}
           </div>
         </div>
       </div>`;
@@ -2525,11 +2552,13 @@ function renderLineupStatcastTable(side, opts={}) {
     const bats = p.bats || info.bats || "";
     const batsCls = bats === "L" ? "hand-l" : bats === "S" ? "hand-s" : "hand-r";
     const pctEntry = HITTER_PCT.hitters[normName(nm)] || {};
-    const cells = metrics.map(([, key, lb]) => {
+    // Percentiles are pre-oriented (high = good even for K%/Whiff/Chase), so the
+    // letter grade maps straight off the percentile for every column.
+    const cells = metrics.map(([lbl, key]) => {
       const v = pctEntry[key];
-      return v == null
-        ? `<td class="split" style="color:var(--muted);opacity:0.4;">—</td>`
-        : `<td class="split split-chip ${pCls(v, lb)}">${v}</td>`;
+      if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
+      const l = gradeLetter(v);
+      return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} (${v}th pct vs MLB)">${l}</span></td>`;
     }).join("");
     rowsHTML += `<tr>
       <td class="order">${p.order || ""}</td>
@@ -2549,8 +2578,8 @@ function renderLineupStatcastTable(side, opts={}) {
   const pillCls = effStatus === "CONFIRMED" ? "lu-confirmed"
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
-  const headers = metrics.map(([lbl, , lb]) => `<th class="right" style="width:42px;" title="${lb ? 'Lower raw = better; percentile is flipped so high = good' : 'Higher = better'}">${lbl}</th>`).join("");
-  const html = `<div class="lu-sc-note">Savant season percentiles · 0–100 scale · higher = better. Blanks filled with prior-year percentile where available.</div>
+  const headers = metrics.map(([lbl]) => `<th class="center" style="width:38px;" title="Letter grade vs MLB (percentile-based; high = good). C ≈ league avg.">${lbl}</th>`).join("");
+  const html = `<div class="lu-sc-note">Savant season percentiles → letter grades vs MLB · C ≈ avg. Blanks filled with prior-year percentile where available.</div>
     <table class="lineup-table">
       <thead><tr>
         <th class="center" style="width:22px;">#</th>
@@ -2629,7 +2658,122 @@ function renderLineupSPHeader(spName, prefix="vs") {
   </div>`;
 }
 
-// opts: { expanded: true } → include K%/BB% cols (used on Lineups tab, skipped in modal)
+// ============================================================================
+// HITTER LETTER GRADES (vs MLB avg) — Power / Eye / BsR / Def
+// Maps a 0–100 percentile (50 ≈ league average) onto an A+…F ladder so a
+// league-average hitter lands around C+/C. Used on the Lineups tab, the game
+// modal, the team-grade bar, and the Statcast view.
+// ============================================================================
+const GRADE_LADDER = [[96,'A+'],[89,'A'],[81,'A-'],[73,'B+'],[64,'B'],[57,'B-'],
+                      [50,'C+'],[43,'C'],[36,'C-'],[28,'D+'],[19,'D'],[11,'D-'],[0,'F']];
+function gradeLetter(pct) {
+  if (pct == null || isNaN(pct)) return null;
+  for (const [thr, l] of GRADE_LADDER) if (pct >= thr) return l;
+  return 'F';
+}
+// Color bucket by letter family: A green → F red (independent of the --tier-*
+// scale, whose "bad" is blue). gr-a best … gr-f worst.
+function gradeCls(letter) {
+  if (!letter) return '';
+  const c = letter[0];
+  return c === 'A' ? 'gr-a' : c === 'B' ? 'gr-b' : c === 'C' ? 'gr-c'
+       : c === 'D' ? 'gr-d' : 'gr-f';
+}
+function gradeCellHTML(pct, label, extra="") {
+  const l = gradeLetter(pct);
+  if (!l) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
+  const t = `${label}: ${l} (${Math.round(pct)}th pct vs MLB)${extra ? ` · ${extra}` : ''}`;
+  return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${t.replace(/"/g,'&quot;')}">${l}</span></td>`;
+}
+function _avgPct(vals) {
+  const vs = vals.filter(v => typeof v === 'number' && !isNaN(v));
+  return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+}
+// Power = barrel / hard-hit / xSLG / xISO / bat-speed percentiles (need ≥2);
+// sparse fallback to max-EV alone for backfilled rookies.
+function powerPct(pc) {
+  if (!pc) return null;
+  const core = [pc.barrel, pc.hard_hit, pc.xslg, pc.xiso, pc.bat_speed]
+    .filter(v => typeof v === 'number');
+  if (core.length >= 2) return _avgPct(core);
+  if (typeof pc.max_ev === 'number') return pc.max_ev;
+  return _avgPct(core);
+}
+// Eye / patience = BB% + Chase percentiles (plate discipline; high pct = good).
+function eyePct(pc) { return pc ? _avgPct([pc.bb_pct, pc.chase]) : null; }
+
+// DEF / BSR percentile = projected runs (hitters.json) ranked vs MLB regulars
+// (pa ≥ 300). Memoized; recomputed only when the HITTERS object is replaced.
+let _RUN_POP_SRC = null, _FLD_POP = null, _BSR_POP = null;
+function _ensureRunPops() {
+  if (_RUN_POP_SRC === HITTERS && _FLD_POP) return;
+  const fld = [], bsr = [];
+  for (const h of Object.values(HITTERS?.hitters || {})) {
+    if ((h.pa || 0) < 300) continue;
+    if (typeof h.fld === 'number') fld.push(h.fld);
+    if (typeof h.bsr === 'number') bsr.push(h.bsr);
+  }
+  fld.sort((a, b) => a - b); bsr.sort((a, b) => a - b);
+  _FLD_POP = fld; _BSR_POP = bsr; _RUN_POP_SRC = HITTERS;
+}
+function _pctileOf(v, pop) {
+  if (v == null || !pop || !pop.length) return null;
+  let lo = 0, hi = pop.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (pop[mid] <= v) lo = mid + 1; else hi = mid; }
+  return Math.round(100 * lo / pop.length);
+}
+function fldPct(h) { _ensureRunPops(); return (h && typeof h.fld === 'number') ? _pctileOf(h.fld, _FLD_POP) : null; }
+function bsrPct(h) { _ensureRunPops(); return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null; }
+
+// Opposing SP throwing hand ('L'/'R'/null) — splits file first, then stats.
+function handOfPitcher(name) {
+  if (!name) return null;
+  const h = (lookupSplits(name)?.hand || lookupPitcherStats(name)?.hand || "").toUpperCase();
+  return h === 'L' || h === 'R' ? h : null;
+}
+
+// PA-weighted team-average percentile for one category over a lineup side.
+// cat: 'pwr' | 'eye' | 'bsr' | 'def'
+function teamGradePct(players, cat) {
+  if (!players || !players.length) return null;
+  let wsum = 0, tw = 0;
+  for (const p of players) {
+    const nm = normName(p.name || "");
+    let pct = null;
+    if (cat === 'pwr' || cat === 'eye') {
+      const pc = HITTER_PCT?.hitters?.[nm];
+      pct = cat === 'pwr' ? powerPct(pc) : eyePct(pc);
+    } else {
+      const h = HITTERS?.hitters?.[nm];
+      pct = cat === 'bsr' ? bsrPct(h) : fldPct(h);
+    }
+    if (pct == null) continue;
+    const slot = (p.order || 0) - 1;
+    const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
+    const w = SLOT_BASE_PA + delta;
+    wsum += pct * w; tw += w;
+  }
+  return tw > 0 ? wsum / tw : null;
+}
+
+// Team-grade bar: wRC+ (vs opp hand) + PWR/EYE/BSR/DEF letter chips.
+function teamGradeBar(game, side) {
+  const lg = lineupsForGame(game);
+  const players = lg?.lineups?.[side]?.players || [];
+  if (!HITTERS || !players.length) return "";
+  const wrc = teamWrcSpan(game, side);
+  const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
+    const pct = teamGradePct(players, cat);
+    const l = gradeLetter(pct);
+    if (!l) return "";
+    return `<span class="tg-chip" title="Team avg ${lbl} grade — ${l} (${Math.round(pct)}th pct, PA-weighted)"><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(l)}">${l}</span></span>`;
+  }).join("");
+  if (!wrc && !chips) return "";
+  return `<div class="team-grade-bar">${wrc}${chips}</div>`;
+}
+
+// opts: { expanded: true } → include Brl%/BB%/K% cols (Lineups tab; skipped in modal)
+//       { oppHand: 'L'|'R' } → which wRC+ split to surface as the matchup column
 function renderLineupTable(side, opts={}) {
   const expanded = !!opts.expanded;
   if (!side) return `<div class="coming-soon">${opts.noDataMsg || "No lineup yet"}</div>`;
@@ -2686,18 +2830,16 @@ function renderLineupTable(side, opts={}) {
       const vL_raw = splitEntry?.wrc_vs_l_raw; const vL_pa = splitEntry?.pa_vs_l;
       const vRCls   = tier(vR, wBands, true);
       const vLCls   = tier(vL, wBands, true);
-      const defCell = h ? defBsrCell(h.fld, fldBands, "DEF") : `<td class="chip"></td>`;
-      // BSR cell: prefer the Savant sprint_elite flag when present; otherwise
-      // fall back to the projected bsr value + chip.
-      let bsrCell;
-      if (h && h.sprint_elite) {
-        const pct = h.sprint_pct != null ? Math.round(h.sprint_pct) : null;
-        bsrCell = `<td class="chip"><span class="def-bsr-chip elite" title="Savant sprint speed p${pct||"?"} · ${h.sprint_speed ?? "?"} ft/s">+</span></td>`;
-      } else if (h) {
-        bsrCell = defBsrCell(h.bsr, bsrBands, "BSR");
-      } else {
-        bsrCell = `<td class="chip"></td>`;
-      }
+      // Matchup wRC+ — the split matching the opposing SP's hand (opts.oppHand).
+      // When the SP hand is unknown, fall back to the vR/vL average.
+      const oppHand = (opts.oppHand || "").toUpperCase();
+      const mV   = oppHand === 'L' ? vL : oppHand === 'R' ? vR
+                 : (vR != null && vL != null ? (vR + vL) / 2 : (vR != null ? vR : vL));
+      const mRaw = oppHand === 'L' ? vL_raw : oppHand === 'R' ? vR_raw : null;
+      const mPa  = oppHand === 'L' ? vL_pa  : oppHand === 'R' ? vR_pa  : null;
+      const mCls = tier(mV, wBands, true);
+      const mLbl = oppHand === 'L' ? 'LHP' : oppHand === 'R' ? 'RHP' : 'SP (hand TBD)';
+      const wrcCell = `<td class="split split-chip ${mCls}" title="${mV != null ? `Projected ${Math.round(mV)} wRC+ vs ${mLbl}${mRaw != null ? ` · raw ${Math.round(mRaw)} over ${mPa} PA (3-yr)` : ''}` : 'No split data'}">${mV != null ? Math.round(mV) : "—"}</td>`;
       // Backfill pos/bats from the cached team roster when the lineup source
       // (e.g. Rotowire platoon default) didn't include them.
       const playerInfo = PLAYER_INFO[normName(nm)] || {};
@@ -2744,6 +2886,12 @@ function renderLineupTable(side, opts={}) {
         barrelTitle = `Savant barrel rate ${barrelRaw.toFixed(1)}%`;
       }
       const barrelCell = `<td class="split split-chip ${barrelCls}" title="${barrelTitle}">${barrelStr}</td>`;
+      // Letter grades vs MLB avg (50th pct ≈ C). Power/Eye from Savant percentiles;
+      // BsR/Def from projected runs ranked vs MLB regulars.
+      const pwrCell = gradeCellHTML(powerPct(hpct), "Power", "barrel/HH/xSLG/xISO/bat-speed pctiles");
+      const eyeCell = gradeCellHTML(eyePct(hpct), "Eye", "BB% + chase pctiles");
+      const bsrGradeCell = gradeCellHTML(bsrPct(h), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
+      const defGradeCell = gradeCellHTML(fldPct(h), "Def");
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
       // modal renders a slimmer table. Order: BB% first, then K%.
       let kbbCells = "";
@@ -2769,17 +2917,14 @@ function renderLineupTable(side, opts={}) {
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
         <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>
-        ${scoreCell}${barrelCell}${kbbCells}
-        ${wobaCell}
+        ${wrcCell}
+        ${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        <td class="split split-chip ${vRCls}" title="${vR != null ? `Shrunk ${Math.round(vR)} wRC+ vs RHP${vR_raw != null ? ` · raw ${Math.round(vR_raw)} over ${vR_pa} PA (3-yr)` : ''}` : 'No vs-RHP data'}">${vR != null ? Math.round(vR) : "—"}</td>
-        <td class="split split-chip ${vLCls}" title="${vL != null ? `Shrunk ${Math.round(vL)} wRC+ vs LHP${vL_raw != null ? ` · raw ${Math.round(vL_raw)} over ${vL_pa} PA (3-yr)` : ''}` : 'No vs-LHP data'}">${vL != null ? Math.round(vL) : "—"}</td>
-        ${defCell}
-        ${bsrCell}
+        ${expanded ? barrelCell + kbbCells : ""}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
-      rowsHTML += `<tr><td colspan="7" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
+      rowsHTML += `<tr><td colspan="13" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
     }
   }
 
@@ -2801,19 +2946,20 @@ function renderLineupTable(side, opts={}) {
     <th class="right" style="width:46px;" title="Projected K% (lower = better)">K%</th>` : "";
   const wobaHeader = expanded
     ? `<th class="right" style="width:50px;" title="Actual current-season wOBA (Savant) — falls back to projection if no PAs yet">wOBA</th>` : "";
+  const oppHandHdr = (opts.oppHand || "").toUpperCase();
+  const wrcHdr = `wRC+${oppHandHdr ? ` v${oppHandHdr}` : ''}`;
   let html = `<table class="lineup-table"><thead><tr>
     <th class="center" style="width:22px;">#</th>
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
-    <th class="right" style="width:54px;" title="Unified hitter score — single weighted z (proj 45 / expected 45 / bat-track 10). Built from woba projection + xwOBA + barrel% + hard-hit% + bat speed.">Score</th>
-    <th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${kbbHeaders}
-    ${wobaHeader}
-    <th class="right" style="width:50px;" title="Projected OPS">OPS</th>
-    <th class="right" style="width:42px;" title="Projected wRC+ vs. RHP (Steamer)">vR</th>
-    <th class="right" style="width:42px;" title="Projected wRC+ vs. LHP (Steamer)">vL</th>
-    <th class="center" style="width:40px;" title="Fielding qualifier (+/−) vs. average">DEF</th>
-    <th class="center" style="width:40px;" title="Baserunning qualifier (+/−) — boosted by elite Savant sprint speed">BSR</th>
+    <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
+    <th class="center" style="width:34px;" title="Power grade vs MLB — barrel / hard-hit / xSLG / xISO / bat-speed percentiles. C ≈ avg.">PWR</th>
+    <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
+    <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
+    <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
+    <th class="right" style="width:48px;" title="Projected OPS">OPS</th>
+    ${expanded ? `<th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${kbbHeaders}` : ""}
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
@@ -2825,7 +2971,8 @@ function renderLineupTable(side, opts={}) {
 function renderLineupForTeam(game, side) {
   const lg = lineupsForGame(game);
   if (!lg) return `<div class="coming-soon">Awaiting lineup</div>`;
-  return renderLineupTable(lg.lineups?.[side], { noDataMsg: `Awaiting ${side} lineup` });
+  const oppSP = game.teams[side === 'away' ? 'home' : 'away'].probablePitcher?.fullName;
+  return renderLineupTable(lg.lineups?.[side], { noDataMsg: `Awaiting ${side} lineup`, oppHand: handOfPitcher(oppSP) });
 }
 
 // ============================================================================
@@ -3248,9 +3395,9 @@ function renderPitcherDeepSP(spName, teamName) {
       ${unifiedScoreChip(s)}
       ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
+    ${renderSPTrends(spName)}
     <div class="pt-stat-grid">${tiles}</div>
     ${arsenalTable}
-    ${renderSPTrends(spName)}
   </div>`;
 }
 
@@ -4145,11 +4292,13 @@ async function openModal(game) {
     <div class="m-section-header"><span>Lineups</span></div>
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away} ${teamWrcSpan(game, 'away')}</h4>
+        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}</h4>
+        ${teamGradeBar(game, 'away')}
         ${renderLineupForTeam(game, 'away')}
       </div>
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home} ${teamWrcSpan(game, 'home')}</h4>
+        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}</h4>
+        ${teamGradeBar(game, 'home')}
         ${renderLineupForTeam(game, 'home')}
       </div>
     </div>
