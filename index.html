@@ -4462,14 +4462,14 @@ function renderRankingsTab() {
     root.innerHTML = `
       <div class="rk-grid">
         <div class="rk-box">
-          <h3>SP Power Rankings <span class="rk-sub">equal-weighted composite · xFIP / SIERA / xERA / botERA / K-BB% · starters only</span></h3>
+          <h3>SP Power Rankings <span class="rk-sub">ranked by weighted FIP · rolling xFIP/SIERA + xERA/botERA/proj · starters only</span></h3>
           <div class="rk-filter" id="rk-sp-filter">
             <button data-flt="qualified" class="${RANKINGS_SP_FILTER==='qualified'?'active':''}">Qualified (≥20 IP)</button>
             <button data-flt="all" class="${RANKINGS_SP_FILTER==='all'?'active':''}">All SPs</button>
           </div>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
 
-          <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">same composite · non-starters only</span></h3>
+          <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">ranked by weighted FIP · non-starters only</span></h3>
           <div class="rk-filter" id="rk-rp-filter">
             <button data-flt="qualified" class="${RANKINGS_RP_FILTER==='qualified'?'active':''}">Qualified (≥10 IP)</button>
             <button data-flt="all" class="${RANKINGS_RP_FILTER==='all'?'active':''}">All RPs</button>
@@ -4477,16 +4477,18 @@ function renderRankingsTab() {
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
         <div class="rk-right">
-          <div class="rk-box"><h3>Bullpen Rankings <span class="rk-sub">today's active-roster relievers only (not season team totals) · avg of each pitcher's season xFIP / SIERA / xERA / botERA / K-BB%</span></h3>
+          <div class="rk-box"><h3>Team Bullpen Rankings <span class="rk-sub">today's active-roster relievers · ranked by avg weighted FIP</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Lineup Rankings <span class="rk-sub">splits vs RHP and LHP</span></h3>
+          <div class="rk-box"><h3>Team Offense <span class="rk-sub">PA-weighted wRC+ · splits vs RHP / LHP</span></h3>
             <div class="rk-split-body">
               <div class="rk-split-col"><div class="rk-split-hdr">vs RHP</div><div id="rk-luR-body"></div></div>
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
             </div>
           </div>
-          <div class="rk-box"><h3>Defense + Baserunning <span class="rk-sub">today's lineup · sum of FLD + BSR runs</span></h3>
+          <div class="rk-box"><h3>Team Defense <span class="rk-sub">today's lineup · projected fielding runs, graded on the curve</span></h3>
             <div id="rk-def-body"></div></div>
+          <div class="rk-box"><h3>Team Baserunning <span class="rk-sub">today's lineup · projected baserunning runs, graded on the curve</span></h3>
+            <div id="rk-bsr-body"></div></div>
         </div>
       </div>
     `;
@@ -4497,6 +4499,7 @@ function renderRankingsTab() {
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_r", "rk-luR-body");
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_l", "rk-luL-body");
     renderDefRankings(hitters, nameToTeam, teams);
+    renderBsrRankings(hitters, nameToTeam, teams);
 
     // Filter button handlers
     document.querySelectorAll("#rk-sp-filter button").forEach(btn => {
@@ -4658,6 +4661,13 @@ function rankChipHtml(rank, total, kind) {
   return `<span class="rank-chip ${kind} ${tier}" title="${kind==='sp'?'Starter':'Team bullpen'} rank · 20% each xFIP/SIERA/xERA/botERA/K-BB%">${label} #${rank}</span>`;
 }
 
+// Team rankings are a ranked list, so grade on the curve by rank-percentile
+// (rank 1 → ~top → A+, last → F). Guarantees spread across the 30 teams.
+function gradeByRank(rank, total) {
+  if (!total) return null;
+  return gradeLetter(100 * (total - rank + 0.5) / total);
+}
+
 function renderSPRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-sp-wrap");
   if (!wrap) return;
@@ -4680,43 +4690,25 @@ function renderSPRankings(pitchers, nameToTeam) {
     pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
   });
 
-  // Z-score each metric across the starter pool
-  // xfip/siera/xera/bot: lower is better. kbb: higher is better (sign flipped below).
-  const metricKeys = ["xfip", "siera", "xera", "bot", "kbb"];
-  const stats = {};
-  metricKeys.forEach(m => {
-    stats[m] = zScores(pool.map(p => p.metrics[m]));
-  });
-
-  // Composite = avg of available z-scores (lower = better overall).
-  // K-BB% gets its sign flipped so "higher K-BB%" reduces the composite.
-  pool.forEach(p => {
-    const zs = [];
-    metricKeys.forEach(m => {
-      if (p.metrics[m] != null && stats[m]) {
-        const z = (p.metrics[m] - stats[m].mean) / stats[m].sd;
-        zs.push(m === "kbb" ? -z : z);
-      }
-    });
-    p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
-  });
-
-  pool.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  // Rank by the weighted FIP (unified_score — rolling-led blend). Lower = better.
+  // Arms without a weighted FIP sink to the bottom.
+  pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+  pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
 
   const total = pool.length;
   const fmt = v => v == null ? "—" : v.toFixed(2);
   const fmtPct = v => v == null ? "—" : v.toFixed(1) + "%";
+  const wThr = { elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75 };
   const rows = pool.map((p, i) => {
     const rank = i + 1;
     const t = nameToTeam[p.key];
-    const tierCls = tierByPercentile(rank, total);
-    const pEntry = pitchers[p.key];
+    const wcls = tier(p.wfip, wThr, false);
+    const gl = (GAMELOGS && GAMELOGS.pitchers && GAMELOGS.pitchers[p.key]);
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?' sp-clickable':''}"${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?` data-spkey="${p.key}" title="Tap for recent-start trends"`:''}>${p.name}</td>
+      <td class="name${gl ? ' sp-clickable' : ''}"${gl ? ` data-spkey="${p.key}" title="Tap for recent-start trends"` : ''}>${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
-      <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
-      <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
+      <td class="comp ${wcls}">${fmt(p.wfip)}</td>
       <td>${fmt(p.metrics.xfip)}</td>
       <td>${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
@@ -4727,14 +4719,13 @@ function renderSPRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:60px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
-      <th title="Composite z-score across xFIP / SIERA / xERA / botERA / K-BB% (lower=better, this view)">Comp</th>
-      <th title="Unified score — single weighted z (proj 45 / expected 45 / model 10)">Score</th>
+      <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
       <th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="11" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -4774,21 +4765,22 @@ function renderReliverRankings(pitchers, nameToTeam) {
     });
     p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
   });
-  pool.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+  pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
   const total = pool.length;
   const fmt = v => v == null ? "—" : v.toFixed(2);
   const fmtPct = v => v == null ? "—" : v.toFixed(1) + "%";
+  const wThr = { elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75 };
   const rows = pool.map((p, i) => {
     const rank = i + 1;
     const t = nameToTeam[p.key];
-    const tierCls = tierByPercentile(rank, total);
-    const pEntry = pitchers[p.key];
+    const wcls = tier(p.wfip, wThr, false);
+    const gl = (GAMELOGS && GAMELOGS.pitchers && GAMELOGS.pitchers[p.key]);
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="name${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?' sp-clickable':''}"${(GAMELOGS&&GAMELOGS.pitchers&&GAMELOGS.pitchers[p.key])?` data-spkey="${p.key}" title="Tap for recent-start trends"`:''}>${p.name}</td>
+      <td class="name${gl ? ' sp-clickable' : ''}"${gl ? ` data-spkey="${p.key}" title="Tap for recent-start trends"` : ''}>${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
-      <td class="comp ${tierCls}">${p.composite != null ? p.composite.toFixed(2) : "—"}</td>
-      <td>${unifiedScoreChip(pEntry, {tight:true,label:""}) || '<span style="color:var(--muted);">—</span>'}</td>
+      <td class="comp ${wcls}">${fmt(p.wfip)}</td>
       <td>${fmt(p.metrics.xfip)}</td>
       <td>${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
@@ -4799,14 +4791,13 @@ function renderReliverRankings(pitchers, nameToTeam) {
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:125px"><col style="width:40px"><col style="width:48px"><col style="width:60px"><col style="width:46px"><col style="width:46px"><col style="width:46px"><col style="width:50px"><col style="width:48px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"><col style="width:34px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
-      <th title="Composite z-score · this view">Comp</th>
-      <th title="Unified score — single weighted z (proj 45 / expected 45 / model 10)">Score</th>
+      <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
       <th>xFIP</th><th>SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="11" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -4943,49 +4934,77 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
     const tierCls = tierByPercentile(rank, total);
+    const g = gradeByRank(rank, total);
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
       <td class="comp ${tierCls}">${Math.round(r.score)}</td>
+      <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>wRC+</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="3" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+    <thead><tr><th>#</th><th class="left">Team</th><th>wRC+</th><th>Gr</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
   </table>`;
 }
 
-// DEF + BSR — sum of FLD + BSR values across today's lineup, ranked.
+// Team Defense — projected fielding runs (FLD) summed across today's lineup,
+// ranked and graded on the curve.
 function renderDefRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-def-body");
   if (!body) return;
   const byTeam = _todaysLineupHittersByTeam(hitters);
   const teamRows = Object.values(byTeam).map(tb => {
-    const fldVals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
-    const bsrVals = tb.list.map(x => x.hitter.bsr).filter(v => v != null);
-    if (!fldVals.length && !bsrVals.length) return null;
-    const fld = fldVals.reduce((a, b) => a + b, 0);
-    const bsr = bsrVals.reduce((a, b) => a + b, 0);
-    return { team: tb.team, fld, bsr, composite: fld + bsr };
+    const vals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
+    if (!vals.length) return null;
+    return { team: tb.team, fld: vals.reduce((a, b) => a + b, 0) };
   }).filter(Boolean);
-  teamRows.sort((a, b) => b.composite - a.composite);
-
+  teamRows.sort((a, b) => b.fld - a.fld);
   const total = teamRows.length;
   const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
-    const tierCls = tierByPercentile(rank, total);
+    const g = gradeByRank(rank, total);
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
-      <td class="comp ${tierCls}">${fmt(r.composite)}</td>
-      <td>${fmt(r.fld)}</td>
-      <td>${fmt(r.bsr)}</td>
+      <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
+      <td class="comp">${fmt(r.fld)}</td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>Total</th><th>DEF</th><th>BSR</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="5" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+    <thead><tr><th>#</th><th class="left">Team</th><th>Gr</th><th>FLD runs</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+  </table>`;
+}
+
+// Team Baserunning — projected BsR runs summed across today's lineup, ranked
+// and graded on the curve.
+function renderBsrRankings(hitters, nameToTeam, teams) {
+  const body = document.getElementById("rk-bsr-body");
+  if (!body) return;
+  const byTeam = _todaysLineupHittersByTeam(hitters);
+  const teamRows = Object.values(byTeam).map(tb => {
+    const vals = tb.list.map(x => x.hitter.bsr).filter(v => v != null);
+    if (!vals.length) return null;
+    return { team: tb.team, bsr: vals.reduce((a, b) => a + b, 0) };
+  }).filter(Boolean);
+  teamRows.sort((a, b) => b.bsr - a.bsr);
+  const total = teamRows.length;
+  const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+  const rows = teamRows.map((r, i) => {
+    const rank = i + 1;
+    const g = gradeByRank(rank, total);
+    return `<tr>
+      <td class="rank">${rank}</td>
+      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
+      <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
+      <td class="comp">${fmt(r.bsr)}</td>
+    </tr>`;
+  }).join("");
+  body.innerHTML = `<table class="rk-table">
+    <thead><tr><th>#</th><th class="left">Team</th><th>Gr</th><th>BSR runs</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
   </table>`;
 }
 
