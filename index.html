@@ -5605,6 +5605,9 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
   const homeWP = sim?.home_wp != null ? (sim.home_wp * 100).toFixed(1) + '%' : '—';
   const awayExp = sim?.away_exp_runs != null ? sim.away_exp_runs.toFixed(2) : '—';
   const homeExp = sim?.home_exp_runs != null ? sim.home_exp_runs.toFixed(2) : '—';
+  // Deserved runs = calibrated quality-of-contact expectation (luck/sequencing removed).
+  const awayDes = sim?.away_deserved_runs != null ? sim.away_deserved_runs.toFixed(1) : null;
+  const homeDes = sim?.home_deserved_runs != null ? sim.home_deserved_runs.toFixed(1) : null;
 
   const histogram = (bins, actualIdx) => {
     if (!bins || !bins.length) return '<div class="wp-empty" style="padding:1.5rem 0;text-align:center;">Run-distribution histogram will render once simulator data is ingested.</div>';
@@ -5616,11 +5619,20 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
     }).join('') + '</div>';
   };
 
-  const umpNote = sim?.ump_name
-    ? `<p style="color:var(--muted);font-size:0.85rem;">HP ump <strong>${sim.ump_name}</strong>
-         &middot; favor: ${away} ${(sim.ump_favor_away >= 0 ? '+' : '') + sim.ump_favor_away?.toFixed(2)} runs,
-         ${home} ${(sim.ump_favor_home >= 0 ? '+' : '') + sim.ump_favor_home?.toFixed(2)} runs.</p>`
-    : '<p style="color:var(--muted);font-size:0.85rem;"><em>Ump adjustment will appear once the Ump Scorecards scrape is wired in.</em></p>';
+  // Centered favor: positive away_favor = ump's zone net helped the away team's offense.
+  const favA = (sim && sim.ump_favor_away != null) ? sim.ump_favor_away : null;
+  let umpNote;
+  if (sim?.ump_name && favA != null) {
+    const favTeam = favA > 0.02 ? away : favA < -0.02 ? home : null;
+    const favMag = Math.abs(favA).toFixed(2);
+    umpNote = favTeam
+      ? `<p style="color:var(--muted);font-size:0.85rem;">HP ump <strong>${sim.ump_name}</strong> — the called zone net <strong>favored ${favTeam}</strong>'s offense by <strong>${favMag}</strong> runs (from miscalled balls/strikes).</p>`
+      : `<p style="color:var(--muted);font-size:0.85rem;">HP ump <strong>${sim.ump_name}</strong> — called zone was roughly even (net favor &lt; 0.02 runs).</p>`;
+  } else if (sim?.ump_name) {
+    umpNote = `<p style="color:var(--muted);font-size:0.85rem;">HP ump <strong>${sim.ump_name}</strong>.</p>`;
+  } else {
+    umpNote = '<p style="color:var(--muted);font-size:0.85rem;"><em>No umpire data for this game.</em></p>';
+  }
 
   return `<div class="wp-detail">
     <h3>${away} @ ${home}${dateLabel ? ` <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">· ${dateLabel}</span>` : ""}</h3>
@@ -5639,12 +5651,15 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
     </div>
 
     <div class="wp-section">
-      <h4>Win Probability</h4>
+      <h4>Win Probability &amp; Deserved Runs</h4>
+      <p style="color:var(--muted);font-size:0.78rem;margin:-0.2rem 0 0.6rem;line-height:1.45;">
+        <b>Sim WP</b> = share of 10,000 batted-ball resamples this team won.
+        <b>Deserved</b> = luck-neutral runs from contact quality (calibrated) — differs from the actual score when a team out-hit or under-hit its result.</p>
       <div class="wp-metrics">
         <div class="wp-metric"><div class="wp-mlabel">${away} Sim WP</div><div class="wp-mval">${awayWP}</div></div>
         <div class="wp-metric"><div class="wp-mlabel">${home} Sim WP</div><div class="wp-mval">${homeWP}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${away} Exp Runs</div><div class="wp-mval">${awayExp}</div><div class="wp-mdelta">Actual: ${aRuns}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} Exp Runs</div><div class="wp-mval">${homeExp}</div><div class="wp-mdelta">Actual: ${hRuns}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${away} Deserved Runs</div><div class="wp-mval">${awayDes != null ? awayDes : '—'}</div><div class="wp-mdelta">Actual: ${aRuns}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} Deserved Runs</div><div class="wp-mval">${homeDes != null ? homeDes : '—'}</div><div class="wp-mdelta">Actual: ${hRuns}</div></div>
       </div>
     </div>
 
@@ -5664,8 +5679,10 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
       <h4>Umpire Adjustment</h4>
       ${umpNote}
       ${sim?.ump_adj_away_wp != null ? `<div class="wp-metrics">
-        <div class="wp-metric"><div class="wp-mlabel">Raw ${away} WP</div><div class="wp-mval">${(sim.away_wp*100).toFixed(1)}%</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">Ump-Adj ${away} WP</div><div class="wp-mval">${(sim.ump_adj_away_wp*100).toFixed(1)}%</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${away} Raw WP</div><div class="wp-mval">${(sim.away_wp*100).toFixed(1)}%</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${away} Ump-Neutral WP</div><div class="wp-mval">${(sim.ump_adj_away_wp*100).toFixed(1)}%</div><div class="wp-mdelta">${((sim.ump_adj_away_wp-sim.away_wp)*100>=0?'+':'')+((sim.ump_adj_away_wp-sim.away_wp)*100).toFixed(1)}pp</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} Raw WP</div><div class="wp-mval">${(sim.home_wp*100).toFixed(1)}%</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} Ump-Neutral WP</div><div class="wp-mval">${(sim.ump_adj_home_wp*100).toFixed(1)}%</div><div class="wp-mdelta">${((sim.ump_adj_home_wp-sim.home_wp)*100>=0?'+':'')+((sim.ump_adj_home_wp-sim.home_wp)*100).toFixed(1)}pp</div></div>
       </div>` : ''}
     </div>
 
@@ -5681,9 +5698,11 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
       <p style="color:var(--muted);font-size:0.82rem;line-height:1.55;">
         Pulls every batted ball from this game's Statcast feed (EV, LA, spray, park), feeds into a
         gradient-boosted outcome classifier trained on ~250K batted balls to get
-        P(out / 1B / 2B / 3B / HR). Resamples 10,000 times, sums with linear weights to get each
-        team's run distribution. HP ump run-favor is subtracted to produce an ump-neutral WP.
-        Edges computed via σ=4.5 normal for totals, de-vigged implied WP for MLs.
+        P(out / 1B / 2B / 3B / HR), then resamples 10,000 times for each team's run distribution and
+        win probability. <b>Deserved runs</b> are the model's contact-quality run expectation,
+        calibrated to the league run scale. <b>Umpire favor</b> is computed from this game's
+        miscalled taken pitches (zone vs. rulebook, weighted by count run value) and subtracted to
+        give an ump-neutral WP.
       </p>
     </div>
   </div>`;
