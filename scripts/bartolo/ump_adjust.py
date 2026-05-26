@@ -129,3 +129,60 @@ def apply_ump_adjustment(sim: SimResult,
         adjusted_away_runs=adj_away,
         adjusted_home_runs=adj_home,
     )
+
+
+# Run value of a called strike (the run advantage the defense gains from a strike
+# vs a ball) keyed by the (balls, strikes) count BEFORE the pitch. 3-2 is largest
+# (ball = walk, strike = K). Used to weight each miscalled taken pitch.
+_UMP_COUNT_RV = {
+    (0, 0): 0.083, (0, 1): 0.061, (0, 2): 0.083,
+    (1, 0): 0.094, (1, 1): 0.073, (1, 2): 0.103,
+    (2, 0): 0.111, (2, 1): 0.092, (2, 2): 0.151,
+    (3, 0): 0.121, (3, 1): 0.151, (3, 2): 0.310,
+}
+_UMP_HALF_PLATE = 0.83  # ft — plate half-width (0.708) + ball radius
+
+
+def compute_ump_favor(statcast_df) -> tuple[float, float]:
+    """Estimate per-team umpire favor (runs) from miscalled taken pitches in a
+    game's Statcast feed — the same idea Ump Scorecards uses. A called strike
+    outside the rulebook zone hurts the batting team; a ball inside the zone
+    helps it. Each miscall is weighted by a count-specific run value.
+
+    Returns CENTERED favors (away_favor, home_favor) that sum to zero, so the
+    number is purely the ump's *tilt* toward one side (a common zone offset that
+    affects both teams cancels out). Positive = the ump's calls net added runs to
+    that team's offense.
+    """
+    need = {"description", "plate_x", "plate_z", "sz_top", "sz_bot",
+            "balls", "strikes", "inning_topbot"}
+    if statcast_df is None or len(statcast_df) == 0 or not need.issubset(statcast_df.columns):
+        return 0.0, 0.0
+    d = statcast_df[statcast_df["description"].isin(["called_strike", "ball", "blocked_ball"])]
+    if len(d) == 0:
+        return 0.0, 0.0
+    away_raw = 0.0
+    home_raw = 0.0
+    for desc, px, pz, szt, szb, b, s, topbot in zip(
+            d["description"], d["plate_x"], d["plate_z"], d["sz_top"], d["sz_bot"],
+            d["balls"], d["strikes"], d["inning_topbot"]):
+        # Skip pitches with missing location/zone data.
+        if px != px or pz != pz or szt != szt or szb != szb:
+            continue
+        in_zone = (abs(px) <= _UMP_HALF_PLATE) and (szb <= pz <= szt)
+        try:
+            rv = _UMP_COUNT_RV.get((int(b), int(s)), 0.10)
+        except (TypeError, ValueError):
+            rv = 0.10
+        delta = 0.0
+        if desc in ("ball", "blocked_ball") and in_zone:   # missed strike → helps batter
+            delta = +rv
+        elif desc == "called_strike" and not in_zone:      # phantom strike → hurts batter
+            delta = -rv
+        if delta:
+            if topbot == "Top":
+                away_raw += delta
+            else:
+                home_raw += delta
+    mean = (away_raw + home_raw) / 2.0
+    return round(away_raw - mean, 2), round(home_raw - mean, 2)
