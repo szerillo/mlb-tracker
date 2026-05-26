@@ -97,6 +97,12 @@ NWS_GRIDS = {
 DOMES = {"Tampa Bay Rays", "Toronto Blue Jays", "Houston Astros", "Texas Rangers",
          "Arizona Diamondbacks", "Miami Marlins", "Milwaukee Brewers"}
 
+# Retractable-roof parks — same set minus Tampa Bay's permanent fixed dome.
+# When the roof state is unknown for the date (no public schedule, e.g. TOR/MIL/
+# HOU/TEX/MIA), we ASSUME closed (run adj 0) but ALSO compute the pure-model
+# open-roof adjustment so the UI can show a dual "closed 0 · open +X%" readout.
+RETRACTABLE = DOMES - {"Tampa Bay Rays"}
+
 # Teams whose roof schedule is published on mlb.com. Parse the table and
 # determine "Open" vs "Closed" per game date.
 ROOF_SCHEDULE_URLS = {
@@ -277,6 +283,37 @@ def _three_hour_trend(forecast, target_iso):
     return result if len(result) >= 2 else None
 
 
+def compute_open_v8(home, game, fc):
+    """Pure-model open-roof adjustment for a retractable park (NO BP blend).
+
+    Used only for the dual "closed 0 · open +X%" readout on retractable parks
+    whose roof state is unknown for the date. We assume the roof is CLOSED for
+    the headline number (0), but surface what the model would say if it opens.
+    Returns (hour, v8) or (hour, None) if no forecast / unmapped park.
+    """
+    hour = extract_hour(fc, game["game_time"])
+    park_code = TEAM_TO_PARK.get(home)
+    if not (hour and park_code):
+        return hour, None
+    t_hours = _three_hour_trend(fc, game["game_time"])
+    wx_in = {
+        "t": hour.get("temp_f"),
+        "hum": hour.get("humidity_pct"),
+        "ws": hour.get("wind_speed_mph") or 0,
+        "wd_compass": nws_wind_to_compass(hour.get("wind_dir")),
+        "precip": hour.get("precip_pct") or 0,
+        "t_hours": t_hours,
+    }
+    v8 = compute_v8(park_code, wx_in)
+    # Mirror the shape of the normal path so the frontend can read it uniformly,
+    # but mark it as pure model (no BP pressure input, no blend).
+    v8["model_pct"] = v8.get("run_adj_pct")
+    v8["pressure_source"] = "default"
+    v8["bp_pct"] = None
+    v8["bp_blended"] = False
+    return hour, v8
+
+
 def main():
     from _common import skip_if_not_in_window
     if skip_if_not_in_window("refresh_weather"):
@@ -325,7 +362,11 @@ def main():
                      - datetime.timedelta(hours=4)).date().isoformat()
         except Exception:
             gd_et = None
-        if g["home"] not in DOMES or (gd_et and is_roof_open(g["home"], gd_et)):
+        # Fetch a forecast when: not a dome, OR roof is known-open, OR it's a
+        # retractable park (so we can compute the dual open-roof adjustment).
+        if (g["home"] not in DOMES
+                or (gd_et and is_roof_open(g["home"], gd_et))
+                or g["home"] in RETRACTABLE):
             unique_teams.add(g["home"])
     forecasts = {}
 
@@ -357,7 +398,7 @@ def main():
         # If this is a retractable-roof park but roof is OPEN for the date,
         # fall through to normal forecast/V8 path.
         if home in DOMES and not roof_open:
-            games_out.append({
+            entry = {
                 "game_pk": g["game_pk"],
                 "matchup": f"{g['away']} @ {home}",
                 "venue": g["venue"],
@@ -365,7 +406,22 @@ def main():
                 "is_dome": True,
                 "weather": None,
                 "note": "Dome / retractable roof — weather adjustment minimal",
-            })
+            }
+            # Retractable park, roof state unknown: assume CLOSED (headline 0)
+            # but also compute the pure-model open-roof adjustment so the UI can
+            # show "closed 0 · open +X%". Skip parks we can't forecast (e.g. TOR
+            # has no NWS coverage in Canada).
+            if home in RETRACTABLE and home in NWS_GRIDS:
+                ofc = forecasts.get(home)
+                ohour, ov8 = compute_open_v8(home, g, ofc)
+                if ov8 is not None:
+                    entry["retractable"] = True
+                    entry["roof_state"] = "unknown"
+                    entry["open_weather"] = ohour
+                    entry["open_v8"] = ov8
+                    entry["note"] = ("Retractable roof — closed assumed (run adj 0); "
+                                     "open-roof model adjustment shown if it opens")
+            games_out.append(entry)
             continue
         if roof_open:
             roof_open_count += 1
@@ -433,7 +489,9 @@ def main():
                         f"the published number weighted {int(BP_BLEND_WEIGHT*100)}% toward BP's "
                         "weather-only runs on games BP covers (v8.run_adj_pct = blended; "
                         "v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. "
-                        "Retractable roofs treated as outdoor when the roof-schedule page marks the date Open."),
+                        "Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. "
+                        "When the roof state is unknown, closed is assumed (headline 0) and a pure-model "
+                        "open-roof adjustment is emitted under open_v8 for a dual 'closed 0 · open +X%' display."),
         "games": games_out,
     }
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
