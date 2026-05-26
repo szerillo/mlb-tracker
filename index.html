@@ -3097,10 +3097,13 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const bpRow = (p) => {
     const f = p.fatigue;
     const s = lookupPitcherStats(p.name);
-    // Primary FIP = xFIP if ≥10 IP, else pFIP (matches SP logic)
-    const useXfip = s?.xfip != null && (s?.ip ?? 0) >= 10;
-    const fipVal = useXfip ? s.xfip : s?.fip_proj;
-    const fipBands = useXfip ? (thr.xfip || thr.fip) : thr.fip;
+    // Weighted FIP (unified_score) — same blend as SPs: rolling xFIP/SIERA +
+    // xERA/botERA/projection. Falls back to season xFIP (≥10 IP), then pFIP.
+    const wfip = s?.unified_score;
+    const useW = wfip != null && wfip < 10;
+    const useXfip = !useW && s?.xfip != null && (s?.ip ?? 0) >= 10;
+    const fipVal = useW ? wfip : (useXfip ? s.xfip : s?.fip_proj);
+    const fipBands = (useW || useXfip) ? (thr.xfip || thr.fip) : thr.fip;
     const fipCls  = tier(fipVal, fipBands, false);
     const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
@@ -3108,11 +3111,13 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days", fLabels) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
     const nameShown = compact ? shortName(p.name) : p.name;
-    const fipLbl = useXfip ? "xFIP" : "pFIP";
+    const fipSrc = useW ? 'w' : (useXfip ? 'x' : 'p');
+    const fipLbl = useW ? "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)"
+                 : (useXfip ? "xFIP — season actual (≥10 IP)" : "pFIP — projection (no qualified xFIP yet)");
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
-      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}${useXfip ? ' — season actual (≥10 IP)' : ' — projection (no qualified xFIP yet)'}">${fmt(fipVal)}<sup class="fip-src ${useXfip ? 'act' : 'proj'}">${useXfip ? 'x' : 'p'}</sup></span></td>
+      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
       <td class="bpt-stat"><span class="v ${xeraCls}" title="xERA">${fmt(s?.xera)}</span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
@@ -3154,7 +3159,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
-      ${availWfip != null ? `<span class="bpt-availpen" title="Average unified wFIP across the ${_availWfips.length} available (non-OUT) arms — lower is better. wFIP = 45% Steamer FIP + 15% xFIP + 15% SIERA + 15% xERA + 10% botERA.">Avail pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
+      ${availWfip != null ? `<span class="bpt-availpen" title="Average weighted FIP across the ${_availWfips.length} available (non-OUT) arms — lower is better. wFIP = rolling xFIP 28 / rolling SIERA 22 / xERA 18 / botERA 17 / projection 15.">Avail pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
       ${thruPill}
     </div>
     <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
@@ -3168,7 +3173,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       </colgroup>
       <thead><tr>
         <th>B</th><th>Pitcher</th>
-        <th class="r" title="xFIP (season, ≥10 IP) or pFIP projection (fallback). Hover each value for which one.">FIP</th>
+        <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
         <th class="r" title="Expected ERA (lower = better)">xERA</th>
         <th class="r" title="K% minus BB%">K-BB%</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
@@ -4554,36 +4559,14 @@ function computeBullpenRanks() {
     byTeam[t.id].pitchers.push(s);
   });
   const teamRows = Object.values(byTeam).map(tb => {
-    const ps = tb.pitchers;
-    if (ps.length === 0) return null;
-    const mean = (field) => {
-      const v = ps.map(p => p[field]).filter(x => x != null);
-      return v.length ? v.reduce((a,b)=>a+b,0) / v.length : null;
-    };
-    const row = { team: tb.team, xfip: mean("xfip"), siera: mean("siera"),
-                  xera: mean("xera"), bot: mean("bot_era"), kbb: mean("k_bb_pct") };
-    // Require ≥3 of 5 metrics present to rank (else bias due to partial aggregation)
-    const present = ["xfip","siera","xera","bot","kbb"].filter(k => row[k] != null).length;
-    row._present = present;
-    return row;
-  }).filter(r => r && r._present >= 3);
-  const zs = {
-    xfip: zScores(teamRows.map(r => r.xfip)),
-    siera: zScores(teamRows.map(r => r.siera)),
-    xera: zScores(teamRows.map(r => r.xera)),
-    bot:  zScores(teamRows.map(r => r.bot)),
-    kbb:  zScores(teamRows.map(r => r.kbb)),
-  };
-  teamRows.forEach(r => {
-    const zList = [];
-    if (r.xfip  != null && zs.xfip)  zList.push((r.xfip  - zs.xfip.mean)  / zs.xfip.sd);
-    if (r.siera != null && zs.siera) zList.push((r.siera - zs.siera.mean) / zs.siera.sd);
-    if (r.xera  != null && zs.xera)  zList.push((r.xera  - zs.xera.mean)  / zs.xera.sd);
-    if (r.bot   != null && zs.bot)   zList.push((r.bot   - zs.bot.mean)   / zs.bot.sd);
-    if (r.kbb   != null && zs.kbb)   zList.push(-((r.kbb - zs.kbb.mean)   / zs.kbb.sd));
-    r.composite = zList.length ? zList.reduce((a,b)=>a+b,0) / zList.length : null;
-  });
-  teamRows.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+    // Rank by the bullpen's average weighted FIP (unified_score) — same blend
+    // as the per-reliever wFIP cell. Lower = better. Need ≥2 arms with a wFIP.
+    const wfips = tb.pitchers.map(p => p.unified_score).filter(x => x != null && x < 10);
+    if (wfips.length < 2) return null;
+    const wfip = wfips.reduce((a, b) => a + b, 0) / wfips.length;
+    return { team: tb.team, wfip, n: wfips.length };
+  }).filter(Boolean);
+  teamRows.sort((a, b) => a.wfip - b.wfip);
   const byAbbr = new Map();
   const byId = new Map();
   const total = teamRows.length;
@@ -4819,6 +4802,7 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
     return {
       team: tb.team,
       n: ps.length,
+      wfip: mean("unified_score"),   // avg weighted FIP — headline ranking metric
       xfip: mean("xfip"),
       siera: mean("siera"),
       xera: mean("xera"),
@@ -4845,7 +4829,8 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
     if (r.kbb   != null && zs.kbb)   zList.push(-((r.kbb - zs.kbb.mean)   / zs.kbb.sd));
     r.composite = zList.length ? zList.reduce((a, b) => a + b, 0) / zList.length : null;
   });
-  teamRows.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  // Rank by avg weighted FIP (same blend as the per-reliever wFIP); composite kept for reference.
+  teamRows.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
 
   const fmt = v => v == null ? "—" : v.toFixed(2);
   const total = teamRows.length;
@@ -4855,7 +4840,8 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
-      <td class="comp ${tierCls}">${r.composite != null ? r.composite.toFixed(2) : "—"}</td>
+      <td class="comp ${tierCls}">${fmt(r.wfip)}</td>
+      <td>${r.composite != null ? r.composite.toFixed(2) : "—"}</td>
       <td>${fmt(r.xfip)}</td>
       <td>${fmt(r.siera)}</td>
       <td>${fmt(r.xera)}</td>
@@ -4865,8 +4851,8 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
   }).join("");
 
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="8" class="rk-empty">No bullpen data.</td></tr>'}</tbody>
+    <thead><tr><th>#</th><th class="left">Team</th><th title="Avg weighted FIP across the bullpen — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)">wFIP</th><th title="z-score composite across the components (reference)">Comp</th><th>xFIP</th><th>SIERA</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No bullpen data.</td></tr>'}</tbody>
   </table>`;
 }
 
