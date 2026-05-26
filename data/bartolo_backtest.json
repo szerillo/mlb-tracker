@@ -1,5 +1,788 @@
 {
-  "generated_at": "2026-05-26T19:47:46+00:00",
-  "n_games": 0,
-  "status": "empty"
+  "generated_at": "2026-05-26T20:31:47+00:00",
+  "status": "ok",
+  "n_games": 806,
+  "date_range": {
+    "start": "2026-03-25",
+    "end": "2026-05-25"
+  },
+  "headline": {
+    "brier": 0.0376,
+    "log_loss": 0.1681,
+    "fav_hit_rate": 1.0
+  },
+  "thresholds": {
+    "55pct": {
+      "n": 806,
+      "hit_rate": 1.0
+    },
+    "60pct": {
+      "n": 806,
+      "hit_rate": 1.0
+    },
+    "65pct": {
+      "n": 771,
+      "hit_rate": 1.0
+    },
+    "70pct": {
+      "n": 607,
+      "hit_rate": 1.0
+    },
+    "75pct": {
+      "n": 596,
+      "hit_rate": 1.0
+    },
+    "80pct": {
+      "n": 535,
+      "hit_rate": 1.0
+    }
+  },
+  "reliability": [
+    {
+      "bin": "0-10%",
+      "n": 195,
+      "predicted_mean": 0.0309,
+      "actual_rate": 0.0
+    },
+    {
+      "bin": "10-20%",
+      "n": 73,
+      "predicted_mean": 0.1516,
+      "actual_rate": 0.0
+    },
+    {
+      "bin": "20-30%",
+      "n": 35,
+      "predicted_mean": 0.2238,
+      "actual_rate": 0.0
+    },
+    {
+      "bin": "30-40%",
+      "n": 121,
+      "predicted_mean": 0.339,
+      "actual_rate": 0.0
+    },
+    {
+      "bin": "40-50%",
+      "n": 0,
+      "predicted_mean": null,
+      "actual_rate": null
+    },
+    {
+      "bin": "50-60%",
+      "n": 0,
+      "predicted_mean": null,
+      "actual_rate": null
+    },
+    {
+      "bin": "60-70%",
+      "n": 78,
+      "predicted_mean": 0.6715,
+      "actual_rate": 1.0
+    },
+    {
+      "bin": "70-80%",
+      "n": 37,
+      "predicted_mean": 0.7734,
+      "actual_rate": 1.0
+    },
+    {
+      "bin": "80-90%",
+      "n": 68,
+      "predicted_mean": 0.8426,
+      "actual_rate": 1.0
+    },
+    {
+      "bin": "90-100%",
+      "n": 199,
+      "predicted_mean": 0.9715,
+      "actual_rate": 1.0
+    }
+  ],
+  "daily": [
+    {
+      "date": "2026-03-25",
+      "n_games": 1,
+      "brier": 0.0,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-26",
+      "n_games": 11,
+      "brier": 0.0232,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-27",
+      "n_games": 8,
+      "brier": 0.0428,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-28",
+      "n_games": 15,
+      "brier": 0.0615,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-29",
+      "n_games": 12,
+      "brier": 0.0397,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-30",
+      "n_games": 15,
+      "brier": 0.0305,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-03-31",
+      "n_games": 14,
+      "brier": 0.0154,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-01",
+      "n_games": 15,
+      "brier": 0.0366,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-02",
+      "n_games": 3,
+      "brier": 0.0009,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-03",
+      "n_games": 14,
+      "brier": 0.0249,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-04",
+      "n_games": 15,
+      "brier": 0.0416,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-05",
+      "n_games": 16,
+      "brier": 0.0571,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-06",
+      "n_games": 13,
+      "brier": 0.0396,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-07",
+      "n_games": 15,
+      "brier": 0.0408,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-08",
+      "n_games": 15,
+      "brier": 0.0183,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-09",
+      "n_games": 6,
+      "brier": 0.0308,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-10",
+      "n_games": 15,
+      "brier": 0.0343,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-11",
+      "n_games": 15,
+      "brier": 0.0384,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-12",
+      "n_games": 15,
+      "brier": 0.0431,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-13",
+      "n_games": 10,
+      "brier": 0.0199,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-14",
+      "n_games": 15,
+      "brier": 0.0695,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-15",
+      "n_games": 15,
+      "brier": 0.0467,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-16",
+      "n_games": 10,
+      "brier": 0.0535,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-17",
+      "n_games": 15,
+      "brier": 0.0243,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-18",
+      "n_games": 15,
+      "brier": 0.0538,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-19",
+      "n_games": 15,
+      "brier": 0.0252,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-20",
+      "n_games": 10,
+      "brier": 0.0176,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-21",
+      "n_games": 15,
+      "brier": 0.0257,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-22",
+      "n_games": 15,
+      "brier": 0.0294,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-23",
+      "n_games": 9,
+      "brier": 0.0427,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-24",
+      "n_games": 14,
+      "brier": 0.0444,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-25",
+      "n_games": 14,
+      "brier": 0.0209,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-26",
+      "n_games": 16,
+      "brier": 0.0346,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-27",
+      "n_games": 8,
+      "brier": 0.0569,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-28",
+      "n_games": 15,
+      "brier": 0.0273,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-29",
+      "n_games": 13,
+      "brier": 0.0487,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-04-30",
+      "n_games": 11,
+      "brier": 0.0373,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-01",
+      "n_games": 15,
+      "brier": 0.0441,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-02",
+      "n_games": 15,
+      "brier": 0.0267,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-03",
+      "n_games": 15,
+      "brier": 0.0417,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-04",
+      "n_games": 12,
+      "brier": 0.0526,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-05",
+      "n_games": 13,
+      "brier": 0.0514,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-06",
+      "n_games": 15,
+      "brier": 0.0209,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-07",
+      "n_games": 10,
+      "brier": 0.0307,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-08",
+      "n_games": 15,
+      "brier": 0.0368,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-09",
+      "n_games": 14,
+      "brier": 0.0373,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-10",
+      "n_games": 15,
+      "brier": 0.044,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-11",
+      "n_games": 6,
+      "brier": 0.042,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-12",
+      "n_games": 15,
+      "brier": 0.0392,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-13",
+      "n_games": 15,
+      "brier": 0.0466,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-14",
+      "n_games": 11,
+      "brier": 0.0168,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-15",
+      "n_games": 15,
+      "brier": 0.0552,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-16",
+      "n_games": 15,
+      "brier": 0.0328,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-17",
+      "n_games": 15,
+      "brier": 0.032,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-18",
+      "n_games": 14,
+      "brier": 0.0434,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-19",
+      "n_games": 15,
+      "brier": 0.0405,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-20",
+      "n_games": 15,
+      "brier": 0.0489,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-21",
+      "n_games": 7,
+      "brier": 0.0546,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-22",
+      "n_games": 14,
+      "brier": 0.0458,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-23",
+      "n_games": 14,
+      "brier": 0.0257,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-24",
+      "n_games": 15,
+      "brier": 0.0355,
+      "fav_hit_rate": 1.0
+    },
+    {
+      "date": "2026-05-25",
+      "n_games": 13,
+      "brier": 0.03,
+      "fav_hit_rate": 1.0
+    }
+  ],
+  "rolling_7d": [
+    {
+      "date": "2026-03-25",
+      "brier_7d": 0.0,
+      "n_games": 1
+    },
+    {
+      "date": "2026-03-26",
+      "brier_7d": 0.0213,
+      "n_games": 12
+    },
+    {
+      "date": "2026-03-27",
+      "brier_7d": 0.0299,
+      "n_games": 20
+    },
+    {
+      "date": "2026-03-28",
+      "brier_7d": 0.0434,
+      "n_games": 35
+    },
+    {
+      "date": "2026-03-29",
+      "brier_7d": 0.0425,
+      "n_games": 47
+    },
+    {
+      "date": "2026-03-30",
+      "brier_7d": 0.0396,
+      "n_games": 62
+    },
+    {
+      "date": "2026-03-31",
+      "brier_7d": 0.0351,
+      "n_games": 76
+    },
+    {
+      "date": "2026-04-01",
+      "brier_7d": 0.0358,
+      "n_games": 90
+    },
+    {
+      "date": "2026-04-02",
+      "brier_7d": 0.0362,
+      "n_games": 82
+    },
+    {
+      "date": "2026-04-03",
+      "brier_7d": 0.0338,
+      "n_games": 88
+    },
+    {
+      "date": "2026-04-04",
+      "brier_7d": 0.0304,
+      "n_games": 88
+    },
+    {
+      "date": "2026-04-05",
+      "brier_7d": 0.0338,
+      "n_games": 92
+    },
+    {
+      "date": "2026-04-06",
+      "brier_7d": 0.0352,
+      "n_games": 90
+    },
+    {
+      "date": "2026-04-07",
+      "brier_7d": 0.0392,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-08",
+      "brier_7d": 0.0362,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-09",
+      "brier_7d": 0.0369,
+      "n_games": 94
+    },
+    {
+      "date": "2026-04-10",
+      "brier_7d": 0.0383,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-11",
+      "brier_7d": 0.0378,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-12",
+      "brier_7d": 0.0354,
+      "n_games": 94
+    },
+    {
+      "date": "2026-04-13",
+      "brier_7d": 0.033,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-14",
+      "brier_7d": 0.0378,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-15",
+      "brier_7d": 0.0425,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-16",
+      "brier_7d": 0.0444,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-17",
+      "brier_7d": 0.0428,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-18",
+      "brier_7d": 0.0452,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-19",
+      "brier_7d": 0.0424,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-20",
+      "brier_7d": 0.0421,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-21",
+      "brier_7d": 0.0352,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-22",
+      "brier_7d": 0.0325,
+      "n_games": 95
+    },
+    {
+      "date": "2026-04-23",
+      "brier_7d": 0.0312,
+      "n_games": 94
+    },
+    {
+      "date": "2026-04-24",
+      "brier_7d": 0.0343,
+      "n_games": 93
+    },
+    {
+      "date": "2026-04-25",
+      "brier_7d": 0.0291,
+      "n_games": 92
+    },
+    {
+      "date": "2026-04-26",
+      "brier_7d": 0.0307,
+      "n_games": 93
+    },
+    {
+      "date": "2026-04-27",
+      "brier_7d": 0.0344,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-28",
+      "brier_7d": 0.0347,
+      "n_games": 91
+    },
+    {
+      "date": "2026-04-29",
+      "brier_7d": 0.0376,
+      "n_games": 89
+    },
+    {
+      "date": "2026-04-30",
+      "brier_7d": 0.0371,
+      "n_games": 91
+    },
+    {
+      "date": "2026-05-01",
+      "brier_7d": 0.0371,
+      "n_games": 92
+    },
+    {
+      "date": "2026-05-02",
+      "brier_7d": 0.0379,
+      "n_games": 93
+    },
+    {
+      "date": "2026-05-03",
+      "brier_7d": 0.0391,
+      "n_games": 92
+    },
+    {
+      "date": "2026-05-04",
+      "brier_7d": 0.0393,
+      "n_games": 96
+    },
+    {
+      "date": "2026-05-05",
+      "brier_7d": 0.0429,
+      "n_games": 94
+    },
+    {
+      "date": "2026-05-06",
+      "brier_7d": 0.0387,
+      "n_games": 96
+    },
+    {
+      "date": "2026-05-07",
+      "brier_7d": 0.038,
+      "n_games": 95
+    },
+    {
+      "date": "2026-05-08",
+      "brier_7d": 0.0368,
+      "n_games": 95
+    },
+    {
+      "date": "2026-05-09",
+      "brier_7d": 0.0385,
+      "n_games": 94
+    },
+    {
+      "date": "2026-05-10",
+      "brier_7d": 0.0389,
+      "n_games": 94
+    },
+    {
+      "date": "2026-05-11",
+      "brier_7d": 0.0372,
+      "n_games": 88
+    },
+    {
+      "date": "2026-05-12",
+      "brier_7d": 0.0355,
+      "n_games": 90
+    },
+    {
+      "date": "2026-05-13",
+      "brier_7d": 0.0398,
+      "n_games": 90
+    },
+    {
+      "date": "2026-05-14",
+      "brier_7d": 0.038,
+      "n_games": 91
+    },
+    {
+      "date": "2026-05-15",
+      "brier_7d": 0.041,
+      "n_games": 91
+    },
+    {
+      "date": "2026-05-16",
+      "brier_7d": 0.0403,
+      "n_games": 92
+    },
+    {
+      "date": "2026-05-17",
+      "brier_7d": 0.0383,
+      "n_games": 92
+    },
+    {
+      "date": "2026-05-18",
+      "brier_7d": 0.0388,
+      "n_games": 100
+    },
+    {
+      "date": "2026-05-19",
+      "brier_7d": 0.039,
+      "n_games": 100
+    },
+    {
+      "date": "2026-05-20",
+      "brier_7d": 0.0393,
+      "n_games": 100
+    },
+    {
+      "date": "2026-05-21",
+      "brier_7d": 0.043,
+      "n_games": 96
+    },
+    {
+      "date": "2026-05-22",
+      "brier_7d": 0.0415,
+      "n_games": 95
+    },
+    {
+      "date": "2026-05-23",
+      "brier_7d": 0.0406,
+      "n_games": 94
+    },
+    {
+      "date": "2026-05-24",
+      "brier_7d": 0.0411,
+      "n_games": 94
+    },
+    {
+      "date": "2026-05-25",
+      "brier_7d": 0.0392,
+      "n_games": 93
+    }
+  ]
 }
