@@ -157,26 +157,23 @@ def main() -> int:
             continue
 
         out_games[str(g.game_pk)] = {
-            **adj.summary,
-            "umpire_name": ump_name,
-            "venue": g.venue,
+            **adj.frontend_dict(ump_name=ump_name, venue=g.venue),
+            "game_pk": str(g.game_pk),
+            "game_date": g.game_date.isoformat(),
             "n_batted_balls": int((gdf["type"] == "X").sum()),
         }
         print(f"  {g.display}: WP away={adj.base.away_win_prob:.3f} "
               f"(ump-adj={adj.ump_adjusted_away_wp:.3f})")
 
-    # Write output.
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    payload_out = {
-        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-        "window_date": target.isoformat(),
-        "model_path": str(MODEL_PATH.relative_to(REPO_ROOT)),
-        "status": "ok",
-        "n_games": len(out_games),
-        "games": out_games,
-    }
-    OUTPUT.write_text(json.dumps(payload_out, indent=2, default=str))
-    print(f"  wrote {len(out_games)} games to {OUTPUT}")
+    # Snapshot today into the per-date archive, then rebuild the flat file from
+    # the WHOLE archive. This makes the daily job accumulate + self-heal (a flat
+    # file is just a projection of the archive), instead of overwriting it with
+    # only today's games.
+    from bartolo.archive import write_date_archive, aggregate_archives
+    write_date_archive(REPO_ROOT, target.isoformat(), out_games, status="ok")
+    payload = aggregate_archives(REPO_ROOT)
+    print(f"  wrote {len(out_games)} games for {target.isoformat()} to archive; "
+          f"flat bartolo_wp.json now has {payload['n_games']} games")
     return 0
 
 
