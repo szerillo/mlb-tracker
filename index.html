@@ -2352,6 +2352,35 @@ function renderStatcastTeamAvgTable(games) {
   const headers = metrics.map(([lbl]) =>
     `<th class="center" style="width:40px;" title="Team-avg letter grade vs MLB (percentile-based; high = good). C ≈ avg.">${lbl}</th>`
   ).join("");
+  // Team-average percentiles cluster near 50 (small between-team SD), so grading
+  // them on the individual ladder makes every team a C. Spread each column by
+  // z-scoring across the teams in view, stretched onto the full A–F ladder.
+  const _allAvgs = [];
+  for (const g of sorted) {
+    const lg = lineupsForGame(g);
+    const ap = lg?.lineups?.away?.players || [];
+    const hp = lg?.lineups?.home?.players || [];
+    if (ap.length) _allAvgs.push(teamAvg(ap));
+    if (hp.length) _allAvgs.push(teamAvg(hp));
+  }
+  const _colStat = {};
+  for (const [, key] of metrics) {
+    const vals = _allAvgs.map(a => a[key]).filter(v => v != null);
+    if (vals.length >= 4) {
+      const m = vals.reduce((x, y) => x + y, 0) / vals.length;
+      const sd = Math.sqrt(vals.reduce((x, y) => x + (y - m) * (y - m), 0) / vals.length) || 1;
+      _colStat[key] = { m, sd };
+    }
+  }
+  const _SC_SPREAD = 18;
+  const makeCells = (avgs) => metrics.map(([lbl, key]) => {
+    const v = avgs[key];
+    if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
+    const cs = _colStat[key];
+    const disp = cs ? Math.max(1, Math.min(99, 50 + ((v - cs.m) / cs.sd) * _SC_SPREAD)) : v;
+    const l = gradeLetter(disp);
+    return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} — vs other teams' lineups (${Math.round(v)}th-pct raw avg)">${l}</span></td>`;
+  }).join("");
   let rowsHTML = "";
   let n_games_with_data = 0;
   for (const g of sorted) {
@@ -2363,12 +2392,6 @@ function renderStatcastTeamAvgTable(games) {
     const awayAvg = teamAvg(awayP);
     const homeAvg = teamAvg(homeP);
     const gt = fmtTime(g.gameDate);
-    const makeCells = (avgs) => metrics.map(([lbl, key]) => {
-      const v = avgs[key];
-      if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
-      const l = gradeLetter(v);
-      return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} (${Math.round(v)}th pct, team avg)">${l}</span></td>`;
-    }).join("");
     // Game header row
     rowsHTML += `<tr class="sc-game-hdr">
       <td colspan="${metrics.length + 2}" style="padding:0.4rem 0.3rem 0.15rem;
@@ -2389,7 +2412,7 @@ function renderStatcastTeamAvgTable(games) {
     </tr>`;
   }
   if (!n_games_with_data) return '<div class="coming-soon">No lineups posted yet</div>';
-  return `<div class="lu-sc-note">Team-avg Savant grades across <b>today's posted lineup</b> · letter grades vs MLB (C ≈ avg) · matchups grouped by game time</div>
+  return `<div class="lu-sc-note">Team-avg Savant grades across <b>today's posted lineup</b> · graded vs other teams' lineups (C ≈ league-avg lineup) · matchups grouped by game time</div>
     <table class="lineup-table" style="width:100%;">
       <thead><tr>
         <th class="left" style="width:90px;">Team</th>
@@ -2756,6 +2779,19 @@ function teamGradePct(players, cat) {
   return tw > 0 ? wsum / tw : null;
 }
 
+// Team-level spread: averaging ~9 player percentiles regresses every team toward
+// 50 (real team SD is only ~7–12), so raw team means all grade C. We normalize by
+// how teams actually vary (per-category team SD, centered at 50) and stretch onto
+// the full A–F ladder, so a strong lineup reaches A and a weak one D/F.
+const TEAM_GRADE_SD = { pwr: 7.5, eye: 12, bsr: 9, def: 12 };
+const TEAM_GRADE_SPREAD = 18;
+function teamGradeLetter(rawPct, cat) {
+  if (rawPct == null) return null;
+  const sd = TEAM_GRADE_SD[cat] || 10;
+  const disp = Math.max(1, Math.min(99, 50 + ((rawPct - 50) / sd) * TEAM_GRADE_SPREAD));
+  return { letter: gradeLetter(disp), raw: Math.round(rawPct) };
+}
+
 // Team-grade bar: wRC+ (vs opp hand) + PWR/EYE/BSR/DEF letter chips.
 function teamGradeBar(game, side) {
   const lg = lineupsForGame(game);
@@ -2763,10 +2799,9 @@ function teamGradeBar(game, side) {
   if (!HITTERS || !players.length) return "";
   const wrc = teamWrcSpan(game, side);
   const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
-    const pct = teamGradePct(players, cat);
-    const l = gradeLetter(pct);
-    if (!l) return "";
-    return `<span class="tg-chip" title="Team avg ${lbl} grade — ${l} (${Math.round(pct)}th pct, PA-weighted)"><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(l)}">${l}</span></span>`;
+    const g = teamGradeLetter(teamGradePct(players, cat), cat);
+    if (!g) return "";
+    return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary)"><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
   }).join("");
   if (!wrc && !chips) return "";
   return `<div class="team-grade-bar">${wrc}${chips}</div>`;
