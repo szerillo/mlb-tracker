@@ -221,6 +221,8 @@
   .sb-pfwx-cell { line-height: 1.4; }
   .sb-pfwx-stack { display: inline-flex; flex-direction: column; gap: 0.2rem;
     align-items: center; min-width: 90px; }
+  .sb-pg-chip { font-size: 0.76rem; }
+  .sb-pg-chip .pct-label { color: var(--accent); font-weight: 700; }
   .sb-pct-chip { display: inline-flex; align-items: center; gap: 0.3rem;
     font-family: var(--mono); font-size: 0.82rem; font-weight: 600;
     padding: 0.14rem 0.5rem; border-radius: 3px;
@@ -1507,6 +1509,129 @@ function blendedWxPct(game) {
   return { isDome: false, value: null };
 }
 
+// ============================================================================
+// PRE-GAME WIN PROBABILITY (predictive) — Sean's MLB Daily Projections model on
+// BARTOLO data. Offense = (blended wOBA / 0.317)^2 · 4.5, split-adjusted (√ wRC+
+// vs opp hand), lineup-spot weighted (1.44…0.61) and Power/Eye-modified; pitching
+// = weighted-FIP RA (SP·0.555 + pen·0.445·bp_factor)·pqm, blended with offense by
+// pw (K-BB% led); + own BSR − opp DEF, × park × HFA (0.96/1.04); Pythagorean^1.83.
+// DISTINCT from the post-game Win Prob tab (which resamples *completed* games).
+// ============================================================================
+const PG_LG_WOBA = 0.317, PG_RG = 4.5, PG_PYTH = 1.83;
+const PG_SPOT_WT = [1.44, 1.31, 1.22, 1.06, 0.94, 0.88, 0.81, 0.69, 0.61];
+const _pgClamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+
+function _pgTeamOffense(players, oppHand) {
+  if (!players || !players.length || !HITTERS) return null;
+  let sum = 0, n = 0;
+  players.slice(0, 9).forEach((p, i) => {
+    const nm = p.name || p;
+    const h = HITTERS.hitters?.[normName(nm)];
+    if (!h) return;
+    const proj = h.woba, act = (h.xwoba_actual != null ? h.xwoba_actual : h.woba_actual);
+    const w = (proj != null && act != null) ? (proj + act) / 2 : (proj != null ? proj : act);
+    if (w == null) return;
+    let rv = Math.pow(w / PG_LG_WOBA, 2) * PG_RG;
+    const split = oppHand === 'L' ? h.wrc_vs_l : h.wrc_vs_r;
+    if (split != null) rv *= Math.sqrt(_pgClamp(split / 100, 0.5, 1.8));
+    const hp = (typeof lookupHitterPct === 'function') ? lookupHitterPct(nm) : null;
+    const pPow = (typeof powerPct === 'function') ? powerPct(hp) : null;
+    const pEye = (typeof eyePct === 'function') ? eyePct(hp) : null;
+    if (pPow != null) rv *= (1 + ((22 + (pPow - 50) / 50 * 8.4) - 22) / 22 * 0.12);
+    if (pEye != null) rv *= (1 + ((10 + (pEye - 50) / 50 * 5.14) - 10) / 10 * 0.12);
+    rv *= (PG_SPOT_WT[i] || 1);
+    sum += rv; n++;
+  });
+  return n ? sum / n : null;   // ~runs/game (spot weights average ~1)
+}
+
+function _pgLineupKbb(players) {
+  if (!players || !HITTERS) return 0.128;
+  let s = 0, n = 0;
+  players.slice(0, 9).forEach(p => {
+    const h = HITTERS.hitters?.[normName(p.name || p)];
+    if (!h) return;
+    const k = h.k_pct_actual != null ? h.k_pct_actual : h.k_pct;
+    const bb = h.bb_pct_actual != null ? h.bb_pct_actual : h.bb_pct;
+    if (k != null && bb != null) { s += (k - bb) / 100; n++; }
+  });
+  return n ? s / n : 0.128;
+}
+
+function _pgSum(players, field) {
+  if (!players || !HITTERS) return 0;
+  let s = 0;
+  players.slice(0, 9).forEach(p => {
+    const h = HITTERS.hitters?.[normName(p.name || p)];
+    if (h && typeof h[field] === 'number') s += h[field];
+  });
+  return s;
+}
+
+function _pgTeamBullpenRA(team) {
+  try {
+    const arms = teamAvailRelievers(team);
+    const ws = arms.map(s => s.unified_score).filter(x => x != null && x < 10);
+    if (ws.length >= 2) return ws.reduce((a, b) => a + b, 0) / ws.length;
+  } catch (e) {}
+  return null;
+}
+
+function _pgStaff(spName, team, oppLineupKbb) {
+  const s = lookupPitcherStats(spName);
+  const spRA = (s && s.unified_score != null && s.unified_score < 10) ? s.unified_score : (s?.fip_proj ?? 4.30);
+  const kbb = s?.k_bb_pct ?? 0.126;
+  const pq = _pgClamp(s?.pitching_plus ?? s?.stuff_plus ?? 100, 60, 140);
+  const pqm = 1 - (pq - 100) / 100 * 0.15;
+  const gs = s?.gs ?? 0, ip = s?.ip ?? 0;
+  const raw = gs > 0 ? ip / gs : 5.2;
+  const wt = gs < 5 ? 0 : Math.min(1, gs / 10);
+  const shrunk = raw * wt + 5.2 * (1 - wt);
+  const ipF = _pgClamp(1 - (shrunk - 5.2) / 4, 0.85, 1.15);
+  const kbbF = _pgClamp(1 - (kbb - 0.128) * 2.3, 0.82, 1.18);
+  const bpf = (ipF + kbbF) / 2;
+  const bpRA = _pgTeamBullpenRA(team) ?? 4.20;
+  const ekbb = kbb + ((oppLineupKbb ?? 0.128) - 0.128) * 0.5;
+  const pw = _pgClamp(0.55 + (ekbb - 0.128) * 2, 0.5, 0.8);
+  return { spRA, bpRA, pqm, bpf, pw };
+}
+
+function computePregame(game) {
+  if (!HITTERS || !PITCHER_STATS) return null;
+  const away = game.teams.away, home = game.teams.home;
+  const awaySP = away.probablePitcher?.fullName, homeSP = home.probablePitcher?.fullName;
+  if (!awaySP || !homeSP) return null;
+  const lg = lineupsForGame(game);
+  const ap = lg?.lineups?.away?.players, hp = lg?.lineups?.home?.players;
+  if (!ap?.length || !hp?.length) return null;          // needs both lineups (posted or projected)
+  const awayHand = handOfPitcher(awaySP) || 'R';
+  const homeHand = handOfPitcher(homeSP) || 'R';
+  const awayOff = _pgTeamOffense(ap, homeHand);          // away bats vs home SP
+  const homeOff = _pgTeamOffense(hp, awayHand);
+  if (awayOff == null || homeOff == null) return null;
+  const homeStaff = _pgStaff(homeSP, { id: home.team.id, name: home.team.name }, _pgLineupKbb(ap));
+  const awayStaff = _pgStaff(awaySP, { id: away.team.id, name: away.team.name }, _pgLineupKbb(hp));
+  const pfRow = parkFactorFor(home.team.abbreviation || teamAbbr(home.team.name));
+  const park = (pfRow && pfRow.park_factor) ? pfRow.park_factor / 100 : 1;
+  const awayBSR = _pgSum(ap, 'bsr'), awayDEF = _pgSum(ap, 'fld');
+  const homeBSR = _pgSum(hp, 'bsr'), homeDEF = _pgSum(hp, 'fld');
+  const blend = (staff, off) => {
+    const staffRA = (staff.spRA * 0.555 + staff.bpRA * 0.445 * staff.bpf) * staff.pqm;
+    return staffRA * staff.pw + off * (1 - staff.pw);
+  };
+  let awayRuns = (blend(homeStaff, awayOff) * park + awayBSR - homeDEF) * 0.96;
+  let homeRuns = (blend(awayStaff, homeOff) * park + homeBSR - awayDEF) * 1.04;
+  awayRuns = Math.max(0.5, awayRuns); homeRuns = Math.max(0.5, homeRuns);
+  const hp_ = Math.pow(homeRuns, PG_PYTH), ap_ = Math.pow(awayRuns, PG_PYTH);
+  const homeWP = hp_ / (hp_ + ap_);
+  const homeForTotal = homeRuns - (homeRuns / 9 * homeWP * (0.7 + 0.3 * homeWP));
+  return {
+    awayRuns, homeRuns, homeWP, awayWP: 1 - homeWP,
+    total: awayRuns + homeForTotal,
+    confirmed: lg?.lineups?.away?.status === 'confirmed' && lg?.lineups?.home?.status === 'confirmed',
+  };
+}
+
 function teamLogo(teamId, size=28) {
   if (!teamId) return "";
   return `<img src="https://www.mlbstatic.com/team-logos/${teamId}.svg"
@@ -2266,6 +2391,22 @@ function renderScoreboard() {
       wxChip = pctChip(wxInfo.value, "Wx", "Blended weather runs adjustment");
     }
 
+    // Pre-game model WP (predictive) — home win % from the run-projection model.
+    let pgChip = "";
+    try {
+      const pg = computePregame(g);
+      if (pg) {
+        const hwp = Math.round(pg.homeWP * 100);
+        const homeAb = home, awayAb = away;
+        const favAb = pg.homeWP >= 0.5 ? homeAb : awayAb;
+        const favPct = Math.round(Math.max(pg.homeWP, pg.awayWP) * 100);
+        const cls = favPct >= 60 ? "good" : favPct >= 55 ? "" : "neutral-empty";
+        const lbl = pg.confirmed ? "WP" : "WP*";
+        const tip = `Pre-game model — ${favAb} ${favPct}% to win. Proj: ${awayAb} ${pg.awayRuns.toFixed(1)} @ ${homeAb} ${pg.homeRuns.toFixed(1)} (total ${pg.total.toFixed(1)}).${pg.confirmed ? '' : ' * projected lineup (not confirmed).'}`;
+        pgChip = `<span class="sb-pct-chip sb-pg-chip ${cls}" title="${tip}"><span class="pct-label">${lbl}</span> ${favAb} ${favPct}%</span>`;
+      }
+    } catch (e) {}
+
     // HP Ump: confirmed first, then projected fallback
     let umpCell;
     if (hp) {
@@ -2283,7 +2424,7 @@ function renderScoreboard() {
       <td class="sb-col-hide-mobile">${spMiniCell(g.teams.home.probablePitcher?.fullName, home, 'home')}</td>
       <td class="sb-total-cell">${totalCell}</td>
       <td class="sb-pfwx-cell">
-        <div class="sb-pfwx-stack">${pfChip}${wxChip}</div>
+        <div class="sb-pfwx-stack">${pfChip}${wxChip}${pgChip}</div>
       </td>
       <td class="sb-ump-cell sb-col-hide-mobile">${umpCell}</td>
     </tr>`;
