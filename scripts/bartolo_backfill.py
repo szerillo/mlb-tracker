@@ -71,8 +71,8 @@ def main() -> int:
         import pybaseball as pyb
         from bartolo.model import BattedBallModel
         from bartolo.simulator import run_simulation
-        from bartolo.ump_adjust import apply_ump_adjustment
-        from bartolo.ingest import fetch_schedule, fetch_game_pbp, extract_umpire, ump_favor_for_game
+        from bartolo.ump_adjust import apply_ump_adjustment, compute_ump_favor
+        from bartolo.ingest import fetch_schedule, fetch_game_pbp, extract_umpire
     except ImportError as e:
         print(f"[backfill] missing dep: {e}", file=sys.stderr)
         return 1
@@ -140,7 +140,7 @@ def main() -> int:
             except Exception:
                 ump_name = ""
 
-            ump_away, ump_home = ump_favor_for_game(g)
+            ump_away, ump_home = compute_ump_favor(gdf)
 
             payload = {
                 "game_pk": g.game_pk,
