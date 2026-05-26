@@ -235,6 +235,8 @@
   .sb-pct-chip.neutral-empty { opacity: 0.5; }
   .sb-wx-dome { display: inline-block; font-size: 0.82rem; color: var(--muted);
     padding: 0.12rem 0.4rem; }
+  .sb-wx-dual { font-size: 0.78rem; color: var(--text); white-space: nowrap;
+    opacity: 0.92; }
 
   /* HP Ump cell */
   .sb-ump-cell { font-size: 0.86rem; }
@@ -1471,7 +1473,16 @@ function blendedWxPct(game) {
   const homeAbbr = game.teams.home.team.abbreviation || teamAbbr(game.teams.home.team.name);
   const awayAbbr = game.teams.away.team.abbreviation || teamAbbr(game.teams.away.team.name);
   const wx = weatherForGame(game.gamePk);
-  if (wx?.is_dome) return { isDome: true, value: null };
+  if (wx?.is_dome) {
+    // Retractable parks with unknown roof state assume closed (headline 0) but
+    // carry a pure-model open-roof adjustment for a dual "closed 0 · open +X%".
+    return {
+      isDome: true,
+      value: null,
+      retractable: !!wx.retractable,
+      openValue: (wx.retractable && wx.open_v8) ? wx.open_v8.run_adj_pct : null,
+    };
+  }
 
   const gameEt = _etDateStr(game.gameDate);
   const bpEt   = _etDateStr(BP_WEATHER?.generated_at);
@@ -2244,7 +2255,13 @@ function renderScoreboard() {
     const wxInfo = blendedWxPct(g);
     let wxChip;
     if (wxInfo.isDome) {
-      wxChip = `<span class="sb-wx-dome">🏟 DOME</span>`;
+      if (wxInfo.retractable && wxInfo.openValue != null) {
+        const ov = wxInfo.openValue;
+        const os = ov >= 0 ? "+" : "";
+        wxChip = `<span class="sb-wx-dome sb-wx-dual" title="Retractable roof — closed assumed (run adj 0). If the roof opens, the model adjustment is ${os}${ov.toFixed(1)}%.">🏟 0 · open ${os}${ov.toFixed(1)}%</span>`;
+      } else {
+        wxChip = `<span class="sb-wx-dome">🏟 DOME</span>`;
+      }
     } else {
       wxChip = pctChip(wxInfo.value, "Wx", "Blended weather runs adjustment");
     }
@@ -3719,7 +3736,30 @@ function renderEnvTab() {
 // ============================================================================
 function renderWeatherDetail(wx, home_park_code, game) {
   if (!wx) return `<div class="coming-soon">Weather not loaded</div>`;
-  if (wx.is_dome) return `<div style="color:var(--muted);">🏟 Dome / retractable roof</div>`;
+  if (wx.is_dome) {
+    if (wx.retractable && wx.open_v8 && wx.open_v8.run_adj_pct != null) {
+      const ow = wx.open_weather || {};
+      const ov = wx.open_v8.run_adj_pct;
+      const os = ov >= 0 ? "+" : "";
+      const ovCls = ov > 0.5 ? "over" : ov < -0.5 ? "under" : "neutral";
+      const owLine = [
+        ow.temp_f != null ? `${ow.temp_f}°F` : null,
+        ow.wind_speed_mph != null ? `${ow.wind_speed_mph}mph ${ow.wind_dir||''}`.trim() : null,
+        `${ow.precip_pct||0}% precip`,
+      ].filter(Boolean).join(" · ");
+      return `
+        <div class="wx-dual">
+          <div class="wx-headline"><b>🏟 Retractable roof</b> — roof state unknown, <b>closed assumed</b> (run adj <b>0</b>)</div>
+          <div class="wx-forecast" style="margin-top:4px;">If open: ${owLine}${ow.short_forecast ? ` — ${ow.short_forecast}` : ''}</div>
+          <div class="wx-v8" style="margin-top:6px;">
+            <span class="ump-pct ${ovCls}" style="font-size:1.05rem;" title="Pure-model open-roof run adjustment (NWS park calibration, no BP blend). Headline assumes roof closed = 0.">
+              Open-roof Run Adj ${os}${ov.toFixed(1)}%
+            </span>
+          </div>
+        </div>`;
+    }
+    return `<div style="color:var(--muted);">🏟 Dome / retractable roof</div>`;
+  }
   if (!wx.weather) return `<div class="coming-soon">${wx.note || 'Forecast unavailable'}</div>`;
   const w = wx.weather;
   const v8 = wx.v8 || {};
