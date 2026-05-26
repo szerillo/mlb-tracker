@@ -231,6 +231,17 @@
   .sb-edge.edge-pos, .sb-edge.edge-over { color: var(--over); background: rgba(110,255,148,0.12); }
   .sb-edge.edge-neg, .sb-edge.edge-under { color: var(--under); background: rgba(255,142,110,0.12); }
   .sb-edge.edge-flat { color: var(--muted); }
+  /* Projections vs Market tab */
+  .proj-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .proj-table th { text-align: left; font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .proj-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .proj-table tbody tr:hover { background: var(--panel-hover); }
+  .proj-mono { font-family: var(--mono); }
+  .proj-muted { color: var(--muted); }
+  .proj-na { color: var(--muted); }
+  .proj-match { font-weight: 600; }
+  .proj-time { color: var(--muted); font-weight: 400; font-size: 0.72rem; margin-left: 0.4rem; }
 
   /* PF / Weather stacked (both in +/-% format) */
   .sb-pfwx-cell { line-height: 1.4; }
@@ -1280,6 +1291,7 @@
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
     <button class="tab" data-tab="rankings" role="tab">Rankings</button>
+    <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
   </div>
   <div class="tabs-hint">
@@ -1331,6 +1343,10 @@
 
   <section id="tab-rankings" class="tab-content" hidden>
     <div id="rankings-root" class="loading">Loading power rankings…</div>
+  </section>
+
+  <section id="tab-proj" class="tab-content" hidden>
+    <div id="proj-root" class="loading">Loading pre-game projections…</div>
   </section>
 
   <section id="tab-winprob" class="tab-content" hidden>
@@ -2422,12 +2438,10 @@ function renderScoreboard() {
       const favAb = favHome ? homeAbbr : awayAbbr;
       const favPct = Math.round(Math.max(pg.homeWP, pg.awayWP) * 100);
       const wpCls = favPct >= 60 ? "pg-strong" : "";
-      const edges = pgMarketEdges(pg, o);
+      // Compact chip only — full projected score / total / market edges live in the Projections tab.
+      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRuns.toFixed(1)} ${homeAbbr} · total ${pg.total.toFixed(1)}${pg.confirmed ? '' : ' · projected lineup'}. See the Projections tab for market edges.`;
       pgRow = `<div class="sb-pg-row">
-        <span class="sb-pg-proj" title="Pre-game model projected runs">${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRuns.toFixed(1)} ${homeAbbr}</span>
-        <span class="sb-pg-wp ${wpCls}">${favAb} ${favPct}%${edges.mlEdge}</span>
-        <span class="sb-pg-tot">Tot ${pg.total.toFixed(1)}${edges.totEdge}</span>
-        ${pg.confirmed ? '' : '<span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}
+        <span class="sb-pg-wp ${wpCls}" title="${tip}">Proj ${favAb} ${favPct}%</span>${pg.confirmed ? '' : '<span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}
       </div>`;
     }
 
@@ -5709,6 +5723,91 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
 }
 
 // ============================================================================
+// PROJECTIONS vs MARKET TAB (pre-game model)
+// ============================================================================
+function renderProjectionsTab() {
+  const root = document.getElementById("proj-root");
+  if (!root) return;
+  const games = (CURRENT_GAMES || []).filter(g => {
+    const s = g.status && g.status.detailedState;
+    return s !== "Final" && s !== "Game Over" && s !== "Completed Early";
+  });
+  const rows = [];
+  for (const g of games) {
+    let pg = null;
+    try { pg = computePregame(g); } catch (e) {}
+    if (!pg) continue;
+    const away = teamAbbr(g.teams.away.team.name);
+    const home = teamAbbr(g.teams.home.team.name);
+    const o = oddsForGame(g.gamePk);
+    // De-vigged market home WP from moneyline.
+    const aO = o?.moneyline?.away?.odds, hO = o?.moneyline?.home?.odds;
+    let mktHomeWP = null, mlEdge = null;
+    if (aO != null && hO != null) {
+      const am = aO < 0 ? (-aO) / ((-aO) + 100) : 100 / (aO + 100);
+      const hm = hO < 0 ? (-hO) / ((-hO) + 100) : 100 / (hO + 100);
+      const s = am + hm;
+      if (s > 0) {
+        mktHomeWP = hm / s;
+        const favHome = pg.homeWP >= 0.5;
+        const modelWP = favHome ? pg.homeWP : pg.awayWP;
+        const mWP = favHome ? mktHomeWP : (1 - mktHomeWP);
+        mlEdge = (modelWP - mWP) * 100;
+      }
+    }
+    const line = o?.total?.over?.line ?? o?.total?.under?.line;
+    const totEdge = line != null ? pg.total - line : null;
+    rows.push({ g, away, home, pg, mktHomeWP, mlEdge, line, totEdge });
+  }
+  if (!rows.length) {
+    root.innerHTML = '<div class="wp-empty">No upcoming games to project right now. The pre-game model runs on today’s and upcoming slates.</div>';
+    return;
+  }
+  rows.sort((a, b) => new Date(a.g.gameDate) - new Date(b.g.gameDate));
+
+  const fav = (r) => r.pg.homeWP >= 0.5 ? r.home : r.away;
+  const favPct = (r) => Math.round(Math.max(r.pg.homeWP, r.pg.awayWP) * 100);
+  const mlCell = (r) => {
+    if (r.mlEdge == null) return '<span class="proj-na">—</span>';
+    const cls = r.mlEdge >= 3 ? "edge-pos" : r.mlEdge <= -3 ? "edge-neg" : "edge-flat";
+    return `<span class="sb-edge ${cls}">${r.mlEdge >= 0 ? "+" : ""}${r.mlEdge.toFixed(0)}pp</span>`;
+  };
+  const totCell = (r) => {
+    if (r.totEdge == null) return '<span class="proj-na">—</span>';
+    const cls = r.totEdge >= 0.4 ? "edge-over" : r.totEdge <= -0.4 ? "edge-under" : "edge-flat";
+    const arrow = r.totEdge >= 0.4 ? "▲" : r.totEdge <= -0.4 ? "▼" : "·";
+    return `<span class="sb-edge ${cls}">${arrow}${r.totEdge >= 0 ? "+" : ""}${r.totEdge.toFixed(1)}</span>`;
+  };
+
+  const body = rows.map(r => `<tr>
+    <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.g.gameDate)}</span>${r.pg.confirmed ? "" : ' <span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}</td>
+    <td class="proj-mono">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRuns.toFixed(1)}</td>
+    <td class="proj-mono"><b>${fav(r)} ${favPct(r)}%</b></td>
+    <td class="proj-mono proj-muted">${r.mktHomeWP != null ? (fav(r) + " " + Math.round((r.pg.homeWP >= 0.5 ? r.mktHomeWP : 1 - r.mktHomeWP) * 100) + "%") : "—"}</td>
+    <td>${mlCell(r)}</td>
+    <td class="proj-mono">${r.pg.total.toFixed(1)}</td>
+    <td class="proj-mono proj-muted">${r.line != null ? r.line : "—"}</td>
+    <td>${totCell(r)}</td>
+  </tr>`).join("");
+
+  root.innerHTML = `
+    <div class="wp-intro" style="margin-bottom:0.8rem;">
+      <strong>Pre-game model vs. the market.</strong> Projected score, win probability and total from the
+      run-projection model, set against the live moneyline (de-vigged) and total. <b>Edges</b> are the model's
+      lean: ML in win-prob points on the model's side, total in projected runs vs. the posted line.
+      <span style="color:var(--under);">proj</span> = lineup not yet confirmed.
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="proj-table">
+      <thead><tr>
+        <th>Matchup</th><th>Proj Score</th><th>Model WP</th><th>Mkt WP</th><th>ML Edge</th>
+        <th>Proj Tot</th><th>Mkt Tot</th><th>Tot Edge</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>`;
+}
+
+// ============================================================================
 // TABS
 // ============================================================================
 document.querySelectorAll(".tab").forEach(btn => {
@@ -5720,6 +5819,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "bullpen")  renderBullpenTab();
     if (btn.dataset.tab === "pitchers") renderPitchersTab();
     if (btn.dataset.tab === "rankings") renderRankingsTab();
+    if (btn.dataset.tab === "proj")     renderProjectionsTab();
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
   };
 });
