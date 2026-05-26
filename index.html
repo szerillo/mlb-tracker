@@ -1007,7 +1007,19 @@
   .wp-game-card .wpg-score { font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
     color: var(--text); margin-top: 0.25rem; }
   .wp-game-card .wpg-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+  .wp-game-card .wpg-wp { font-size: 0.78rem; color: var(--accent); font-weight: 700; margin-top: 0.3rem; }
+  .wp-game-card .wpg-wp-pending { color: var(--muted); font-weight: 500; font-style: italic; }
+  .wp-game-card.selected { border-color: var(--accent); background: var(--panel-hover);
+    box-shadow: inset 0 0 0 1px var(--accent); }
   .wp-empty { color: var(--muted); font-style: italic; }
+  .wp-browse-hdr { display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; margin: 0 0 0.75rem; flex-wrap: wrap; }
+  .wp-browse-hdr h3 { margin: 0; font-family: var(--display); font-size: 1rem;
+    letter-spacing: 0.02em; color: var(--muted); text-transform: uppercase; }
+  .wp-date-select { background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    border-radius: 7px; padding: 0.4rem 0.6rem; font-size: 0.85rem; font-family: var(--mono);
+    cursor: pointer; }
+  .wp-date-select:hover { border-color: var(--accent); }
 
   .wp-detail { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
     padding: 1rem 1.25rem 1.25rem; margin-bottom: 1.5rem; }
@@ -5224,9 +5236,17 @@ function renderBsrRankings(hitters, nameToTeam, teams) {
 let WINPROB_DATA = null;      // data/bartolo_wp.json — per-game sim summaries
 let WINPROB_BACKTEST = null;  // data/bartolo_backtest.json — season-to-date calibration
 let WINPROB_SELECTED = null;  // gamePk of currently-shown detail
+let WINPROB_BROWSE_DATE = null; // YYYY-MM-DD of the archive date being browsed
 let WINPROB_RENDERED = false;
 
 function invalidateWinprob() { WINPROB_RENDERED = false; }
+
+// Format an ISO date (YYYY-MM-DD) as e.g. "Sat, May 24" for the Win Prob archive.
+function wpFmtDate(iso) {
+  if (!iso) return "";
+  const dt = new Date(iso + "T12:00:00");
+  return isNaN(dt) ? iso : dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
 
 // ─── Season-to-date backtest sub-section ────────────────────────────────────
 function renderWinprobBacktest(bt) {
@@ -5387,38 +5407,89 @@ async function renderWinprobTab() {
   }
   const backtestHtml = renderWinprobBacktest(WINPROB_BACKTEST);
 
-  // No finals today? Try past dates from WINPROB_DATA
-  const completedPks = Object.keys(WINPROB_DATA.games || {});
-  if (finalsToday.length === 0 && completedPks.length === 0) {
-    root.innerHTML = intro + '<div class="wp-empty">No completed games yet today. Check back after first pitch — final-game analysis will surface here.</div>';
+  // GAME ARCHIVE BROWSER
+  // Every completed game we've simulated lives in WINPROB_DATA.games (keyed by
+  // gamePk, each carrying game_date + the full sim payload). Group by date so the
+  // user can step back through the whole season and click into any game. Today's
+  // live finals that haven't been archived yet get a lightweight shell so they're
+  // still browsable before the daily runner processes them.
+  const wpGames = WINPROB_DATA.games || {};
+  if (finalsToday.length === 0 && Object.keys(wpGames).length === 0) {
+    root.innerHTML = intro + backtestHtml + '<div class="wp-empty">No simulated games yet. Final-game analysis appears here once the daily runner processes a completed slate.</div>';
     WINPROB_RENDERED = true;
     return;
   }
 
-  // Build a card grid of completed games
-  const cards = finalsToday.map(g => {
-    const away = teamAbbr(g.teams.away.team.name);
-    const home = teamAbbr(g.teams.home.team.name);
+  const byDate = {};
+  for (const [pk, sim] of Object.entries(wpGames)) {
+    const d = (sim.game_date || "").slice(0, 10) || "unknown";
+    (byDate[d] = byDate[d] || []).push({ pk: String(pk), sim });
+  }
+  const todayIso = (typeof VIEW_DATE !== "undefined" && VIEW_DATE) ? VIEW_DATE : today();
+  finalsToday.forEach(g => {
+    const pk = String(g.gamePk);
+    if (wpGames[pk]) return;               // already archived
     const fs = g._finalScore || {};
-    const aPk = g.gamePk;
-    return `<div class="wp-game-card" data-pk="${aPk}">
+    const shell = {
+      game_date: todayIso,
+      away_team: g.teams.away.team.name,
+      home_team: g.teams.home.team.name,
+      actual_away_runs: fs.away, actual_home_runs: fs.home,
+      venue: g.venue?.name || "",
+      _live: true,
+    };
+    (byDate[todayIso] = byDate[todayIso] || []).push({ pk, sim: shell });
+  });
+
+  const allDates = Object.keys(byDate).sort().reverse();
+  // If a game is selected (e.g. from a scoreboard chip), browse that game's date.
+  if (WINPROB_SELECTED != null) {
+    for (const d of allDates) {
+      if (byDate[d].some(x => x.pk === String(WINPROB_SELECTED))) { WINPROB_BROWSE_DATE = d; break; }
+    }
+  }
+  if (!WINPROB_BROWSE_DATE || !byDate[WINPROB_BROWSE_DATE]) WINPROB_BROWSE_DATE = allDates[0];
+
+  const dateOpts = allDates.map(d =>
+    `<option value="${d}"${d === WINPROB_BROWSE_DATE ? " selected" : ""}>${wpFmtDate(d)} · ${byDate[d].length} game${byDate[d].length === 1 ? "" : "s"}</option>`
+  ).join("");
+
+  const dayGames = (byDate[WINPROB_BROWSE_DATE] || []).slice()
+    .sort((a, b) => (a.sim.away_team || "").localeCompare(b.sim.away_team || ""));
+  const cards = dayGames.map(({ pk, sim }) => {
+    const away = teamAbbr(sim.away_team) || sim.away_team || "?";
+    const home = teamAbbr(sim.home_team) || sim.home_team || "?";
+    const aR = sim.actual_away_runs, hR = sim.actual_home_runs;
+    let wpChip;
+    if (sim.away_wp != null) {
+      const favAway = sim.away_wp >= 0.5;
+      const favAb = favAway ? away : home;
+      const favPct = Math.round((favAway ? sim.away_wp : 1 - sim.away_wp) * 100);
+      wpChip = `<div class="wpg-wp">${favAb} ${favPct}% WP</div>`;
+    } else {
+      wpChip = `<div class="wpg-wp wpg-wp-pending">sim pending</div>`;
+    }
+    const sel = (pk === String(WINPROB_SELECTED)) ? " selected" : "";
+    return `<div class="wp-game-card${sel}" data-pk="${pk}">
       <div class="wpg-matchup">${away} @ ${home}</div>
-      <div class="wpg-score">${fs.away != null ? fs.away : '—'}–${fs.home != null ? fs.home : '—'}</div>
-      <div class="wpg-meta">${g.venue?.name || ''}</div>
+      <div class="wpg-score">${aR != null ? aR : "—"}–${hR != null ? hR : "—"}</div>
+      ${wpChip}
     </div>`;
   }).join("");
 
-  // If a game is selected, render its detail below
+  // Detail for the selected game — prefer the archived sim, fall back to a live final.
   let detailHtml = "";
-  const selectedGame = WINPROB_SELECTED ? finalsMap[WINPROB_SELECTED] : null;
-  if (selectedGame) {
-    detailHtml = renderWinprobDetail(selectedGame, WINPROB_DATA.games && WINPROB_DATA.games[selectedGame.gamePk]);
+  if (WINPROB_SELECTED != null && wpGames[String(WINPROB_SELECTED)]) {
+    detailHtml = renderWinprobDetailSim(wpGames[String(WINPROB_SELECTED)]);
+  } else if (WINPROB_SELECTED != null && finalsMap[WINPROB_SELECTED]) {
+    detailHtml = renderWinprobDetail(finalsMap[WINPROB_SELECTED], null);
   }
 
   root.innerHTML = intro
     + backtestHtml
-    + '<h3 style="margin:0 0 0.5rem;font-family:var(--display);font-size:1rem;letter-spacing:0.02em;color:var(--muted);text-transform:uppercase;">Today\'s Finals</h3>'
-    + '<div class="wp-games">' + (cards || '<div class="wp-empty">No finals today yet.</div>') + '</div>'
+    + `<div class="wp-browse-hdr"><h3>Game Archive</h3>`
+    + `<select id="wp-date-select" class="wp-date-select" aria-label="Browse games by date">${dateOpts}</select></div>`
+    + '<div class="wp-games">' + (cards || '<div class="wp-empty">No games on this date.</div>') + '</div>'
     + detailHtml;
 
   // Wire backtest "Details" toggle
@@ -5431,10 +5502,19 @@ async function renderWinprobTab() {
     };
   }
 
+  // Wire date selector
+  const dsel = document.getElementById("wp-date-select");
+  if (dsel) dsel.onchange = (e) => {
+    WINPROB_BROWSE_DATE = e.target.value;
+    WINPROB_SELECTED = null;
+    WINPROB_RENDERED = false;
+    renderWinprobTab();
+  };
+
   // Wire card clicks
   document.querySelectorAll("#winprob-root .wp-game-card").forEach(card => {
     card.onclick = () => {
-      WINPROB_SELECTED = parseInt(card.dataset.pk, 10);
+      WINPROB_SELECTED = card.dataset.pk;   // string gamePk (archive keys are strings)
       WINPROB_RENDERED = false;
       renderWinprobTab();
       // Scroll detail into view
@@ -5448,7 +5528,21 @@ async function renderWinprobTab() {
   WINPROB_RENDERED = true;
 }
 
-function renderWinprobDetail(game, winprobData) {
+function renderWinprobDetailSim(sim) {
+  // Render a detail panel straight from an archived sim entry (no live MLB
+  // schedule object). Adapts the archive record into the shape renderWinprobDetail
+  // expects, then reuses the same markup.
+  if (!sim) return "";
+  const fakeGame = {
+    teams: { away: { team: { name: sim.away_team } }, home: { team: { name: sim.home_team } } },
+    _finalScore: { away: sim.actual_away_runs, home: sim.actual_home_runs },
+    venue: { name: sim.venue || "" },
+    gamePk: sim.game_pk,
+  };
+  return renderWinprobDetail(fakeGame, sim, sim.game_date ? wpFmtDate(sim.game_date) : "");
+}
+
+function renderWinprobDetail(game, winprobData, dateLabel) {
   const away = teamAbbr(game.teams.away.team.name);
   const home = teamAbbr(game.teams.home.team.name);
   const fs = game._finalScore || {};
@@ -5479,7 +5573,7 @@ function renderWinprobDetail(game, winprobData) {
     : '<p style="color:var(--muted);font-size:0.85rem;"><em>Ump adjustment will appear once the Ump Scorecards scrape is wired in.</em></p>';
 
   return `<div class="wp-detail">
-    <h3>${away} @ ${home}</h3>
+    <h3>${away} @ ${home}${dateLabel ? ` <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">· ${dateLabel}</span>` : ""}</h3>
     <div class="wp-scorebox">
       <div class="wp-team">
         <div class="wp-tname">${away}</div>
