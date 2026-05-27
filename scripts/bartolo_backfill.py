@@ -75,10 +75,10 @@ def _archive_complete(out_path: Path) -> bool:
     for g in games.values():
         if g.get("away_deserved_runs") is None or g.get("home_deserved_runs") is None:
             return False
-        # Win Prob must be anchored on deserved runs. Older archives were anchored
-        # on the actual score (no wp_basis marker) — treat those as incomplete so a
-        # re-run replaces them with the deserved-anchored sim.
-        if g.get("wp_basis") != "deserved":
+        # Win Prob must be the current basis (deserved + plate-discipline process
+        # nudge + per-game descriptive stats). Older archives ("deserved" or none)
+        # are treated as incomplete so a re-run replaces them.
+        if g.get("wp_basis") != "deserved_v2":
             return False
     return True
 
@@ -105,6 +105,7 @@ def main() -> int:
         from bartolo.simulator import run_simulation
         from bartolo.ump_adjust import apply_ump_adjustment, compute_ump_favor
         from bartolo.ingest import fetch_schedule, fetch_game_pbp, extract_umpire
+        from bartolo.game_stats import compute_game_stats
     except ImportError as e:
         print(f"[backfill] missing dep: {e}", file=sys.stderr)
         return 1
@@ -193,6 +194,7 @@ def main() -> int:
             if len(gdf) == 0:
                 continue
 
+            pbp = None
             try:
                 pbp = fetch_game_pbp(g.game_pk)
                 ump_name = extract_umpire(pbp) if pbp else ""
@@ -200,6 +202,7 @@ def main() -> int:
                 ump_name = ""
 
             ump_away, ump_home = compute_ump_favor(gdf)
+            gstats = compute_game_stats(gdf, pbp)
 
             payload = {
                 "game_pk": g.game_pk,
@@ -218,7 +221,7 @@ def main() -> int:
                 continue
 
             out_games[str(g.game_pk)] = {
-                **adj.frontend_dict(ump_name=ump_name, venue=g.venue),
+                **adj.frontend_dict(ump_name=ump_name, venue=g.venue, game_stats=gstats),
                 "game_pk": str(g.game_pk),
                 "game_date": g.game_date.isoformat(),
                 "n_batted_balls": int((gdf["type"] == "X").sum()),
