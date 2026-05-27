@@ -1252,6 +1252,13 @@
   .hit-trend-detail > td { background:rgba(94,234,212,0.04); padding:8px 10px !important; }
   .hit-vp-hdr { font-size:0.72rem; color:var(--muted); font-weight:600; margin:8px 0 3px; }
   .hit-vp td:first-child, .hit-vp th:first-child { text-align:left; }
+  .hit-log th, .hit-log td { padding:2px 5px; font-size:0.72rem; text-align:right; }
+  .hit-log th:first-child, .hit-log td:first-child,
+  .hit-log th:nth-child(2), .hit-log td:nth-child(2) { text-align:left; }
+  .hit-roll-hdr { font-size:0.72rem; color:var(--muted); font-weight:600; margin:9px 0 3px; display:flex; align-items:center; gap:8px; }
+  .hit-pa-toggle { display:inline-flex; gap:0; border:1px solid var(--border,#2a3b46); border-radius:5px; overflow:hidden; }
+  .hit-pa-toggle button { background:transparent; color:var(--muted); border:0; padding:1px 8px; font-size:0.7rem; cursor:pointer; }
+  .hit-pa-toggle button.active { background:var(--accent); color:#06231f; font-weight:700; }
 </style>
 </head>
 <body>
@@ -4225,6 +4232,13 @@ function spWindowValue(w, field) {
     for (const s of w) { if (s[field] != null && s.outs) { num += s[field] * s.outs; den += s.outs; } }
     return den ? +(num / den).toFixed(2) : null;
   }
+  // CSW% / Ball% are 0–1 fractions — pitch-weight and KEEP precision (rounding
+  // to 0 decimals here would flatten the rolling line to 0, the "static" bug).
+  if (field === 'csw' || field === 'ball_pct') {
+    let num = 0, den = 0;
+    for (const s of w) { if (s[field] != null && s.pitches) { num += s[field] * s.pitches; den += s.pitches; } }
+    return den ? +(num / den).toFixed(4) : null;
+  }
   let num = 0, den = 0;
   for (const s of w) { if (s[field] != null && s.pitches) { num += s[field] * s.pitches; den += s.pitches; } }
   return den ? +(num / den).toFixed(field === 'velo' ? 1 : 0) : null;
@@ -4265,14 +4279,11 @@ function renderSPTrendsHTML(gl) {
     { key: 'bb',   label: 'BB%',    series: rollingSeries(starts, 'bb_pct'), l5: l5.bb_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
-  // CSW% / Ball% (Statcast, fractions 0–1 → shown as %). Only surfaced once the
-  // gamelog pull has populated them, so we don't render empty cells pre-backfill.
+  // CSW% (Statcast, fraction 0–1 → shown as %). Rolling 3-start window like the
+  // other rate metrics. Only surfaced once the gamelog pull has populated it.
   const pctFmt = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
   if (starts.some(s => s.csw != null)) {
     metrics.push({ key: 'csw', label: 'CSW%', series: rollingSeries(starts, 'csw'), l5: l5.csw, fmt: pctFmt, mode: 'rolling' });
-  }
-  if (starts.some(s => s.ball_pct != null)) {
-    metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling' });
   }
   const dateSeries = starts.map(s => s.date);
   const sparkCells = metrics.map(m => {
@@ -4320,7 +4331,10 @@ function hitterGameLogsFor(name) {
   return HITTER_GAMELOGS.hitters[normName(name)] || null;
 }
 
-// Trailing-window true ratios from raw per-game counts (mirrors the python agg):
+// Rolling window for hitter rate stats is measured in PA (not games); user-toggle 25/50.
+let HIT_PA_WIN = 50;
+
+// True ratios over a window of games (mirrors the python agg):
 //   K%/BB% = ΣK or ΣBB / ΣPA · Whiff% = Σwhiffs / Σswings · Brl% = Σbarrels / Σbip
 function hitWindowValue(w, field) {
   const sum = k => w.reduce((a, g) => a + (g[k] || 0), 0);
@@ -4330,59 +4344,79 @@ function hitWindowValue(w, field) {
   if (field === 'barrel') { const d = sum('bip');    return d ? +(sum('barrels') / d * 100).toFixed(1) : null; }
   return null;
 }
-function hitRollingSeries(games, field, win = 5) {
-  return games.map((_, i) => hitWindowValue(games.slice(Math.max(0, i - win + 1), i + 1), field));
+// Trailing window: accumulate whole games backward until >= minPA plate appearances,
+// so the rolling sample is PA-normalized rather than fixed game count.
+function hitWindowAccumPA(games, endIdx, minPA) {
+  let i = endIdx, pa = 0; const w = [];
+  while (i >= 0) { w.unshift(games[i]); pa += games[i].pa || 0; if (pa >= minPA) break; i--; }
+  return w;
+}
+function hitRollingSeriesPA(games, field, minPA) {
+  return games.map((_, idx) => hitWindowValue(hitWindowAccumPA(games, idx, minPA), field));
+}
+
+// Toggle the rolling-window size (25 / 50 PA); re-render any open hitter panels.
+function hitPaToggle(n) {
+  HIT_PA_WIN = n;
+  document.querySelectorAll('tr.hit-trend-detail').forEach(det => {
+    const key = det.dataset.hitkey;
+    const gl = (HITTER_GAMELOGS && HITTER_GAMELOGS.hitters) ? HITTER_GAMELOGS.hitters[key] : null;
+    const td = det.querySelector('td');
+    if (gl && td) td.innerHTML = renderHitterTrendsHTML(gl);
+  });
 }
 
 function renderHitterTrendsHTML(gl) {
   if (!gl || !gl.games || !gl.games.length) return "";
   const games = gl.games;
-  const recent = games.slice(-6).reverse();   // most recent first
-  const l10 = gl.l10 || {}, l5 = gl.l5 || {}, season = gl.season || {};
+  const recent = games.slice(-10).reverse();   // most recent first
+  const season = gl.season || {};
   const uid = "h_" + ((normName(gl.name || "") || ("" + (gl.mlbam_id || ""))).replace(/[^a-z0-9]/g, ""));
   const pct1 = v => v != null ? v.toFixed(1) + '%' : '—';
   const pct0 = v => v != null ? Math.round(v) + '%' : '—';
+  const iv   = v => v == null ? '—' : v;
+  const w3   = v => v == null ? "—" : ("." + Math.round(v * 1000)).slice(0, 4);                 // wOBA (<1)
+  const fmt3 = v => v == null ? "—" : (v >= 1 ? v.toFixed(3) : v.toFixed(3).replace(/^0/, ''));  // slash / OPS
 
+  // Box-score + Statcast game log (most recent 10). Box cols come from MLB game
+  // logs (show — until the nightly pull repopulates them).
   const lsRows = recent.map(g => `<tr>
       <td>${g.date ? fmtDateShort(g.date) : '—'}</td>
       <td>${g.opp || '—'}</td>
-      <td>${g.pa ?? '—'}</td>
-      <td>${pct0(g.k_pct)}</td>
-      <td>${pct0(g.bb_pct)}</td>
-      <td>${pct0(g.whiff)}</td>
-      <td>${pct0(g.barrel)}</td>
+      <td>${iv(g.ab)}</td><td>${iv(g.r)}</td><td>${iv(g.h)}</td><td>${iv(g.hr)}</td>
+      <td>${iv(g.rbi)}</td><td>${iv(g.bb)}</td><td>${iv(g.k)}</td><td>${iv(g.sb)}</td>
+      <td>${pct0(g.whiff)}</td><td>${pct0(g.barrel)}</td>
     </tr>`).join("");
 
-  // Rolling metrics — 5-game trailing windows of true ratios. Headline = L10.
+  // Rolling rate metrics — trailing-PA windows; headline = current trailing-N-PA value.
   const metrics = [
-    { key: 'k',      label: 'K%',     series: hitRollingSeries(games, 'k_pct'),  hl: l10.k_pct,  lo: 'better' },
-    { key: 'bb',     label: 'BB%',    series: hitRollingSeries(games, 'bb_pct'), hl: l10.bb_pct, lo: 'higher' },
-    { key: 'whiff',  label: 'Whiff%', series: hitRollingSeries(games, 'whiff'),  hl: l10.whiff,  lo: 'better' },
-    { key: 'barrel', label: 'Brl%',   series: hitRollingSeries(games, 'barrel'), hl: l10.barrel, lo: 'higher' },
-  ];
+    { key: 'k',      label: 'K%',     field: 'k_pct'  },
+    { key: 'bb',     label: 'BB%',    field: 'bb_pct' },
+    { key: 'whiff',  label: 'Whiff%', field: 'whiff'  },
+    { key: 'barrel', label: 'Brl%',   field: 'barrel' },
+  ].map(m => {
+    const series = hitRollingSeriesPA(games, m.field, HIT_PA_WIN);
+    const sv = series.filter(v => v != null && isFinite(v));
+    return { ...m, series, hl: sv.length ? sv[sv.length - 1] : null,
+             mn: sv.length ? Math.min(...sv) : null, mx: sv.length ? Math.max(...sv) : null };
+  });
   const dateSeries = games.map(g => g.date);
-  const sparkCells = metrics.map(m => {
-    const sv = m.series.filter(v => v != null && isFinite(v));
-    const lastV = sv.length ? sv[sv.length - 1] : null;
-    const mn = sv.length ? Math.min(...sv) : null;
-    const mx = sv.length ? Math.max(...sv) : null;
-    return `
-    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} — 5-game rolling · L10 ${pct1(m.hl)} · latest ${pct1(lastV)} · range ${pct1(mn)}–${pct1(mx)} · tap to expand season chart">
+  const sparkCells = metrics.map(m => `
+    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} — trailing ${HIT_PA_WIN} PA rolling · now ${pct1(m.hl)} · range ${pct1(m.mn)}–${pct1(m.mx)} · tap to expand season chart">
       <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${pct1(m.hl)}</span></div>
       ${sparkline(m.series)}
-      <div class="sp-spark-sub">last ${pct1(lastV)} · ${pct1(mn)}–${pct1(mx)}</div>
-    </div>`;
-  }).join("");
+      <div class="sp-spark-sub">now ${pct1(m.hl)} · ${pct1(m.mn)}–${pct1(m.mx)}</div>
+    </div>`).join("");
   const bigCharts = metrics.map(m => `
     <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
-      <div class="sp-bigchart-hdr">${m.label} — 5-game rolling, full season (${m.series.filter(v => v != null).length} games)</div>
+      <div class="sp-bigchart-hdr">${m.label} — trailing ${HIT_PA_WIN} PA rolling, full season (${m.series.filter(v => v != null).length} games)</div>
       ${bigChart(m.series, { fmt: pct1, dates: dateSeries })}
     </div>`).join("");
+  const paToggle = `<span class="hit-pa-toggle">${[25, 50].map(n => `<button class="${HIT_PA_WIN === n ? 'active' : ''}" onclick="hitPaToggle(${n})">${n} PA</button>`).join('')}</span>`;
 
   // Performance vs pitch-type (Fastball / Breaking / Offspeed). wOBA higher-is-better.
   const vp = gl.vs_pitch || {};
   const wobaCls = v => v == null ? "" : v >= 0.370 ? "elite" : v >= 0.330 ? "good" : v <= 0.280 ? "worst" : v <= 0.300 ? "bad" : "";
-  const w3 = v => v == null ? "—" : ("." + Math.round(v * 1000)).slice(0, 4);
   const vpRow = (lbl, k) => {
     const d = vp[k];
     if (!d) return `<tr><td>${lbl}</td><td colspan="4" style="color:var(--muted);font-style:italic;text-align:left;">no data</td></tr>`;
@@ -4395,15 +4429,17 @@ function renderHitterTrendsHTML(gl) {
     </tr>`;
   };
 
+  const slash = season.avg != null ? `${fmt3(season.avg)}/${fmt3(season.obp)}/${fmt3(season.slg)}` : '';
   const seasonLine = season.pa
-    ? `<span class="sp-trends-sub">${season.n} G · ${season.pa} PA · season K ${pct0(season.k_pct)} · BB ${pct0(season.bb_pct)} · Whiff ${pct0(season.whiff)} · Brl ${pct0(season.barrel)}${season.xwoba != null ? ` · xwOBA ${w3(season.xwoba)}` : ''}</span>`
+    ? `<span class="sp-trends-sub">${season.n} G · ${season.pa} PA${slash ? ` · ${slash}` : ''}${season.hr != null ? ` · ${season.hr} HR · ${season.rbi} RBI · ${season.sb} SB` : ''} · K ${pct0(season.k_pct)} · BB ${pct0(season.bb_pct)} · Whiff ${pct0(season.whiff)} · Brl ${pct0(season.barrel)}${season.xwoba != null ? ` · xwOBA ${w3(season.xwoba)}` : ''}</span>`
     : '';
 
   return `<div class="sp-trends hit-trends">
-    <div class="sp-trends-hdr">Recent games ${seasonLine}</div>
-    <table class="sp-ls"><thead><tr>
-      <th>Date</th><th>Opp</th><th>PA</th><th>K%</th><th>BB%</th><th>Whiff%</th><th>Brl%</th>
+    <div class="sp-trends-hdr">Game log ${seasonLine}</div>
+    <table class="sp-ls hit-log"><thead><tr>
+      <th>Date</th><th>Opp</th><th>AB</th><th>R</th><th>H</th><th>HR</th><th>RBI</th><th>BB</th><th>K</th><th>SB</th><th>Whiff%</th><th>Brl%</th>
     </tr></thead><tbody>${lsRows}</tbody></table>
+    <div class="hit-roll-hdr">Rolling rates ${paToggle}</div>
     <div class="sp-sparks">${sparkCells}</div>
     ${bigCharts}
     <div class="hit-vp-hdr">vs Pitch Type — season</div>
@@ -4430,6 +4466,7 @@ function hitTrendDelegate(e) {
   if (!html) return;
   const det = document.createElement('tr');
   det.className = 'hit-trend-detail';
+  det.dataset.hitkey = key;   // lets the PA-window toggle re-render this panel
   det.innerHTML = `<td colspan="${tr.children.length || 13}">${html}</td>`;
   tr.parentNode.insertBefore(det, tr.nextElementSibling);
 }
