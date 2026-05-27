@@ -77,6 +77,10 @@ jobs:
         run: |
           python scripts/refresh_hitter_percentiles.py > /tmp/hp.json && mv /tmp/hp.json data/hitter_percentiles.json || true
 
+      - name: Pull hitter per-game logs (rolling K%/BB%/whiff/barrel + vs-pitch-type) → hitter_gamelogs.json
+        run: python scripts/refresh_hitter_gamelogs.py
+        continue-on-error: true
+
       # ── UNIFIED SCORES (must run AFTER all enrichments above) ────────────
       - name: Compute unified pitcher score
         run: python scripts/compute_pitcher_score.py
