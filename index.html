@@ -1248,6 +1248,10 @@
   .sp-nochart { font-size:0.7rem; color:var(--muted); padding:6px; }
   .sp-clickable { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
   .sp-trend-detail > td { background:rgba(94,234,212,0.04); padding:8px 10px !important; }
+  .hit-clickable { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
+  .hit-trend-detail > td { background:rgba(94,234,212,0.04); padding:8px 10px !important; }
+  .hit-vp-hdr { font-size:0.72rem; color:var(--muted); font-weight:600; margin:8px 0 3px; }
+  .hit-vp td:first-child, .hit-vp th:first-child { text-align:left; }
 </style>
 </head>
 <body>
@@ -1431,6 +1435,7 @@ const RUNS_PER_PCT = 0.1;
 let UMP_STATS = null;
 let FATIGUE = null;
 let GAMELOGS = null;   // data/pitcher_gamelogs.json — per-start SP trends
+let HITTER_GAMELOGS = null; // data/hitter_gamelogs.json — per-game rolling form + vs-pitch-type
 let HITTERS = null;
 let PITCHERS = null;
 let WEATHER = null;
@@ -1489,7 +1494,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1506,10 +1511,12 @@ async function loadStaticData() {
     fetchJSON(`data/hitter_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`pitcher_roles.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_gamelogs.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/hitter_gamelogs.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
   HITTER_SPLITS = hsplits; PITCHER_ROLES = proles; GAMELOGS = glogs;
+  HITTER_GAMELOGS = hglogs;
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -3222,11 +3229,18 @@ function renderLineupTable(side, opts={}) {
         : "";
       // Unified hitter score chip — slots between Player and Brl%
       const scoreCell = `<td class="split">${unifiedScoreChip(h, {tight:true,label:""}) || '<span style="color:var(--muted);font-size:0.75rem;">—</span>'}</td>`;
+      // Clickable hitter name → inline rolling-form + vs-pitch-type panel,
+      // only when the gamelog pull has this batter (otherwise plain text).
+      const hasGl = !!(HITTER_GAMELOGS && HITTER_GAMELOGS.hitters && HITTER_GAMELOGS.hitters[normName(nm)]);
+      const playerCellCls = hasGl ? "player hit-clickable" : "player";
+      const playerCellAttr = hasGl
+        ? ` data-hitkey="${normName(nm)}" title="Tap for rolling K%/BB%/Whiff%/Brl% + vs pitch-type"`
+        : ` title="${nm.replace(/"/g,'&quot;')}"`;
       rowsHTML += `<tr>
         <td class="order">${p.order || ""}</td>
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="player" title="${nm.replace(/"/g,'&quot;')}">${autoName(nm)}${danFlag}</td>
+        <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
         ${wrcCell}
         ${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
@@ -4294,6 +4308,130 @@ function renderSPTrendsHTML(gl) {
 function renderSPTrends(name) { return renderSPTrendsHTML(gameLogsFor(name)); }
 function renderSPTrendsByKey(key) {
   return renderSPTrendsHTML(GAMELOGS && GAMELOGS.pitchers ? GAMELOGS.pitchers[key] : null);
+}
+
+// ============================================================================
+// HITTER PER-GAME TRENDS  (data/hitter_gamelogs.json)
+// Rolling K% / BB% / Whiff% / Barrel% + performance vs pitch-type (FB/BR/OS).
+// Mirrors the SP-trend pattern; reuses sparkline / bigChart / toggleSPChart.
+// ============================================================================
+function hitterGameLogsFor(name) {
+  if (!HITTER_GAMELOGS || !HITTER_GAMELOGS.hitters || !name) return null;
+  return HITTER_GAMELOGS.hitters[normName(name)] || null;
+}
+
+// Trailing-window true ratios from raw per-game counts (mirrors the python agg):
+//   K%/BB% = ΣK or ΣBB / ΣPA · Whiff% = Σwhiffs / Σswings · Brl% = Σbarrels / Σbip
+function hitWindowValue(w, field) {
+  const sum = k => w.reduce((a, g) => a + (g[k] || 0), 0);
+  if (field === 'k_pct')  { const d = sum('pa');     return d ? +(sum('k')       / d * 100).toFixed(1) : null; }
+  if (field === 'bb_pct') { const d = sum('pa');     return d ? +(sum('bb')      / d * 100).toFixed(1) : null; }
+  if (field === 'whiff')  { const d = sum('swings'); return d ? +(sum('whiffs')  / d * 100).toFixed(1) : null; }
+  if (field === 'barrel') { const d = sum('bip');    return d ? +(sum('barrels') / d * 100).toFixed(1) : null; }
+  return null;
+}
+function hitRollingSeries(games, field, win = 5) {
+  return games.map((_, i) => hitWindowValue(games.slice(Math.max(0, i - win + 1), i + 1), field));
+}
+
+function renderHitterTrendsHTML(gl) {
+  if (!gl || !gl.games || !gl.games.length) return "";
+  const games = gl.games;
+  const recent = games.slice(-6).reverse();   // most recent first
+  const l10 = gl.l10 || {}, l5 = gl.l5 || {}, season = gl.season || {};
+  const uid = "h_" + ((normName(gl.name || "") || ("" + (gl.mlbam_id || ""))).replace(/[^a-z0-9]/g, ""));
+  const pct1 = v => v != null ? v.toFixed(1) + '%' : '—';
+  const pct0 = v => v != null ? Math.round(v) + '%' : '—';
+
+  const lsRows = recent.map(g => `<tr>
+      <td>${g.date ? fmtDateShort(g.date) : '—'}</td>
+      <td>${g.opp || '—'}</td>
+      <td>${g.pa ?? '—'}</td>
+      <td>${pct0(g.k_pct)}</td>
+      <td>${pct0(g.bb_pct)}</td>
+      <td>${pct0(g.whiff)}</td>
+      <td>${pct0(g.barrel)}</td>
+    </tr>`).join("");
+
+  // Rolling metrics — 5-game trailing windows of true ratios. Headline = L10.
+  const metrics = [
+    { key: 'k',      label: 'K%',     series: hitRollingSeries(games, 'k_pct'),  hl: l10.k_pct,  lo: 'better' },
+    { key: 'bb',     label: 'BB%',    series: hitRollingSeries(games, 'bb_pct'), hl: l10.bb_pct, lo: 'higher' },
+    { key: 'whiff',  label: 'Whiff%', series: hitRollingSeries(games, 'whiff'),  hl: l10.whiff,  lo: 'better' },
+    { key: 'barrel', label: 'Brl%',   series: hitRollingSeries(games, 'barrel'), hl: l10.barrel, lo: 'higher' },
+  ];
+  const dateSeries = games.map(g => g.date);
+  const sparkCells = metrics.map(m => {
+    const sv = m.series.filter(v => v != null && isFinite(v));
+    const lastV = sv.length ? sv[sv.length - 1] : null;
+    const mn = sv.length ? Math.min(...sv) : null;
+    const mx = sv.length ? Math.max(...sv) : null;
+    return `
+    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} — 5-game rolling · L10 ${pct1(m.hl)} · latest ${pct1(lastV)} · range ${pct1(mn)}–${pct1(mx)} · tap to expand season chart">
+      <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${pct1(m.hl)}</span></div>
+      ${sparkline(m.series)}
+      <div class="sp-spark-sub">last ${pct1(lastV)} · ${pct1(mn)}–${pct1(mx)}</div>
+    </div>`;
+  }).join("");
+  const bigCharts = metrics.map(m => `
+    <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
+      <div class="sp-bigchart-hdr">${m.label} — 5-game rolling, full season (${m.series.filter(v => v != null).length} games)</div>
+      ${bigChart(m.series, { fmt: pct1, dates: dateSeries })}
+    </div>`).join("");
+
+  // Performance vs pitch-type (Fastball / Breaking / Offspeed). wOBA higher-is-better.
+  const vp = gl.vs_pitch || {};
+  const wobaCls = v => v == null ? "" : v >= 0.370 ? "elite" : v >= 0.330 ? "good" : v <= 0.280 ? "worst" : v <= 0.300 ? "bad" : "";
+  const w3 = v => v == null ? "—" : ("." + Math.round(v * 1000)).slice(0, 4);
+  const vpRow = (lbl, k) => {
+    const d = vp[k];
+    if (!d) return `<tr><td>${lbl}</td><td colspan="4" style="color:var(--muted);font-style:italic;text-align:left;">no data</td></tr>`;
+    return `<tr>
+      <td>${lbl}</td>
+      <td class="split-chip ${wobaCls(d.woba)}">${w3(d.woba)}</td>
+      <td>${pct0(d.whiff)}</td>
+      <td>${pct0(d.barrel)}</td>
+      <td>${d.pa ?? '—'}</td>
+    </tr>`;
+  };
+
+  const seasonLine = season.pa
+    ? `<span class="sp-trends-sub">${season.n} G · ${season.pa} PA · season K ${pct0(season.k_pct)} · BB ${pct0(season.bb_pct)} · Whiff ${pct0(season.whiff)} · Brl ${pct0(season.barrel)}${season.xwoba != null ? ` · xwOBA ${w3(season.xwoba)}` : ''}</span>`
+    : '';
+
+  return `<div class="sp-trends hit-trends">
+    <div class="sp-trends-hdr">Recent games ${seasonLine}</div>
+    <table class="sp-ls"><thead><tr>
+      <th>Date</th><th>Opp</th><th>PA</th><th>K%</th><th>BB%</th><th>Whiff%</th><th>Brl%</th>
+    </tr></thead><tbody>${lsRows}</tbody></table>
+    <div class="sp-sparks">${sparkCells}</div>
+    ${bigCharts}
+    <div class="hit-vp-hdr">vs Pitch Type — season</div>
+    <table class="sp-ls hit-vp"><thead><tr>
+      <th>Type</th><th>wOBA</th><th>Whiff%</th><th>Brl%</th><th>PA</th>
+    </tr></thead><tbody>
+      ${vpRow('Fastball', 'FB')}${vpRow('Breaking', 'BR')}${vpRow('Offspeed', 'OS')}
+    </tbody></table>
+  </div>`;
+}
+
+// Click delegate — toggles an inline trend panel under any clicked lineup hitter.
+// Mirrors spTrendDelegate; works on both the Lineups tab and the game modal.
+function hitTrendDelegate(e) {
+  const cell = e.target.closest && e.target.closest('td.hit-clickable');
+  if (!cell) return;
+  const key = cell.getAttribute('data-hitkey');
+  const tr = cell.closest('tr');
+  if (!tr) return;
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('hit-trend-detail')) { next.remove(); return; }
+  const gl = HITTER_GAMELOGS && HITTER_GAMELOGS.hitters ? HITTER_GAMELOGS.hitters[key] : null;
+  const html = renderHitterTrendsHTML(gl);
+  if (!html) return;
+  const det = document.createElement('tr');
+  det.className = 'hit-trend-detail';
+  det.innerHTML = `<td colspan="${tr.children.length || 13}">${html}</td>`;
+  tr.parentNode.insertBefore(det, tr.nextElementSibling);
 }
 
 // Rankings drill-down: clicking a pitcher row toggles an inline FULL pitcher
@@ -5963,6 +6101,7 @@ document.getElementById("datePicker").onchange = (e) => { if (e.target.value) lo
 // Delegated: clicking a starter's name in the Rankings tab toggles an inline
 // per-start trends row. Bound once at startup (survives table re-renders).
 document.addEventListener("click", spTrendDelegate);
+document.addEventListener("click", hitTrendDelegate);
 
 loadToday();
 document.addEventListener("visibilitychange", () => {
