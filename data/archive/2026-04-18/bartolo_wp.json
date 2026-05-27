@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-27T04:46:19+00:00",
+  "generated_at": "2026-05-27T06:55:35+00:00",
   "window_date": "2026-04-18",
   "status": "ok",
   "n_games": 15,
@@ -9,45 +9,49 @@
       "home_team": "New York Yankees",
       "actual_away_runs": 4,
       "actual_home_runs": 13,
-      "wp_basis": "deserved",
-      "away_wp": 0.0037,
-      "home_wp": 0.9963,
-      "away_exp_runs": 1.481,
-      "home_exp_runs": 7.749,
-      "away_deserved_runs": 1.31,
-      "home_deserved_runs": 7.78,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.0063,
+      "home_wp": 0.9937,
+      "away_exp_runs": 1.848,
+      "home_exp_runs": 7.744,
+      "away_deserved_runs": 1.74,
+      "home_deserved_runs": 7.77,
       "away_hist": [
         {
-          "count": 2969,
+          "count": 2009,
           "label": "0 R"
         },
         {
-          "count": 2484,
+          "count": 2326,
           "label": "1 R"
         },
         {
-          "count": 2323,
+          "count": 2656,
           "label": "2 R"
         },
         {
-          "count": 1435,
+          "count": 1773,
           "label": "3 R"
         },
         {
-          "count": 630,
+          "count": 895,
           "label": "4 R"
         },
         {
-          "count": 132,
+          "count": 277,
           "label": "5 R"
         },
         {
-          "count": 24,
+          "count": 52,
           "label": "6 R"
         },
         {
-          "count": 3,
+          "count": 11,
           "label": "7 R"
+        },
+        {
+          "count": 1,
+          "label": "8 R"
         }
       ],
       "home_hist": [
@@ -118,13 +122,114 @@
       ],
       "away_actual_idx": 4,
       "home_actual_idx": 13,
-      "ump_adj_away_wp": 0.0073,
-      "ump_adj_home_wp": 0.9927,
+      "ump_adj_away_wp": 0.0116,
+      "ump_adj_home_wp": 0.9884,
       "ump_favor_away": -0.26,
       "ump_favor_home": 0.26,
       "ump_name": "Tyler Jones",
       "venue": "Yankee Stadium",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.313,
+          "xba": 0.254,
+          "discipline": {
+            "o_swing": 0.281,
+            "z_swing": 0.603,
+            "whiff": 0.211,
+            "swstr": 0.096,
+            "csw": 0.304
+          },
+          "risp": {
+            "ab": 5,
+            "h": 1,
+            "avg": 0.2
+          },
+          "lob": 10
+        },
+        "home": {
+          "xwoba": 0.455,
+          "xba": 0.28,
+          "discipline": {
+            "o_swing": 0.153,
+            "z_swing": 0.699,
+            "whiff": 0.234,
+            "swstr": 0.095,
+            "csw": 0.222
+          },
+          "risp": {
+            "ab": 11,
+            "h": 4,
+            "avg": 0.364
+          },
+          "lob": 16
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Warren, Will",
+            "ev": 111.0,
+            "la": 21.0,
+            "xba": 0.946,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Blackburn, Paul",
+            "ev": 75.4,
+            "la": 16.0,
+            "xba": 0.751,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Warren, Will",
+            "ev": 88.4,
+            "la": 4.0,
+            "xba": 0.521,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Cameron, Noah",
+            "ev": 105.3,
+            "la": 34.0,
+            "xba": 0.726,
+            "result": "field_error",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Spence, Mitch",
+            "ev": 106.7,
+            "la": 5.0,
+            "xba": 0.637,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Spence, Mitch",
+            "ev": 69.3,
+            "la": -19.0,
+            "xba": 0.044,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Spence, Mitch",
+            "ev": 85.2,
+            "la": 27.0,
+            "xba": 0.077,
+            "result": "triple",
+            "kind": "lucky_hit"
+          }
+        ]
+      },
       "game_pk": "823558",
       "game_date": "2026-04-18",
       "n_batted_balls": 51
@@ -134,60 +239,60 @@
       "home_team": "Minnesota Twins",
       "actual_away_runs": 5,
       "actual_home_runs": 4,
-      "wp_basis": "deserved",
-      "away_wp": 0.7416,
-      "home_wp": 0.2584,
-      "away_exp_runs": 4.981,
-      "home_exp_runs": 3.482,
-      "away_deserved_runs": 4.97,
-      "home_deserved_runs": 3.5,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.6872,
+      "home_wp": 0.3128,
+      "away_exp_runs": 4.812,
+      "home_exp_runs": 3.691,
+      "away_deserved_runs": 4.8,
+      "home_deserved_runs": 3.71,
       "away_hist": [
         {
-          "count": 31,
+          "count": 49,
           "label": "0 R"
         },
         {
-          "count": 144,
+          "count": 204,
           "label": "1 R"
         },
         {
-          "count": 519,
+          "count": 647,
           "label": "2 R"
         },
         {
-          "count": 1284,
+          "count": 1352,
           "label": "3 R"
         },
         {
-          "count": 1963,
+          "count": 2022,
           "label": "4 R"
         },
         {
-          "count": 2268,
+          "count": 2307,
           "label": "5 R"
         },
         {
-          "count": 1938,
+          "count": 1814,
           "label": "6 R"
         },
         {
-          "count": 1165,
+          "count": 1025,
           "label": "7 R"
         },
         {
-          "count": 501,
+          "count": 424,
           "label": "8 R"
         },
         {
-          "count": 154,
+          "count": 129,
           "label": "9 R"
         },
         {
-          "count": 24,
+          "count": 19,
           "label": "10 R"
         },
         {
-          "count": 8,
+          "count": 7,
           "label": "11 R"
         },
         {
@@ -197,55 +302,138 @@
       ],
       "home_hist": [
         {
-          "count": 223,
+          "count": 144,
           "label": "0 R"
         },
         {
-          "count": 704,
+          "count": 547,
           "label": "1 R"
         },
         {
-          "count": 1752,
+          "count": 1506,
           "label": "2 R"
         },
         {
-          "count": 2507,
+          "count": 2451,
           "label": "3 R"
         },
         {
-          "count": 2330,
+          "count": 2529,
           "label": "4 R"
         },
         {
-          "count": 1539,
+          "count": 1710,
           "label": "5 R"
         },
         {
-          "count": 701,
+          "count": 795,
           "label": "6 R"
         },
         {
-          "count": 204,
+          "count": 258,
           "label": "7 R"
         },
         {
-          "count": 37,
+          "count": 54,
           "label": "8 R"
         },
         {
-          "count": 3,
+          "count": 6,
           "label": "9 R"
         }
       ],
       "away_actual_idx": 5,
       "home_actual_idx": 4,
-      "ump_adj_away_wp": 0.7981,
-      "ump_adj_home_wp": 0.2019,
+      "ump_adj_away_wp": 0.7411,
+      "ump_adj_home_wp": 0.2589,
       "ump_favor_away": -0.17,
       "ump_favor_home": 0.17,
       "ump_name": "Nic Lentz",
       "venue": "Target Field",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.303,
+          "xba": 0.255,
+          "discipline": {
+            "o_swing": 0.296,
+            "z_swing": 0.627,
+            "whiff": 0.279,
+            "swstr": 0.13,
+            "csw": 0.322
+          },
+          "risp": {
+            "ab": 9,
+            "h": 3,
+            "avg": 0.333
+          },
+          "lob": 17
+        },
+        "home": {
+          "xwoba": 0.329,
+          "xba": 0.268,
+          "discipline": {
+            "o_swing": 0.245,
+            "z_swing": 0.583,
+            "whiff": 0.292,
+            "swstr": 0.118,
+            "csw": 0.292
+          },
+          "risp": {
+            "ab": 15,
+            "h": 3,
+            "avg": 0.2
+          },
+          "lob": 24
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Funderburk, Kody",
+            "ev": 101.5,
+            "la": 25.0,
+            "xba": 0.58,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Bradley, Taj",
+            "ev": 101.6,
+            "la": 3.0,
+            "xba": 0.54,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Johnson, Pierce",
+            "ev": 102.6,
+            "la": 31.0,
+            "xba": 0.714,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Abbott, Andrew",
+            "ev": 97.4,
+            "la": 8.0,
+            "xba": 0.66,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Abbott, Andrew",
+            "ev": 97.0,
+            "la": 8.0,
+            "xba": 0.66,
+            "result": "field_error",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "823721",
       "game_date": "2026-04-18",
       "n_batted_balls": 55
@@ -255,13 +443,13 @@
       "home_team": "Chicago Cubs",
       "actual_away_runs": 2,
       "actual_home_runs": 4,
-      "wp_basis": "deserved",
-      "away_wp": 0.3133,
-      "home_wp": 0.6867,
-      "away_exp_runs": 5.071,
-      "home_exp_runs": 6.366,
-      "away_deserved_runs": 5.06,
-      "home_deserved_runs": 6.4,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.3135,
+      "home_wp": 0.6865,
+      "away_exp_runs": 5.033,
+      "home_exp_runs": 6.291,
+      "away_deserved_runs": 5.02,
+      "home_deserved_runs": 6.33,
       "away_hist": [
         {
           "count": 58,
@@ -280,35 +468,35 @@
           "label": "3 R"
         },
         {
-          "count": 1839,
+          "count": 1840,
           "label": "4 R"
         },
         {
-          "count": 2153,
+          "count": 2154,
           "label": "5 R"
         },
         {
-          "count": 1937,
+          "count": 1949,
           "label": "6 R"
         },
         {
-          "count": 1250,
+          "count": 1261,
           "label": "7 R"
         },
         {
-          "count": 570,
+          "count": 554,
           "label": "8 R"
         },
         {
-          "count": 221,
+          "count": 220,
           "label": "9 R"
         },
         {
-          "count": 66,
+          "count": 60,
           "label": "10 R"
         },
         {
-          "count": 8,
+          "count": 6,
           "label": "11 R"
         },
         {
@@ -322,67 +510,132 @@
           "label": "0 R"
         },
         {
-          "count": 33,
+          "count": 36,
           "label": "1 R"
         },
         {
-          "count": 164,
+          "count": 171,
           "label": "2 R"
         },
         {
-          "count": 450,
+          "count": 513,
           "label": "3 R"
         },
         {
-          "count": 998,
+          "count": 1069,
           "label": "4 R"
         },
         {
-          "count": 1626,
+          "count": 1592,
           "label": "5 R"
         },
         {
-          "count": 1989,
+          "count": 1986,
           "label": "6 R"
         },
         {
-          "count": 1952,
+          "count": 1949,
           "label": "7 R"
         },
         {
-          "count": 1429,
+          "count": 1396,
           "label": "8 R"
         },
         {
-          "count": 864,
+          "count": 833,
           "label": "9 R"
         },
         {
-          "count": 340,
+          "count": 321,
           "label": "10 R"
         },
         {
-          "count": 123,
+          "count": 107,
           "label": "11 R"
         },
         {
-          "count": 21,
+          "count": 18,
           "label": "12 R"
         },
         {
-          "count": 7,
+          "count": 5,
           "label": "13 R"
         }
       ],
       "away_actual_idx": 2,
       "home_actual_idx": 4,
-      "ump_adj_away_wp": 0.2904,
-      "ump_adj_home_wp": 0.7096,
+      "ump_adj_away_wp": 0.298,
+      "ump_adj_home_wp": 0.702,
       "ump_favor_away": 0.07,
       "ump_favor_home": -0.07,
       "ump_name": "Alex Tosi",
       "venue": "Wrigley Field",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.303,
+          "xba": 0.199,
+          "discipline": {
+            "o_swing": 0.326,
+            "z_swing": 0.697,
+            "whiff": 0.257,
+            "swstr": 0.125,
+            "csw": 0.257
+          },
+          "risp": {
+            "ab": 6,
+            "h": 0,
+            "avg": 0.0
+          },
+          "lob": 16
+        },
+        "home": {
+          "xwoba": 0.392,
+          "xba": 0.254,
+          "discipline": {
+            "o_swing": 0.239,
+            "z_swing": 0.698,
+            "whiff": 0.204,
+            "swstr": 0.089,
+            "csw": 0.226
+          },
+          "risp": {
+            "ab": 3,
+            "h": 1,
+            "avg": 0.333
+          },
+          "lob": 8
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Brown, Ben",
+            "ev": 103.5,
+            "la": 23.0,
+            "xba": 0.72,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Peralta, Freddy",
+            "ev": 101.9,
+            "la": 5.0,
+            "xba": 0.58,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Peralta, Freddy",
+            "ev": 91.4,
+            "la": 19.0,
+            "xba": 0.514,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "824694",
       "game_date": "2026-04-18",
       "n_batted_balls": 51
@@ -392,72 +645,72 @@
       "home_team": "Pittsburgh Pirates",
       "actual_away_runs": 8,
       "actual_home_runs": 7,
-      "wp_basis": "deserved",
-      "away_wp": 0.7055,
-      "home_wp": 0.2945,
-      "away_exp_runs": 7.078,
-      "home_exp_runs": 5.562,
-      "away_deserved_runs": 7.08,
-      "home_deserved_runs": 5.58,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.7119,
+      "home_wp": 0.2881,
+      "away_exp_runs": 7.498,
+      "home_exp_runs": 5.919,
+      "away_deserved_runs": 7.5,
+      "home_deserved_runs": 5.94,
       "away_hist": [
         {
-          "count": 3,
+          "count": 0,
           "label": "0 R"
         },
         {
-          "count": 16,
+          "count": 10,
           "label": "1 R"
         },
         {
-          "count": 81,
+          "count": 44,
           "label": "2 R"
         },
         {
-          "count": 210,
+          "count": 143,
           "label": "3 R"
         },
         {
-          "count": 624,
+          "count": 428,
           "label": "4 R"
         },
         {
-          "count": 1170,
+          "count": 894,
           "label": "5 R"
         },
         {
-          "count": 1752,
+          "count": 1473,
           "label": "6 R"
         },
         {
-          "count": 2091,
+          "count": 1933,
           "label": "7 R"
         },
         {
-          "count": 1797,
+          "count": 2014,
           "label": "8 R"
         },
         {
-          "count": 1238,
+          "count": 1540,
           "label": "9 R"
         },
         {
-          "count": 647,
+          "count": 922,
           "label": "10 R"
         },
         {
-          "count": 261,
+          "count": 398,
           "label": "11 R"
         },
         {
-          "count": 87,
+          "count": 147,
           "label": "12 R"
         },
         {
-          "count": 21,
+          "count": 45,
           "label": "13 R"
         },
         {
-          "count": 1,
+          "count": 8,
           "label": "14 R"
         },
         {
@@ -467,71 +720,140 @@
       ],
       "home_hist": [
         {
-          "count": 55,
+          "count": 34,
           "label": "0 R"
         },
         {
-          "count": 160,
+          "count": 96,
           "label": "1 R"
         },
         {
-          "count": 425,
+          "count": 332,
           "label": "2 R"
         },
         {
-          "count": 846,
+          "count": 709,
           "label": "3 R"
         },
         {
-          "count": 1476,
+          "count": 1305,
           "label": "4 R"
         },
         {
-          "count": 1907,
+          "count": 1765,
           "label": "5 R"
         },
         {
-          "count": 1994,
+          "count": 2005,
           "label": "6 R"
         },
         {
-          "count": 1413,
+          "count": 1604,
           "label": "7 R"
         },
         {
-          "count": 965,
+          "count": 1135,
           "label": "8 R"
         },
         {
-          "count": 498,
+          "count": 605,
           "label": "9 R"
         },
         {
-          "count": 186,
+          "count": 295,
           "label": "10 R"
         },
         {
-          "count": 63,
+          "count": 86,
           "label": "11 R"
         },
         {
-          "count": 9,
+          "count": 24,
           "label": "12 R"
         },
         {
-          "count": 3,
+          "count": 4,
           "label": "13 R"
+        },
+        {
+          "count": 1,
+          "label": "14 R"
         }
       ],
       "away_actual_idx": 8,
       "home_actual_idx": 7,
-      "ump_adj_away_wp": 0.8119,
-      "ump_adj_home_wp": 0.1881,
+      "ump_adj_away_wp": 0.8172,
+      "ump_adj_home_wp": 0.1828,
       "ump_favor_away": -0.5,
       "ump_favor_home": 0.5,
       "ump_name": "Adrian Johnson",
       "venue": "PNC Park",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.293,
+          "xba": 0.24,
+          "discipline": {
+            "o_swing": 0.231,
+            "z_swing": 0.684,
+            "whiff": 0.168,
+            "swstr": 0.072,
+            "csw": 0.247
+          },
+          "risp": {
+            "ab": 19,
+            "h": 6,
+            "avg": 0.316
+          },
+          "lob": 34
+        },
+        "home": {
+          "xwoba": 0.285,
+          "xba": 0.167,
+          "discipline": {
+            "o_swing": 0.277,
+            "z_swing": 0.673,
+            "whiff": 0.253,
+            "swstr": 0.113,
+            "csw": 0.261
+          },
+          "risp": {
+            "ab": 17,
+            "h": 2,
+            "avg": 0.118
+          },
+          "lob": 27
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Mattson, Isaac",
+            "ev": 106.9,
+            "la": 17.0,
+            "xba": 0.551,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Jax, Griffin",
+            "ev": 64.9,
+            "la": 21.0,
+            "xba": 0.62,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Baker, Bryan",
+            "ev": 80.7,
+            "la": -27.0,
+            "xba": 0.046,
+            "result": "single",
+            "kind": "lucky_hit"
+          }
+        ]
+      },
       "game_pk": "823394",
       "game_date": "2026-04-18",
       "n_batted_balls": 70
@@ -541,483 +863,68 @@
       "home_team": "Washington Nationals",
       "actual_away_runs": 7,
       "actual_home_runs": 6,
-      "wp_basis": "deserved",
-      "away_wp": 0.4627,
-      "home_wp": 0.5373,
-      "away_exp_runs": 7.034,
-      "home_exp_runs": 7.337,
-      "away_deserved_runs": 7.05,
-      "home_deserved_runs": 7.34,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.4876,
+      "home_wp": 0.5124,
+      "away_exp_runs": 7.302,
+      "home_exp_runs": 7.396,
+      "away_deserved_runs": 7.32,
+      "home_deserved_runs": 7.4,
       "away_hist": [
-        {
-          "count": 6,
-          "label": "0 R"
-        },
-        {
-          "count": 31,
-          "label": "1 R"
-        },
-        {
-          "count": 106,
-          "label": "2 R"
-        },
-        {
-          "count": 304,
-          "label": "3 R"
-        },
-        {
-          "count": 651,
-          "label": "4 R"
-        },
-        {
-          "count": 1098,
-          "label": "5 R"
-        },
-        {
-          "count": 1675,
-          "label": "6 R"
-        },
-        {
-          "count": 1962,
-          "label": "7 R"
-        },
-        {
-          "count": 1759,
-          "label": "8 R"
-        },
-        {
-          "count": 1301,
-          "label": "9 R"
-        },
-        {
-          "count": 650,
-          "label": "10 R"
-        },
-        {
-          "count": 317,
-          "label": "11 R"
-        },
-        {
-          "count": 105,
-          "label": "12 R"
-        },
-        {
-          "count": 31,
-          "label": "13 R"
-        },
-        {
-          "count": 4,
-          "label": "14 R"
-        }
-      ],
-      "home_hist": [
         {
           "count": 1,
           "label": "0 R"
         },
         {
-          "count": 8,
+          "count": 22,
           "label": "1 R"
         },
         {
-          "count": 57,
+          "count": 85,
           "label": "2 R"
         },
         {
-          "count": 214,
+          "count": 218,
           "label": "3 R"
         },
         {
-          "count": 515,
+          "count": 551,
           "label": "4 R"
         },
         {
-          "count": 967,
+          "count": 1031,
           "label": "5 R"
         },
         {
-          "count": 1662,
+          "count": 1582,
           "label": "6 R"
         },
         {
-          "count": 1938,
+          "count": 1908,
           "label": "7 R"
         },
         {
-          "count": 1818,
+          "count": 1791,
           "label": "8 R"
         },
         {
-          "count": 1406,
+          "count": 1411,
           "label": "9 R"
         },
         {
-          "count": 872,
+          "count": 829,
           "label": "10 R"
         },
         {
-          "count": 356,
+          "count": 368,
           "label": "11 R"
         },
         {
-          "count": 138,
+          "count": 153,
           "label": "12 R"
         },
         {
           "count": 40,
-          "label": "13 R"
-        },
-        {
-          "count": 8,
-          "label": "14 R"
-        }
-      ],
-      "away_actual_idx": 7,
-      "home_actual_idx": 6,
-      "ump_adj_away_wp": 0.4876,
-      "ump_adj_home_wp": 0.5124,
-      "ump_favor_away": -0.11,
-      "ump_favor_home": 0.11,
-      "ump_name": "Brennan Miller",
-      "venue": "Nationals Park",
-      "edges": [],
-      "game_pk": "822751",
-      "game_date": "2026-04-18",
-      "n_batted_balls": 77
-    },
-    "825020": {
-      "away_team": "Chicago White Sox",
-      "home_team": "Athletics",
-      "actual_away_runs": 6,
-      "actual_home_runs": 7,
-      "wp_basis": "deserved",
-      "away_wp": 0.5157,
-      "home_wp": 0.4843,
-      "away_exp_runs": 9.193,
-      "home_exp_runs": 9.111,
-      "away_deserved_runs": 9.17,
-      "home_deserved_runs": 9.12,
-      "away_hist": [
-        {
-          "count": 0,
-          "label": "0 R"
-        },
-        {
-          "count": 1,
-          "label": "1 R"
-        },
-        {
-          "count": 2,
-          "label": "2 R"
-        },
-        {
-          "count": 16,
-          "label": "3 R"
-        },
-        {
-          "count": 67,
-          "label": "4 R"
-        },
-        {
-          "count": 220,
-          "label": "5 R"
-        },
-        {
-          "count": 508,
-          "label": "6 R"
-        },
-        {
-          "count": 1094,
-          "label": "7 R"
-        },
-        {
-          "count": 1642,
-          "label": "8 R"
-        },
-        {
-          "count": 1941,
-          "label": "9 R"
-        },
-        {
-          "count": 1932,
-          "label": "10 R"
-        },
-        {
-          "count": 1399,
-          "label": "11 R"
-        },
-        {
-          "count": 733,
-          "label": "12 R"
-        },
-        {
-          "count": 335,
-          "label": "13 R"
-        },
-        {
-          "count": 96,
-          "label": "14 R"
-        },
-        {
-          "count": 14,
-          "label": "15 R"
-        }
-      ],
-      "home_hist": [
-        {
-          "count": 0,
-          "label": "0 R"
-        },
-        {
-          "count": 1,
-          "label": "1 R"
-        },
-        {
-          "count": 2,
-          "label": "2 R"
-        },
-        {
-          "count": 20,
-          "label": "3 R"
-        },
-        {
-          "count": 91,
-          "label": "4 R"
-        },
-        {
-          "count": 306,
-          "label": "5 R"
-        },
-        {
-          "count": 632,
-          "label": "6 R"
-        },
-        {
-          "count": 1192,
-          "label": "7 R"
-        },
-        {
-          "count": 1694,
-          "label": "8 R"
-        },
-        {
-          "count": 1839,
-          "label": "9 R"
-        },
-        {
-          "count": 1688,
-          "label": "10 R"
-        },
-        {
-          "count": 1246,
-          "label": "11 R"
-        },
-        {
-          "count": 764,
-          "label": "12 R"
-        },
-        {
-          "count": 349,
-          "label": "13 R"
-        },
-        {
-          "count": 142,
-          "label": "14 R"
-        },
-        {
-          "count": 25,
-          "label": "15 R"
-        },
-        {
-          "count": 8,
-          "label": "16 R"
-        },
-        {
-          "count": 1,
-          "label": "17 R"
-        }
-      ],
-      "away_actual_idx": 6,
-      "home_actual_idx": 7,
-      "ump_adj_away_wp": 0.5409,
-      "ump_adj_home_wp": 0.4591,
-      "ump_favor_away": -0.1,
-      "ump_favor_home": 0.1,
-      "ump_name": "Chad Whitson",
-      "venue": "Sutter Health Park",
-      "edges": [],
-      "game_pk": "825020",
-      "game_date": "2026-04-18",
-      "n_batted_balls": 68
-    },
-    "824775": {
-      "away_team": "Detroit Tigers",
-      "home_team": "Boston Red Sox",
-      "actual_away_runs": 4,
-      "actual_home_runs": 1,
-      "wp_basis": "deserved",
-      "away_wp": 0.9815,
-      "home_wp": 0.0185,
-      "away_exp_runs": 4.421,
-      "home_exp_runs": 0.516,
-      "away_deserved_runs": 4.43,
-      "home_deserved_runs": 0.08,
-      "away_hist": [
-        {
-          "count": 87,
-          "label": "0 R"
-        },
-        {
-          "count": 294,
-          "label": "1 R"
-        },
-        {
-          "count": 867,
-          "label": "2 R"
-        },
-        {
-          "count": 1597,
-          "label": "3 R"
-        },
-        {
-          "count": 2337,
-          "label": "4 R"
-        },
-        {
-          "count": 2284,
-          "label": "5 R"
-        },
-        {
-          "count": 1535,
-          "label": "6 R"
-        },
-        {
-          "count": 672,
-          "label": "7 R"
-        },
-        {
-          "count": 259,
-          "label": "8 R"
-        },
-        {
-          "count": 55,
-          "label": "9 R"
-        },
-        {
-          "count": 12,
-          "label": "10 R"
-        },
-        {
-          "count": 1,
-          "label": "11 R"
-        }
-      ],
-      "home_hist": [
-        {
-          "count": 6512,
-          "label": "0 R"
-        },
-        {
-          "count": 2236,
-          "label": "1 R"
-        },
-        {
-          "count": 1007,
-          "label": "2 R"
-        },
-        {
-          "count": 222,
-          "label": "3 R"
-        },
-        {
-          "count": 21,
-          "label": "4 R"
-        },
-        {
-          "count": 2,
-          "label": "5 R"
-        }
-      ],
-      "away_actual_idx": 4,
-      "home_actual_idx": 1,
-      "ump_adj_away_wp": 0.9885,
-      "ump_adj_home_wp": 0.0115,
-      "ump_favor_away": -0.15,
-      "ump_favor_home": 0.15,
-      "ump_name": "Felix Neon",
-      "venue": "Fenway Park",
-      "edges": [],
-      "game_pk": "824775",
-      "game_date": "2026-04-18",
-      "n_batted_balls": 47
-    },
-    "823882": {
-      "away_team": "Milwaukee Brewers",
-      "home_team": "Miami Marlins",
-      "actual_away_runs": 5,
-      "actual_home_runs": 2,
-      "wp_basis": "deserved",
-      "away_wp": 0.8893,
-      "home_wp": 0.1107,
-      "away_exp_runs": 8.211,
-      "home_exp_runs": 5.322,
-      "away_deserved_runs": 8.21,
-      "home_deserved_runs": 5.35,
-      "away_hist": [
-        {
-          "count": 0,
-          "label": "0 R"
-        },
-        {
-          "count": 0,
-          "label": "1 R"
-        },
-        {
-          "count": 0,
-          "label": "2 R"
-        },
-        {
-          "count": 23,
-          "label": "3 R"
-        },
-        {
-          "count": 129,
-          "label": "4 R"
-        },
-        {
-          "count": 461,
-          "label": "5 R"
-        },
-        {
-          "count": 988,
-          "label": "6 R"
-        },
-        {
-          "count": 1781,
-          "label": "7 R"
-        },
-        {
-          "count": 2297,
-          "label": "8 R"
-        },
-        {
-          "count": 1964,
-          "label": "9 R"
-        },
-        {
-          "count": 1360,
-          "label": "10 R"
-        },
-        {
-          "count": 707,
-          "label": "11 R"
-        },
-        {
-          "count": 227,
-          "label": "12 R"
-        },
-        {
-          "count": 53,
           "label": "13 R"
         },
         {
@@ -1027,67 +934,841 @@
       ],
       "home_hist": [
         {
-          "count": 8,
+          "count": 1,
           "label": "0 R"
         },
         {
-          "count": 90,
+          "count": 7,
           "label": "1 R"
         },
         {
-          "count": 356,
+          "count": 56,
           "label": "2 R"
         },
         {
-          "count": 975,
+          "count": 197,
           "label": "3 R"
         },
         {
-          "count": 1748,
+          "count": 477,
           "label": "4 R"
         },
         {
-          "count": 2219,
+          "count": 902,
           "label": "5 R"
         },
         {
-          "count": 2128,
+          "count": 1620,
           "label": "6 R"
         },
         {
-          "count": 1526,
+          "count": 1931,
           "label": "7 R"
         },
         {
-          "count": 672,
+          "count": 1866,
           "label": "8 R"
         },
         {
-          "count": 212,
+          "count": 1432,
           "label": "9 R"
         },
         {
-          "count": 52,
+          "count": 919,
           "label": "10 R"
         },
         {
-          "count": 12,
+          "count": 385,
           "label": "11 R"
         },
         {
+          "count": 155,
+          "label": "12 R"
+        },
+        {
+          "count": 42,
+          "label": "13 R"
+        },
+        {
+          "count": 10,
+          "label": "14 R"
+        }
+      ],
+      "away_actual_idx": 7,
+      "home_actual_idx": 6,
+      "ump_adj_away_wp": 0.5149,
+      "ump_adj_home_wp": 0.4851,
+      "ump_favor_away": -0.11,
+      "ump_favor_home": 0.11,
+      "ump_name": "Brennan Miller",
+      "venue": "Nationals Park",
+      "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.289,
+          "xba": 0.269,
+          "discipline": {
+            "o_swing": 0.297,
+            "z_swing": 0.705,
+            "whiff": 0.202,
+            "swstr": 0.101,
+            "csw": 0.28
+          },
+          "risp": {
+            "ab": 18,
+            "h": 4,
+            "avg": 0.222
+          },
+          "lob": 28
+        },
+        "home": {
+          "xwoba": 0.318,
+          "xba": 0.228,
+          "discipline": {
+            "o_swing": 0.321,
+            "z_swing": 0.675,
+            "whiff": 0.192,
+            "swstr": 0.089,
+            "csw": 0.256
+          },
+          "risp": {
+            "ab": 19,
+            "h": 4,
+            "avg": 0.211
+          },
+          "lob": 32
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "P\u00e9rez, Cionel",
+            "ev": 103.2,
+            "la": 24.0,
+            "xba": 0.72,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Lovelady, Richard",
+            "ev": 95.6,
+            "la": 10.0,
+            "xba": 0.697,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Cavalli, Cade",
+            "ev": 103.5,
+            "la": 4.0,
+            "xba": 0.571,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "P\u00e9rez, Cionel",
+            "ev": 93.0,
+            "la": -24.0,
+            "xba": 0.092,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Houser, Adrian",
+            "ev": 101.3,
+            "la": 30.0,
+            "xba": 0.557,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Houser, Adrian",
+            "ev": 104.2,
+            "la": 19.0,
+            "xba": 0.5,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
+      "game_pk": "822751",
+      "game_date": "2026-04-18",
+      "n_batted_balls": 77
+    },
+    "825020": {
+      "away_team": "Chicago White Sox",
+      "home_team": "Athletics",
+      "actual_away_runs": 6,
+      "actual_home_runs": 7,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.481,
+      "home_wp": 0.519,
+      "away_exp_runs": 9.146,
+      "home_exp_runs": 9.286,
+      "away_deserved_runs": 9.13,
+      "home_deserved_runs": 9.29,
+      "away_hist": [
+        {
+          "count": 0,
+          "label": "0 R"
+        },
+        {
+          "count": 1,
+          "label": "1 R"
+        },
+        {
+          "count": 3,
+          "label": "2 R"
+        },
+        {
+          "count": 17,
+          "label": "3 R"
+        },
+        {
+          "count": 65,
+          "label": "4 R"
+        },
+        {
+          "count": 223,
+          "label": "5 R"
+        },
+        {
+          "count": 530,
+          "label": "6 R"
+        },
+        {
+          "count": 1163,
+          "label": "7 R"
+        },
+        {
+          "count": 1715,
+          "label": "8 R"
+        },
+        {
+          "count": 1972,
+          "label": "9 R"
+        },
+        {
+          "count": 1850,
+          "label": "10 R"
+        },
+        {
+          "count": 1316,
+          "label": "11 R"
+        },
+        {
+          "count": 707,
+          "label": "12 R"
+        },
+        {
+          "count": 329,
+          "label": "13 R"
+        },
+        {
+          "count": 95,
+          "label": "14 R"
+        },
+        {
+          "count": 14,
+          "label": "15 R"
+        }
+      ],
+      "home_hist": [
+        {
+          "count": 0,
+          "label": "0 R"
+        },
+        {
+          "count": 1,
+          "label": "1 R"
+        },
+        {
+          "count": 1,
+          "label": "2 R"
+        },
+        {
+          "count": 17,
+          "label": "3 R"
+        },
+        {
+          "count": 73,
+          "label": "4 R"
+        },
+        {
+          "count": 237,
+          "label": "5 R"
+        },
+        {
+          "count": 559,
+          "label": "6 R"
+        },
+        {
+          "count": 1060,
+          "label": "7 R"
+        },
+        {
+          "count": 1671,
+          "label": "8 R"
+        },
+        {
+          "count": 1837,
+          "label": "9 R"
+        },
+        {
+          "count": 1719,
+          "label": "10 R"
+        },
+        {
+          "count": 1354,
+          "label": "11 R"
+        },
+        {
+          "count": 835,
+          "label": "12 R"
+        },
+        {
+          "count": 413,
+          "label": "13 R"
+        },
+        {
+          "count": 171,
+          "label": "14 R"
+        },
+        {
+          "count": 41,
+          "label": "15 R"
+        },
+        {
+          "count": 9,
+          "label": "16 R"
+        },
+        {
           "count": 2,
+          "label": "17 R"
+        }
+      ],
+      "away_actual_idx": 6,
+      "home_actual_idx": 7,
+      "ump_adj_away_wp": 0.5098,
+      "ump_adj_home_wp": 0.4902,
+      "ump_favor_away": -0.1,
+      "ump_favor_home": 0.1,
+      "ump_name": "Chad Whitson",
+      "venue": "Sutter Health Park",
+      "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.434,
+          "xba": 0.302,
+          "discipline": {
+            "o_swing": 0.279,
+            "z_swing": 0.687,
+            "whiff": 0.186,
+            "swstr": 0.085,
+            "csw": 0.213
+          },
+          "risp": {
+            "ab": 17,
+            "h": 3,
+            "avg": 0.176
+          },
+          "lob": 34
+        },
+        "home": {
+          "xwoba": 0.415,
+          "xba": 0.277,
+          "discipline": {
+            "o_swing": 0.282,
+            "z_swing": 0.776,
+            "whiff": 0.157,
+            "swstr": 0.07,
+            "csw": 0.146
+          },
+          "risp": {
+            "ab": 14,
+            "h": 2,
+            "avg": 0.143
+          },
+          "lob": 29
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Severino, Luis",
+            "ev": 69.6,
+            "la": 34.0,
+            "xba": 0.749,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Kuhnel, Joel",
+            "ev": 85.4,
+            "la": 20.0,
+            "xba": 0.651,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Perkins, Jack",
+            "ev": 97.2,
+            "la": 5.0,
+            "xba": 0.574,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Leasure, Jordan",
+            "ev": 103.2,
+            "la": 25.0,
+            "xba": 0.754,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Leasure, Jordan",
+            "ev": 100.4,
+            "la": 24.0,
+            "xba": 0.529,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Fedde, Erick",
+            "ev": 100.0,
+            "la": 30.0,
+            "xba": 0.509,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
+      "game_pk": "825020",
+      "game_date": "2026-04-18",
+      "n_batted_balls": 68
+    },
+    "824775": {
+      "away_team": "Detroit Tigers",
+      "home_team": "Boston Red Sox",
+      "actual_away_runs": 4,
+      "actual_home_runs": 1,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.9754,
+      "home_wp": 0.0246,
+      "away_exp_runs": 4.489,
+      "home_exp_runs": 0.729,
+      "away_deserved_runs": 4.5,
+      "home_deserved_runs": 0.45,
+      "away_hist": [
+        {
+          "count": 87,
+          "label": "0 R"
+        },
+        {
+          "count": 288,
+          "label": "1 R"
+        },
+        {
+          "count": 861,
+          "label": "2 R"
+        },
+        {
+          "count": 1539,
+          "label": "3 R"
+        },
+        {
+          "count": 2232,
+          "label": "4 R"
+        },
+        {
+          "count": 2232,
+          "label": "5 R"
+        },
+        {
+          "count": 1596,
+          "label": "6 R"
+        },
+        {
+          "count": 797,
+          "label": "7 R"
+        },
+        {
+          "count": 293,
+          "label": "8 R"
+        },
+        {
+          "count": 62,
+          "label": "9 R"
+        },
+        {
+          "count": 12,
+          "label": "10 R"
+        },
+        {
+          "count": 1,
+          "label": "11 R"
+        }
+      ],
+      "home_hist": [
+        {
+          "count": 5213,
+          "label": "0 R"
+        },
+        {
+          "count": 2835,
+          "label": "1 R"
+        },
+        {
+          "count": 1503,
+          "label": "2 R"
+        },
+        {
+          "count": 401,
+          "label": "3 R"
+        },
+        {
+          "count": 43,
+          "label": "4 R"
+        },
+        {
+          "count": 5,
+          "label": "5 R"
+        }
+      ],
+      "away_actual_idx": 4,
+      "home_actual_idx": 1,
+      "ump_adj_away_wp": 0.9823,
+      "ump_adj_home_wp": 0.0177,
+      "ump_favor_away": -0.15,
+      "ump_favor_home": 0.15,
+      "ump_name": "Felix Neon",
+      "venue": "Fenway Park",
+      "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.389,
+          "xba": 0.288,
+          "discipline": {
+            "o_swing": 0.244,
+            "z_swing": 0.621,
+            "whiff": 0.238,
+            "swstr": 0.096,
+            "csw": 0.25
+          },
+          "risp": {
+            "ab": 4,
+            "h": 1,
+            "avg": 0.25
+          },
+          "lob": 14
+        },
+        "home": {
+          "xwoba": 0.223,
+          "xba": 0.201,
+          "discipline": {
+            "o_swing": 0.307,
+            "z_swing": 0.696,
+            "whiff": 0.339,
+            "swstr": 0.16,
+            "csw": 0.298
+          },
+          "risp": {
+            "ab": 6,
+            "h": 0,
+            "avg": 0.0
+          },
+          "lob": 15
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Bello, Brayan",
+            "ev": 106.2,
+            "la": 32.0,
+            "xba": 0.849,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Kelly, Zack",
+            "ev": 106.3,
+            "la": 8.0,
+            "xba": 0.671,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Bello, Brayan",
+            "ev": 101.8,
+            "la": 22.0,
+            "xba": 0.534,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Mor\u00e1n, Jovani",
+            "ev": 101.5,
+            "la": 45.0,
+            "xba": 0.026,
+            "result": "double",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Holton, Tyler",
+            "ev": 100.4,
+            "la": 16.0,
+            "xba": 0.54,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Jansen, Kenley",
+            "ev": 91.2,
+            "la": 19.0,
+            "xba": 0.514,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Skubal, Tarik",
+            "ev": 102.3,
+            "la": 43.0,
+            "xba": 0.123,
+            "result": "double",
+            "kind": "lucky_hit"
+          }
+        ]
+      },
+      "game_pk": "824775",
+      "game_date": "2026-04-18",
+      "n_batted_balls": 47
+    },
+    "823882": {
+      "away_team": "Milwaukee Brewers",
+      "home_team": "Miami Marlins",
+      "actual_away_runs": 5,
+      "actual_home_runs": 2,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.8612,
+      "home_wp": 0.1388,
+      "away_exp_runs": 7.721,
+      "home_exp_runs": 5.143,
+      "away_deserved_runs": 7.73,
+      "home_deserved_runs": 5.17,
+      "away_hist": [
+        {
+          "count": 0,
+          "label": "0 R"
+        },
+        {
+          "count": 0,
+          "label": "1 R"
+        },
+        {
+          "count": 4,
+          "label": "2 R"
+        },
+        {
+          "count": 63,
+          "label": "3 R"
+        },
+        {
+          "count": 241,
+          "label": "4 R"
+        },
+        {
+          "count": 714,
+          "label": "5 R"
+        },
+        {
+          "count": 1373,
+          "label": "6 R"
+        },
+        {
+          "count": 2104,
+          "label": "7 R"
+        },
+        {
+          "count": 2205,
+          "label": "8 R"
+        },
+        {
+          "count": 1709,
+          "label": "9 R"
+        },
+        {
+          "count": 1023,
+          "label": "10 R"
+        },
+        {
+          "count": 429,
+          "label": "11 R"
+        },
+        {
+          "count": 107,
+          "label": "12 R"
+        },
+        {
+          "count": 27,
+          "label": "13 R"
+        },
+        {
+          "count": 1,
+          "label": "14 R"
+        }
+      ],
+      "home_hist": [
+        {
+          "count": 18,
+          "label": "0 R"
+        },
+        {
+          "count": 116,
+          "label": "1 R"
+        },
+        {
+          "count": 426,
+          "label": "2 R"
+        },
+        {
+          "count": 1102,
+          "label": "3 R"
+        },
+        {
+          "count": 1828,
+          "label": "4 R"
+        },
+        {
+          "count": 2337,
+          "label": "5 R"
+        },
+        {
+          "count": 2085,
+          "label": "6 R"
+        },
+        {
+          "count": 1337,
+          "label": "7 R"
+        },
+        {
+          "count": 553,
+          "label": "8 R"
+        },
+        {
+          "count": 153,
+          "label": "9 R"
+        },
+        {
+          "count": 37,
+          "label": "10 R"
+        },
+        {
+          "count": 7,
+          "label": "11 R"
+        },
+        {
+          "count": 1,
           "label": "12 R"
         }
       ],
       "away_actual_idx": 5,
       "home_actual_idx": 2,
-      "ump_adj_away_wp": 0.8466,
-      "ump_adj_home_wp": 0.1534,
+      "ump_adj_away_wp": 0.8126,
+      "ump_adj_home_wp": 0.1874,
       "ump_favor_away": 0.22,
       "ump_favor_home": -0.22,
       "ump_name": "Sean Barber",
       "venue": "loanDepot park",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.353,
+          "xba": 0.191,
+          "discipline": {
+            "o_swing": 0.191,
+            "z_swing": 0.544,
+            "whiff": 0.213,
+            "swstr": 0.075,
+            "csw": 0.266
+          },
+          "risp": {
+            "ab": 12,
+            "h": 3,
+            "avg": 0.25
+          },
+          "lob": 22
+        },
+        "home": {
+          "xwoba": 0.315,
+          "xba": 0.297,
+          "discipline": {
+            "o_swing": 0.356,
+            "z_swing": 0.729,
+            "whiff": 0.167,
+            "swstr": 0.093,
+            "csw": 0.271
+          },
+          "risp": {
+            "ab": 7,
+            "h": 2,
+            "avg": 0.286
+          },
+          "lob": 15
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Alcantara, Sandy",
+            "ev": 98.0,
+            "la": 15.0,
+            "xba": 0.774,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Alcantara, Sandy",
+            "ev": 92.3,
+            "la": 22.0,
+            "xba": 0.149,
+            "result": "double",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Woodruff, Brandon",
+            "ev": 75.7,
+            "la": 23.0,
+            "xba": 0.911,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Woodruff, Brandon",
+            "ev": 104.2,
+            "la": 14.0,
+            "xba": 0.691,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "823882",
       "game_date": "2026-04-18",
       "n_batted_balls": 58
@@ -1097,90 +1778,159 @@
       "home_team": "Cleveland Guardians",
       "actual_away_runs": 2,
       "actual_home_runs": 4,
-      "wp_basis": "deserved",
-      "away_wp": 0.0905,
-      "home_wp": 0.9095,
-      "away_exp_runs": 0.59,
-      "home_exp_runs": 2.947,
-      "away_deserved_runs": 0.0,
-      "home_deserved_runs": 2.94,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.1007,
+      "home_wp": 0.8992,
+      "away_exp_runs": 0.767,
+      "home_exp_runs": 3.089,
+      "away_deserved_runs": 0.32,
+      "home_deserved_runs": 3.09,
       "away_hist": [
         {
-          "count": 6196,
+          "count": 5413,
           "label": "0 R"
         },
         {
-          "count": 2254,
+          "count": 2499,
           "label": "1 R"
         },
         {
-          "count": 1163,
+          "count": 1458,
           "label": "2 R"
         },
         {
-          "count": 335,
+          "count": 512,
           "label": "3 R"
         },
         {
-          "count": 51,
+          "count": 114,
           "label": "4 R"
         },
         {
-          "count": 1,
+          "count": 3,
           "label": "5 R"
+        },
+        {
+          "count": 1,
+          "label": "6 R"
         }
       ],
       "home_hist": [
         {
-          "count": 663,
+          "count": 533,
           "label": "0 R"
         },
         {
-          "count": 1166,
+          "count": 1122,
           "label": "1 R"
         },
         {
-          "count": 2035,
+          "count": 1912,
           "label": "2 R"
         },
         {
-          "count": 2432,
+          "count": 2505,
           "label": "3 R"
         },
         {
-          "count": 2045,
+          "count": 2157,
           "label": "4 R"
         },
         {
-          "count": 1177,
+          "count": 1194,
           "label": "5 R"
         },
         {
-          "count": 373,
+          "count": 441,
           "label": "6 R"
         },
         {
-          "count": 99,
+          "count": 115,
           "label": "7 R"
         },
         {
-          "count": 9,
+          "count": 18,
           "label": "8 R"
         },
         {
-          "count": 1,
+          "count": 3,
           "label": "9 R"
         }
       ],
       "away_actual_idx": 2,
       "home_actual_idx": 4,
-      "ump_adj_away_wp": 0.1101,
-      "ump_adj_home_wp": 0.8899,
+      "ump_adj_away_wp": 0.1232,
+      "ump_adj_home_wp": 0.8768,
       "ump_favor_away": -0.07,
       "ump_favor_home": 0.07,
       "ump_name": "Mark Wegner",
       "venue": "Progressive Field",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.193,
+          "xba": 0.137,
+          "discipline": {
+            "o_swing": 0.379,
+            "z_swing": 0.644,
+            "whiff": 0.375,
+            "swstr": 0.194,
+            "csw": 0.396
+          },
+          "risp": {
+            "ab": 4,
+            "h": 0,
+            "avg": 0.0
+          },
+          "lob": 9
+        },
+        "home": {
+          "xwoba": 0.289,
+          "xba": 0.216,
+          "discipline": {
+            "o_swing": 0.246,
+            "z_swing": 0.603,
+            "whiff": 0.315,
+            "swstr": 0.132,
+            "csw": 0.31
+          },
+          "risp": {
+            "ab": 3,
+            "h": 1,
+            "avg": 0.333
+          },
+          "lob": 3
+        },
+        "luck_events": [
+          {
+            "team": "home",
+            "batter": "Su\u00e1rez, Albert",
+            "ev": 103.5,
+            "la": 9.0,
+            "xba": 0.714,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Kremer, Dean",
+            "ev": 96.7,
+            "la": 9.0,
+            "xba": 0.594,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Kremer, Dean",
+            "ev": 105.3,
+            "la": 4.0,
+            "xba": 0.571,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "824451",
       "game_date": "2026-04-18",
       "n_batted_balls": 35
@@ -1190,110 +1940,110 @@
       "home_team": "Houston Astros",
       "actual_away_runs": 7,
       "actual_home_runs": 5,
-      "wp_basis": "deserved",
-      "away_wp": 0.7421,
-      "home_wp": 0.2579,
-      "away_exp_runs": 5.913,
-      "home_exp_runs": 4.243,
-      "away_deserved_runs": 5.91,
-      "home_deserved_runs": 4.28,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.7592,
+      "home_wp": 0.2408,
+      "away_exp_runs": 6.12,
+      "home_exp_runs": 4.308,
+      "away_deserved_runs": 6.12,
+      "home_deserved_runs": 4.35,
       "away_hist": [
         {
-          "count": 21,
+          "count": 17,
           "label": "0 R"
         },
         {
-          "count": 88,
+          "count": 60,
           "label": "1 R"
         },
         {
-          "count": 339,
+          "count": 275,
           "label": "2 R"
         },
         {
-          "count": 683,
+          "count": 615,
           "label": "3 R"
         },
         {
-          "count": 1276,
+          "count": 1077,
           "label": "4 R"
         },
         {
-          "count": 1773,
+          "count": 1644,
           "label": "5 R"
         },
         {
-          "count": 2002,
+          "count": 1984,
           "label": "6 R"
         },
         {
-          "count": 1719,
+          "count": 1856,
           "label": "7 R"
         },
         {
-          "count": 1129,
+          "count": 1296,
           "label": "8 R"
         },
         {
-          "count": 653,
+          "count": 755,
           "label": "9 R"
         },
         {
-          "count": 239,
+          "count": 312,
           "label": "10 R"
         },
         {
-          "count": 64,
+          "count": 88,
           "label": "11 R"
         },
         {
-          "count": 12,
+          "count": 17,
           "label": "12 R"
         },
         {
-          "count": 2,
+          "count": 4,
           "label": "13 R"
         }
       ],
       "home_hist": [
         {
-          "count": 66,
+          "count": 63,
           "label": "0 R"
         },
         {
-          "count": 349,
+          "count": 310,
           "label": "1 R"
         },
         {
-          "count": 1061,
+          "count": 975,
           "label": "2 R"
         },
         {
-          "count": 1876,
+          "count": 1831,
           "label": "3 R"
         },
         {
-          "count": 2364,
+          "count": 2432,
           "label": "4 R"
         },
         {
-          "count": 2069,
+          "count": 2114,
           "label": "5 R"
         },
         {
-          "count": 1375,
+          "count": 1414,
           "label": "6 R"
         },
         {
-          "count": 621,
+          "count": 627,
           "label": "7 R"
         },
         {
-          "count": 183,
+          "count": 193,
           "label": "8 R"
         },
         {
-          "count": 32,
+          "count": 37,
           "label": "9 R"
         },
         {
@@ -1303,13 +2053,60 @@
       ],
       "away_actual_idx": 7,
       "home_actual_idx": 5,
-      "ump_adj_away_wp": 0.7655,
-      "ump_adj_home_wp": 0.2345,
+      "ump_adj_away_wp": 0.7853,
+      "ump_adj_home_wp": 0.2147,
       "ump_favor_away": -0.11,
       "ump_favor_home": 0.11,
       "ump_name": "Willie Traynor",
       "venue": "Daikin Park",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.291,
+          "xba": 0.17,
+          "discipline": {
+            "o_swing": 0.33,
+            "z_swing": 0.635,
+            "whiff": 0.228,
+            "swstr": 0.105,
+            "csw": 0.263
+          },
+          "risp": {
+            "ab": 13,
+            "h": 1,
+            "avg": 0.077
+          },
+          "lob": 20
+        },
+        "home": {
+          "xwoba": 0.336,
+          "xba": 0.177,
+          "discipline": {
+            "o_swing": 0.221,
+            "z_swing": 0.606,
+            "whiff": 0.246,
+            "swstr": 0.093,
+            "csw": 0.242
+          },
+          "risp": {
+            "ab": 7,
+            "h": 1,
+            "avg": 0.143
+          },
+          "lob": 12
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "McCullers Jr., Lance",
+            "ev": 93.7,
+            "la": -24.0,
+            "xba": 0.092,
+            "result": "double",
+            "kind": "lucky_hit"
+          }
+        ]
+      },
       "game_pk": "824206",
       "game_date": "2026-04-18",
       "n_batted_balls": 46
@@ -1319,110 +2116,110 @@
       "home_team": "Seattle Mariners",
       "actual_away_runs": 3,
       "actual_home_runs": 7,
-      "wp_basis": "deserved",
-      "away_wp": 0.8085,
-      "home_wp": 0.1915,
-      "away_exp_runs": 6.339,
-      "home_exp_runs": 4.268,
-      "away_deserved_runs": 6.33,
-      "home_deserved_runs": 4.28,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.7474,
+      "home_wp": 0.2526,
+      "away_exp_runs": 6.051,
+      "home_exp_runs": 4.442,
+      "away_deserved_runs": 6.04,
+      "home_deserved_runs": 4.46,
       "away_hist": [
         {
-          "count": 2,
+          "count": 4,
           "label": "0 R"
         },
         {
-          "count": 14,
+          "count": 27,
           "label": "1 R"
         },
         {
-          "count": 87,
+          "count": 148,
           "label": "2 R"
         },
         {
-          "count": 327,
+          "count": 461,
           "label": "3 R"
         },
         {
-          "count": 924,
+          "count": 1167,
           "label": "4 R"
         },
         {
-          "count": 1776,
+          "count": 1908,
           "label": "5 R"
         },
         {
-          "count": 2295,
+          "count": 2240,
           "label": "6 R"
         },
         {
-          "count": 2245,
+          "count": 2052,
           "label": "7 R"
         },
         {
-          "count": 1416,
+          "count": 1242,
           "label": "8 R"
         },
         {
-          "count": 647,
+          "count": 564,
           "label": "9 R"
         },
         {
-          "count": 212,
+          "count": 160,
           "label": "10 R"
         },
         {
-          "count": 51,
+          "count": 25,
           "label": "11 R"
         },
         {
-          "count": 4,
+          "count": 2,
           "label": "12 R"
         }
       ],
       "home_hist": [
         {
-          "count": 109,
+          "count": 73,
           "label": "0 R"
         },
         {
-          "count": 421,
+          "count": 337,
           "label": "1 R"
         },
         {
-          "count": 1025,
+          "count": 874,
           "label": "2 R"
         },
         {
-          "count": 1751,
+          "count": 1630,
           "label": "3 R"
         },
         {
-          "count": 2285,
+          "count": 2236,
           "label": "4 R"
         },
         {
-          "count": 2023,
+          "count": 2158,
           "label": "5 R"
         },
         {
-          "count": 1437,
+          "count": 1553,
           "label": "6 R"
         },
         {
-          "count": 684,
+          "count": 807,
           "label": "7 R"
         },
         {
-          "count": 209,
+          "count": 257,
           "label": "8 R"
         },
         {
-          "count": 51,
+          "count": 66,
           "label": "9 R"
         },
         {
-          "count": 3,
+          "count": 7,
           "label": "10 R"
         },
         {
@@ -1432,13 +2229,78 @@
       ],
       "away_actual_idx": 3,
       "home_actual_idx": 7,
-      "ump_adj_away_wp": 0.7858,
-      "ump_adj_home_wp": 0.2142,
+      "ump_adj_away_wp": 0.721,
+      "ump_adj_home_wp": 0.279,
       "ump_favor_away": 0.11,
       "ump_favor_home": -0.11,
       "ump_name": "Rob Drake",
       "venue": "T-Mobile Park",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.316,
+          "xba": 0.217,
+          "discipline": {
+            "o_swing": 0.29,
+            "z_swing": 0.693,
+            "whiff": 0.273,
+            "swstr": 0.133,
+            "csw": 0.271
+          },
+          "risp": {
+            "ab": 8,
+            "h": 1,
+            "avg": 0.125
+          },
+          "lob": 25
+        },
+        "home": {
+          "xwoba": 0.346,
+          "xba": 0.284,
+          "discipline": {
+            "o_swing": 0.316,
+            "z_swing": 0.765,
+            "whiff": 0.207,
+            "swstr": 0.113,
+            "csw": 0.231
+          },
+          "risp": {
+            "ab": 7,
+            "h": 3,
+            "avg": 0.429
+          },
+          "lob": 15
+        },
+        "luck_events": [
+          {
+            "team": "home",
+            "batter": "Eovaldi, Nathan",
+            "ev": 98.7,
+            "la": 10.0,
+            "xba": 0.777,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Eovaldi, Nathan",
+            "ev": 84.7,
+            "la": 20.0,
+            "xba": 0.651,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Eovaldi, Nathan",
+            "ev": 109.4,
+            "la": 3.0,
+            "xba": 0.531,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "823151",
       "game_date": "2026-04-18",
       "n_batted_balls": 57
@@ -1448,52 +2310,52 @@
       "home_team": "Philadelphia Phillies",
       "actual_away_runs": 3,
       "actual_home_runs": 1,
-      "wp_basis": "deserved",
-      "away_wp": 0.7255,
-      "home_wp": 0.2745,
-      "away_exp_runs": 3.269,
-      "home_exp_runs": 1.972,
-      "away_deserved_runs": 3.25,
-      "home_deserved_runs": 1.92,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.7444,
+      "home_wp": 0.2556,
+      "away_exp_runs": 3.398,
+      "home_exp_runs": 2.011,
+      "away_deserved_runs": 3.38,
+      "home_deserved_runs": 1.96,
       "away_hist": [
         {
-          "count": 364,
+          "count": 351,
           "label": "0 R"
         },
         {
-          "count": 920,
+          "count": 871,
           "label": "1 R"
         },
         {
-          "count": 1922,
+          "count": 1808,
           "label": "2 R"
         },
         {
-          "count": 2430,
+          "count": 2305,
           "label": "3 R"
         },
         {
-          "count": 2202,
+          "count": 2216,
           "label": "4 R"
         },
         {
-          "count": 1334,
+          "count": 1466,
           "label": "5 R"
         },
         {
-          "count": 608,
+          "count": 694,
           "label": "6 R"
         },
         {
-          "count": 168,
+          "count": 223,
           "label": "7 R"
         },
         {
-          "count": 43,
+          "count": 56,
           "label": "8 R"
         },
         {
-          "count": 8,
+          "count": 9,
           "label": "9 R"
         },
         {
@@ -1503,47 +2365,121 @@
       ],
       "home_hist": [
         {
-          "count": 1895,
+          "count": 1842,
           "label": "0 R"
         },
         {
-          "count": 2091,
+          "count": 2119,
           "label": "1 R"
         },
         {
-          "count": 2464,
+          "count": 2461,
           "label": "2 R"
         },
         {
-          "count": 2016,
+          "count": 1993,
           "label": "3 R"
         },
         {
-          "count": 1120,
+          "count": 1124,
           "label": "4 R"
         },
         {
-          "count": 335,
+          "count": 366,
           "label": "5 R"
         },
         {
-          "count": 68,
+          "count": 82,
           "label": "6 R"
         },
         {
-          "count": 11,
+          "count": 13,
           "label": "7 R"
         }
       ],
       "away_actual_idx": 3,
       "home_actual_idx": 1,
-      "ump_adj_away_wp": 0.7508,
-      "ump_adj_home_wp": 0.2492,
+      "ump_adj_away_wp": 0.7613,
+      "ump_adj_home_wp": 0.2387,
       "ump_favor_away": -0.08,
       "ump_favor_home": 0.08,
       "ump_name": "James Hoye",
       "venue": "Citizens Bank Park",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.263,
+          "xba": 0.194,
+          "discipline": {
+            "o_swing": 0.359,
+            "z_swing": 0.677,
+            "whiff": 0.325,
+            "swstr": 0.159,
+            "csw": 0.293
+          },
+          "risp": {
+            "ab": 9,
+            "h": 2,
+            "avg": 0.222
+          },
+          "lob": 17
+        },
+        "home": {
+          "xwoba": 0.165,
+          "xba": 0.148,
+          "discipline": {
+            "o_swing": 0.477,
+            "z_swing": 0.615,
+            "whiff": 0.296,
+            "swstr": 0.162,
+            "csw": 0.338
+          },
+          "risp": {
+            "ab": 2,
+            "h": 0,
+            "avg": 0.0
+          },
+          "lob": 9
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "S\u00e1nchez, Cristopher",
+            "ev": 107.6,
+            "la": 33.0,
+            "xba": 0.886,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Banks, Tanner",
+            "ev": 100.2,
+            "la": 5.0,
+            "xba": 0.597,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "S\u00e1nchez, Cristopher",
+            "ev": 43.1,
+            "la": 34.0,
+            "xba": 0.13,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Lee, Dylan",
+            "ev": 103.4,
+            "la": 3.0,
+            "xba": 0.551,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "823474",
       "game_date": "2026-04-18",
       "n_batted_balls": 46
@@ -1553,16 +2489,16 @@
       "home_team": "Colorado Rockies",
       "actual_away_runs": 3,
       "actual_home_runs": 4,
-      "wp_basis": "deserved",
-      "away_wp": 0.7619,
-      "home_wp": 0.2381,
-      "away_exp_runs": 5.393,
-      "home_exp_runs": 3.701,
-      "away_deserved_runs": 5.39,
-      "home_deserved_runs": 3.74,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.7613,
+      "home_wp": 0.2387,
+      "away_exp_runs": 5.484,
+      "home_exp_runs": 3.823,
+      "away_deserved_runs": 5.48,
+      "home_deserved_runs": 3.86,
       "away_hist": [
         {
-          "count": 22,
+          "count": 17,
           "label": "0 R"
         },
         {
@@ -1570,101 +2506,175 @@
           "label": "1 R"
         },
         {
-          "count": 365,
+          "count": 355,
           "label": "2 R"
         },
         {
-          "count": 925,
+          "count": 913,
           "label": "3 R"
         },
         {
-          "count": 1579,
+          "count": 1555,
           "label": "4 R"
         },
         {
-          "count": 2142,
+          "count": 2091,
           "label": "5 R"
         },
         {
-          "count": 2151,
+          "count": 2089,
           "label": "6 R"
         },
         {
-          "count": 1505,
+          "count": 1588,
           "label": "7 R"
         },
         {
-          "count": 783,
+          "count": 818,
           "label": "8 R"
         },
         {
-          "count": 315,
+          "count": 343,
           "label": "9 R"
         },
         {
-          "count": 78,
+          "count": 94,
           "label": "10 R"
         },
         {
-          "count": 18,
+          "count": 19,
           "label": "11 R"
         },
         {
-          "count": 6,
+          "count": 7,
           "label": "12 R"
         }
       ],
       "home_hist": [
         {
-          "count": 198,
+          "count": 176,
           "label": "0 R"
         },
         {
-          "count": 635,
+          "count": 631,
           "label": "1 R"
         },
         {
-          "count": 1420,
+          "count": 1347,
           "label": "2 R"
         },
         {
-          "count": 2340,
+          "count": 2123,
           "label": "3 R"
         },
         {
-          "count": 2457,
+          "count": 2381,
           "label": "4 R"
         },
         {
-          "count": 1674,
+          "count": 1854,
           "label": "5 R"
         },
         {
-          "count": 894,
+          "count": 1032,
           "label": "6 R"
         },
         {
-          "count": 306,
+          "count": 358,
           "label": "7 R"
         },
         {
-          "count": 65,
+          "count": 84,
           "label": "8 R"
         },
         {
-          "count": 11,
+          "count": 14,
           "label": "9 R"
         }
       ],
       "away_actual_idx": 3,
       "home_actual_idx": 4,
-      "ump_adj_away_wp": 0.7619,
-      "ump_adj_home_wp": 0.2381,
+      "ump_adj_away_wp": 0.7517,
+      "ump_adj_home_wp": 0.2483,
       "ump_favor_away": 0.01,
       "ump_favor_home": -0.01,
       "ump_name": "Dan Iassogna",
       "venue": "Coors Field",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.307,
+          "xba": 0.213,
+          "discipline": {
+            "o_swing": 0.275,
+            "z_swing": 0.725,
+            "whiff": 0.304,
+            "swstr": 0.152,
+            "csw": 0.283
+          },
+          "risp": {
+            "ab": 7,
+            "h": 0,
+            "avg": 0.0
+          },
+          "lob": 15
+        },
+        "home": {
+          "xwoba": 0.25,
+          "xba": 0.21,
+          "discipline": {
+            "o_swing": 0.343,
+            "z_swing": 0.649,
+            "whiff": 0.213,
+            "swstr": 0.102,
+            "csw": 0.252
+          },
+          "risp": {
+            "ab": 10,
+            "h": 3,
+            "avg": 0.3
+          },
+          "lob": 12
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Hill, Jaden",
+            "ev": 101.2,
+            "la": 30.0,
+            "xba": 0.557,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Feltner, Ryan",
+            "ev": 99.5,
+            "la": 43.0,
+            "xba": 0.057,
+            "result": "home_run",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "away",
+            "batter": "Vodnik, Victor",
+            "ev": 90.2,
+            "la": -9.0,
+            "xba": 0.15,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Sheehan, Emmet",
+            "ev": 106.1,
+            "la": 16.0,
+            "xba": 0.566,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "824372",
       "game_date": "2026-04-18",
       "n_batted_balls": 50
@@ -1674,56 +2684,56 @@
       "home_team": "Arizona Diamondbacks",
       "actual_away_runs": 2,
       "actual_home_runs": 6,
-      "wp_basis": "deserved",
-      "away_wp": 0.245,
-      "home_wp": 0.755,
-      "away_exp_runs": 4.414,
-      "home_exp_runs": 6.063,
-      "away_deserved_runs": 4.4,
-      "home_deserved_runs": 6.1,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.2406,
+      "home_wp": 0.7594,
+      "away_exp_runs": 4.382,
+      "home_exp_runs": 6.072,
+      "away_deserved_runs": 4.37,
+      "home_deserved_runs": 6.11,
       "away_hist": [
         {
           "count": 122,
           "label": "0 R"
         },
         {
-          "count": 351,
+          "count": 353,
           "label": "1 R"
         },
         {
-          "count": 936,
+          "count": 947,
           "label": "2 R"
         },
         {
-          "count": 1648,
+          "count": 1681,
           "label": "3 R"
         },
         {
-          "count": 2196,
+          "count": 2240,
           "label": "4 R"
         },
         {
-          "count": 2089,
+          "count": 2065,
           "label": "5 R"
         },
         {
-          "count": 1519,
+          "count": 1505,
           "label": "6 R"
         },
         {
-          "count": 759,
+          "count": 733,
           "label": "7 R"
         },
         {
-          "count": 268,
+          "count": 257,
           "label": "8 R"
         },
         {
-          "count": 95,
+          "count": 83,
           "label": "9 R"
         },
         {
-          "count": 16,
+          "count": 13,
           "label": "10 R"
         },
         {
@@ -1787,13 +2797,105 @@
       ],
       "away_actual_idx": 2,
       "home_actual_idx": 6,
-      "ump_adj_away_wp": 0.2405,
-      "ump_adj_home_wp": 0.7595,
+      "ump_adj_away_wp": 0.23,
+      "ump_adj_home_wp": 0.77,
       "ump_favor_away": 0.03,
       "ump_favor_home": -0.03,
       "ump_name": "Jim Wolf",
       "venue": "Chase Field",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.234,
+          "xba": 0.228,
+          "discipline": {
+            "o_swing": 0.486,
+            "z_swing": 0.695,
+            "whiff": 0.2,
+            "swstr": 0.116,
+            "csw": 0.271
+          },
+          "risp": {
+            "ab": 9,
+            "h": 2,
+            "avg": 0.222
+          },
+          "lob": 18
+        },
+        "home": {
+          "xwoba": 0.256,
+          "xba": 0.22,
+          "discipline": {
+            "o_swing": 0.323,
+            "z_swing": 0.745,
+            "whiff": 0.127,
+            "swstr": 0.064,
+            "csw": 0.193
+          },
+          "risp": {
+            "ab": 5,
+            "h": 3,
+            "avg": 0.6
+          },
+          "lob": 6
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Gallen, Zac",
+            "ev": 90.2,
+            "la": 8.0,
+            "xba": 0.551,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Thompson, Ryan",
+            "ev": 73.4,
+            "la": 31.0,
+            "xba": 0.506,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Gallen, Zac",
+            "ev": 84.3,
+            "la": -8.0,
+            "xba": 0.11,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "Scherzer, Max",
+            "ev": 89.1,
+            "la": 8.0,
+            "xba": 0.52,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Scherzer, Max",
+            "ev": 93.6,
+            "la": 18.0,
+            "xba": 0.509,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "Hoffman, Jeff",
+            "ev": 88.1,
+            "la": -21.0,
+            "xba": 0.089,
+            "result": "single",
+            "kind": "lucky_hit"
+          }
+        ]
+      },
       "game_pk": "825098",
       "game_date": "2026-04-18",
       "n_batted_balls": 58
@@ -1803,48 +2905,48 @@
       "home_team": "Los Angeles Angels",
       "actual_away_runs": 4,
       "actual_home_runs": 1,
-      "wp_basis": "deserved",
-      "away_wp": 0.6186,
-      "home_wp": 0.3814,
-      "away_exp_runs": 2.96,
-      "home_exp_runs": 2.389,
-      "away_deserved_runs": 2.95,
-      "home_deserved_runs": 2.38,
+      "wp_basis": "deserved_v2",
+      "away_wp": 0.6431,
+      "home_wp": 0.3569,
+      "away_exp_runs": 3.099,
+      "home_exp_runs": 2.402,
+      "away_deserved_runs": 3.09,
+      "home_deserved_runs": 2.4,
       "away_hist": [
         {
-          "count": 365,
+          "count": 248,
           "label": "0 R"
         },
         {
-          "count": 1213,
+          "count": 898,
           "label": "1 R"
         },
         {
-          "count": 2342,
+          "count": 2210,
           "label": "2 R"
         },
         {
-          "count": 2801,
+          "count": 2946,
           "label": "3 R"
         },
         {
-          "count": 2038,
+          "count": 2215,
           "label": "4 R"
         },
         {
-          "count": 964,
+          "count": 1115,
           "label": "5 R"
         },
         {
-          "count": 241,
+          "count": 312,
           "label": "6 R"
         },
         {
-          "count": 34,
+          "count": 51,
           "label": "7 R"
         },
         {
-          "count": 2,
+          "count": 5,
           "label": "8 R"
         }
       ],
@@ -1892,13 +2994,114 @@
       ],
       "away_actual_idx": 4,
       "home_actual_idx": 1,
-      "ump_adj_away_wp": 0.5934,
-      "ump_adj_home_wp": 0.4066,
+      "ump_adj_away_wp": 0.6183,
+      "ump_adj_home_wp": 0.3817,
       "ump_favor_away": 0.07,
       "ump_favor_home": -0.07,
       "ump_name": "Gabe Morales",
       "venue": "Angel Stadium",
       "edges": [],
+      "game_stats": {
+        "away": {
+          "xwoba": 0.333,
+          "xba": 0.244,
+          "discipline": {
+            "o_swing": 0.272,
+            "z_swing": 0.662,
+            "whiff": 0.246,
+            "swstr": 0.11,
+            "csw": 0.267
+          },
+          "risp": {
+            "ab": 13,
+            "h": 3,
+            "avg": 0.231
+          },
+          "lob": 20
+        },
+        "home": {
+          "xwoba": 0.294,
+          "xba": 0.194,
+          "discipline": {
+            "o_swing": 0.314,
+            "z_swing": 0.703,
+            "whiff": 0.316,
+            "swstr": 0.156,
+            "csw": 0.312
+          },
+          "risp": {
+            "ab": 8,
+            "h": 1,
+            "avg": 0.125
+          },
+          "lob": 18
+        },
+        "luck_events": [
+          {
+            "team": "away",
+            "batter": "Kikuchi, Yusei",
+            "ev": 97.3,
+            "la": 7.0,
+            "xba": 0.609,
+            "result": "double_play",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Anderson, Shaun",
+            "ev": 101.0,
+            "la": 25.0,
+            "xba": 0.58,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Kikuchi, Yusei",
+            "ev": 100.0,
+            "la": 3.0,
+            "xba": 0.54,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "away",
+            "batter": "Zeferjahn, Ryan",
+            "ev": 57.9,
+            "la": -18.0,
+            "xba": 0.061,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "away",
+            "batter": "Zeferjahn, Ryan",
+            "ev": 99.1,
+            "la": -24.0,
+            "xba": 0.092,
+            "result": "single",
+            "kind": "lucky_hit"
+          },
+          {
+            "team": "home",
+            "batter": "M\u00e1rquez, Germ\u00e1n",
+            "ev": 100.3,
+            "la": 27.0,
+            "xba": 0.511,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          },
+          {
+            "team": "home",
+            "batter": "M\u00e1rquez, Germ\u00e1n",
+            "ev": 103.5,
+            "la": 19.0,
+            "xba": 0.5,
+            "result": "field_out",
+            "kind": "unlucky_out"
+          }
+        ]
+      },
       "game_pk": "824049",
       "game_date": "2026-04-18",
       "n_batted_balls": 45
