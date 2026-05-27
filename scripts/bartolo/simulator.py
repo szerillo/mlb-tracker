@@ -103,8 +103,10 @@ class SimResult:
     home_team: str = ""
     actual_away_runs: int = 0
     actual_home_runs: int = 0
-    # Calibrated "deserved" runs from quality of contact (un-anchored — unlike the
-    # resampled mean, this is NOT pinned to actual, so it captures luck/sequencing).
+    # Calibrated "deserved" runs from quality of contact. This is the sim ANCHOR:
+    # each team's run distribution is centered here (E[sim] = deserved), so the
+    # win probability reflects luck-neutral contact quality rather than the actual
+    # score. Compare against actual_*_runs to see who out-/under-hit their result.
     deserved_away_runs: float = 0.0
     deserved_home_runs: float = 0.0
 
@@ -179,22 +181,25 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
         home_team=game_payload["home_team"],
         away_team=game_payload["away_team"],
     )
-    # Anchor residual to the MODEL's expected run value for these batted balls
-    # (not to the ACTUAL events' LW sum). This ensures E[sim_total] = actual_runs
-    # exactly — otherwise any mismatch between the model's per-BB outcome
-    # distribution and the actual outcomes introduces a systematic bias in
-    # sim_mean that compounds into ~+5 runs/game across a full MLB slate.
+    # DESERVED-RUNS ANCHOR.
+    # Each team's run distribution is centered on its calibrated *deserved* runs
+    # (luck-neutral quality of contact) rather than on the actual score, so the
+    # resulting Win Prob answers "who deserved to win given how they hit?" instead
+    # of trivially "who scored more?".
     #
-    # Rationale: since bb_runs_sim is drawn from model.predict_proba(), its
-    # expected value is sum of (model EV per ball). Anchoring on that expectation
-    # rather than the realized LW cancels out cleanly in the simulator math:
-    #   fixed = walks*lw + Ks*lw + HBP*lw + (actual - model_bb_ev - event_lws)
-    #   E[sim_total] = E[bb_runs_sim] + fixed
-    #                = model_bb_ev + (actual - model_bb_ev)  = actual  ✓
+    # Mechanics: bb_runs_sim is drawn from model.predict_proba(), so its expected
+    # value is the model's per-BB expectation (== away_lw). Setting
+    #   other_runs_scored = deserved - away_lw
+    # makes E[sim_total] = E[bb_runs_sim] + other_runs_scored
+    #                    = away_lw + (deserved - away_lw) = deserved  ✓
+    # The model-EV anchor (away_lw) still cancels cleanly, so we keep the
+    # +5 runs/game de-bias fix while shifting the center from actual → deserved.
     away_lw = estimate_model_expected_lw(away_events, model)
     home_lw = estimate_model_expected_lw(home_events, model)
-    away_events.other_runs_scored = game_payload["actual_away_runs"] - away_lw
-    home_events.other_runs_scored = game_payload["actual_home_runs"] - home_lw
+    des_away = calibrate_deserved(away_lw)
+    des_home = calibrate_deserved(home_lw)
+    away_events.other_runs_scored = des_away - away_lw
+    home_events.other_runs_scored = des_home - home_lw
 
     away_runs = simulate_team_runs(away_events, model, n_sims=n_sims, rng=rng)
     home_runs = simulate_team_runs(home_events, model, n_sims=n_sims, rng=rng)
@@ -207,8 +212,8 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
         home_team=game_payload["home_team"],
         actual_away_runs=game_payload["actual_away_runs"],
         actual_home_runs=game_payload["actual_home_runs"],
-        deserved_away_runs=calibrate_deserved(away_lw),
-        deserved_home_runs=calibrate_deserved(home_lw),
+        deserved_away_runs=des_away,
+        deserved_home_runs=des_home,
     )
 
 
