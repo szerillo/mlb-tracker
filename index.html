@@ -5409,7 +5409,7 @@ function renderWinprobBacktest(bt) {
       <div class="wpb-stat ${favCls}">
         <div class="wpb-label">Fav Hit Rate</div>
         <div class="wpb-val">${favHit}</div>
-        <div class="wpb-sub">when model picks winner</div>
+        <div class="wpb-sub">deserved fav won the game</div>
       </div>
       <div class="wpb-stat">
         <div class="wpb-label">Sample</div>
@@ -5456,7 +5456,9 @@ async function renderWinprobTab() {
   const intro = `<div class="wp-intro">
     <strong>B.A.R.T.O.L.O. post-game win-probability simulator.</strong> For every completed game,
     resamples batted-ball outcomes via a gradient-boosted classifier trained on ~250K Statcast events,
-    then subtracts the HP umpire's called-zone favor to produce an ump-neutral win probability.
+    anchored on each team's <em>deserved</em> (luck-neutral) runs rather than the actual score — so the win
+    probability reflects who deserved to win given their quality of contact, and a team can post a high WP
+    even in a game it lost. The HP umpire's called-zone favor is then removed for an ump-neutral number.
     Edges shown against Action Network PRO projections and the current market.
   </div>`;
 
@@ -5667,8 +5669,8 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
     <div class="wp-section">
       <h4>Win Probability &amp; Deserved Runs</h4>
       <p style="color:var(--muted);font-size:0.78rem;margin:-0.2rem 0 0.6rem;line-height:1.45;">
-        <b>Sim WP</b> = share of 10,000 batted-ball resamples this team won.
-        <b>Deserved</b> = luck-neutral runs from contact quality (calibrated) — differs from the actual score when a team out-hit or under-hit its result.</p>
+        <b>Sim WP</b> = how often this team wins across 10,000 resamples with each side anchored on its <b>deserved</b> (luck-neutral) runs — i.e. who deserved to win, not who actually scored more.
+        <b>Deserved</b> = calibrated runs from quality of contact; compare to the actual score to see who out-hit or under-hit their result.</p>
       <div class="wp-metrics">
         <div class="wp-metric"><div class="wp-mlabel">${away} Sim WP</div><div class="wp-mval">${awayWP}</div></div>
         <div class="wp-metric"><div class="wp-mlabel">${home} Sim WP</div><div class="wp-mval">${homeWP}</div></div>
