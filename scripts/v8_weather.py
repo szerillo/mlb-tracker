@@ -427,7 +427,18 @@ def compute_v8(park, wx):
         dd = cal.get("dome_damp", DOME_DAMP_DEFAULT)
         total = -0.01 + total * dd
 
-    run_adj_pct = total * 100
+    # ── Outcome-anchored scale (2026 carry calibration) ───────────────────
+    # V9's physical magnitude was originally tuned to BallparkPal's PREDICTED
+    # runs. Validated against REALIZED batted-ball carry over 5,657 games
+    # (2024-26): direction & rank-ordering are correct (within-park r=0.47 vs
+    # carry residual; Coors altitude control r=0.76), but the run-% magnitude
+    # runs hot. carry→runs calibration (β=0.0083 run/ft × ~9.7 FB/game, and
+    # 0.83 ft of carry per +1% adj) implies ~0.067 realized runs per +1% vs the
+    # 0.087 the raw % asserts → k≈0.77 (a carry-only lower bound; true k≈0.85
+    # once non-carry effects are folded in). Shrink the published % toward the
+    # realized run impact.
+    EMPIRICAL_SCALE = 0.85
+    run_adj_pct = total * 100 * EMPIRICAL_SCALE
 
     # Apply V8.1 cold cap for most parks.
     # For extreme cold (<42°F) at non-dome parks, let it go deeper (BP has shown larger penalties).
