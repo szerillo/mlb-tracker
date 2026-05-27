@@ -172,6 +172,77 @@ def vs_pitch(df):
     return out
 
 
+def mlb_gamelog(mid, season):
+    """Per-game box-score stats from the MLB Stats API gameLog (regular season).
+
+    Returns (by_date, season_slash):
+      by_date[date] = {pa, ab, r, h, hr, rbi, bb, k, sb}  (summed across DH)
+      season_slash  = {avg, obp, slg, ops}  (cumulative — from the latest split)
+
+    NB: in gameLog splits the COUNTING stats are per-game while the RATE stats
+    (avg/obp/slg/ops) are season-to-date cumulative, so the latest split's slash
+    is the season slash.
+    """
+    url = (f"https://statsapi.mlb.com/api/v1/people/{mid}/stats?stats=gameLog"
+           f"&group=hitting&season={season}&gameType=R")
+    by_date, slash = {}, {}
+
+    def _i(v):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
+
+    def _f3(v):
+        try:
+            return round(float(v), 3)
+        except (TypeError, ValueError):
+            return None
+
+    try:
+        splits = http_json(url)["stats"][0]["splits"]
+    except Exception:
+        return by_date, slash
+    for s in splits:
+        d = s.get("date")
+        st = s.get("stat", {})
+        if not d:
+            continue
+        rec = by_date.setdefault(d, {"pa": 0, "ab": 0, "r": 0, "h": 0,
+                                     "hr": 0, "rbi": 0, "bb": 0, "k": 0, "sb": 0})
+        rec["pa"]  += _i(st.get("plateAppearances"))
+        rec["ab"]  += _i(st.get("atBats"))
+        rec["r"]   += _i(st.get("runs"))
+        rec["h"]   += _i(st.get("hits"))
+        rec["hr"]  += _i(st.get("homeRuns"))
+        rec["rbi"] += _i(st.get("rbi"))
+        rec["bb"]  += _i(st.get("baseOnBalls"))
+        rec["k"]   += _i(st.get("strikeOuts"))
+        rec["sb"]  += _i(st.get("stolenBases"))
+    if splits:
+        last = max(splits, key=lambda s: s.get("date") or "").get("stat", {})
+        slash = {"avg": _f3(last.get("avg")), "obp": _f3(last.get("obp")),
+                 "slg": _f3(last.get("slg")), "ops": _f3(last.get("ops"))}
+    return by_date, slash
+
+
+def merge_box(games, gl_box):
+    """Attach MLB box-score stats to each statcast game (matched by date).
+    Prefers authoritative gameLog PA/K/BB for the rate denominators when present.
+    """
+    for g in games:
+        b = gl_box.get(g["date"])
+        if not b:
+            continue
+        g["ab"] = b["ab"]; g["r"] = b["r"]; g["h"] = b["h"]
+        g["hr"] = b["hr"]; g["rbi"] = b["rbi"]; g["sb"] = b["sb"]
+        if b["pa"]:
+            g["pa"] = b["pa"]; g["k"] = b["k"]; g["bb"] = b["bb"]
+            g["k_pct"] = _ratio(b["k"], b["pa"])
+            g["bb_pct"] = _ratio(b["bb"], b["pa"])
+    return games
+
+
 def main():
     from pybaseball import statcast_batter
     ap = argparse.ArgumentParser()
@@ -205,19 +276,36 @@ def main():
             fail += 1
             time.sleep(THROTTLE_S)
             continue
+        # Regular season only — statcast_batter returns spring-training games in
+        # the early-March window too, which would pollute season totals + the
+        # box-score join (gameLog is regular-season only).
+        if "game_type" in df.columns:
+            df = df[df["game_type"] == "R"]
+            if len(df) == 0:
+                fail += 1
+                time.sleep(THROTTLE_S)
+                continue
         games = per_game(df)
         if not games:
             time.sleep(THROTTLE_S)
             continue
+        # Merge official MLB box-score stats (AB/R/H/HR/RBI/SB + slash) per game.
+        gl_box, gl_slash = mlb_gamelog(mid, season)
+        merge_box(games, gl_box)
         season_agg = agg(games)
         # season xwOBA (batted-ball quality) for context
         bip = df[df["type"] == "X"]
         xw = bip["estimated_woba_using_speedangle"].dropna() if len(bip) else []
         if season_agg:
             season_agg["xwoba"] = round(float(xw.mean()), 3) if len(xw) else None
+            if gl_slash:
+                season_agg.update(gl_slash)        # avg / obp / slg / ops
+            # season box totals (gameLog where present)
+            for fld in ("ab", "r", "h", "hr", "rbi", "sb"):
+                season_agg[fld] = sum(g.get(fld) or 0 for g in games)
         hitters[norm_name(name)] = {
             "name": name, "mlbam_id": mid,
-            "games": [{k: g[k] for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "k_pct", "bb_pct", "whiff", "barrel")} for g in games],
+            "games": [{k: g.get(k) for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "k_pct", "bb_pct", "whiff", "barrel", "ab", "r", "h", "hr", "rbi", "sb")} for g in games],
             "l5": agg(games[-LOOKBACK_L5:]),
             "l10": agg(games[-LOOKBACK_L10:]),
             "season": season_agg,
@@ -231,7 +319,7 @@ def main():
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "season": season,
-        "source": "Statcast (pybaseball statcast_batter)",
+        "source": "Statcast (pybaseball statcast_batter) + MLB Stats API gameLog box scores",
         "min_pa": MIN_PA, "lookback_l10": LOOKBACK_L10, "lookback_l5": LOOKBACK_L5,
         "count": len(hitters),
         "hitters": hitters,
