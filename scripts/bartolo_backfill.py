@@ -75,6 +75,11 @@ def _archive_complete(out_path: Path) -> bool:
     for g in games.values():
         if g.get("away_deserved_runs") is None or g.get("home_deserved_runs") is None:
             return False
+        # Win Prob must be anchored on deserved runs. Older archives were anchored
+        # on the actual score (no wp_basis marker) — treat those as incomplete so a
+        # re-run replaces them with the deserved-anchored sim.
+        if g.get("wp_basis") != "deserved":
+            return False
     return True
 
 
