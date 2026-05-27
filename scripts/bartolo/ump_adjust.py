@@ -92,6 +92,10 @@ class UmpAdjustedResult:
             "home_team": s.home_team,
             "actual_away_runs": s.actual_away_runs,
             "actual_home_runs": s.actual_home_runs,
+            # WP is anchored on deserved (luck-neutral) runs, not the actual score.
+            # wp_basis lets the backfill detect & re-sim any older actual-anchored
+            # archives, and documents the metric's meaning for the frontend.
+            "wp_basis": "deserved",
             "away_wp": round(s.away_win_prob, 4),
             "home_wp": round(s.home_win_prob, 4),
             "away_exp_runs": round(float(s.away_runs.mean()), 3),
