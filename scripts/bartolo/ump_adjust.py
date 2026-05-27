@@ -79,7 +79,7 @@ class UmpAdjustedResult:
             "wp_shift_away": self.wp_shift_away,
         }
 
-    def frontend_dict(self, ump_name: str = "", venue: str = "") -> dict:
+    def frontend_dict(self, ump_name: str = "", venue: str = "", game_stats: dict | None = None) -> dict:
         """Per-game summary in the exact schema the Win Prob tab renders
         (away_wp / away_exp_runs / away_hist / away_actual_idx / ump_adj_* /
         ump_favor_* / ump_name / venue / edges). This is the canonical output
@@ -87,15 +87,16 @@ class UmpAdjustedResult:
         s = self.base
         aw_bins, aw_idx = _run_hist(s.away_runs, s.actual_away_runs)
         hm_bins, hm_idx = _run_hist(s.home_runs, s.actual_home_runs)
-        return {
+        d = {
             "away_team": s.away_team,
             "home_team": s.home_team,
             "actual_away_runs": s.actual_away_runs,
             "actual_home_runs": s.actual_home_runs,
-            # WP is anchored on deserved (luck-neutral) runs, not the actual score.
-            # wp_basis lets the backfill detect & re-sim any older actual-anchored
-            # archives, and documents the metric's meaning for the frontend.
-            "wp_basis": "deserved",
+            # WP is anchored on deserved (luck-neutral) runs, now with a
+            # plate-discipline process nudge to BB/K. "deserved_v2" lets the
+            # backfill detect & re-sim older archives lacking the process layer +
+            # per-game descriptive stats.
+            "wp_basis": "deserved_v2",
             "away_wp": round(s.away_win_prob, 4),
             "home_wp": round(s.home_win_prob, 4),
             "away_exp_runs": round(float(s.away_runs.mean()), 3),
@@ -114,6 +115,9 @@ class UmpAdjustedResult:
             "venue": venue,
             "edges": [],
         }
+        if game_stats:
+            d["game_stats"] = game_stats
+        return d
 
 
 def apply_ump_adjustment(sim: SimResult,
