@@ -4251,6 +4251,15 @@ function renderSPTrendsHTML(gl) {
     { key: 'bb',   label: 'BB%',    series: rollingSeries(starts, 'bb_pct'), l5: l5.bb_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
+  // CSW% / Ball% (Statcast, fractions 0–1 → shown as %). Only surfaced once the
+  // gamelog pull has populated them, so we don't render empty cells pre-backfill.
+  const pctFmt = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+  if (starts.some(s => s.csw != null)) {
+    metrics.push({ key: 'csw', label: 'CSW%', series: rollingSeries(starts, 'csw'), l5: l5.csw, fmt: pctFmt, mode: 'rolling' });
+  }
+  if (starts.some(s => s.ball_pct != null)) {
+    metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling' });
+  }
   const dateSeries = starts.map(s => s.date);
   const sparkCells = metrics.map(m => {
     const sv = m.series.filter(v => v != null && isFinite(v));
