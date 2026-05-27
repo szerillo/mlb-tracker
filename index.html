@@ -4852,30 +4852,25 @@ function computeSPRanks() {
   const hasRoles = PITCHER_ROLES && PITCHER_ROLES.pitchers && Object.keys(PITCHER_ROLES.pitchers).length > 0;
   const hasKnown = KNOWN_STARTERS && KNOWN_STARTERS.size > 0;
   if (!hasRoles && !hasKnown) return { byKey: new Map(), total: 0 };
+  // MUST mirror renderSPRankings() (SP Power Rankings tab, default "Qualified"
+  // view) EXACTLY so the rank chip on the scoreboard / lineups / pitcher modal
+  // matches the Rankings page. Qualified pool (isStarter, ≥20 IP, ≥3 of 5
+  // metrics present via the rolling-led xFIP/SIERA the wFIP weights) sorted by
+  // weighted FIP (unified_score, lower = better). Previously this ranked ALL
+  // starters by a composite z-score — a different metric AND a different pool —
+  // which mismatched the Rankings page (e.g. Gausman 16 here vs 36 there).
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
     if (!isStarter(k)) return;
-    const metrics = { xfip: s.xfip, siera: s.siera, xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct };
-    const present = Object.values(metrics).filter(v => v != null).length;
+    if ((s.ip || 0) < 20) return;  // qualified gate (matches Rankings default)
+    const present = [rollComp(s, 'xfip'), rollComp(s, 'siera'), s.xera, s.bot_era, s.k_bb_pct]
+      .filter(v => v != null).length;
     if (present < 3) return;
-    pool.push({ key: k, metrics });
+    pool.push({ key: k, wfip: s.unified_score });
   });
   if (!pool.length) return { byKey: new Map(), total: 0 };
-  // Z-score each metric; kbb sign-flipped (higher=better)
-  const keys = ["xfip", "siera", "xera", "bot", "kbb"];
-  const stats = {};
-  keys.forEach(m => { stats[m] = zScores(pool.map(p => p.metrics[m])); });
-  pool.forEach(p => {
-    const zs = [];
-    keys.forEach(m => {
-      if (p.metrics[m] != null && stats[m]) {
-        const z = (p.metrics[m] - stats[m].mean) / stats[m].sd;
-        zs.push(m === "kbb" ? -z : z);
-      }
-    });
-    p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
-  });
-  pool.sort((a, b) => (a.composite ?? 99) - (b.composite ?? 99));
+  // Weighted FIP (unified_score) — lower = better; no-wFIP arms sink to bottom.
+  pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
   const byKey = new Map();
   const total = pool.length;
   pool.forEach((p, i) => { byKey.set(p.key, { rank: i + 1, total }); });
