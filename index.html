@@ -1098,6 +1098,22 @@
   .wp-legend span::before { content: ''; width: 10px; height: 10px; border-radius: 2px;
     background: var(--accent); opacity: 0.8; display: inline-block; }
   .wp-legend span.actual::before { background: var(--tier-worst); opacity: 1; }
+  .wp-hxrow { display: flex; gap: 2px; padding: 0.15rem 0.5rem 0; }
+  .wp-hxrow .wp-hx { flex: 1; min-width: 6px; text-align: center; font-family: var(--mono);
+    font-size: 0.58rem; color: var(--muted); }
+  .wp-hxrow .wp-hx.act { color: var(--tier-worst); font-weight: 700; }
+  .wp-haxis { font-size: 0.62rem; color: var(--muted); text-align: center; margin-top: 0.15rem; }
+  .wp-disc { font-family: var(--mono); font-size: 0.74rem; color: var(--text); margin: 0.25rem 0;
+    line-height: 1.4; }
+  .wp-disc .wp-disc-team { display: inline-block; min-width: 2.4rem; font-weight: 700;
+    color: var(--accent); }
+  .wp-luck-list { display: flex; flex-direction: column; gap: 0.3rem; }
+  .wp-luck-item { font-size: 0.78rem; line-height: 1.35; padding: 0.3rem 0.5rem; border-radius: 5px;
+    background: rgba(36, 46, 58, 0.4); border-left: 3px solid var(--border); }
+  .wp-luck-item.unlucky { border-left-color: var(--accent); }
+  .wp-luck-item.lucky { border-left-color: rgba(212,175,55,0.8); }
+  .wp-luck-item .wp-luck-tag { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+    font-weight: 700; color: var(--muted); margin-right: 0.35rem; }
 
   .wp-edges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0.8rem; }
   .wp-edge-pill { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
@@ -5648,6 +5664,26 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
   const awayDes = sim?.away_deserved_runs != null ? sim.away_deserved_runs.toFixed(1) : null;
   const homeDes = sim?.home_deserved_runs != null ? sim.home_deserved_runs.toFixed(1) : null;
 
+  // Per-game descriptive stats (xwOBA/xBA, plate discipline, RISP, LOB, luck events).
+  const gs = sim?.game_stats || null;
+  const ga = gs?.away || {}, gh = gs?.home || {};
+  const fpct = (x) => x != null ? Math.round(x * 100) + '%' : '—';
+  const f3 = (x) => x != null ? x.toFixed(3).replace(/^0\./, '.') : '—';
+  const discLine = (d) => d ? `Chase ${fpct(d.o_swing)} · Z-Swing ${fpct(d.z_swing)} · Whiff ${fpct(d.whiff)} · CSW ${fpct(d.csw)}` : '—';
+  const risp = (r) => r && r.ab != null ? `${r.h}-for-${r.ab}` : '—';
+  const luckEvents = gs?.luck_events || [];
+  const luckList = luckEvents.length
+    ? '<div class="wp-luck-list">' + luckEvents.map(e => {
+        const tm = e.team === 'away' ? away : home;
+        const cls = e.kind === 'unlucky_out' ? 'unlucky' : 'lucky';
+        const tag = e.kind === 'unlucky_out' ? 'Robbed' : 'Fluke hit';
+        const ev = e.ev != null ? `${e.ev} mph` : '';
+        const la = e.la != null ? `${e.la}°` : '';
+        const det = [ev, la].filter(Boolean).join(', ');
+        return `<div class="wp-luck-item ${cls}"><span class="wp-luck-tag">${tag}</span> ${tm} · ${e.batter || ''}${det ? ' — ' + det : ''}, xBA ${f3(e.xba)} → <b>${(e.result || '').replace(/_/g, ' ')}</b></div>`;
+      }).join('') + '</div>'
+    : '<div class="wp-empty" style="padding:0.4rem 0;">No outlier batted balls (every result roughly matched its contact quality).</div>';
+
   // Lucky-win banner: the team that actually won was out-deserved by its opponent.
   let luckBanner = "";
   {
@@ -5664,11 +5700,18 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
   const histogram = (bins, actualIdx) => {
     if (!bins || !bins.length) return '<div class="wp-empty" style="padding:1.5rem 0;text-align:center;">Run-distribution histogram will render once simulator data is ingested.</div>';
     const maxCount = Math.max(...bins.map(b => b.count));
-    return '<div class="wp-histogram">' + bins.map((b, i) => {
+    const tot = bins.reduce((s, b) => s + b.count, 0) || 1;
+    const bars = bins.map((b, i) => {
       const h = maxCount ? Math.round((b.count / maxCount) * 100) : 0;
       const cls = (i === actualIdx) ? 'wp-hbar actual' : 'wp-hbar';
-      return '<div class="' + cls + '" style="height:' + h + '%" title="' + b.label + ': ' + b.count + '"></div>';
-    }).join('') + '</div>';
+      const pct = Math.round((b.count / tot) * 100);
+      return '<div class="' + cls + '" style="height:' + h + '%" title="' + i + ' runs: ' + pct + '% of sims (' + b.count + ')"></div>';
+    }).join('');
+    const axis = bins.map((b, i) =>
+      `<span class="wp-hx${i === actualIdx ? ' act' : ''}">${i}</span>`).join('');
+    return '<div class="wp-histogram">' + bars + '</div>' +
+           '<div class="wp-hxrow">' + axis + '</div>' +
+           '<div class="wp-haxis">runs scored · bar height = share of 10,000 sims</div>';
   };
 
   // Centered favor: positive away_favor = ump's zone net helped the away team's offense.
@@ -5720,16 +5763,37 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
       </div>
     </div>
 
+    ${gs ? `<div class="wp-section">
+      <h4>Quality of Contact &amp; Plate Discipline</h4>
+      <div class="wp-metrics">
+        <div class="wp-metric"><div class="wp-mlabel">${away} xwOBA</div><div class="wp-mval">${f3(ga.xwoba)}</div><div class="wp-mdelta">xBA ${f3(ga.xba)}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} xwOBA</div><div class="wp-mval">${f3(gh.xwoba)}</div><div class="wp-mdelta">xBA ${f3(gh.xba)}</div></div>
+      </div>
+      <div class="wp-disc"><span class="wp-disc-team">${away}</span> ${discLine(ga.discipline)}</div>
+      <div class="wp-disc"><span class="wp-disc-team">${home}</span> ${discLine(gh.discipline)}</div>
+      <p style="color:var(--muted);font-size:0.74rem;margin:0.5rem 0 0;line-height:1.4;">Chase &amp; CSW feed the process layer that nudges deserved BB/K; xwOBA/xBA are quality-of-contact context.</p>
+    </div>` : ''}
+
+    ${gs ? `<div class="wp-section">
+      <h4>Sequencing &amp; Luck</h4>
+      <div class="wp-metrics">
+        <div class="wp-metric"><div class="wp-mlabel">${away} w/ RISP</div><div class="wp-mval">${risp(ga.risp)}</div><div class="wp-mdelta">LOB ${ga.lob != null ? ga.lob : '—'}</div></div>
+        <div class="wp-metric"><div class="wp-mlabel">${home} w/ RISP</div><div class="wp-mval">${risp(gh.risp)}</div><div class="wp-mdelta">LOB ${gh.lob != null ? gh.lob : '—'}</div></div>
+      </div>
+      <p style="color:var(--muted);font-size:0.74rem;margin:0.5rem 0 0.5rem;line-height:1.4;">RISP &amp; LOB are timing/sequencing — the luck the model strips out; they explain a deserved-vs-actual gap. Outlier batted balls:</p>
+      ${luckList}
+    </div>` : ''}
+
     <div class="wp-section">
       <h4>Run Distribution — ${away}</h4>
       ${histogram(sim?.away_hist, sim?.away_actual_idx)}
-      <div class="wp-legend"><span>Sim</span><span class="actual">Actual</span></div>
+      <div class="wp-legend"><span>Sim (deserved-anchored)</span><span class="actual">Actual (${aRuns})</span></div>
     </div>
 
     <div class="wp-section">
       <h4>Run Distribution — ${home}</h4>
       ${histogram(sim?.home_hist, sim?.home_actual_idx)}
-      <div class="wp-legend"><span>Sim</span><span class="actual">Actual</span></div>
+      <div class="wp-legend"><span>Sim (deserved-anchored)</span><span class="actual">Actual (${hRuns})</span></div>
     </div>
 
     <div class="wp-section">
