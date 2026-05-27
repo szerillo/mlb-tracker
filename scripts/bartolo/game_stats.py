@@ -156,19 +156,27 @@ def _team_risp(df) -> dict:
 
 def _lucky_unlucky(df, team: str, hi: float = 0.50, lo: float = 0.150) -> list:
     """Batted balls whose result defied contact quality.
-    unlucky_out: xBA >= hi but made an out;  lucky_hit: xBA <= lo but a hit."""
+    unlucky_out: xBA >= hi but made an out;  lucky_hit: xBA <= lo but a hit.
+
+    NOTE: Statcast's `player_name` is the PITCHER, not the batter, so we carry
+    the `batter` MLBAM id (`_bid`) here and resolve it to the hitter's name in
+    compute_game_stats() — the player who actually struck the ball is who we
+    want to credit/blame for the luck."""
+    n = len(df.get("events", []))
+    bcol = df["batter"] if hasattr(df, "columns") and "batter" in df.columns else [None] * n
     outs, hits = [], []
-    for ev, xb, ls, la, name in zip(
+    for ev, xb, ls, la, bid in zip(
         df.get("events", []), df.get("estimated_ba_using_speedangle", []),
-        df.get("launch_speed", []), df.get("launch_angle", []), df.get("player_name", []),
+        df.get("launch_speed", []), df.get("launch_angle", []), bcol,
     ):
         e = ev if isinstance(ev, str) else None
         x = _f(xb)
         if e is None or x is None:
             continue
         is_hit = e in _HIT_EVENTS
+        bidv = _f(bid)
         rec = {
-            "team": team, "batter": name if isinstance(name, str) else "",
+            "team": team, "batter": "", "_bid": int(bidv) if bidv is not None else None,
             "ev": round(_f(ls), 1) if _f(ls) is not None else None,
             "la": round(_f(la), 0) if _f(la) is not None else None,
             "xba": round(x, 3), "result": e,
@@ -182,6 +190,32 @@ def _lucky_unlucky(df, team: str, hi: float = 0.50, lo: float = 0.150) -> list:
     outs.sort(key=lambda r: r["xba"], reverse=True)   # most-robbed first
     hits.sort(key=lambda r: r["xba"])                 # flukiest first
     return outs[:3] + hits[:3]
+
+
+def _resolve_batter_names(ids) -> dict:
+    """Map MLBAM batter ids -> "Last, First" (Savant style). Best-effort:
+    uses pybaseball's Chadwick reverse lookup (cached after first call).
+    Returns {} on any failure so luck events still render (sans name)."""
+    uniq = sorted({int(i) for i in ids if i})
+    if not uniq:
+        return {}
+    try:
+        from pybaseball import playerid_reverse_lookup
+        tbl = playerid_reverse_lookup(uniq, key_type="mlbam")
+    except Exception:
+        return {}
+    out = {}
+    for _, r in tbl.iterrows():
+        try:
+            mid = int(r["key_mlbam"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        last = str(r.get("name_last", "") or "").strip()
+        first = str(r.get("name_first", "") or "").strip()
+        name = f"{last.title()}, {first.title()}" if last else first.title()
+        if name:
+            out[mid] = name
+    return out
 
 
 def expected_bb_k_rate_from_discipline(disc: dict) -> tuple[Optional[float], Optional[float]]:
@@ -229,5 +263,11 @@ def compute_game_stats(statcast_df, pbp: Optional[dict] = None) -> dict:
             "risp": _team_risp(df),
             "lob": lob.get(side),
         }
-    out["luck_events"] = _lucky_unlucky(away, "away") + _lucky_unlucky(home, "home")
+    luck = _lucky_unlucky(away, "away") + _lucky_unlucky(home, "home")
+    names = _resolve_batter_names([r.get("_bid") for r in luck])
+    for r in luck:
+        bid = r.pop("_bid", None)
+        if bid is not None and not r.get("batter"):
+            r["batter"] = names.get(bid, "")
+    out["luck_events"] = luck
     return out
