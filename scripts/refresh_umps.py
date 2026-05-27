@@ -2,10 +2,12 @@
 Refresh umpire stats from UmpScorecards.
 Outputs data/umps.json with the same schema the site expects.
 
-Methodology (matches what was agreed with user):
-  - Baseline: 2025 + 2026 games, game-weighted mean of offense_adj.
-  - Per-ump value: 2024 games weighted x1, 2025 x2, 2026 x2.
-  - Bayesian shrinkage: 50-game prior toward league baseline.
+Methodology:
+  - Per-ump value: 2026 games weighted x5, 2025 x4, 2024 x1 (50/40/10), per game.
+  - Baseline: the SAME 50/40/10 recency weighting over 2024-26 (current-weighted
+    league norm, so the 2026 ABS-era level shift is reflected, not anchored to a
+    stale 2025-heavy baseline).
+  - Bayesian shrinkage: 50-game prior toward that baseline.
   - Minimum 10 raw games in 2024-2026.
 """
 import json, urllib.request, os, datetime
@@ -37,16 +39,22 @@ def main():
         rows = json.load(r)["rows"]
     print(f"  loaded {len(rows)} games")
 
-    # Baseline: 2025 + 2026
-    base_sum = 0.0
-    base_n = 0
+    # Baseline = the SAME 50/40/10 (2026/2025/2024) recency weighting applied to
+    # the per-ump values, so the "0% ump" reference is the current-weighted league
+    # norm. This matters in 2026: the ABS-challenge era shifted league-average
+    # offense-favor toward neutral (2025 +0.40 → 2026 +0.05 runs/g), so a recency
+    # baseline correctly pulls the reference down rather than anchoring to a stale
+    # 2025-heavy level.
+    base_sw = 0.0
+    base_so = 0.0
     for r in rows:
         y = r.get("date", "")[:4]
-        if y in ("2025", "2026") and not r.get("failed"):
-            base_sum += off_adj(r)
-            base_n += 1
-    baseline = base_sum / base_n
-    print(f"  baseline (2025+2026, n={base_n}): {baseline:+.4f}")
+        w = 5 if y == "2026" else 4 if y == "2025" else 1 if y == "2024" else 0
+        if w and not r.get("failed"):
+            base_sw += w
+            base_so += w * off_adj(r)
+    baseline = base_so / base_sw
+    print(f"  baseline (50/40/10 weighted 2024-26): {baseline:+.4f}")
 
     # Per-ump weighted
     ump_off = defaultdict(float)
@@ -59,7 +67,7 @@ def main():
         y = r.get("date", "")[:4]
         if not u or r.get("failed"):
             continue
-        w = 2 if y in ("2025", "2026") else 1 if y == "2024" else 0
+        w = 5 if y == "2026" else 4 if y == "2025" else 1 if y == "2024" else 0
         if w == 0:
             continue
         ump_off[u] += w * off_adj(r)
@@ -101,8 +109,8 @@ def main():
         "generated_at": datetime.date.today().isoformat(),
         "source": "UmpScorecards (umpscorecards.com/api)",
         "source_url": "https://umpscorecards.com",
-        "methodology": f"Per-ump: 2024x1 + 2025x2 + 2026x2 weighted, {PRIOR}-game Bayesian prior. Baseline = 2025+2026 game-weighted mean.",
-        "window_label": "2024-2026 (2025/26 double-weighted)",
+        "methodology": f"Per-ump offense adj: 2026x5 + 2025x4 + 2024x1 (50/40/10) per-game weighting, {PRIOR}-game Bayesian prior toward the same 50/40/10-weighted 2024-26 baseline.",
+        "window_label": "2024-2026 (50/40/10 by year, recency-weighted)",
         "shrinkage_prior_games": PRIOR,
         "baseline": baseline,
         "league_avg": {"baseline_off_adj": round(baseline, 4), "acc_above_x_mean": league_acc},
