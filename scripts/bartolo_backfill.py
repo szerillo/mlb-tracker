@@ -76,9 +76,10 @@ def _archive_complete(out_path: Path) -> bool:
         if g.get("away_deserved_runs") is None or g.get("home_deserved_runs") is None:
             return False
         # Win Prob must be the current basis (deserved + plate-discipline process
-        # nudge + per-game descriptive stats). Older archives ("deserved" or none)
-        # are treated as incomplete so a re-run replaces them.
-        if g.get("wp_basis") != "deserved_v2":
+        # nudge + per-game descriptive stats + luck-event batter-name fix). Older
+        # archives ("deserved", "deserved_v2", or none) are treated as incomplete
+        # so a re-run replaces them.
+        if g.get("wp_basis") != "deserved_v3":
             return False
     return True
 
