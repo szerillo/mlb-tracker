@@ -153,6 +153,50 @@ def main():
             "total":     {"over": _fmt(tot_over), "under": _fmt(tot_under)},
         })
 
+    # --- Freeze odds at first pitch -------------------------------------------
+    # Once a game starts, lock its market to the last pre-start snapshot so the
+    # scoreboard + Projections tab show the closing pregame line (not live/in-game
+    # odds). Each refresh carries forward the existing odds for any game whose
+    # start time has passed, as long as a valid pregame price was already captured.
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    prev_by_pk = {}
+    try:
+        if os.path.exists(OUTPUT):
+            prev = json.load(open(OUTPUT))
+            if prev.get("date") == date.isoformat():
+                for pg in prev.get("games", []):
+                    if pg.get("game_pk") is not None:
+                        prev_by_pk[pg["game_pk"]] = pg
+    except Exception as e:
+        print(f"  WARN: could not read existing odds for freeze: {e}")
+
+    def _has_started(g):
+        st = g.get("start_time")
+        if not st:
+            return False
+        try:
+            t = datetime.datetime.fromisoformat(st.replace("Z", "+00:00"))
+            return now_utc >= t
+        except Exception:
+            return False
+
+    def _has_pregame_price(pg):
+        ml = (pg or {}).get("moneyline") or {}
+        return bool(ml.get("away") and ml.get("home"))
+
+    frozen = 0
+    for i, g in enumerate(games_out):
+        prev_g = prev_by_pk.get(g.get("game_pk"))
+        if _has_started(g) and _has_pregame_price(prev_g):
+            games_out[i] = {
+                **prev_g,
+                "status": g.get("status") or prev_g.get("status"),  # status may update
+                "odds_locked": True,
+            }
+            frozen += 1
+    if frozen:
+        print(f"  froze pregame odds for {frozen} started game(s)")
+
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "source": "Action Network gameprojections API (v2) · best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
