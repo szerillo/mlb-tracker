@@ -1062,8 +1062,20 @@
   .wp-team .wp-tname { font-family: var(--display); font-size: 1.2rem; font-weight: 600; }
   .wp-team .wp-truns { font-family: var(--mono); font-size: 2.6rem; font-weight: 700;
     line-height: 1.1; }
-  .wp-team .wp-twp { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+  .wp-team .wp-tcap { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); margin-top: -0.15rem; }
+  .wp-team .wp-tdes { font-family: var(--mono); font-size: 1.35rem; font-weight: 700;
+    color: var(--accent); line-height: 1.1; margin-top: 0.35rem; }
+  .wp-team .wp-tdes .wp-tcap2 { font-family: var(--display); font-size: 0.6rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .wp-team .wp-twp { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
   .wp-vs { font-size: 1rem; color: var(--muted); font-style: italic; }
+  .wp-luck-banner { background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0.2rem; font-size: 0.85rem;
+    color: var(--text); line-height: 1.4; }
+  .wp-game-card.wp-lucky { border-color: rgba(212,175,55,0.55);
+    box-shadow: inset 3px 0 0 rgba(212,175,55,0.8); }
+  .wpg-luck { font-size: 0.85rem; }
 
   .wp-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem;
     margin: 0.6rem 0; }
@@ -5526,6 +5538,17 @@ async function renderWinprobTab() {
     const away = teamAbbr(sim.away_team) || sim.away_team || "?";
     const home = teamAbbr(sim.home_team) || sim.home_team || "?";
     const aR = sim.actual_away_runs, hR = sim.actual_home_runs;
+    // "Lucky win" = the team that actually won was out-deserved by its opponent.
+    const ad = sim.away_deserved_runs, hd = sim.home_deserved_runs;
+    let lucky = false, luckTip = "";
+    if (aR != null && hR != null && aR !== hR && ad != null && hd != null && ad !== hd) {
+      const actualW = aR > hR ? away : home;
+      const deservedW = ad > hd ? away : home;
+      if (actualW !== deservedW) {
+        lucky = true;
+        luckTip = `Lucky win — ${actualW} won, but ${deservedW} out-hit them (deserved ${ad.toFixed(1)}–${hd.toFixed(1)})`;
+      }
+    }
     let wpChip;
     if (sim.away_wp != null) {
       const favAway = sim.away_wp >= 0.5;
@@ -5536,8 +5559,8 @@ async function renderWinprobTab() {
       wpChip = `<div class="wpg-wp wpg-wp-pending">sim pending</div>`;
     }
     const sel = (pk === String(WINPROB_SELECTED)) ? " selected" : "";
-    return `<div class="wp-game-card${sel}" data-pk="${pk}">
-      <div class="wpg-matchup">${away} @ ${home}</div>
+    return `<div class="wp-game-card${sel}${lucky ? " wp-lucky" : ""}" data-pk="${pk}">
+      <div class="wpg-matchup">${away} @ ${home}${lucky ? ` <span class="wpg-luck" title="${luckTip}">🍀</span>` : ""}</div>
       <div class="wpg-score">${aR != null ? aR : "—"}–${hR != null ? hR : "—"}</div>
       ${wpChip}
     </div>`;
@@ -5625,6 +5648,19 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
   const awayDes = sim?.away_deserved_runs != null ? sim.away_deserved_runs.toFixed(1) : null;
   const homeDes = sim?.home_deserved_runs != null ? sim.home_deserved_runs.toFixed(1) : null;
 
+  // Lucky-win banner: the team that actually won was out-deserved by its opponent.
+  let luckBanner = "";
+  {
+    const aRn = fs.away, hRn = fs.home, adN = sim?.away_deserved_runs, hdN = sim?.home_deserved_runs;
+    if (aRn != null && hRn != null && aRn !== hRn && adN != null && hdN != null && adN !== hdN) {
+      const actualW = aRn > hRn ? away : home;
+      const deservedW = adN > hdN ? away : home;
+      if (actualW !== deservedW) {
+        luckBanner = `<div class="wp-luck-banner">🍀 <b>Lucky win.</b> ${actualW} won the game, but ${deservedW} deserved it on contact quality — deserved <b>${adN.toFixed(1)}–${hdN.toFixed(1)}</b> vs actual <b>${aRn}–${hRn}</b>.</div>`;
+      }
+    }
+  }
+
   const histogram = (bins, actualIdx) => {
     if (!bins || !bins.length) return '<div class="wp-empty" style="padding:1.5rem 0;text-align:center;">Run-distribution histogram will render once simulator data is ingested.</div>';
     const maxCount = Math.max(...bins.map(b => b.count));
@@ -5652,16 +5688,21 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
 
   return `<div class="wp-detail">
     <h3>${away} @ ${home}${dateLabel ? ` <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">· ${dateLabel}</span>` : ""}</h3>
+    ${luckBanner}
     <div class="wp-scorebox">
       <div class="wp-team">
         <div class="wp-tname">${away}</div>
         <div class="wp-truns">${aRuns}</div>
+        <div class="wp-tcap">actual</div>
+        <div class="wp-tdes">${awayDes != null ? awayDes : '—'}<span class="wp-tcap2"> deserved</span></div>
         <div class="wp-twp">Sim WP: ${awayWP}</div>
       </div>
       <div class="wp-vs">vs</div>
       <div class="wp-team">
         <div class="wp-tname">${home}</div>
         <div class="wp-truns">${hRuns}</div>
+        <div class="wp-tcap">actual</div>
+        <div class="wp-tdes">${homeDes != null ? homeDes : '—'}<span class="wp-tcap2"> deserved</span></div>
         <div class="wp-twp">Sim WP: ${homeWP}</div>
       </div>
     </div>
