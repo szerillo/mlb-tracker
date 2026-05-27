@@ -52,6 +52,32 @@ def _date_range(start: datetime.date, end: datetime.date):
         d = d + one
 
 
+def _archive_complete(out_path: Path) -> bool:
+    """True if a date's archive is fully populated and needs no deserved-runs
+    backfill. A date counts as complete when its archive exists and either:
+      - status is an off-day / empty marker (no_finals, statcast_empty), or
+      - every game already carries non-null away/home deserved_runs.
+    Missing archives, unreadable archives, or any game lacking deserved_runs
+    are treated as incomplete so a re-run repairs them."""
+    if not out_path.exists():
+        return False
+    try:
+        d = json.loads(out_path.read_text())
+    except Exception:
+        return False
+    if d.get("status") in ("no_finals", "statcast_empty"):
+        return True
+    games = d.get("games", {})
+    if not games:
+        # An "ok" status with zero games is genuinely complete (no Finals had
+        # batted balls); anything else with no games we retry.
+        return d.get("status") == "ok"
+    for g in games.values():
+        if g.get("away_deserved_runs") is None or g.get("home_deserved_runs") is None:
+            return False
+    return True
+
+
 def main() -> int:
     start = _parse_date(os.environ.get("BACKFILL_START", ""), DEFAULT_START)
     end   = _parse_date(os.environ.get("BACKFILL_END", ""), _et_yesterday())
@@ -86,16 +112,33 @@ def main() -> int:
 
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
+    max_dates = int(os.environ.get("BACKFILL_MAX_DATES", "10") or "10")
+
+    # Self-converging selection: a "force" run re-sims everything in range;
+    # otherwise we only touch dates whose archive is missing deserved_runs.
+    # Process most-recent dates first so the dates users browse fill earliest,
+    # and cap each run (max_dates) so a single batch finishes well inside the
+    # workflow's cancel-in-progress window. Any dates left over keep the
+    # .backfill-now trigger in place so the next scheduled run resumes
+    # automatically until coverage is complete.
+    all_dates = list(_date_range(start, end))
+    pending = [
+        t for t in all_dates
+        if force or not _archive_complete(ARCHIVE_DIR / t.isoformat() / "bartolo_wp.json")
+    ]
+    pending.sort(reverse=True)
+    total_pending = len(pending)
+    batch = pending[:max_dates] if max_dates > 0 else pending
+    print(f"[backfill] {total_pending} dates need work; processing {len(batch)} "
+          f"this run (max_dates={max_dates}, recent-first)")
+
     total_games = 0
     dates_processed = 0
-    dates_skipped = 0
+    dates_skipped = max(0, len(all_dates) - total_pending)
 
-    for target in _date_range(start, end):
+    for target in batch:
         date_dir = ARCHIVE_DIR / target.isoformat()
         out_path = date_dir / "bartolo_wp.json"
-        if out_path.exists() and not force:
-            dates_skipped += 1
-            continue
 
         games = fetch_schedule(target)
         if not games:
@@ -192,6 +235,29 @@ def main() -> int:
     # tab immediately reflects everything we just wrote.
     from bartolo.archive import aggregate_archives
     payload = aggregate_archives(REPO_ROOT)
+
+    # Own the .backfill-now trigger so coverage converges across runs. If any
+    # dates still need work after this capped batch, leave (or re-create) the
+    # trigger so the next scheduled run resumes; only clear it once everything
+    # is filled. The workflow no longer removes the trigger unconditionally —
+    # that previously let a single cancelled run strand the backfill.
+    remaining = [
+        t for t in all_dates
+        if not _archive_complete(ARCHIVE_DIR / t.isoformat() / "bartolo_wp.json")
+    ]
+    flag = REPO_ROOT / ".backfill-now"
+    if remaining:
+        flag.write_text(
+            "auto-heal: deserved-runs backfill still in progress\n"
+            f"remaining={len(remaining)} (next: {remaining[-1].isoformat()})\n"
+        )
+        print(f"[backfill] {len(remaining)} dates still need work — keeping "
+              f".backfill-now so the next scheduled run continues")
+    else:
+        if flag.exists():
+            flag.unlink()
+        print("[backfill] all dates complete — removed .backfill-now")
+
     print(f"[backfill] DONE — processed {dates_processed} dates, skipped {dates_skipped}, "
           f"total games={total_games}; flat bartolo_wp.json now {payload['n_games']} games")
     return 0
