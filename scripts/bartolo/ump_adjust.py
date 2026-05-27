@@ -166,10 +166,17 @@ def compute_ump_favor(statcast_df) -> tuple[float, float]:
     for desc, px, pz, szt, szb, b, s, topbot in zip(
             d["description"], d["plate_x"], d["plate_z"], d["sz_top"], d["sz_bot"],
             d["balls"], d["strikes"], d["inning_topbot"]):
-        # Skip pitches with missing location/zone data.
-        if px != px or pz != pz or szt != szt or szb != szb:
+        # NA-safe coercion: pandas nullable values (pd.NA) raise "boolean value
+        # of NA is ambiguous" in comparisons like `px != px`, so convert to plain
+        # floats first (float(pd.NA)/float(None) raise -> skip the pitch) and then
+        # drop NaNs via the x != x trick on the resulting plain floats.
+        try:
+            pxf = float(px); pzf = float(pz); sztf = float(szt); szbf = float(szb)
+        except (TypeError, ValueError):
             continue
-        in_zone = (abs(px) <= _UMP_HALF_PLATE) and (szb <= pz <= szt)
+        if pxf != pxf or pzf != pzf or sztf != sztf or szbf != szbf:
+            continue
+        in_zone = (abs(pxf) <= _UMP_HALF_PLATE) and (szbf <= pzf <= sztf)
         try:
             rv = _UMP_COUNT_RV.get((int(b), int(s)), 0.10)
         except (TypeError, ValueError):
@@ -180,7 +187,7 @@ def compute_ump_favor(statcast_df) -> tuple[float, float]:
         elif desc == "called_strike" and not in_zone:      # phantom strike → hurts batter
             delta = -rv
         if delta:
-            if topbot == "Top":
+            if str(topbot) == "Top":                        # str() is NA-safe
                 away_raw += delta
             else:
                 home_raw += delta
