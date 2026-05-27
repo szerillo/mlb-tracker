@@ -183,13 +183,9 @@ def main():
     start = f"{season}-03-01"
     end = datetime.date.today().isoformat()
 
-    try:
-        sys.path.insert(0, HERE)
-        from _common import skip_if_not_in_window
-        if skip_if_not_in_window("refresh_hitter_gamelogs", overnight_only=True):
-            return
-    except Exception:
-        pass
+    # No run-window gate: this pull is wired only into the once-daily
+    # nightly_stats workflow (mirrors refresh_pitcher_gamelogs.py, which also
+    # always runs when invoked), so it should execute whenever that job runs.
 
     universe = get_hitter_universe(season)
     if args.limit:
