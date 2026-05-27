@@ -117,7 +117,7 @@ def main() -> int:
 
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    max_dates = int(os.environ.get("BACKFILL_MAX_DATES", "10") or "10")
+    max_dates = int(os.environ.get("BACKFILL_MAX_DATES", "22") or "22")
 
     # Self-converging selection: a "force" run re-sims everything in range;
     # otherwise we only touch dates whose archive is missing deserved_runs.
