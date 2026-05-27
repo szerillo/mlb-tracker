@@ -1462,11 +1462,18 @@ let KNOWN_STARTERS = new Set();
 // like Grant Taylor that the probable-pitcher heuristic misclassifies.
 function isStarter(normalizedName) {
   if (!normalizedName) return false;
+  // Live probable-pitcher signal (built from the last ~10 days + upcoming
+  // probables) is ground truth and wins FIRST — a pitcher who is actually
+  // starting games IS a starter, regardless of what stale preseason Steamer
+  // projections (pitcher_roles.json) say. This keeps current rotation arms
+  // (e.g. Sasaki, Arrighetti, Wrobleski) out of the bullpen even when the
+  // projection file mis-buckets them as RP.
+  if (KNOWN_STARTERS.has(normalizedName)) return true;
   if (PITCHER_ROLES && PITCHER_ROLES.pitchers) {
     const r = PITCHER_ROLES.pitchers[normalizedName];
     if (r && r.role) return r.role === "SP";
   }
-  return KNOWN_STARTERS.has(normalizedName);
+  return false;
 }
 
 // Live lineup cache from MLB feed/live (keyed by gamePk).
@@ -5680,7 +5687,11 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
         const ev = e.ev != null ? `${e.ev} mph` : '';
         const la = e.la != null ? `${e.la}°` : '';
         const det = [ev, la].filter(Boolean).join(', ');
-        return `<div class="wp-luck-item ${cls}"><span class="wp-luck-tag">${tag}</span> ${tm} · ${e.batter || ''}${det ? ' — ' + det : ''}, xBA ${f3(e.xba)} → <b>${(e.result || '').replace(/_/g, ' ')}</b></div>`;
+        const inn = (e.half && e.inning != null) ? `${e.half}${e.inning}` : '';
+        const outs = (e.outs != null) ? `${e.outs} out${e.outs === 1 ? '' : 's'}` : '';
+        const sit = [inn, outs, e.bases].filter(Boolean).join(', ');
+        const sitHtml = sit ? ` <span style="color:var(--muted);font-weight:400;">(${sit})</span>` : '';
+        return `<div class="wp-luck-item ${cls}"><span class="wp-luck-tag">${tag}</span> ${tm} · ${e.batter || ''}${sitHtml}${det ? ' — ' + det : ''}, xBA ${f3(e.xba)} → <b>${(e.result || '').replace(/_/g, ' ')}</b></div>`;
       }).join('') + '</div>'
     : '<div class="wp-empty" style="padding:0.4rem 0;">No outlier batted balls (every result roughly matched its contact quality).</div>';
 
@@ -5799,12 +5810,7 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
     <div class="wp-section">
       <h4>Umpire Adjustment</h4>
       ${umpNote}
-      ${sim?.ump_adj_away_wp != null ? `<div class="wp-metrics">
-        <div class="wp-metric"><div class="wp-mlabel">${away} Raw WP</div><div class="wp-mval">${(sim.away_wp*100).toFixed(1)}%</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${away} Ump-Neutral WP</div><div class="wp-mval">${(sim.ump_adj_away_wp*100).toFixed(1)}%</div><div class="wp-mdelta">${((sim.ump_adj_away_wp-sim.away_wp)*100>=0?'+':'')+((sim.ump_adj_away_wp-sim.away_wp)*100).toFixed(1)}pp</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} Raw WP</div><div class="wp-mval">${(sim.home_wp*100).toFixed(1)}%</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} Ump-Neutral WP</div><div class="wp-mval">${(sim.ump_adj_home_wp*100).toFixed(1)}%</div><div class="wp-mdelta">${((sim.ump_adj_home_wp-sim.home_wp)*100>=0?'+':'')+((sim.ump_adj_home_wp-sim.home_wp)*100).toFixed(1)}pp</div></div>
-      </div>` : ''}
+      ${sim?.ump_adj_away_wp != null ? `<p style="font-size:0.9rem;margin:0.3rem 0 0;">Ump-adjusted WP: <strong>${away} ${(sim.ump_adj_away_wp*100).toFixed(1)}%</strong> · <strong>${home} ${(sim.ump_adj_home_wp*100).toFixed(1)}%</strong></p>` : ''}
     </div>
 
     <div class="wp-section">
