@@ -264,6 +264,68 @@ def mlb_starts_fallback(mlbam_id, season):
     return starts
 
 
+# ── per-start plate-discipline from Statcast (CSW% / whiff% / ball% / mix) ──
+# FanGraphs game logs carry SwStr% and Balls but NOT a called-strike count, so
+# true CSW% isn't derivable there. Statcast pitch-level data is the accurate
+# source: one statcast_pitcher() call per arm yields every pitch's description,
+# from which we compute per-GAME CSW% (called+swinging strikes / pitches),
+# whiff% (swinging strikes / pitches), ball% (balls / pitches) and pitch mix.
+_SC_CSW = {"called_strike", "swinging_strike", "swinging_strike_blocked"}
+_SC_WHIFF = {"swinging_strike", "swinging_strike_blocked", "missed_bunt"}
+_SC_BALL = {"ball", "blocked_ball", "pitchout", "hit_by_pitch"}
+
+
+def statcast_discipline(mlbam_id, season):
+    """Per-game {date_iso: {csw, whiff, ball_pct, mix}} from Statcast pitch data.
+    Returns {} on any failure so the FG line-score data still ships."""
+    try:
+        from pybaseball import statcast_pitcher
+        df = statcast_pitcher(f"{season}-03-01",
+                              datetime.date.today().isoformat(), mlbam_id)
+    except Exception as e:
+        print(f"[gamelogs] statcast discipline failed id={mlbam_id}: {e}",
+              file=sys.stderr)
+        return {}
+    if df is None or len(df) == 0 or "game_date" not in df.columns \
+            or "description" not in df.columns:
+        return {}
+    out = {}
+    try:
+        for gd, g in df.groupby("game_date"):
+            n = len(g)
+            if not n:
+                continue
+            desc = g["description"].astype(str)
+            rec = {
+                "csw": round(int(desc.isin(_SC_CSW).sum()) / n, 3),
+                "whiff": round(int(desc.isin(_SC_WHIFF).sum()) / n, 3),
+                "ball_pct": round(int(desc.isin(_SC_BALL).sum()) / n, 3),
+            }
+            if "pitch_type" in g.columns:
+                vc = g["pitch_type"].astype(str).value_counts(normalize=True)
+                mix = {k: round(float(v), 3) for k, v in vc.items()
+                       if k and k != "nan"}
+                if mix:
+                    rec["mix"] = mix
+            out[str(gd)[:10]] = rec
+    except Exception as e:
+        print(f"[gamelogs] statcast group failed id={mlbam_id}: {e}",
+              file=sys.stderr)
+    return out
+
+
+def merge_discipline(starts, disc):
+    """Attach csw/whiff/ball_pct/mix to each start by date; default None so
+    downstream aggregate() can rely on the keys existing."""
+    for s in starts:
+        d = disc.get(s.get("date"))
+        s["csw"] = d["csw"] if d else None
+        s["whiff"] = d["whiff"] if d else None
+        s["ball_pct"] = d["ball_pct"] if d else None
+        if d and d.get("mix"):
+            s["mix"] = d["mix"]
+
+
 # ── aggregation ───────────────────────────────────────────────────────────
 def aggregate(starts):
     """K%/BB% as true ratios; xFIP/SIERA IP-weighted; velo/Stuff+ pitch-weighted."""
@@ -281,10 +343,10 @@ def aggregate(starts):
         return round(num / den, 2) if den else None
 
     def pitch_weighted(field, ndigits):
-        num = sum((s[field] or 0) * (s["pitches"] or 0)
-                  for s in starts if s[field] is not None and s["pitches"])
+        num = sum((s.get(field) or 0) * (s["pitches"] or 0)
+                  for s in starts if s.get(field) is not None and s["pitches"])
         den = sum((s["pitches"] or 0)
-                  for s in starts if s[field] is not None and s["pitches"])
+                  for s in starts if s.get(field) is not None and s["pitches"])
         return round(num / den, ndigits) if den else None
 
     return {
@@ -296,6 +358,9 @@ def aggregate(starts):
         "siera": ip_weighted("siera"),
         "velo": pitch_weighted("velo", 1),
         "stuff": pitch_weighted("stuff", 0),
+        "csw": pitch_weighted("csw", 3),
+        "whiff": pitch_weighted("whiff", 3),
+        "ball_pct": pitch_weighted("ball_pct", 3),
     }
 
 
@@ -399,6 +464,10 @@ def main():
                 continue
         if not starts:
             continue
+        # Enrich each start with Statcast CSW% / whiff% / ball% / pitch mix
+        # (one Savant call per arm; degrades to nulls if Savant is unavailable).
+        merge_discipline(starts, statcast_discipline(mlbam_id, season))
+        time.sleep(THROTTLE_S)
         key = norm_name(full_name)
         pitchers[key] = {
             "name": full_name,
