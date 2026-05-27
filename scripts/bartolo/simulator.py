@@ -60,6 +60,34 @@ def calibrate_deserved(raw_lw: float) -> float:
     return max(0.0, DESERVED_CAL_A * float(raw_lw) + DESERVED_CAL_B)
 
 
+# Plate-discipline process layer. Nudges a team's deserved BB/K toward what its
+# swing decisions imply (CSW→K, chase→BB), blended with what actually happened.
+# Ks get more weight than walks: K-avoidance is a clean batter signal, whereas
+# walks lean on the pitcher's wildness, not just the batter's eye.
+K_PROCESS_WEIGHT = 0.30
+BB_PROCESS_WEIGHT = 0.18
+
+
+def _process_lw_delta(side_df, events) -> float:
+    """Δ added to a team's actual-anchored linear-weight estimate so deserved
+    runs credit plate discipline (process), not only the BB/K that occurred."""
+    try:
+        from .game_stats import _team_discipline, expected_bb_k_rate_from_discipline
+        exp_bb_rate, exp_k_rate = expected_bb_k_rate_from_discipline(_team_discipline(side_df))
+        if exp_bb_rate is None:
+            return 0.0
+        pa = (len(events.batted_balls) + events.strikeouts
+              + events.walks + events.hit_by_pitches)
+        if pa <= 0:
+            return 0.0
+        blend_bb = (1 - BB_PROCESS_WEIGHT) * events.walks + BB_PROCESS_WEIGHT * (exp_bb_rate * pa)
+        blend_k = (1 - K_PROCESS_WEIGHT) * events.strikeouts + K_PROCESS_WEIGHT * (exp_k_rate * pa)
+        return ((blend_bb - events.walks) * OUTCOME_RUN_VALUES["walk"]
+                + (blend_k - events.strikeouts) * OUTCOME_RUN_VALUES["strikeout"])
+    except Exception:
+        return 0.0
+
+
 @dataclass
 class GameEvents:
     """Normalized per-team event list for a game.
@@ -196,8 +224,17 @@ def run_simulation(game_payload: dict, model: BattedBallModel,
     # +5 runs/game de-bias fix while shifting the center from actual → deserved.
     away_lw = estimate_model_expected_lw(away_events, model)
     home_lw = estimate_model_expected_lw(home_events, model)
-    des_away = calibrate_deserved(away_lw)
-    des_home = calibrate_deserved(home_lw)
+    # Process nudge: shift deserved toward plate-discipline-implied BB/K.
+    sc = game_payload.get("statcast")
+    if sc is not None and len(sc) and "inning_topbot" in getattr(sc, "columns", []):
+        away_proc = away_lw + _process_lw_delta(sc[sc["inning_topbot"] == "Top"], away_events)
+        home_proc = home_lw + _process_lw_delta(sc[sc["inning_topbot"] == "Bot"], home_events)
+    else:
+        away_proc, home_proc = away_lw, home_lw
+    des_away = calibrate_deserved(away_proc)
+    des_home = calibrate_deserved(home_proc)
+    # Anchor the sim's expectation to deserved; subtract the ACTUAL-anchored lw so
+    # E[sim] = deserved (the model-EV term cancels cleanly, keeping the de-bias fix).
     away_events.other_runs_scored = des_away - away_lw
     home_events.other_runs_scored = des_home - home_lw
 
