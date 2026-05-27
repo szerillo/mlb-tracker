@@ -221,7 +221,7 @@ def main():
             season_agg["xwoba"] = round(float(xw.mean()), 3) if len(xw) else None
         hitters[norm_name(name)] = {
             "name": name, "mlbam_id": mid,
-            "games": [{k: g[k] for k in ("date", "opp", "pa", "k_pct", "bb_pct", "whiff", "barrel")} for g in games],
+            "games": [{k: g[k] for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "k_pct", "bb_pct", "whiff", "barrel")} for g in games],
             "l5": agg(games[-LOOKBACK_L5:]),
             "l10": agg(games[-LOOKBACK_L10:]),
             "season": season_agg,
