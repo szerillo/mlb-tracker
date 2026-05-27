@@ -214,7 +214,6 @@ jobs:
         timeout-minutes: 60
         run: |
           python scripts/bartolo_backfill.py
-          rm -f .backfill-now
         continue-on-error: true
         env:
           BACKFILL_START: ${{ github.event.inputs.backfill_start || '' }}
