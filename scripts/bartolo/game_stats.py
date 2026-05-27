@@ -154,6 +154,21 @@ def _team_risp(df) -> dict:
     return {"ab": ab, "h": h, "avg": round(h / ab, 3) if ab else None}
 
 
+def _base_state(on1, on2, on3) -> str:
+    """Human base-occupancy string from on_1b/2b/3b (runner id present = occupied)."""
+    b = (_f(on1) is not None, _f(on2) is not None, _f(on3) is not None)
+    return {
+        (False, False, False): "bases empty",
+        (True, False, False): "runner on 1st",
+        (False, True, False): "runner on 2nd",
+        (False, False, True): "runner on 3rd",
+        (True, True, False): "1st & 2nd",
+        (True, False, True): "1st & 3rd",
+        (False, True, True): "2nd & 3rd",
+        (True, True, True): "bases loaded",
+    }[b]
+
+
 def _lucky_unlucky(df, team: str, hi: float = 0.50, lo: float = 0.150) -> list:
     """Batted balls whose result defied contact quality.
     unlucky_out: xBA >= hi but made an out;  lucky_hit: xBA <= lo but a hit.
@@ -161,13 +176,17 @@ def _lucky_unlucky(df, team: str, hi: float = 0.50, lo: float = 0.150) -> list:
     NOTE: Statcast's `player_name` is the PITCHER, not the batter, so we carry
     the `batter` MLBAM id (`_bid`) here and resolve it to the hitter's name in
     compute_game_stats() — the player who actually struck the ball is who we
-    want to credit/blame for the luck."""
+    want to credit/blame for the luck. Each event also carries the game
+    situation (inning/half, outs, base state) so the callout reads in context."""
     n = len(df.get("events", []))
-    bcol = df["batter"] if hasattr(df, "columns") and "batter" in df.columns else [None] * n
+    def _col(name):
+        return df[name] if hasattr(df, "columns") and name in df.columns else [None] * n
     outs, hits = [], []
-    for ev, xb, ls, la, bid in zip(
+    for ev, xb, ls, la, bid, inn, tb, ow, o1, o2, o3 in zip(
         df.get("events", []), df.get("estimated_ba_using_speedangle", []),
-        df.get("launch_speed", []), df.get("launch_angle", []), bcol,
+        df.get("launch_speed", []), df.get("launch_angle", []),
+        _col("batter"), _col("inning"), _col("inning_topbot"),
+        _col("outs_when_up"), _col("on_1b"), _col("on_2b"), _col("on_3b"),
     ):
         e = ev if isinstance(ev, str) else None
         x = _f(xb)
@@ -175,11 +194,17 @@ def _lucky_unlucky(df, team: str, hi: float = 0.50, lo: float = 0.150) -> list:
             continue
         is_hit = e in _HIT_EVENTS
         bidv = _f(bid)
+        innv = _f(inn)
+        owv = _f(ow)
         rec = {
             "team": team, "batter": "", "_bid": int(bidv) if bidv is not None else None,
             "ev": round(_f(ls), 1) if _f(ls) is not None else None,
             "la": round(_f(la), 0) if _f(la) is not None else None,
             "xba": round(x, 3), "result": e,
+            "inning": int(innv) if innv is not None else None,
+            "half": ("T" if tb == "Top" else "B" if tb == "Bot" else None),
+            "outs": int(owv) if owv is not None else None,
+            "bases": _base_state(o1, o2, o3),
         }
         if (not is_hit) and x >= hi:
             rec["kind"] = "unlucky_out"
