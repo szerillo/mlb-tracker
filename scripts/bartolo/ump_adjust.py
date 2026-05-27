@@ -93,10 +93,10 @@ class UmpAdjustedResult:
             "actual_away_runs": s.actual_away_runs,
             "actual_home_runs": s.actual_home_runs,
             # WP is anchored on deserved (luck-neutral) runs, now with a
-            # plate-discipline process nudge to BB/K. "deserved_v3" lets the
+            # plate-discipline process nudge to BB/K. "deserved_v4" lets the
             # backfill detect & re-sim older archives lacking the process layer,
             # per-game descriptive stats, or the luck-event batter-name fix.
-            "wp_basis": "deserved_v3",
+            "wp_basis": "deserved_v4",
             "away_wp": round(s.away_win_prob, 4),
             "home_wp": round(s.home_win_prob, 4),
             "away_exp_runs": round(float(s.away_runs.mean()), 3),
