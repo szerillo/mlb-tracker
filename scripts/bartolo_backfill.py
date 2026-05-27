@@ -79,7 +79,7 @@ def _archive_complete(out_path: Path) -> bool:
         # nudge + per-game descriptive stats + luck-event batter-name fix). Older
         # archives ("deserved", "deserved_v2", or none) are treated as incomplete
         # so a re-run replaces them.
-        if g.get("wp_basis") != "deserved_v3":
+        if g.get("wp_basis") != "deserved_v4":
             return False
     return True
 
