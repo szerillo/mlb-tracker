@@ -1716,9 +1716,15 @@ function computePregame(game) {
   awayRuns = Math.max(0.5, awayRuns); homeRuns = Math.max(0.5, homeRuns);
   const hp_ = Math.pow(homeRuns, PG_PYTH), ap_ = Math.pow(awayRuns, PG_PYTH);
   const homeWP = hp_ / (hp_ + ap_);
+  // Bottom-9th adjustment: home doesn't always bat the bottom of the 9th when
+  // leading, so its expected runs over a real game are trimmed by ~(1 inning's
+  // worth × homeWP). Expose the trimmed value (homeRunsAdj) for the displayed
+  // projected score so it RECONCILES with the projected total below — the raw
+  // homeRuns stays for the Pythagorean WP math, which needs full-9 values.
   const homeForTotal = homeRuns - (homeRuns / 9 * homeWP * (0.7 + 0.3 * homeWP));
   return {
-    awayRuns, homeRuns, homeWP, awayWP: 1 - homeWP,
+    awayRuns, homeRuns, homeRunsAdj: homeForTotal,
+    homeWP, awayWP: 1 - homeWP,
     total: awayRuns + homeForTotal,
     confirmed: lg?.lineups?.away?.status === 'confirmed' && lg?.lineups?.home?.status === 'confirmed',
   };
@@ -2493,7 +2499,7 @@ function renderScoreboard() {
       const favPct = Math.round(Math.max(pg.homeWP, pg.awayWP) * 100);
       const wpCls = favPct >= 60 ? "pg-strong" : "";
       // Compact chip only — full projected score / total / market edges live in the Projections tab.
-      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRuns.toFixed(1)} ${homeAbbr} · total ${pg.total.toFixed(1)}${pg.confirmed ? '' : ' · projected lineup'}. See the Projections tab for market edges.`;
+      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRunsAdj.toFixed(1)} ${homeAbbr} · total ${pg.total.toFixed(1)}${pg.confirmed ? '' : ' · projected lineup'}. See the Projections tab for market edges.`;
       pgRow = `<div class="sb-pg-row">
         <span class="sb-pg-wp ${wpCls}" title="${tip}">Proj ${favAb} ${favPct}%</span>${pg.confirmed ? '' : '<span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}
       </div>`;
@@ -6079,7 +6085,7 @@ function renderProjectionsTab() {
 
   const body = rows.map(r => `<tr>
     <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.g.gameDate)}</span>${r.pg.confirmed ? "" : ' <span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}</td>
-    <td class="proj-mono">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRuns.toFixed(1)}</td>
+    <td class="proj-mono">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRunsAdj.toFixed(1)}</td>
     <td class="proj-mono"><b>${fav(r)} ${favPct(r)}%</b></td>
     <td class="proj-mono proj-muted">${r.mktHomeWP != null ? (fav(r) + " " + Math.round((r.pg.homeWP >= 0.5 ? r.mktHomeWP : 1 - r.mktHomeWP) * 100) + "%") : "—"}</td>
     <td>${mlCell(r)}</td>
