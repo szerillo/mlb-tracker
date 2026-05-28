@@ -3418,10 +3418,11 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   const ftg = withMeta.filter(p => p.fatigue?.tier === "FATIGUED").sort(sortKey);
   const avail = withMeta.filter(p => !p.fatigue || p.fatigue.tier == null).sort(sortKey);
 
-  // Available-pen quality: average unified wFIP across the arms that are NOT
-  // LIKELY OUT (i.e. RESTED + FATIGUED). wFIP blends Steamer FIP + xFIP + SIERA
-  // + xERA + botERA, so it's robust even when a reliever has no qualified xFIP.
-  const _availArms = [...avail, ...ftg];
+  // Available-pen quality: average unified wFIP across only the RESTED arms —
+  // i.e. genuinely fresh, excluding FATIGUED and OUT (so it reflects who can
+  // actually be leaned on tonight). wFIP blends Steamer FIP + xFIP + SIERA +
+  // xERA + botERA, robust even when a reliever has no qualified xFIP.
+  const _availArms = avail;
   const _availWfips = _availArms
     .map(p => lookupPitcherStats(p.name)?.unified_score)
     .filter(v => v != null && v < 10);
@@ -3495,7 +3496,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
-      ${availWfip != null ? `<span class="bpt-availpen" title="Average weighted FIP across the ${_availWfips.length} available (non-OUT) arms — lower is better. wFIP = rolling xFIP 28 / rolling SIERA 22 / xERA 18 / botERA 17 / projection 15.">Avail pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
+      ${availWfip != null ? `<span class="bpt-availpen" title="Average weighted FIP across the ${_availWfips.length} RESTED (fresh, non-fatigued) arms — lower is better. wFIP = rolling xFIP 28 / rolling SIERA 22 / xERA 18 / botERA 17 / projection 15.">Rested pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
       ${thruPill}
     </div>
     <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
