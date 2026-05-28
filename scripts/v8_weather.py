@@ -99,11 +99,21 @@ CAL_PARAMS = {
     "MIA":{"t_sens":1.0,"cold_mult":1.0,"dome_damp":0.15},
 }
 
+# Home-plate -> center-field compass bearing (deg from N). Drives the wind
+# in/out projection. Real MLB orientations span ~22 deg (NNE) clockwise to
+# ~202 deg (SSW). The SOUTH/SE-facing parks were corrected 2026-05 after the
+# original table mis-stored them as NE/ENE, which flipped in/out winds
+# (e.g. a NNE wind at Comerica read "in from LF" instead of the correct
+# "out to RF"). Southward cohort per Hardball Times / Baseball Almanac:
+#   CWS (Rate Field, "points SE"), DET (Comerica, most-southward pre-2017),
+#   ATL (Truist, most-southward), MIL + TEX (southward; usually roofed).
+# NE-facing parks left unchanged (plausible range) pending a full
+# coordinate-based recompute.
 GPS_CF = {
-    "ARI":52,"ATL":42,"BAL":49,"BOS":63,"CHC":9,"CHW":37,"CIN":41,"CLE":9,
-    "COL":69,"DET":81,"HOU":41,"KC":49,"LAA":50,"LAD":53,"MIA":37,"MIL":46,
+    "ARI":52,"ATL":175,"BAL":49,"BOS":63,"CHC":9,"CHW":135,"CIN":41,"CLE":9,
+    "COL":69,"DET":150,"HOU":41,"KC":49,"LAA":50,"LAD":53,"MIA":37,"MIL":150,
     "MIN":38,"NYM":7,"NYY":37,"PHI":46,"PIT":37,"SD":48,"SEA":2,"SF":64,
-    "STL":47,"TB":45,"TEX":43,"TOR":44,"WAS":44,"ATH":43,
+    "STL":47,"TB":45,"TEX":155,"TOR":44,"WAS":44,"ATH":43,
 }
 
 # Per-park temp and wind distribution buckets (BP_DIST)
