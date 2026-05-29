@@ -1515,7 +1515,11 @@ async function loadStaticData() {
     fetchJSON(`data/pitcher_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_arsenal.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
-    fetchJSON(`data/hitter_splits.json?t=${Date.now()}`).catch(() => null),
+    // NB: the canonical path for ingest_hitter_splits.py's output is
+    // data/hitter_splits.json, but the file currently lives at repo root
+    // (data/ copy is a 0-byte placeholder). Fetch the root file until the
+    // ingest re-runs and writes to data/.
+    fetchJSON(`hitter_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`pitcher_roles.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_gamelogs.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_gamelogs.json?t=${Date.now()}`).catch(() => null),
@@ -5048,17 +5052,17 @@ function computeSPRanks() {
   const hasRoles = PITCHER_ROLES && PITCHER_ROLES.pitchers && Object.keys(PITCHER_ROLES.pitchers).length > 0;
   const hasKnown = KNOWN_STARTERS && KNOWN_STARTERS.size > 0;
   if (!hasRoles && !hasKnown) return { byKey: new Map(), total: 0 };
-  // MUST mirror renderSPRankings() (SP Power Rankings tab, default "Qualified"
-  // view) EXACTLY so the rank chip on the scoreboard / lineups / pitcher modal
-  // matches the Rankings page. Qualified pool (isStarter, ≥20 IP, ≥3 of 5
-  // metrics present via the rolling-led xFIP/SIERA the wFIP weights) sorted by
-  // weighted FIP (unified_score, lower = better). Previously this ranked ALL
-  // starters by a composite z-score — a different metric AND a different pool —
-  // which mismatched the Rankings page (e.g. Gausman 16 here vs 36 there).
+  // Mirrors renderSPRankings() but uses the broader "All SPs" pool (not just
+  // Qualified ≥20 IP) so probable starters without 20 IP — early-season call-ups,
+  // returning IL arms, AAA starts — still get a rank chip on the scoreboard /
+  // lineups / pitcher modal instead of showing blank. Pool: isStarter, ≥3 of 5
+  // metrics present via the rolling-led xFIP/SIERA the wFIP weights, sorted by
+  // weighted FIP (unified_score, lower = better). The chip then matches the
+  // Rankings page only when its filter is set to "All SPs"; under Qualified the
+  // chip can show a deeper rank (more arms in pool), but at least it never blanks.
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
     if (!isStarter(k)) return;
-    if ((s.ip || 0) < 20) return;  // qualified gate (matches Rankings default)
     const present = [rollComp(s, 'xfip'), rollComp(s, 'siera'), s.xera, s.bot_era, s.k_bb_pct]
       .filter(v => v != null).length;
     if (present < 3) return;
