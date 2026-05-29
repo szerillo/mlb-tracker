@@ -117,6 +117,23 @@ def per_game(df):
         bip = g[g["type"] == "X"]
         nbb = len(bip)
         barrels = int((bip["launch_speed_angle"] == 6).sum()) if "launch_speed_angle" in bip else 0
+        # Per-PA xwOBA: estimated_woba_using_speedangle for BIP, actual woba_value
+        # (the Statcast wOBA constants) for non-BIP K/BB/HBP. Denominator is the
+        # sum of woba_denom (PA-ending pitches). Sums (not ratios) are stored so
+        # the rolling-window code can compute true ratios over arbitrary windows.
+        if "woba_denom" in g.columns:
+            pa_rows = g[g["woba_denom"].fillna(0) > 0]
+            if "estimated_woba_using_speedangle" in pa_rows.columns:
+                xw_num_series = pa_rows["estimated_woba_using_speedangle"].fillna(
+                    pa_rows["woba_value"]
+                )
+            else:
+                xw_num_series = pa_rows["woba_value"]
+            xwoba_num = float(xw_num_series.dropna().sum())
+            xwoba_den = float(pa_rows["woba_denom"].dropna().sum())
+        else:
+            xwoba_num = 0.0
+            xwoba_den = 0.0
         opp = None
         if "home_team" in g and "away_team" in g and "inning_topbot" in g:
             # batter's team is on offense; opponent is the fielding side
@@ -126,6 +143,8 @@ def per_game(df):
             "date": str(gd)[:10], "opp": opp, "pa": pa,
             "k": int(ev.isin(_K).sum()), "bb": int(ev.isin(_BB).sum()),
             "swings": swings, "whiffs": whiffs, "bip": nbb, "barrels": barrels,
+            "xwoba_num": round(xwoba_num, 5), "xwoba_den": round(xwoba_den, 3),
+            "xwoba": round(xwoba_num / xwoba_den, 3) if xwoba_den else None,
             "k_pct": _ratio(int(ev.isin(_K).sum()), pa),
             "bb_pct": _ratio(int(ev.isin(_BB).sum()), pa),
             "whiff": _ratio(whiffs, swings),
@@ -142,9 +161,12 @@ def agg(games):
     spa = sum(g["pa"] for g in games); ssw = sum(g["swings"] for g in games)
     swh = sum(g["whiffs"] for g in games); sbip = sum(g["bip"] for g in games)
     sba = sum(g["barrels"] for g in games)
+    xwn = sum(g.get("xwoba_num") or 0 for g in games)
+    xwd = sum(g.get("xwoba_den") or 0 for g in games)
     return {"n": len(games), "pa": spa,
             "k_pct": _ratio(sk, spa), "bb_pct": _ratio(sbb, spa),
-            "whiff": _ratio(swh, ssw), "barrel": _ratio(sba, sbip)}
+            "whiff": _ratio(swh, ssw), "barrel": _ratio(sba, sbip),
+            "xwoba_pa": round(xwn / xwd, 3) if xwd else None}
 
 
 def vs_pitch(df):
@@ -305,7 +327,7 @@ def main():
                 season_agg[fld] = sum(g.get(fld) or 0 for g in games)
         hitters[norm_name(name)] = {
             "name": name, "mlbam_id": mid,
-            "games": [{k: g.get(k) for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "k_pct", "bb_pct", "whiff", "barrel", "ab", "r", "h", "hr", "rbi", "sb")} for g in games],
+            "games": [{k: g.get(k) for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "xwoba_num", "xwoba_den", "xwoba", "k_pct", "bb_pct", "whiff", "barrel", "ab", "r", "h", "hr", "rbi", "sb")} for g in games],
             "l5": agg(games[-LOOKBACK_L5:]),
             "l10": agg(games[-LOOKBACK_L10:]),
             "season": season_agg,
