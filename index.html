@@ -896,6 +896,30 @@
   .m-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
   .m-env-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 0.7rem; }
   @media (max-width: 760px) { .m-env-row { grid-template-columns: 1fr; } }
+  /* Pre-Game Model detail block (modal) — closes #205 */
+  .pg-grid { display: flex; flex-direction: column; gap: 0.55rem;
+    padding: 0.55rem 0.7rem; background: var(--surface); border-radius: 6px;
+    border: 1px solid var(--border); margin-bottom: 0.6rem; }
+  .pg-summary { display: flex; flex-direction: column; gap: 0.3rem; }
+  .pg-score { font-size: 1.05rem; font-family: var(--mono); font-weight: 700; }
+  .pg-score-team { color: var(--text); }
+  .pg-score-dash { color: var(--muted); margin: 0 0.4rem; }
+  .pg-wp, .pg-tot { font-size: 0.86rem; color: var(--text); }
+  .pg-wp b, .pg-tot b { font-family: var(--mono); }
+  .pg-mkt { color: var(--muted); }
+  .pg-pover { color: var(--muted); font-size: 0.78rem; margin-left: 0.4rem; }
+  .pg-flag { color: var(--projected); font-size: 0.78rem; font-style: italic; }
+  .pg-tables { display: flex; flex-direction: column; gap: 0.35rem; }
+  .pg-tbl-cap { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.02em; }
+  .pg-note { font-style: italic; }
+  .pg-tbl { width: 100%; font-size: 0.78rem; border-collapse: collapse; }
+  .pg-tbl th { color: var(--muted); font-weight: 600; text-align: right;
+    padding: 0.18rem 0.32rem; border-bottom: 1px solid var(--border); }
+  .pg-tbl th:first-child { text-align: left; }
+  .pg-tbl td { font-family: var(--mono); text-align: right;
+    padding: 0.2rem 0.32rem; }
+  .pg-tbl td.pg-lbl { font-family: inherit; text-align: left; color: var(--muted); }
+  .pg-tbl td:nth-child(2) { text-align: left; color: var(--text); font-family: inherit; }
   .m-team-wrc { font-size: 0.78rem; font-weight: 500; margin-left: 0.5rem;
     color: var(--muted); letter-spacing: 0.02em; }
   .m-team-wrc .val { font-family: var(--mono); font-weight: 700; }
@@ -1673,6 +1697,17 @@ function _pgTeamBullpenRA(team) {
   return null;
 }
 
+// Count of FATIGUED-tier arms on a team's active fatigue slice. Used as the
+// bullpen-RA multiplier per spec: bullpen_comp × (1 + 0.015 · #fatigued_arms).
+// LIKELY-OUT arms are NOT counted (they're already excluded from teamAvailRelievers).
+function _pgCountFatigued(team) {
+  try {
+    const slice = (typeof activeFatigue === 'function') ? activeFatigue() : null;
+    const rows = (slice && slice.teams && slice.teams[team.name]) || [];
+    return rows.filter(r => r.tier === 'FATIGUED').length;
+  } catch (e) { return 0; }
+}
+
 function _pgStaff(spName, team, oppLineupKbb) {
   const s = lookupPitcherStats(spName);
   const spRA = (s && s.unified_score != null && s.unified_score < 10) ? s.unified_score : (s?.fip_proj ?? 4.30);
@@ -1686,10 +1721,21 @@ function _pgStaff(spName, team, oppLineupKbb) {
   const ipF = _pgClamp(1 - (shrunk - 5.2) / 4, 0.85, 1.15);
   const kbbF = _pgClamp(1 - (kbb - 0.128) * 2.3, 0.82, 1.18);
   const bpf = (ipF + kbbF) / 2;
-  const bpRA = _pgTeamBullpenRA(team) ?? 4.20;
+  const bpRArested = _pgTeamBullpenRA(team) ?? 4.20;
+  // Bullpen fatigue multiplier (spec): bullpen_comp × (1 + 0.015 · #fatigued).
+  // Implemented as RA inflation so the downstream blend math stays identical.
+  const nFatigued = _pgCountFatigued(team);
+  const fatigueMul = 1 + 0.015 * nFatigued;
+  const bpRA = bpRArested * fatigueMul;
   const ekbb = kbb + ((oppLineupKbb ?? 0.128) - 0.128) * 0.5;
   const pw = _pgClamp(0.55 + (ekbb - 0.128) * 2, 0.5, 0.8);
-  return { spRA, bpRA, pqm, bpf, pw };
+  return {
+    spRA, bpRA, bpRArested, pqm, bpf, pw,
+    // surface intermediates so the modal can show the model's reasoning
+    spKbb: kbb, pq, ipF, kbbF, ekbb,
+    shrunkIpgs: shrunk, gs, ip,
+    nFatigued, fatigueMul,
+  };
 }
 
 function computePregame(game) {
@@ -1726,12 +1772,132 @@ function computePregame(game) {
   // projected score so it RECONCILES with the projected total below — the raw
   // homeRuns stays for the Pythagorean WP math, which needs full-9 values.
   const homeForTotal = homeRuns - (homeRuns / 9 * homeWP * (0.7 + 0.3 * homeWP));
+  const total = awayRuns + homeForTotal;
   return {
     awayRuns, homeRuns, homeRunsAdj: homeForTotal,
     homeWP, awayWP: 1 - homeWP,
-    total: awayRuns + homeForTotal,
+    total,
     confirmed: lg?.lineups?.away?.status === 'confirmed' && lg?.lineups?.home?.status === 'confirmed',
+    // Component breakdown — surfaces the spec's intermediates so the modal can
+    // explain WHY the model arrived at this projection (audit + tuning).
+    components: {
+      away: { offense: awayOff, staff: homeStaff, BSR: awayBSR, DEF: awayDEF, oppSP: homeSP, oppHand: homeHand },
+      home: { offense: homeOff, staff: awayStaff, BSR: homeBSR, DEF: homeDEF, oppSP: awaySP, oppHand: awayHand },
+      park, hfaAway: 0.96, hfaHome: 1.04, pyth: PG_PYTH,
+    },
   };
+}
+
+// Standard-normal CDF (Abramowitz & Stegun approximation, |err| < 7.5e-8). Used
+// for the totals over/under probability — NORM.DIST(line, projTotal, SD, TRUE).
+function _pgNormCdf(z) {
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const sign = z < 0 ? -1 : 1;
+  const x = Math.abs(z) / Math.SQRT2;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t * Math.exp(-x*x);
+  return 0.5 * (1 + sign * y);
+}
+// Pre-game P(over) at a market line, per spec: SD = k·√(projTotal). k=1.50 full,
+// 1.60 F5, 1.54 team-total. Returns over-probability as a fraction in [0,1].
+function pgPOver(line, projTotal, k=1.50) {
+  if (line == null || projTotal == null || projTotal <= 0) return null;
+  const sd = k * Math.sqrt(projTotal);
+  if (sd <= 0) return null;
+  const z = (line - projTotal) / sd;
+  return 1 - _pgNormCdf(z);
+}
+
+// Render a full pre-game model detail block for the game modal — surfaces the
+// component breakdown so the projection is auditable: each side's offense /
+// staff (SP·0.555 + BP·0.445·bp_factor) blended by pw, park, HFA, BSR/DEF, +
+// totals probability vs the market line. Closes #205 (deep pre-game detail in
+// the modal) and follows the recipe in PREGAME_MODEL_SPEC.md.
+function renderPregameDetailHTML(game, pg) {
+  if (!pg) return '<div class="coming-soon">Pre-game model not ready (lineups + probable SPs needed)</div>';
+  const cs = pg.components || {};
+  const awayAbbr = teamAbbr(game.teams.away.team.name);
+  const homeAbbr = teamAbbr(game.teams.home.team.name);
+  const o = oddsForGame(game.gamePk);
+  const line = o?.total?.over?.line ?? o?.total?.under?.line;
+  const pOver = pgPOver(line, pg.total, 1.50);
+  // Market WP (de-vigged), if odds posted
+  const aO = o?.moneyline?.away?.odds, hO = o?.moneyline?.home?.odds;
+  let mktHomeWP = null;
+  if (aO != null && hO != null) {
+    const am = aO < 0 ? (-aO) / ((-aO) + 100) : 100 / (aO + 100);
+    const hm = hO < 0 ? (-hO) / ((-hO) + 100) : 100 / (hO + 100);
+    const s = am + hm;
+    if (s > 0) mktHomeWP = hm / s;
+  }
+  const favHome = pg.homeWP >= 0.5;
+  const favAb   = favHome ? homeAbbr : awayAbbr;
+  const favWP   = favHome ? pg.homeWP : pg.awayWP;
+  const mktWP   = mktHomeWP == null ? null : (favHome ? mktHomeWP : 1 - mktHomeWP);
+  const mlEdge  = mktWP != null ? (favWP - mktWP) * 100 : null;
+  const totEdge = line != null ? pg.total - line : null;
+  const r3 = v => v == null ? '—' : v.toFixed(3);
+  const r2 = v => v == null ? '—' : v.toFixed(2);
+  const r1 = v => v == null ? '—' : v.toFixed(1);
+  const pp = v => v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(0) + 'pp';
+  const pct0 = v => v == null ? '—' : Math.round(v * 100) + '%';
+  // Per-side staff component table — exposes the spec's intermediates.
+  const stafRow = (lbl, abbr, oppSP, side) => {
+    const s = side.staff;
+    return `<tr>
+      <td class="pg-lbl">${lbl} ${abbr}</td>
+      <td title="Opp SP (whose RA you face)">${oppSP || '—'}</td>
+      <td>${r2(s.spRA)}</td>
+      <td>${r2(s.bpRArested)}${s.nFatigued ? ` <span style="color:var(--projected);" title="${s.nFatigued} fatigued — ×${s.fatigueMul.toFixed(3)} per spec">+${s.nFatigued}f</span>` : ''}</td>
+      <td>${r2(s.bpf)}</td>
+      <td>${r2(s.pw)}</td>
+      <td>${r2(s.pqm)}</td>
+    </tr>`;
+  };
+  const offRow = (lbl, abbr, side) => `<tr>
+      <td class="pg-lbl">${lbl} ${abbr}</td>
+      <td>${r2(side.offense)}</td>
+      <td>${r1(side.BSR)}</td>
+      <td>${r1(side.DEF)}</td>
+      <td>${(side.oppHand || '—')}HP</td>
+    </tr>`;
+  // Edge pills
+  const mlEdgeCls = mlEdge == null ? 'edge-flat' : mlEdge >= 3 ? 'edge-pos' : mlEdge <= -3 ? 'edge-neg' : 'edge-flat';
+  const totEdgeCls = totEdge == null ? 'edge-flat' : totEdge >= 0.4 ? 'edge-over' : totEdge <= -0.4 ? 'edge-under' : 'edge-flat';
+  const pOverHTML = pOver != null
+    ? `<span class="pg-pover" title="P(over) = 1 − Φ((line − projTotal) / (1.50·√projTotal)) per spec">${pct0(pOver)} → over</span>`
+    : '';
+  return `
+    <div class="pg-grid">
+      <div class="pg-summary">
+        <div class="pg-score">
+          <span class="pg-score-team">${awayAbbr} ${pg.awayRuns.toFixed(1)}</span>
+          <span class="pg-score-dash">–</span>
+          <span class="pg-score-team">${pg.homeRunsAdj.toFixed(1)} ${homeAbbr}</span>
+        </div>
+        <div class="pg-wp"><b>${favAb} ${(favWP*100).toFixed(0)}%</b>${mktWP != null ? ` <span class="pg-mkt">(mkt ${(mktWP*100).toFixed(0)}%)</span>` : ''} <span class="sb-edge ${mlEdgeCls}">${pp(mlEdge)}</span></div>
+        <div class="pg-tot">Proj total <b>${pg.total.toFixed(1)}</b>${line != null ? ` (mkt ${line})` : ''} <span class="sb-edge ${totEdgeCls}">${totEdge == null ? '—' : (totEdge >= 0 ? '+' : '') + totEdge.toFixed(1)}</span> ${pOverHTML}</div>
+        ${pg.confirmed ? '' : '<div class="pg-flag">⚠ projected lineup (not yet confirmed)</div>'}
+      </div>
+      <div class="pg-tables">
+        <div class="pg-tbl-cap">Staff component (SP·0.555 + BP·0.445·bp_factor, ×pqm, blended w/ offense by pw)</div>
+        <table class="pg-tbl"><thead><tr>
+          <th></th><th>Opp SP</th><th title="SP weighted-FIP RA">SP RA</th><th title="Bullpen weighted-FIP RA (rested arms; +n if fatigued)">BP RA</th><th title="bp_factor = avg(ip_factor, kbb_factor)">bp_f</th><th title="pw = clamp(0.55 + (ekbb − 0.128)·2, 0.50, 0.80)">pw</th><th title="pqm = 1 − (pq − 100)/100·0.15">pqm</th>
+        </tr></thead><tbody>
+          ${stafRow('Away faces', awayAbbr, cs.away?.oppSP, cs.away || {})}
+          ${stafRow('Home faces', homeAbbr, cs.home?.oppSP, cs.home || {})}
+        </tbody></table>
+        <div class="pg-tbl-cap">Offense + legs/glove (run_value = (blended_wOBA/0.317)² · 4.5, × √(wRC+ split/100), × spot weight, × Power/Eye modifiers)</div>
+        <table class="pg-tbl"><thead><tr>
+          <th></th><th title="Spot-weighted run value averaged over 9 hitters">Off (R/G)</th><th title="Σ BSR over 9 — added to batting team">BSR</th><th title="Σ DEF over 9 — subtracted from batting team's runs">DEF</th><th>vs SP</th>
+        </tr></thead><tbody>
+          ${offRow('Away bats vs', awayAbbr, cs.away || {})}
+          ${offRow('Home bats vs', homeAbbr, cs.home || {})}
+        </tbody></table>
+        <div class="pg-tbl-cap pg-note">Park factor ${cs.park != null ? cs.park.toFixed(3) + '×' : '—'} · HFA 0.96/1.04 · Pythagorean^${cs.pyth || 1.83} · 9th-inning truncation applied to total only</div>
+      </div>
+    </div>`;
 }
 
 // Compare the pre-game model against the current market: de-vigged moneyline
@@ -4834,6 +5000,14 @@ async function openModal(game) {
     <div class="m-venue-row">
       <div class="m-venue-badge">${venueLine}</div>
     </div>
+
+    <div class="m-section-header"><span>Pre-Game Model</span>
+      <span class="right-note">projection · win prob · totals</span></div>
+    ${(() => {
+        let pg = null;
+        try { pg = computePregame(game); } catch (e) {}
+        return renderPregameDetailHTML(game, pg);
+    })()}
 
     <div class="m-section-header"><span>Best Odds</span>
       <span class="right-note">best price across 7 NJ books</span></div>
