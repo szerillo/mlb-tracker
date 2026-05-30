@@ -159,6 +159,16 @@ jobs:
         run: python scripts/compute_hitter_score.py
         continue-on-error: true
 
+      - name: Snapshot pre-game model inputs (forward-backtest archive)
+        # PREGAME_MODEL_SPEC.md decision 4: capture every input that feeds
+        # computePregame() (SP RA, BP RA, n_fatigued, team offense, BSR/DEF,
+        # park, pw/pqm/bp_factor + projected runs/WP/total) into
+        # data/archive/{date}/pregame_inputs.json so we can backtest once a
+        # couple weeks of snapshots stack up. Re-runs overwrite for the day
+        # so the snapshot always reflects the latest lineup info.
+        run: python scripts/refresh_pregame_archive.py
+        continue-on-error: true
+
       - name: Refresh betting odds (ActionNetwork scrape)
         run: python scripts/refresh_odds.py
         continue-on-error: true
