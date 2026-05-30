@@ -1927,7 +1927,7 @@ function lineupsForGame(game) {
   // Priority order:
   // 1. MLB live feed/live batting orders (confirmed, authoritative)
   // 2. Static lineups.json by gamePk
-  // 3. Static lineups.json by team-pair fallback
+  // 3. Static lineups.json by team-pair AND game-date fallback
   const live = LIVE_LINEUPS[game.gamePk];
   if (live) {
     const awayName = game.teams.away.team.name;
@@ -1947,11 +1947,27 @@ function lineupsForGame(game) {
   const games = LINEUPS.games || [];
   let lg = games.find(g => g.game_pk === game.gamePk);
   if (lg) return lg;
+  // Team-pair fallback — but date-scoped. lineups.json holds today + tomorrow
+  // (~84 games) so a 3-game series ships the same (away, home) pair 3 times.
+  // The legacy fallback grabbed the FIRST match, which was the lineup leak
+  // bug: a Tuesday matchup could pull Wednesday's projected lineup. We now
+  // require the date of game.gameDate to match game_time before falling back,
+  // and abort if the (pair, date) hits more than one record.
   const awayName = game.teams.away.team.name;
   const homeName = game.teams.home.team.name;
-  lg = games.find(g => g.away === awayName && g.home === homeName);
-  if (lg) console.warn("Lineup matched by team-pair fallback for", awayName, "@", homeName);
-  return lg || null;
+  const targetDate = (game.gameDate || "").slice(0, 10);
+  const candidates = games.filter(g =>
+    g.away === awayName && g.home === homeName &&
+    (g.game_time || "").slice(0, 10) === targetDate
+  );
+  if (candidates.length === 1) {
+    console.warn("Lineup matched by team-pair+date fallback for", awayName, "@", homeName, targetDate);
+    return candidates[0];
+  }
+  if (candidates.length > 1) {
+    console.warn("Lineup team-pair+date ambiguous, refusing match for", awayName, "@", homeName, targetDate, candidates.length, "candidates");
+  }
+  return null;
 }
 
 // ============================================================================
@@ -2755,7 +2771,7 @@ function renderLineupsTab() {
   }
   sumEl.innerHTML = `<div class="lu-summary">
     <div><b>${confirmed}</b> confirmed · <b>${projected}</b> projected · <b>${total - confirmed - projected}</b> awaiting (of ${total})</div>
-    <div class="lu-grade-key">Grades vs MLB (C ≈ avg): <b>PWR</b>/<b>EYE</b> from Statcast &amp; plate-discipline percentiles · <b>wRC+</b>/<b>BSR</b>/<b>DEF</b> from projections.</div>
+    <div class="lu-grade-key">Grades vs MLB (C ≈ avg): <b>PWR</b>/<b>EYE</b> from Statcast &amp; plate-discipline percentiles · <b>CON</b> from season K% (lower = better) · <b>wRC+</b>/<b>BSR</b>/<b>DEF</b> from projections. Hitters missing data are excluded from team averages (not counted as 0).</div>
     <div>Data generated ${LINEUPS?.generated_at?.slice(0,16).replace('T',' ') || '—'} UTC · refresh page for latest</div>
   </div>`;
 
@@ -3045,6 +3061,17 @@ function _pctileOf(v, pop) {
 }
 function fldPct(h) { _ensureRunPops(); return (h && typeof h.fld === 'number') ? _pctileOf(h.fld, _FLD_POP) : null; }
 function bsrPct(h) { _ensureRunPops(); return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null; }
+// Contact = K% mapped against the individual MLB-hitter K% distribution. Linear
+// floor 10% K% → 99th pct (best contact), ceiling 35% K% → 1st pct (worst).
+// MLB avg ~22% K% → ~52nd pct (C+). Uses season actual K% (k_pct_actual) with
+// projection (k_pct) as fallback. Returns null for missing data so the
+// team-grade and per-row chips both skip the hitter rather than averaging in 0.
+function conPct(h) {
+  if (!h) return null;
+  const k = h.k_pct_actual != null ? h.k_pct_actual : h.k_pct;
+  if (k == null || k < 0 || k > 80) return null;  // sanity guard against corrupt entries
+  return Math.max(1, Math.min(99, 99 - (k - 10) / (35 - 10) * 98));
+}
 
 // Opposing SP throwing hand ('L'/'R'/null) — splits file first, then stats.
 function handOfPitcher(name) {
@@ -3100,7 +3127,7 @@ function teamGradeBar(game, side) {
   const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
     const g = teamGradeLetter(teamGradePct(players, cat), cat);
     if (!g) return "";
-    return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary)"><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
+    return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary). Hitters with no Savant/projection data are excluded from the average (NOT counted as 0)."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
   }).join("");
   if (!wrc && !con && !chips) return "";
   return `<div class="team-grade-bar">${wrc}${con}${chips}</div>`;
@@ -3227,6 +3254,7 @@ function renderLineupTable(side, opts={}) {
       // BsR/Def from projected runs ranked vs MLB regulars.
       const pwrCell = gradeCellHTML(powerPct(hpct), "Power", "barrel/HH/xSLG/xISO/bat-speed pctiles");
       const eyeCell = gradeCellHTML(eyePct(hpct), "Eye", "BB% + chase pctiles");
+      const conCell = gradeCellHTML(conPct(h), "Contact", "K% vs MLB hitter distribution (lower K% = better)");
       const bsrGradeCell = gradeCellHTML(bsrPct(h), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
       const defGradeCell = gradeCellHTML(fldPct(h), "Def");
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
@@ -3265,13 +3293,13 @@ function renderLineupTable(side, opts={}) {
         <td class="bats ${batsCls}">${bats}</td>
         <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
         ${wrcCell}
-        ${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
+        ${pwrCell}${eyeCell}${conCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         ${expanded ? barrelCell + kbbCells : ""}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
-      rowsHTML += `<tr><td colspan="13" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
+      rowsHTML += `<tr><td colspan="14" style="color:var(--muted);font-size:0.78rem;font-style:italic;">(row render error — ${(p && p.name) || "?"})</td></tr>`;
     }
   }
 
@@ -3303,6 +3331,7 @@ function renderLineupTable(side, opts={}) {
     <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
     <th class="center" style="width:34px;" title="Power grade vs MLB — barrel / hard-hit / xSLG / xISO / bat-speed percentiles. C ≈ avg.">PWR</th>
     <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
+    <th class="center" style="width:34px;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → F). Lower K% = better contact.">CON</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
     <th class="right" style="width:48px;" title="Season OPS — actual current-season (projection fallback)">OPS</th>
@@ -4634,8 +4663,10 @@ function teamWrcSpan(game, side) {
   const key = oppHand === 'L' ? 'wrc_vs_l' : 'wrc_vs_r';
   // PA-weighted mean: multiply each slot's wRC+ by its expected PA/game, then
   // divide by total weight. Slots with missing wRC+ data are excluded from both
-  // numerator and denominator so the weights still reflect actual contributors.
-  let wsum = 0, tw = 0;
+  // numerator and denominator so the weights still reflect actual contributors
+  // (NOT counted as 0). Tooltip surfaces coverage so an apparent low team value
+  // can be inspected — if 2/9 hitters had data, the chip says so.
+  let wsum = 0, tw = 0, n_have = 0;
   for (const p of players) {
     const h = HITTERS.hitters[normName(p.name || "")];
     if (!(h && h[key] != null)) continue;
@@ -4644,12 +4675,14 @@ function teamWrcSpan(game, side) {
     const w = SLOT_BASE_PA + delta;
     wsum += h[key] * w;
     tw += w;
+    n_have++;
   }
   if (tw <= 0) return "";
   const avg = wsum / tw;
   const thr = HITTERS?.thresholds?.wrc_splits || {elite:140,good:115,bad:80,worst:65};
   const cls = tier(avg, thr, true);
-  return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9)">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
+  const cov = `${n_have}/${players.length} hitters had data`;
+  return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9). ${cov} — missing entries excluded from the average (NOT averaged in as 0).">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
 }
 
 // Team contact chip — PA-weighted K% across the posted lineup mapped to an
@@ -4664,17 +4697,18 @@ const TEAM_K_BEST = 17.0;   // floor (better than best team in years tracked)
 const TEAM_K_WORST = 27.5;  // ceiling (worse than worst team in years tracked)
 function teamContactSpan(players) {
   if (!HITTERS || !players || !players.length) return "";
-  let wsum = 0, tw = 0;
+  let wsum = 0, tw = 0, n_have = 0;
   for (const p of players) {
     const h = HITTERS.hitters[normName(p.name || "")];
     if (!h) continue;
     const k = (h.k_pct_actual != null) ? h.k_pct_actual : h.k_pct;
-    if (k == null) continue;
+    if (k == null || k < 0 || k > 80) continue;  // sanity guard
     const slot = (p.order || 0) - 1;
     const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
     const w = SLOT_BASE_PA + delta;
     wsum += k * w;
     tw += w;
+    n_have++;
   }
   if (tw <= 0) return "";
   const k_pct = wsum / tw;
@@ -4683,7 +4717,7 @@ function teamContactSpan(players) {
     99 - (k_pct - TEAM_K_BEST) / (TEAM_K_WORST - TEAM_K_BEST) * 98));
   const letter = gradeLetter(pctDisp);
   if (!letter) return "";
-  const title = `Team contact grade ${letter} — combined K% ${k_pct.toFixed(1)}% (PA-weighted by slot, season actuals). League ref: best ≈ 17.5% · avg ≈ 22.2% · worst ≈ 27.5%`;
+  const title = `Team contact grade ${letter} — combined K% ${k_pct.toFixed(1)}% (PA-weighted by slot, season actuals). ${n_have}/${players.length} hitters had data; missing entries are excluded (NOT averaged in as 0). League ref: best ≈ 17.5% · avg ≈ 22.2% · worst ≈ 27.5%`;
   return `<span class="tg-chip" title="${title.replace(/"/g,'&quot;')}"><span class="tg-lbl">Con</span><span class="grade ${gradeCls(letter)}">${letter}</span></span>`;
 }
 
