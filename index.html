@@ -4652,11 +4652,16 @@ function teamWrcSpan(game, side) {
   return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9)">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
 }
 
-// Team contact chip — PA-weighted K% across the posted lineup. Uses the season
+// Team contact chip — PA-weighted K% across the posted lineup mapped to an
+// A-F grade against the recent MLB team K% distribution. Uses the season
 // actual K% (k_pct_actual, with k_pct projection as fallback). LOWER = better.
-// Bands seeded from MLB-team-level K% distribution: <20 elite, <22 good, >25 bad,
-// >27 worst. Same PA-weighting as wRC+ (slot 1 > slot 9) so it mirrors how runs
-// get scored, not just a flat average.
+//
+// League calibration (team K%, recent seasons):
+//   best ≈ 17.5%   ·   avg ≈ 22.2%   ·   worst ≈ 27.5%
+// Linear map: K% 17.0 → 99th pct (A+ floor), K% 27.5 → 1st pct (F). Matches
+// the PWR/EYE/BSR/DEF chip shape (tg-chip) so the row reads as one ladder.
+const TEAM_K_BEST = 17.0;   // floor (better than best team in years tracked)
+const TEAM_K_WORST = 27.5;  // ceiling (worse than worst team in years tracked)
 function teamContactSpan(players) {
   if (!HITTERS || !players || !players.length) return "";
   let wsum = 0, tw = 0;
@@ -4673,9 +4678,13 @@ function teamContactSpan(players) {
   }
   if (tw <= 0) return "";
   const k_pct = wsum / tw;
-  // Lower K% is better → invert tier (pass false-for-higher-better flag)
-  const cls = tier(k_pct, {elite: 20, good: 22, bad: 25, worst: 27}, false);
-  return `<span class="m-team-wrc" title="Combined K% across the lineup (PA-weighted by slot, season actuals) — lower = more contact">K%: <span class="val ${cls}">${k_pct.toFixed(1)}%</span></span>`;
+  // Linear interpolation: K% 17.0 → 99th pct (best), K% 27.5 → 1st pct (worst).
+  const pctDisp = Math.max(1, Math.min(99,
+    99 - (k_pct - TEAM_K_BEST) / (TEAM_K_WORST - TEAM_K_BEST) * 98));
+  const letter = gradeLetter(pctDisp);
+  if (!letter) return "";
+  const title = `Team contact grade ${letter} — combined K% ${k_pct.toFixed(1)}% (PA-weighted by slot, season actuals). League ref: best ≈ 17.5% · avg ≈ 22.2% · worst ≈ 27.5%`;
+  return `<span class="tg-chip" title="${title.replace(/"/g,'&quot;')}"><span class="tg-lbl">Con</span><span class="grade ${gradeCls(letter)}">${letter}</span></span>`;
 }
 
 
