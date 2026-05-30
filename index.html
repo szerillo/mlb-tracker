@@ -3090,19 +3090,20 @@ function teamGradeLetter(rawPct, cat) {
   return { letter: gradeLetter(disp), raw: Math.round(rawPct) };
 }
 
-// Team-grade bar: wRC+ (vs opp hand) + PWR/EYE/BSR/DEF letter chips.
+// Team-grade bar: wRC+ (vs opp hand) + team contact (K%) + PWR/EYE/BSR/DEF letter chips.
 function teamGradeBar(game, side) {
   const lg = lineupsForGame(game);
   const players = lg?.lineups?.[side]?.players || [];
   if (!HITTERS || !players.length) return "";
   const wrc = teamWrcSpan(game, side);
+  const con = teamContactSpan(players);
   const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
     const g = teamGradeLetter(teamGradePct(players, cat), cat);
     if (!g) return "";
     return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary)"><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
   }).join("");
-  if (!wrc && !chips) return "";
-  return `<div class="team-grade-bar">${wrc}${chips}</div>`;
+  if (!wrc && !con && !chips) return "";
+  return `<div class="team-grade-bar">${wrc}${con}${chips}</div>`;
 }
 
 // opts: { expanded: true } → include Brl%/BB%/K% cols (Lineups tab; skipped in modal)
@@ -4351,13 +4352,16 @@ function hitterGameLogsFor(name) {
 let HIT_PA_WIN = 50;
 
 // True ratios over a window of games (mirrors the python agg):
-//   K%/BB% = ΣK or ΣBB / ΣPA · Whiff% = Σwhiffs / Σswings · Brl% = Σbarrels / Σbip
+//   K%/BB% = ΣK or ΣBB / ΣPA · Whiff% = Σwhiffs / Σswings · Brl% = Σbarrels / Σbip ·
+//   xwOBA  = Σxwoba_num / Σxwoba_den (Statcast PA-level: BIP gets the EV/LA xwOBA
+//   estimator; K/BB/HBP fall back to the actual wOBA constants).
 function hitWindowValue(w, field) {
   const sum = k => w.reduce((a, g) => a + (g[k] || 0), 0);
-  if (field === 'k_pct')  { const d = sum('pa');     return d ? +(sum('k')       / d * 100).toFixed(1) : null; }
-  if (field === 'bb_pct') { const d = sum('pa');     return d ? +(sum('bb')      / d * 100).toFixed(1) : null; }
-  if (field === 'whiff')  { const d = sum('swings'); return d ? +(sum('whiffs')  / d * 100).toFixed(1) : null; }
-  if (field === 'barrel') { const d = sum('bip');    return d ? +(sum('barrels') / d * 100).toFixed(1) : null; }
+  if (field === 'k_pct')  { const d = sum('pa');        return d ? +(sum('k')         / d * 100).toFixed(1) : null; }
+  if (field === 'bb_pct') { const d = sum('pa');        return d ? +(sum('bb')        / d * 100).toFixed(1) : null; }
+  if (field === 'whiff')  { const d = sum('swings');    return d ? +(sum('whiffs')    / d * 100).toFixed(1) : null; }
+  if (field === 'barrel') { const d = sum('bip');       return d ? +(sum('barrels')   / d * 100).toFixed(1) : null; }
+  if (field === 'xwoba')  { const d = sum('xwoba_den'); return d ? +(sum('xwoba_num') / d).toFixed(3)       : null; }
   return null;
 }
 // Trailing window: accumulate whole games backward until >= minPA plate appearances,
@@ -4405,11 +4409,14 @@ function renderHitterTrendsHTML(gl) {
     </tr>`).join("");
 
   // Rolling rate metrics — trailing-PA windows; headline = current trailing-N-PA value.
+  // xwOBA formats as .XXX (wOBA scale) while everything else formats as a percentage,
+  // so each metric carries its own fmt for headlines, sparkline tooltips, and big-chart axes.
   const metrics = [
-    { key: 'k',      label: 'K%',     field: 'k_pct'  },
-    { key: 'bb',     label: 'BB%',    field: 'bb_pct' },
-    { key: 'whiff',  label: 'Whiff%', field: 'whiff'  },
-    { key: 'barrel', label: 'Brl%',   field: 'barrel' },
+    { key: 'k',      label: 'K%',     field: 'k_pct',  fmt: pct1 },
+    { key: 'bb',     label: 'BB%',    field: 'bb_pct', fmt: pct1 },
+    { key: 'whiff',  label: 'Whiff%', field: 'whiff',  fmt: pct1 },
+    { key: 'barrel', label: 'Brl%',   field: 'barrel', fmt: pct1 },
+    { key: 'xwoba',  label: 'xwOBA',  field: 'xwoba',  fmt: w3   },
   ].map(m => {
     const series = hitRollingSeriesPA(games, m.field, HIT_PA_WIN);
     const sv = series.filter(v => v != null && isFinite(v));
@@ -4418,15 +4425,15 @@ function renderHitterTrendsHTML(gl) {
   });
   const dateSeries = games.map(g => g.date);
   const sparkCells = metrics.map(m => `
-    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} — trailing ${HIT_PA_WIN} PA rolling · now ${pct1(m.hl)} · range ${pct1(m.mn)}–${pct1(m.mx)} · tap to expand season chart">
-      <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${pct1(m.hl)}</span></div>
+    <div class="sp-spark-cell" onclick="toggleSPChart('${uid}_${m.key}')" title="${m.label} — trailing ${HIT_PA_WIN} PA rolling · now ${m.fmt(m.hl)} · range ${m.fmt(m.mn)}–${m.fmt(m.mx)} · tap to expand season chart">
+      <div class="sp-spark-top"><span class="sp-spark-lbl">${m.label}</span><span class="sp-spark-val">${m.fmt(m.hl)}</span></div>
       ${sparkline(m.series)}
-      <div class="sp-spark-sub">now ${pct1(m.hl)} · ${pct1(m.mn)}–${pct1(m.mx)}</div>
+      <div class="sp-spark-sub">now ${m.fmt(m.hl)} · ${m.fmt(m.mn)}–${m.fmt(m.mx)}</div>
     </div>`).join("");
   const bigCharts = metrics.map(m => `
     <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
       <div class="sp-bigchart-hdr">${m.label} — trailing ${HIT_PA_WIN} PA rolling, full season (${m.series.filter(v => v != null).length} games)</div>
-      ${bigChart(m.series, { fmt: pct1, dates: dateSeries })}
+      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries })}
     </div>`).join("");
   const paToggle = `<span class="hit-pa-toggle">${[25, 50].map(n => `<button class="${HIT_PA_WIN === n ? 'active' : ''}" onclick="hitPaToggle(${n})">${n} PA</button>`).join('')}</span>`;
 
@@ -4643,6 +4650,32 @@ function teamWrcSpan(game, side) {
   const thr = HITTERS?.thresholds?.wrc_splits || {elite:140,good:115,bad:80,worst:65};
   const cls = tier(avg, thr, true);
   return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9)">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
+}
+
+// Team contact chip — PA-weighted K% across the posted lineup. Uses the season
+// actual K% (k_pct_actual, with k_pct projection as fallback). LOWER = better.
+// Bands seeded from MLB-team-level K% distribution: <20 elite, <22 good, >25 bad,
+// >27 worst. Same PA-weighting as wRC+ (slot 1 > slot 9) so it mirrors how runs
+// get scored, not just a flat average.
+function teamContactSpan(players) {
+  if (!HITTERS || !players || !players.length) return "";
+  let wsum = 0, tw = 0;
+  for (const p of players) {
+    const h = HITTERS.hitters[normName(p.name || "")];
+    if (!h) continue;
+    const k = (h.k_pct_actual != null) ? h.k_pct_actual : h.k_pct;
+    if (k == null) continue;
+    const slot = (p.order || 0) - 1;
+    const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
+    const w = SLOT_BASE_PA + delta;
+    wsum += k * w;
+    tw += w;
+  }
+  if (tw <= 0) return "";
+  const k_pct = wsum / tw;
+  // Lower K% is better → invert tier (pass false-for-higher-better flag)
+  const cls = tier(k_pct, {elite: 20, good: 22, bad: 25, worst: 27}, false);
+  return `<span class="m-team-wrc" title="Combined K% across the lineup (PA-weighted by slot, season actuals) — lower = more contact">K%: <span class="val ${cls}">${k_pct.toFixed(1)}%</span></span>`;
 }
 
 
