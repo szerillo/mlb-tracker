@@ -66,6 +66,10 @@ NAME_TO_ABBR = {
     "Washington Nationals": "WSH",
 }
 
+# park_factors.json uses different keys for two teams than MLB Stats API convention.
+# Mirrors index.html's parkFactorFor() ABBREV_ALIAS so lookups succeed for both.
+PARK_FACTOR_ALIAS = {"WSH": "WAS", "CWS": "CHW", "ATH": "OAK", "AZ": "ARI"}
+
 
 def _clamp(x, lo, hi):
     return max(lo, min(hi, x))
@@ -257,7 +261,8 @@ def compute_pregame(game, hitters, hitter_pct, pitcher_stats, park_factors, fati
                             pitcher_stats, fatigue_slice)
     home_name = game["teams"]["home"]["team"]["name"]
     home_abbr = game["teams"]["home"]["team"].get("abbreviation") or NAME_TO_ABBR.get(home_name) or ""
-    pf_row = (park_factors.get("parks") or {}).get(home_abbr) or {}
+    park_key = PARK_FACTOR_ALIAS.get(home_abbr, home_abbr)
+    pf_row = (park_factors.get("parks") or {}).get(park_key) or {}
     park = (pf_row.get("park_factor") / 100.0) if pf_row.get("park_factor") else 1.0
     away_bsr = _pg_sum(ap, "bsr", hitters)
     away_def = _pg_sum(ap, "fld", hitters)
