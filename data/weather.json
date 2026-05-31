@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T15:09:18.907119Z",
+  "generated_at": "2026-05-31T16:09:57.072463Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -97,31 +97,27 @@
       "weather": {
         "temp_f": 72,
         "humidity_pct": 35,
-        "wind_speed_mph": 2,
-        "wind_dir": "E",
+        "wind_speed_mph": 0,
+        "wind_dir": "",
         "precip_pct": 0,
         "short_forecast": "Sunny",
         "start_time": "2026-05-31T14:00:00-04:00"
       },
       "v8": {
-        "run_adj_pct": -2.1,
+        "run_adj_pct": -2.0,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -2,
           "t_adj_pct": -0.2,
-          "w_adj_pct": -0.3,
+          "w_adj_pct": 0.0,
           "dp_adj_pct": -2.2,
           "p_adj_pct": -0.7,
           "precip_adj_pct": 0,
           "carry_pct": -0.4,
-          "wind": {
-            "out_component": -1.2,
-            "dir_rarity": 0.75,
-            "spd_rarity": 0.55
-          }
+          "wind": null
         },
-        "model_pct": -3.3,
+        "model_pct": -3.0,
         "pressure_source": "BP",
         "bp_pct": -1,
         "bp_blended": true,
@@ -276,7 +272,7 @@
         "wind_speed_mph": 5,
         "wind_dir": "ENE",
         "precip_pct": 0,
-        "short_forecast": "Partly Sunny",
+        "short_forecast": "Mostly Cloudy",
         "start_time": "2026-05-31T13:00:00-05:00"
       },
       "v8": {
