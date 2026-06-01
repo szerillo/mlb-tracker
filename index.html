@@ -3915,8 +3915,10 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const fipVal = useW ? wfip : (useXfip ? s.xfip : s?.fip_proj);
     const fipBands = (useW || useXfip) ? (thr.xfip || thr.fip) : thr.fip;
     const fipCls  = tier(fipVal, fipBands, false);
-    const xeraCls = tier(s?.xera, thr.xera, false);
     const kbbCls  = tier(s?.k_bb_pct, thr.k_bb, true);
+    // Stuff+ tier bands (100 = league avg, higher = better)
+    const plusBands = { elite: 115, good: 105, bad: 95, worst: 85 };
+    const stuffCls = tier(s?.stuff_plus, plusBands, true);
     // Modal (compact) uses slash format; full Bullpen tab uses day abbrev.
     const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days", fLabels) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
@@ -3928,8 +3930,8 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
-      <td class="bpt-stat"><span class="v ${xeraCls}" title="xERA">${fmt(s?.xera)}</span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
+      <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${fmt(s?.stuff_plus)}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
@@ -3984,8 +3986,8 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <thead><tr>
         <th>B</th><th>Pitcher</th>
         <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
-        <th class="r" title="Expected ERA (lower = better)">xERA</th>
         <th class="r" title="K% minus BB%">K-BB%</th>
+        <th class="r" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
       </tr></thead>
       <tbody>${tableBody}</tbody>
