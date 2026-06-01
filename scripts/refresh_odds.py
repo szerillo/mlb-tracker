@@ -19,7 +19,8 @@ Writes data/odds.json with best prices per game joined to MLB gamePk.
 """
 import json, os, sys, datetime, urllib.request
 
-OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "odds.json")
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+OUTPUT = os.path.join(REPO_ROOT, "data", "odds.json")
 AN_API = ("https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb"
           "?bookIds=15,30,68,69,71,75,79,123,2988&date={yyyymmdd}&periods=event")
 MLB_API = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={iso}"
@@ -210,6 +211,29 @@ def main():
         json.dump(payload, f, indent=2)
     pk_ct = sum(1 for g in games_out if g["game_pk"])
     print(f"  wrote {len(games_out)} games ({pk_ct} matched to MLB pk) → {OUTPUT}")
+
+    # ── Archive locked closing odds for past-date scroll ────────────────────
+    # Every game that's started (and thus has its closing pregame line locked)
+    # gets snapshotted to data/archive/{date}/closing_odds.json. Re-runs
+    # overwrite, but locked odds don't change once frozen so that's safe. The
+    # frontend's day-scroll reads from here for any date < today.
+    started_games = [g for g in games_out if _has_started(g)]
+    if started_games:
+        archive_dir = os.path.join(REPO_ROOT, "data", "archive", date.isoformat())
+        os.makedirs(archive_dir, exist_ok=True)
+        archive_path = os.path.join(archive_dir, "closing_odds.json")
+        archive_payload = {
+            "generated_at": payload["generated_at"],
+            "source": payload["source"],
+            "date": date.isoformat(),
+            "n_games": len(started_games),
+            "games": started_games,
+            "note": "Closing (last pre-first-pitch) odds for each started game on "
+                    "this date. Used by the scoreboard when scrolling to past dates.",
+        }
+        with open(archive_path, "w") as f:
+            json.dump(archive_payload, f)
+        print(f"  archived closing odds for {len(started_games)} games → {archive_path}")
 
 
 if __name__ == "__main__":
