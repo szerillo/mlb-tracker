@@ -216,6 +216,7 @@
   .sb-total-cell { font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; }
   .sb-total-line { font-weight: 700; color: var(--text); }
   .sb-total-odds { color: var(--muted); margin-left: 0.2rem; font-size: 0.78rem; }
+  .sb-total-impl { color: var(--accent, #4cd0d0); font-size: 0.74rem; font-style: italic; }
   /* Pre-game model row under the matchup */
   .sb-pg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem;
     margin-top: 0.3rem; font-size: 0.76rem; color: var(--muted); }
@@ -2827,8 +2828,32 @@ function renderScoreboard() {
     const tOver = o?.total?.over, tUnder = o?.total?.under;
     let totalCell = `<span class="sb-empty">—</span>`;
     if (tOver) {
-      totalCell = `<span class="sb-total-line">O ${tOver.line}</span> <span class="sb-total-odds" title="${tOver.book}">${tOver.odds>0?'+':''}${tOver.odds}</span>`;
-      if (tUnder) totalCell += `<br><span class="sb-total-line">U ${tUnder.line}</span> <span class="sb-total-odds" title="${tUnder.book}">${tUnder.odds>0?'+':''}${tUnder.odds}</span>`;
+      // Compute juice-adjusted implied total. De-vig over/under American
+      // odds → fair probability, then nudge the line by (p_over - 0.5) * K.
+      // K=12 calibrates 8.5 -120/+100 ≈ 8.75, -130/+110 ≈ 9.0 (matches the
+      // book-implied "true" line). When the lines differ, anchor to over.
+      const impliedTotal = (() => {
+        if (tOver.odds == null) return null;
+        if (!tUnder || tUnder.odds == null) return null;
+        const ap = o => o > 0 ? 100 / (o + 100) : -o / (-o + 100);
+        const op = ap(tOver.odds), up = ap(tUnder.odds);
+        if (!op || !up) return null;
+        const norm_over = op / (op + up);
+        const base = tOver.line;
+        if (base == null) return null;
+        return base + (norm_over - 0.5) * 12;
+      })();
+      const implTitle = impliedTotal != null
+        ? ` · juice-adj implied total ≈ ${impliedTotal.toFixed(2)}` : '';
+      totalCell = `<span class="sb-total-line" title="${tOver.book}${implTitle}">O ${tOver.line}</span> <span class="sb-total-odds" title="${tOver.book}${implTitle}">${tOver.odds>0?'+':''}${tOver.odds}</span>`;
+      if (tUnder) totalCell += `<br><span class="sb-total-line" title="${tUnder.book}${implTitle}">U ${tUnder.line}</span> <span class="sb-total-odds" title="${tUnder.book}${implTitle}">${tUnder.odds>0?'+':''}${tUnder.odds}</span>`;
+      // Surface the juice-adjusted implied total inline if it diverges from
+      // the posted line by ≥ 0.15. Keeps the column compact when totals are
+      // balanced -110/-110 (no divergence) but shows the truth when one side
+      // is juiced (8.5 -130/+110 ≈ 9.0 implied).
+      if (impliedTotal != null && Math.abs(impliedTotal - tOver.line) >= 0.15) {
+        totalCell += `<br><span class="sb-total-impl" title="De-vig over/under → fair implied total. Reflects the book's true number once the juice is stripped.">≈ ${impliedTotal.toFixed(2)}</span>`;
+      }
     }
 
     // PF / Wx stacked — both expressed as ±%
@@ -5346,7 +5371,7 @@ function renderRankingsTab() {
     root.innerHTML = `
       <div class="rk-grid">
         <div class="rk-box">
-          <h3>SP Power Rankings <span class="rk-sub">≥10 IP as a starter (GS≥3, IP/GS≥3.5) · ranked by weighted FIP</span></h3>
+          <h3>SP Power Rankings <span class="rk-sub">probable starters · ≥10 IP · ranked by weighted FIP</span></h3>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
 
           <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">≥10 IP non-starters · ranked by weighted FIP</span></h3>
@@ -5574,8 +5599,16 @@ function renderSPRankings(pitchers, nameToTeam) {
     if (!isStarter(k)) return;
     const ip = s.ip || 0;
     const gs = s.gs || 0;
-    if (ip < 10 || gs < 3) return;
-    if ((ip / gs) < 3.5) return;   // openers / bulk-relievers-cameo'ing out
+    if (ip < 10) return;
+    // pitcher_stats.json frequently has gs=null (FanGraphs dump doesn't
+    // always include the GS field). Only enforce the GS/IP-per-GS gates
+    // when gs is actually known — otherwise we trust isStarter() (which
+    // already uses the live probable-pitcher set + Steamer roles) to keep
+    // bulk relievers out.
+    if (gs >= 1) {
+      if (gs < 3) return;
+      if ((ip / gs) < 3.5) return;   // openers / bulk-relievers-cameo'ing out
+    }
     const metrics = {
       xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
     };
