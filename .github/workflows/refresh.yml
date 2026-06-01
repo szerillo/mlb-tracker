@@ -169,6 +169,15 @@ jobs:
         run: python scripts/refresh_pregame_archive.py
         continue-on-error: true
 
+      - name: Snapshot per-pitcher anchors (xERA / botERA / proj / wFIP)
+        # Freezes the season-cumulative anchor metrics each day. Future wFIP
+        # weight backtests can read the date-stamped file matching their
+        # prediction date instead of leaking the current snapshot's
+        # forward-looking xERA / botERA / fip_proj values. Output:
+        # data/archive/{date}/pitcher_anchors.json (~70 KB / day).
+        run: python scripts/refresh_pitcher_anchors_archive.py
+        continue-on-error: true
+
       - name: Refresh betting odds (ActionNetwork scrape)
         run: python scripts/refresh_odds.py
         continue-on-error: true
