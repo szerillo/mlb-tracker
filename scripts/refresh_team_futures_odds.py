@@ -220,12 +220,25 @@ def main():
 
     # Stitch by abbr
     all_teams = (set(win_totals) | set(division) | set(playoffs) | set(world_series))
+
+    # PRESERVE-ON-EMPTY: BettingPros' Cloudflare blocks GitHub Actions runner
+    # IPs intermittently — when blocked, all 4 fetch_* calls return {} and
+    # all_teams is empty. Overwriting with an empty file would wipe the last
+    # known good odds (which the frontend Futures tab depends on). If we got
+    # nothing, exit 0 without writing so the previous file survives until the
+    # next pass (or a manual run from an unblocked IP) succeeds.
+    if not all_teams:
+        print("[futures-odds] all markets returned 0 teams (likely IP block) — "
+              "leaving existing data/team_futures_odds.json unchanged",
+              file=sys.stderr)
+        return 0
+
     teams_out = {}
     for abbr in sorted(all_teams):
         teams_out[abbr] = {
             "abbr":         abbr,
             "win_total":    win_totals.get(abbr),
-            "division":     division.get(abbr) ,
+            "division":     division.get(abbr),
             "playoffs":     playoffs.get(abbr),
             "world_series": world_series.get(abbr),
         }
