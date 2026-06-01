@@ -78,11 +78,28 @@ def main():
                 pitchers[k] = pitchers.get(k, {})
                 pitchers[k][field] = round(float(fip), 2)
 
-    # Keep fip_proj as a back-compat alias for fip_atc until the UI is fully
-    # migrated (index.html still falls through to fip_proj on older caches).
+    # fip_proj = MEAN of available source projections.
+    #
+    # History: this used to be aliased to fip_atc when fip_proj was null, but
+    # that left stale single-source values in place when older pipeline runs
+    # had populated fip_proj from a different system (e.g. Mason Miller ended
+    # up with fip_proj=5.23 from OOPSY's outlier instead of his ~3.07 blend
+    # across ATC/BatX/OOPSY/ZiPS, which dragged his wFIP down ~0.3 runs).
+    #
+    # The fix: recompute fip_proj every run as the mean of whatever subset of
+    # [fip_atc, fip_batx, fip_oopsy, fip_zips] is populated. ALWAYS overwrite -
+    # so a stuck value from an older script can't survive a refresh.
+    proj_keys = [f for f, _ in SYSTEMS]   # four projection field names
     for k, row in pitchers.items():
-        if row.get("fip_atc") is not None and row.get("fip_proj") is None:
-            row["fip_proj"] = row["fip_atc"]
+        vals = [row[f] for f in proj_keys if isinstance(row.get(f), (int, float))]
+        if vals:
+            row["fip_proj"] = round(sum(vals) / len(vals), 2)
+            row["fip_proj_n_sources"] = len(vals)
+        elif "fip_proj" in row:
+            # No sources available - clear any stuck old value rather than
+            # leaving an unverifiable number sitting on the record.
+            row["fip_proj"] = None
+            row["fip_proj_n_sources"] = 0
 
     payload["pitchers"] = pitchers
     payload["projections_enriched_at"] = datetime.datetime.utcnow().isoformat() + "Z"
