@@ -1959,28 +1959,11 @@ function renderPregameDetailHTML(game, pg) {
         <div class="pg-score">
           <span class="pg-score-team">${awayAbbr} ${pg.awayRuns.toFixed(1)}</span>
           <span class="pg-score-dash">–</span>
-          <span class="pg-score-team">${pg.homeRunsAdj.toFixed(1)} ${homeAbbr}</span>
+          <span class="pg-score-team">${pg.homeRuns.toFixed(1)} ${homeAbbr}</span>
         </div>
         <div class="pg-wp"><b>${favAb} ${(favWP*100).toFixed(0)}%</b>${mktWP != null ? ` <span class="pg-mkt">(mkt ${(mktWP*100).toFixed(0)}%)</span>` : ''} <span class="sb-edge ${mlEdgeCls}">${pp(mlEdge)}</span></div>
         <div class="pg-tot">Proj total <b>${pg.total.toFixed(1)}</b>${line != null ? ` (mkt ${line})` : ''} <span class="sb-edge ${totEdgeCls}">${totEdge == null ? '—' : (totEdge >= 0 ? '+' : '') + totEdge.toFixed(1)}</span> ${pOverHTML}</div>
         ${pg.confirmed ? '' : '<div class="pg-flag">⚠ projected lineup (not yet confirmed)</div>'}
-      </div>
-      <div class="pg-tables">
-        <div class="pg-tbl-cap">Staff component (SP·0.555 + BP·0.445·bp_factor, ×pqm, blended w/ offense by pw)</div>
-        <table class="pg-tbl"><thead><tr>
-          <th></th><th>Opp SP</th><th title="SP weighted-FIP RA">SP RA</th><th title="Bullpen weighted-FIP RA (rested arms; +n if fatigued)">BP RA</th><th title="bp_factor = avg(ip_factor, kbb_factor)">bp_f</th><th title="pw = clamp(0.55 + (ekbb − 0.128)·2, 0.50, 0.80)">pw</th><th title="pqm = 1 − (pq − 100)/100·0.15">pqm</th>
-        </tr></thead><tbody>
-          ${stafRow('Away faces', awayAbbr, cs.away?.oppSP, cs.away || {})}
-          ${stafRow('Home faces', homeAbbr, cs.home?.oppSP, cs.home || {})}
-        </tbody></table>
-        <div class="pg-tbl-cap">Offense + legs/glove (run_value = (blended_wOBA/0.317)² · 4.5, × √(wRC+ split/100), × spot weight, × Power/Eye modifiers)</div>
-        <table class="pg-tbl"><thead><tr>
-          <th></th><th title="Spot-weighted run value averaged over 9 hitters">Off (R/G)</th><th title="Σ BSR over 9 — added to batting team">BSR</th><th title="Σ DEF over 9 — subtracted from batting team's runs">DEF</th><th>vs SP</th>
-        </tr></thead><tbody>
-          ${offRow('Away bats vs', awayAbbr, cs.away || {})}
-          ${offRow('Home bats vs', homeAbbr, cs.home || {})}
-        </tbody></table>
-        <div class="pg-tbl-cap pg-note">Park factor ${cs.park != null ? cs.park.toFixed(3) + '×' : '—'} · HFA 0.96/1.04 · Pythagorean^${cs.pyth || 1.83} · 9th-inning truncation applied to total only</div>
       </div>
     </div>`;
 }
@@ -2822,7 +2805,7 @@ function renderScoreboard() {
       const favPct = Math.round(Math.max(pg.homeWP, pg.awayWP) * 100);
       const wpCls = favPct >= 60 ? "pg-strong" : "";
       // Compact chip only — full projected score / total / market edges live in the Projections tab.
-      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRunsAdj.toFixed(1)} ${homeAbbr} · total ${pg.total.toFixed(1)}${pg.confirmed ? '' : ' · projected lineup'}. See the Projections tab for market edges.`;
+      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRuns.toFixed(1)} ${homeAbbr} (HFA-adjusted) · total ${pg.total.toFixed(1)} (home truncated for 9th-inning skip)${pg.confirmed ? '' : ' · projected lineup'}.`;
       pgRow = `<div class="sb-pg-row">
         <span class="sb-pg-wp ${wpCls}" title="${tip}">Proj ${favAb} ${favPct}%</span>${pg.confirmed ? '' : '<span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}
       </div>`;
@@ -3429,7 +3412,7 @@ function teamGradeBar(game, side) {
     return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary). Hitters with no Savant/projection data are excluded from the average (NOT counted as 0)."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
   }).join("");
   if (!wrc && !con && !chips) return "";
-  return `<div class="team-grade-bar">${wrc}${con}${chips}</div>`;
+  return `<div class="team-grade-bar">${con}${wrc}${chips}</div>`;
 }
 
 // opts: { expanded: true } → include Brl%/BB%/K% cols (Lineups tab; skipped in modal)
@@ -3592,7 +3575,7 @@ function renderLineupTable(side, opts={}) {
         <td class="bats ${batsCls}">${bats}</td>
         <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
         ${wrcCell}
-        ${pwrCell}${eyeCell}${conCell}${bsrGradeCell}${defGradeCell}
+        ${pwrCell}${conCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         ${expanded ? barrelCell + kbbCells : ""}
       </tr>`;
@@ -3629,8 +3612,8 @@ function renderLineupTable(side, opts={}) {
     <th class="left">Player</th>
     <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
     <th class="center" style="width:34px;" title="Power grade vs MLB — barrel / hard-hit / xSLG / xISO / bat-speed percentiles. C ≈ avg.">PWR</th>
-    <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → F). Lower K% = better contact.">CON</th>
+    <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
     <th class="right" style="width:48px;" title="Season OPS — actual current-season (projection fallback)">OPS</th>
@@ -6531,7 +6514,7 @@ function renderProjectionsTab() {
 
   const body = rows.map(r => `<tr>
     <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.g.gameDate)}</span>${r.pg.confirmed ? "" : ' <span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}</td>
-    <td class="proj-mono">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRunsAdj.toFixed(1)}</td>
+    <td class="proj-mono" title="HFA-adjusted projected runs (home gets HFA bump). Total uses a slightly trimmed home value to account for home not batting in the 9th when leading.">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRuns.toFixed(1)}</td>
     <td class="proj-mono"><b>${fav(r)} ${favPct(r)}%</b></td>
     <td class="proj-mono proj-muted">${r.mktHomeWP != null ? (fav(r) + " " + Math.round((r.pg.homeWP >= 0.5 ? r.mktHomeWP : 1 - r.mktHomeWP) * 100) + "%") : "—"}</td>
     <td>${mlCell(r)}</td>
