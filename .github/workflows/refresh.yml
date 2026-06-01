@@ -240,6 +240,15 @@ jobs:
         run: python scripts/bartolo_backtest.py
         continue-on-error: true
 
+      - name: Refresh league-wide team grades (30 teams, fixed reference)
+        # Statcast team-avg view used to z-score grades against teams in the
+        # current slate, so a 2-game day gave bizarrely different grades than
+        # a 14-game day. This script computes each team's category averages
+        # once across the full league and stores fixed mean/SD references so
+        # the frontend can grade deterministically.
+        run: python scripts/refresh_team_grades.py
+        continue-on-error: true
+
       - name: Pre-game backtest aggregate (joins pregame snapshots → actuals)
         # Reads every data/archive/{date}/pregame_inputs.json and joins by
         # game_pk to bartolo_wp finals. Outputs data/pregame_backtest.json
