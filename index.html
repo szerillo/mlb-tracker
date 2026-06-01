@@ -1388,6 +1388,18 @@
   .ft-sub { font-size: 0.66rem; color: var(--muted); line-height: 1.2; margin-top: 1px; font-family: var(--mono, monospace); }
   .ft-table-implied td { padding: 0.35rem 0.4rem; line-height: 1.25; }
   .ft-table-implied tbody tr { vertical-align: top; }
+
+  /* Colorblind-friendly grade palette (yellow=elite, white=avg, purple=bad).
+     Applied after the original gr-* declarations so this wins specificity. */
+  .grade.gr-a { color: #ffd95a; background: rgba(255, 217, 90, 0.16); border: 1px solid rgba(255, 217, 90, 0.35); }
+  .grade.gr-b { color: #f5e29c; background: rgba(245, 226, 156, 0.12); border: 1px solid rgba(245, 226, 156, 0.28); }
+  .grade.gr-c { color: var(--text); background: rgba(139, 149, 161, 0.10); border: 1px solid rgba(139, 149, 161, 0.20); }
+  .grade.gr-d { color: #c8a8ff; background: rgba(200, 168, 255, 0.12); border: 1px solid rgba(200, 168, 255, 0.30); }
+  .grade.gr-f { color: #b794f4; background: rgba(183, 148, 244, 0.14); border: 1px solid rgba(183, 148, 244, 0.32); }
+  /* Lineup SP card: enforce a min-height so the two boxes (away/home) inside one
+     game panel start the lineup table at the same vertical offset, even when one
+     SP has more decorations (opener tag, plus line) than the other. */
+  .lu-sp { min-height: 64px; }
 </style>
 </head>
 <body>
@@ -3125,7 +3137,7 @@ function renderLineupsTab() {
   sumEl.innerHTML = `<div class="lu-summary">
     <div><b>${confirmed}</b> confirmed · <b>${projected}</b> projected · <b>${total - confirmed - projected}</b> awaiting (of ${total})</div>
     <div class="lu-grade-key">Grades vs MLB (C ≈ avg): <b>PWR</b>/<b>EYE</b> from Statcast &amp; plate-discipline percentiles · <b>CON</b> from season K% (lower = better) · <b>wRC+</b>/<b>BSR</b>/<b>DEF</b> from projections. Hitters missing data are excluded from team averages (not counted as 0).</div>
-    <div>Data generated ${LINEUPS?.generated_at?.slice(0,16).replace('T',' ') || '—'} UTC · refresh page for latest</div>
+
   </div>`;
 
   let postedHTML = "";
@@ -3354,8 +3366,8 @@ function renderLineupSPHeader(spName, prefix="vs") {
 // league-average hitter lands around C+/C. Used on the Lineups tab, the game
 // modal, the team-grade bar, and the Statcast view.
 // ============================================================================
-const GRADE_LADDER = [[96,'A+'],[89,'A'],[81,'A-'],[73,'B+'],[64,'B'],[57,'B-'],
-                      [50,'C+'],[43,'C'],[36,'C-'],[28,'D+'],[19,'D'],[11,'D-'],[0,'F']];
+const GRADE_LADDER = [[95,'A+'],[87,'A'],[80,'A-'],[72,'B+'],[64,'B'],[56,'B-'],
+                      [46,'C+'],[36,'C'],[26,'C-'],[17,'D+'],[8,'D'],[0,'D-']];
 function gradeLetter(pct) {
   if (pct == null || isNaN(pct)) return null;
   for (const [thr, l] of GRADE_LADDER) if (pct >= thr) return l;
@@ -3367,7 +3379,7 @@ function gradeCls(letter) {
   if (!letter) return '';
   const c = letter[0];
   return c === 'A' ? 'gr-a' : c === 'B' ? 'gr-b' : c === 'C' ? 'gr-c'
-       : c === 'D' ? 'gr-d' : 'gr-f';
+       : c === 'D' ? 'gr-d' : 'gr-c';
 }
 function gradeCellHTML(pct, label, extra="") {
   const l = gradeLetter(pct);
