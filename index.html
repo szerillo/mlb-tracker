@@ -3495,7 +3495,7 @@ function teamGradeBar(game, side) {
     return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary). Hitters with no Savant/projection data are excluded from the average (NOT counted as 0)."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
   }).join("");
   if (!wrc && !con && !chips) return "";
-  return `<div class="team-grade-bar">${con}${wrc}${chips}</div>`;
+  return `<div class="team-grade-bar">${wrc}${con}${chips}</div>`;
 }
 
 // opts: { expanded: true } → include Brl%/BB%/K% cols (Lineups tab; skipped in modal)
@@ -3658,7 +3658,7 @@ function renderLineupTable(side, opts={}) {
         <td class="bats ${batsCls}">${bats}</td>
         <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
         ${wrcCell}
-        ${pwrCell}${conCell}${eyeCell}${bsrGradeCell}${defGradeCell}
+        ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
         ${expanded ? barrelCell + kbbCells : ""}
       </tr>`;
