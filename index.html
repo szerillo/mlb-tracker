@@ -1080,6 +1080,17 @@
   .rk-table td.bad   { color: var(--tier-bad); }
   .rk-table td.worst { color: var(--tier-worst); }
   .rk-sp-wrap { max-height: 820px; overflow-y: auto; }
+  /* Compact variant for SP/RP rankings — 10 columns squeezed into the
+     same horizontal box. Tighter font + padding so xFIP and SIERA can sit
+     side-by-side without wrapping. */
+  .rk-table-compact { font-size: 0.74rem; }
+  .rk-table-compact th { font-size: 0.56rem; padding: 0.22rem 0.18rem; }
+  .rk-table-compact td { padding: 0.22rem 0.18rem; }
+  .rk-table-compact td.rank { font-size: 0.68rem; }
+  .rk-table-compact td.name { font-size: 0.78rem; }
+  /* Marker on team rows whose lineup came from upcoming (not today's slate) */
+  .rk-upcoming { font-size: 0.6rem; color: var(--muted); font-style: italic;
+    margin-left: 0.2rem; font-family: var(--mono); letter-spacing: 0; }
   /* Season vs Rolling 30-day mode toggle on SP/RP rankings */
   .rk-mode-toggle { display: inline-flex; gap: 4px; margin: 0 0.4rem; vertical-align: middle; }
   .rk-mode-toggle button { padding: 2px 7px; font-size: 0.62rem; border: 1px solid var(--border);
@@ -5381,34 +5392,34 @@ function renderRankingsTab() {
         <div class="rk-box">
           <h3>SP Power Rankings
             <span class="rk-mode-toggle" id="rk-sp-mode">
-              <button data-mode="season" class="active" title="Season-to-date wFIP — blends rolling form (L5), season-to-date xFIP/SIERA, season xERA/botERA, and preseason projection.">Season</button>
+              <button data-mode="season" class="active" title="Season wFIP — blends rolling form (L5), season-to-date xFIP/SIERA, season xERA/botERA, and rest-of-season FG projection.">Season</button>
               <button data-mode="rolling30" title="Aggregated only over starts in the last 30 days. Pure recent-form signal — pitchers without recent starts drop out.">Rolling 30d</button>
             </span>
-            <span class="rk-sub">probable starters · ≥10 IP · wFIP blends rolling form (L5) + season xFIP/SIERA/xERA/botERA + preseason projection</span>
+            <span class="rk-sub">probable starters · ≥10 IP · wFIP blends rolling form (L5) + season xFIP/SIERA/xERA/botERA + FG rest-of-season projection</span>
           </h3>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
 
           <h3 style="margin-top:1.5rem;">Reliever Power Rankings
             <span class="rk-mode-toggle" id="rk-rp-mode">
-              <button data-mode="season" class="active" title="Season-to-date wFIP — blends rolling form (L5), season-to-date xFIP/SIERA, season xERA/botERA, and preseason projection.">Season</button>
+              <button data-mode="season" class="active" title="Season wFIP — blends rolling form (L5), season-to-date xFIP/SIERA, season xERA/botERA, and rest-of-season FG projection.">Season</button>
               <button data-mode="rolling30" title="Aggregated only over appearances in the last 30 days. Pure recent-form signal — relievers without recent outings drop out.">Rolling 30d</button>
             </span>
-            <span class="rk-sub">≥10 IP non-starters · wFIP blends rolling form (L5) + season xFIP/SIERA/xERA/botERA + preseason projection</span>
+            <span class="rk-sub">≥10 IP non-starters · wFIP blends rolling form (L5) + season xFIP/SIERA/xERA/botERA + FG rest-of-season projection</span>
           </h3>
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
         <div class="rk-right">
           <div class="rk-box"><h3>Team Bullpen Rankings <span class="rk-sub">today's available relievers (active roster, likely-out excluded) · avg weighted FIP</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Team Offense <span class="rk-sub">PA-weighted wRC+ · splits vs RHP / LHP</span></h3>
+          <div class="rk-box"><h3>Team Offense <span class="rk-sub">all 30 teams · PA-weighted wRC+ · splits vs RHP / LHP · today's posted lineup or earliest upcoming</span></h3>
             <div class="rk-split-body">
               <div class="rk-split-col"><div class="rk-split-hdr">vs RHP</div><div id="rk-luR-body"></div></div>
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
             </div>
           </div>
-          <div class="rk-box"><h3>Team Defense <span class="rk-sub">today's lineup · projected fielding runs, graded on the curve</span></h3>
+          <div class="rk-box"><h3>Team Defense <span class="rk-sub">all 30 teams · projected fielding runs, today's posted lineup or earliest upcoming</span></h3>
             <div id="rk-def-body"></div></div>
-          <div class="rk-box"><h3>Team Baserunning <span class="rk-sub">today's lineup · projected baserunning runs, graded on the curve</span></h3>
+          <div class="rk-box"><h3>Team Baserunning <span class="rk-sub">all 30 teams · projected baserunning runs, today's posted lineup or earliest upcoming</span></h3>
             <div id="rk-bsr-body"></div></div>
         </div>
       </div>
@@ -5661,7 +5672,7 @@ function unifiedScoreChip(entry, opts={}) {
   const tightCls = opts.tight ? " tight" : "";
   const label = (opts.label !== undefined) ? opts.label : (isFip ? "wFIP" : "wRC+");
   const title = isFip
-    ? `wFIP (weighted FIP projection) ${text} — lower = better · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 45% Steamer fip_proj + 15% xFIP + 15% SIERA + 15% xERA + 10% botERA`
+    ? `wFIP (weighted FIP projection) ${text} — lower = better · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% FG ROS proj`
     : `Unified hitter rating ${text} (wRC+ scale, 100 = avg) · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 45% wOBA proj + 25% xwOBA + 10% barrel% + 10% hard-hit% + 10% bat-speed`;
   return `<span class="uni-chip ${cls}${tightCls}" title="${title}">${label ? label + ' ' : ''}<b>${text}</b></span>`;
 }
@@ -5700,8 +5711,8 @@ function renderSPRankings(pitchers, nameToTeam) {
       if (!m || m.ip < 10) return;
       const present = [m.xfip, m.siera, m.kbb].filter(v => v != null).length;
       if (present < 2) return;
-      // Attach the projection anchor for display (preseason — no leakage).
-      // xERA/botERA stay null in rolling mode (no per-start equivalent).
+      // Attach the rest-of-season projection anchor for display (live FG blend,
+      // no leakage). xERA/botERA stay null in rolling mode (no per-start equivalent).
       const stat = psMap[k] || {};
       m.proj = stat.fip_proj;
       pool.push({ key: k, name: pitcherDisplayName(k), metrics: m, ip: m.ip });
@@ -5759,32 +5770,34 @@ function renderSPRankings(pitchers, nameToTeam) {
       <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
-      <td title="xFIP / SIERA blended 56/44 — they're tracking the same process signal so we collapse them. Individual figures are still on the pitcher modal.">${fmt(xfipSieraBlend(p.metrics))}</td>
+      <td title="Rolling (L5-led) xFIP — the figure the wFIP weights at 28%">${fmt(p.metrics.xfip)}</td>
+      <td title="Rolling (L5-led) SIERA — the figure the wFIP weights at 22%">${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
-      <td title="Preseason projection blend — ATC / BatX / OOPSY / ZiPS FIP. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
+      <td title="Rest-of-season FIP projection — live blend of FG's ATC / BatX / OOPSY / ZiPS, updated nightly. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
       <td>${fmtPct(p.metrics.kbb)}</td>
     </tr>`;
   }).join("");
 
   const wfipTitle = mode === 'rolling30'
     ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% over starts in the last 30 days. xERA/botERA/Proj shown for context but not blended (season-only). Lower = better.'
-    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% projection. The rolling components are themselves 60% L5 + 40% season-to-date — so the formula blends recent form with season anchor and projection. Lower = better.';
+    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% ROS projection. The rolling components are themselves 60% L5 + 40% season-to-date — so the formula blends recent form with season anchor and rest-of-season projection. Lower = better.';
   const emptyMsg = mode === 'rolling30'
     ? 'No starters with ≥10 IP in the last 30 days.'
     : 'No starters matched filter.';
-  wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:58px"><col style="width:48px"><col style="width:50px"><col style="width:48px"><col style="width:50px"></colgroup>
+  wrap.innerHTML = `<table class="rk-table rk-table-compact">
+    <colgroup><col style="width:28px"><col style="width:114px"><col style="width:36px"><col style="width:48px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:44px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
       <th title="${wfipTitle}">wFIP</th>
-      <th title="xFIP + SIERA blended (56/44 — matches the wFIP weighting). Rolling-led (L5) with season-to-date anchor.">xFIP/S</th>
-      <th title="Statcast xERA — season-to-date">xERA</th>
-      <th title="FG Pitcher Bot ERA — season-to-date">botERA</th>
-      <th title="Preseason FIP projection (ATC / BatX / OOPSY / ZiPS blend)">Proj</th>
-      <th title="Strikeout rate minus walk rate — best single forward indicator">K-BB%</th>
+      <th title="Rolling (L5-led) xFIP — 28% of the wFIP">xFIP</th>
+      <th title="Rolling (L5-led) SIERA — 22% of the wFIP">SIERA</th>
+      <th title="Statcast xERA — season-to-date, 18% of the wFIP">xERA</th>
+      <th title="FG Pitcher Bot ERA — season-to-date, 17% of the wFIP">botERA</th>
+      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly) — 15% of the wFIP">Proj</th>
+      <th title="Strikeout rate minus walk rate — best single forward indicator (shown for context, not in wFIP)">K-BB%</th>
     </tr></thead>
-    <tbody>${rows || `<tr><td colspan="9" class="rk-empty">${emptyMsg}</td></tr>`}</tbody>
+    <tbody>${rows || `<tr><td colspan="10" class="rk-empty">${emptyMsg}</td></tr>`}</tbody>
   </table>`;
 }
 
@@ -5856,32 +5869,34 @@ function renderReliverRankings(pitchers, nameToTeam) {
       <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
-      <td title="xFIP / SIERA blended 56/44 — they're tracking the same process signal so we collapse them. Individual figures are still on the pitcher modal.">${fmt(xfipSieraBlend(p.metrics))}</td>
+      <td title="Rolling (L5-led) xFIP — the figure the wFIP weights at 28%">${fmt(p.metrics.xfip)}</td>
+      <td title="Rolling (L5-led) SIERA — the figure the wFIP weights at 22%">${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
-      <td title="Preseason projection blend — ATC / BatX / OOPSY / ZiPS FIP. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
+      <td title="Rest-of-season FIP projection — live blend of FG's ATC / BatX / OOPSY / ZiPS, updated nightly. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
       <td>${fmtPct(p.metrics.kbb)}</td>
     </tr>`;
   }).join("");
 
   const rpWfipTitle = mode === 'rolling30'
     ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% over appearances in the last 30 days. xERA/botERA/Proj shown for context but not blended (season-only). Lower = better.'
-    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% projection. The rolling components are themselves 60% L5 + 40% season-to-date — so the formula blends recent form with season anchor and projection. Lower = better.';
+    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% ROS projection. The rolling components are themselves 60% L5 + 40% season-to-date — so the formula blends recent form with season anchor and rest-of-season projection. Lower = better.';
   const rpEmptyMsg = mode === 'rolling30'
     ? 'No relievers with ≥10 IP in the last 30 days.'
     : 'No relievers matched filter.';
-  wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:58px"><col style="width:48px"><col style="width:50px"><col style="width:48px"><col style="width:50px"></colgroup>
+  wrap.innerHTML = `<table class="rk-table rk-table-compact">
+    <colgroup><col style="width:28px"><col style="width:114px"><col style="width:36px"><col style="width:48px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:42px"><col style="width:44px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
       <th title="${rpWfipTitle}">wFIP</th>
-      <th title="xFIP + SIERA blended (56/44 — matches the wFIP weighting). Rolling-led (L5) with season-to-date anchor.">xFIP/S</th>
-      <th title="Statcast xERA — season-to-date">xERA</th>
-      <th title="FG Pitcher Bot ERA — season-to-date">botERA</th>
-      <th title="Preseason FIP projection (ATC / BatX / OOPSY / ZiPS blend)">Proj</th>
-      <th title="Strikeout rate minus walk rate — best single forward indicator">K-BB%</th>
+      <th title="Rolling (L5-led) xFIP — 28% of the wFIP">xFIP</th>
+      <th title="Rolling (L5-led) SIERA — 22% of the wFIP">SIERA</th>
+      <th title="Statcast xERA — season-to-date, 18% of the wFIP">xERA</th>
+      <th title="FG Pitcher Bot ERA — season-to-date, 17% of the wFIP">botERA</th>
+      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly) — 15% of the wFIP">Proj</th>
+      <th title="Strikeout rate minus walk rate — best single forward indicator (shown for context, not in wFIP)">K-BB%</th>
     </tr></thead>
-    <tbody>${rows || `<tr><td colspan="9" class="rk-empty">${rpEmptyMsg}</td></tr>`}</tbody>
+    <tbody>${rows || `<tr><td colspan="10" class="rk-empty">${rpEmptyMsg}</td></tr>`}</tbody>
   </table>`;
 }
 
@@ -5982,13 +5997,56 @@ function _todaysLineupHittersByTeam(hitters) {
   return byTeam;
 }
 
-// Lineup rankings — based on TODAY's posted lineup for each team.
-// If a team hasn't posted yet, they're omitted from the ranking (not padded
-// with season top-9), so the table reflects only actionable data.
+// All-30-teams variant — starts with today's posted lineups, then for any team
+// missing from today's slate (off day, or lineup not posted yet) we cascade to
+// the earliest upcoming game in LINEUPS.games (the 5-day lookahead window).
+// This keeps the Rankings tab populated with all 30 teams even on lighter
+// slates so the def/bsr/wrc tables behave as a season-long view rather than
+// a slate-dependent one.
+function _allTeamsLineupHittersByTeam(hitters, teams) {
+  const byTeam = _todaysLineupHittersByTeam(hitters);
+  // Walk LINEUPS.games sorted by game_time so the EARLIEST upcoming lineup
+  // wins (matches "next game" intent, not whatever order the file happens
+  // to be in). Players come back from the projected or confirmed lineup.
+  const upcoming = (LINEUPS && Array.isArray(LINEUPS.games)) ? LINEUPS.games : [];
+  const sortedGames = upcoming.slice().sort(
+    (a, b) => (a.game_time || '').localeCompare(b.game_time || ''));
+  const teamByName = {};
+  (teams || []).forEach(t => { if (t && t.name) teamByName[t.name] = t; });
+  sortedGames.forEach(g => {
+    ['away','home'].forEach(side => {
+      const teamName = g[side];
+      const t = teamByName[teamName];
+      if (!t || byTeam[t.id]) return;          // already have today's lineup
+      const players = g.lineups?.[side]?.players || [];
+      if (players.length < 5) return;          // need ~full lineup
+      const list = [];
+      for (const p of players) {
+        const h = hitters[normName(p.name || "")];
+        if (h) list.push({ name: p.name, hitter: h, order: p.order || 99 });
+      }
+      if (list.length) {
+        list.sort((a, b) => a.order - b.order);
+        byTeam[t.id] = {
+          team: { id: t.id, abbr: t.abbreviation || teamAbbr(t.name), name: t.name },
+          list,
+          _fromUpcoming: true,
+          _upcomingDate: (g.game_time || '').slice(0, 10),
+        };
+      }
+    });
+  });
+  return byTeam;
+}
+
+// Lineup rankings — uses TODAY's posted lineup when available, else cascades
+// to the earliest upcoming lineup in LINEUPS (5-day lookahead). So all 30
+// teams appear here regardless of slate size, with a "next: YYYY-MM-DD"
+// marker on rows that fell back to upcoming.
 function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId) {
   const body = document.getElementById(elementId);
   if (!body) return;
-  const byTeam = _todaysLineupHittersByTeam(hitters);
+  const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
   const teamRows = Object.values(byTeam).map(tb => {
     const vals = tb.list.map(x => x.hitter[splitField]).filter(v => v != null);
     if (vals.length < 5) return null;
@@ -6002,7 +6060,7 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
       wsum += v * w; tw += w;
     });
     const avg = tw > 0 ? wsum / tw : vals.reduce((a,b)=>a+b,0) / vals.length;
-    return { team: tb.team, n: vals.length, score: avg };
+    return { team: tb.team, n: vals.length, score: avg, tb };
   }).filter(Boolean);
   teamRows.sort((a, b) => b.score - a.score);
 
@@ -6011,29 +6069,34 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
     const rank = i + 1;
     const tierCls = tierByPercentile(rank, total);
     const g = gradeByRank(rank, total);
+    // Mark teams whose lineup came from upcoming (not today's posted) with a
+    // small italic chip so users can tell that data isn't slate-locked.
+    const upcoming = r.tb && r.tb._fromUpcoming
+      ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today or hasn't posted yet">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
+      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
       <td class="comp ${tierCls}">${Math.round(r.score)}</td>
       <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th>wRC+</th><th>Gr</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
-// Team Defense — projected fielding runs (FLD) summed across today's lineup,
-// ranked and graded on the curve.
+// Team Defense — projected fielding runs (FLD) summed across the team's
+// next-game lineup (today's posted, else earliest upcoming), ranked and
+// graded on the curve. Covers all 30 teams.
 function renderDefRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-def-body");
   if (!body) return;
-  const byTeam = _todaysLineupHittersByTeam(hitters);
+  const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
   const teamRows = Object.values(byTeam).map(tb => {
     const vals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
     if (!vals.length) return null;
-    return { team: tb.team, fld: vals.reduce((a, b) => a + b, 0) };
+    return { team: tb.team, fld: vals.reduce((a, b) => a + b, 0), tb };
   }).filter(Boolean);
   teamRows.sort((a, b) => b.fld - a.fld);
   const total = teamRows.length;
@@ -6041,16 +6104,18 @@ function renderDefRankings(hitters, nameToTeam, teams) {
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
     const g = gradeByRank(rank, total);
+    const upcoming = r.tb && r.tb._fromUpcoming
+      ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
+      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
       <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
       <td class="comp">${fmt(r.fld)}</td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th>Gr</th><th>FLD runs</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -6059,11 +6124,11 @@ function renderDefRankings(hitters, nameToTeam, teams) {
 function renderBsrRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-bsr-body");
   if (!body) return;
-  const byTeam = _todaysLineupHittersByTeam(hitters);
+  const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
   const teamRows = Object.values(byTeam).map(tb => {
     const vals = tb.list.map(x => x.hitter.bsr).filter(v => v != null);
     if (!vals.length) return null;
-    return { team: tb.team, bsr: vals.reduce((a, b) => a + b, 0) };
+    return { team: tb.team, bsr: vals.reduce((a, b) => a + b, 0), tb };
   }).filter(Boolean);
   teamRows.sort((a, b) => b.bsr - a.bsr);
   const total = teamRows.length;
@@ -6071,16 +6136,18 @@ function renderBsrRankings(hitters, nameToTeam, teams) {
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
     const g = gradeByRank(rank, total);
+    const upcoming = r.tb && r.tb._fromUpcoming
+      ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
     return `<tr>
       <td class="rank">${rank}</td>
-      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}</td>
+      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
       <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
       <td class="comp">${fmt(r.bsr)}</td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th>Gr</th><th>BSR runs</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups posted yet.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
