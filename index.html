@@ -974,6 +974,12 @@
   @media (max-width: 700px) {
     .bt-stats { grid-template-columns: repeat(2, 1fr); }
   }
+  /* Deserved-runs chip next to the actual final score — small, muted,
+     hugged tight to the score. Tells the story: "they scored 7 but only
+     deserved 4.7" at a glance. */
+  .sb-des { font-family: var(--mono); font-size: 0.74rem;
+    color: var(--muted); margin-left: 0.18rem; font-weight: 500; }
+
   /* Centered metric pills inside Quality-of-Contact + Sequencing-&-Luck
      sections — Sean's ask: center the pills instead of left-aligning. */
   .wp-section-centered .wp-metrics { justify-content: center; }
@@ -1615,6 +1621,16 @@ async function loadStaticData() {
   // Pre-game backtest payload — model proj vs actual outcomes (joined by
   // game_pk via refresh_pregame_backtest.py).
   PREGAME_BACKTEST = pgbt;
+  // Background fetch of bartolo_wp so the scoreboard can render
+  // actual(deserved) runs for Final games without blocking initial paint.
+  // The file is ~4MB so we deliberately don't await it in Promise.all above;
+  // it lands after the scoreboard does, then we re-render finals.
+  if (WINPROB_DATA === null) {
+    fetch(`data/bartolo_wp.json?t=${Date.now()}`)
+      .then(r => r.ok ? r.json() : { games: {} })
+      .then(d => { WINPROB_DATA = d; if (typeof renderScoreboard === 'function') renderScoreboard(); })
+      .catch(() => { WINPROB_DATA = { games: {} }; });
+  }
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -2742,13 +2758,20 @@ function renderScoreboard() {
       ? `<span class="ml-paren ${mlCls(ml)}" title="${ml.book}">(${ml.odds>0?'+':''}${ml.odds})</span>`
       : `<span class="ml-paren empty">(—)</span>`;
 
-    // Scores (if final) sit next to team logos; odds remain in parens between teams
+    // Scores (if final) sit next to team logos; odds remain in parens between teams.
+    // For Final games we ALSO surface the deserved runs from bartolo_wp in parens
+    // next to the actual — gives a glance at whether the score reflected the
+    // quality of play. Falls back to plain actual until bartolo_wp loads.
     const isFinal = status === "Final" || status === "Game Over";
     const fs = g._finalScore;
+    const wpSim = (isFinal && WINPROB_DATA?.games) ? WINPROB_DATA.games[String(g.gamePk)] : null;
+    const awayDes = wpSim?.away_deserved_runs;
+    const homeDes = wpSim?.home_deserved_runs;
+    const desFmt = v => v != null ? `<span class="sb-des">(${v.toFixed(1)})</span>` : '';
     const awayScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>` : "";
+      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>${desFmt(awayDes)}` : "";
     const homeScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>` : "";
+      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>${desFmt(homeDes)}` : "";
     // On Final rows, append a "→ WP" chip that jumps to the Win Prob tab with
     // this game pre-selected. Click handler attached below alongside row clicks.
     const wpChip = isFinal
@@ -2761,7 +2784,12 @@ function renderScoreboard() {
     // row right under the matchup — projected score, win prob for the favorite,
     // projected total — with edge pills comparing the model to the live market.
     let pg = null;
-    try { pg = computePregame(g); } catch (e) {}
+    // Skip computing pre-game for Finals entirely — the deserved chip above
+    // is what matters there, and Sean's pref is "dont need to put WP for all
+    // of them" (i.e. don't crowd the row with a pre-game pred we can't act on).
+    if (!isFinal) {
+      try { pg = computePregame(g); } catch (e) {}
+    }
     let pgRow = "";
     if (pg && !isFinal) {
       const favHome = pg.homeWP >= 0.5;
