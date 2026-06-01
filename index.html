@@ -974,11 +974,11 @@
   @media (max-width: 700px) {
     .bt-stats { grid-template-columns: repeat(2, 1fr); }
   }
-  /* Deserved-runs chip next to the actual final score — small, muted,
-     hugged tight to the score. Tells the story: "they scored 7 but only
-     deserved 4.7" at a glance. */
-  .sb-des { font-family: var(--mono); font-size: 0.74rem;
-    color: var(--muted); margin-left: 0.18rem; font-weight: 500; }
+  /* Deserved-runs row — sits below the actual score line, gives a glance
+     at who out-hit / under-hit their result without crowding the matchup. */
+  .sb-des-row { font-family: var(--mono); font-size: 0.78rem;
+    color: var(--muted); margin-top: 0.18rem; font-weight: 500;
+    letter-spacing: 0.02em; }
 
   /* Centered metric pills inside Quality-of-Contact + Sequencing-&-Luck
      sections — Sean's ask: center the pills instead of left-aligning. */
@@ -1531,7 +1531,8 @@ let UMP_STATS = null;
 let FATIGUE = null;
 let GAMELOGS = null;   // data/pitcher_gamelogs.json — per-start SP trends
 let HITTER_GAMELOGS = null;
-let PREGAME_BACKTEST = null; // data/hitter_gamelogs.json — per-game rolling form + vs-pitch-type
+let PREGAME_BACKTEST = null;
+let TEAM_GRADES = null; // data/hitter_gamelogs.json — per-game rolling form + vs-pitch-type
 let HITTERS = null;
 let PITCHERS = null;
 let WEATHER = null;
@@ -1590,7 +1591,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs, pgbt] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs, pgbt, tg] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1613,6 +1614,7 @@ async function loadStaticData() {
     fetchJSON(`data/pitcher_gamelogs.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_gamelogs.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pregame_backtest.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/team_grades.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
@@ -1621,6 +1623,10 @@ async function loadStaticData() {
   // Pre-game backtest payload — model proj vs actual outcomes (joined by
   // game_pk via refresh_pregame_backtest.py).
   PREGAME_BACKTEST = pgbt;
+  // League-wide team-grade reference (from scripts/refresh_team_grades.py).
+  // Carries each team's pwr/eye/bsr/def averages AND the league mean+SD that
+  // we z-score against so grades are stable across slate sizes.
+  TEAM_GRADES = tg;
   // Background fetch of bartolo_wp so the scoreboard can render
   // actual(deserved) runs for Final games without blocking initial paint.
   // The file is ~4MB so we deliberately don't await it in Promise.all above;
@@ -2617,6 +2623,20 @@ async function loadForDate(date) {
   invalidateBullpenTab();
   if (typeof invalidateRankings === 'function') invalidateRankings();
   if (typeof invalidateWinprob === 'function') invalidateWinprob();
+  // Past-date closing odds: live odds.json only carries TODAY's slate (locked
+  // at first pitch). Past dates have their closing odds archived to
+  // data/archive/{date}/closing_odds.json by refresh_odds.py — fetch that
+  // and override ODDS so the scoreboard / Projections moneylines + totals
+  // show the actual closing price for that day instead of going blank.
+  if (date !== today()) {
+    try {
+      const r = await fetch(`data/archive/${date}/closing_odds.json?t=${Date.now()}`);
+      if (r.ok) {
+        const archived = await r.json();
+        if (archived && archived.games) ODDS = archived;
+      }
+    } catch (e) { /* leave ODDS alone; scoreboard will show no-odds */ }
+  }
   // If a lazy tab is currently visible, re-render it so the user doesn't have
   // to click away and back to see the new date's data.
   const activeTab = document.querySelector('.tab.active');
@@ -2767,11 +2787,16 @@ function renderScoreboard() {
     const wpSim = (isFinal && WINPROB_DATA?.games) ? WINPROB_DATA.games[String(g.gamePk)] : null;
     const awayDes = wpSim?.away_deserved_runs;
     const homeDes = wpSim?.home_deserved_runs;
-    const desFmt = v => v != null ? `<span class="sb-des">(${v.toFixed(1)})</span>` : '';
+    // Plain actual scores next to logos (no inline deserved chip per Sean).
     const awayScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>${desFmt(awayDes)}` : "";
+      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>` : "";
     const homeScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>${desFmt(homeDes)}` : "";
+      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>` : "";
+    // Deserved-runs row — appears BELOW the actual score line, above the
+    // Final → WP link. Empty until WINPROB_DATA loads in the background.
+    const desRow = (isFinal && awayDes != null && homeDes != null)
+      ? `<div class="sb-des-row" title="Deserved runs from BARTOLO sim — calibrated quality-of-contact expectation (luck/sequencing removed). Compare to actual to see who out-hit / under-hit their result.">xR ${awayDes.toFixed(1)} – ${homeDes.toFixed(1)}</div>`
+      : '';
     // On Final rows, append a "→ WP" chip that jumps to the Win Prob tab with
     // this game pre-selected. Click handler attached below alongside row clicks.
     const wpChip = isFinal
@@ -2812,6 +2837,7 @@ function renderScoreboard() {
         <span class="team">${homeScoreHTML}<span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
         ${mlFmt(hML)}
       </div>
+      ${desRow}
       <div class="sb-time-row">${bottomLine}</div>
       ${pgRow}`;
 
@@ -2944,34 +2970,29 @@ function renderStatcastTeamAvgTable(games) {
   const headers = metrics.map(([lbl]) =>
     `<th class="center" style="width:40px;" title="Team-avg letter grade vs MLB (percentile-based; high = good). C ≈ avg.">${lbl}</th>`
   ).join("");
-  // Team-average percentiles cluster near 50 (small between-team SD), so grading
-  // them on the individual ladder makes every team a C. Spread each column by
-  // z-scoring across the teams in view, stretched onto the full A–F ladder.
-  const _allAvgs = [];
-  for (const g of sorted) {
-    const lg = lineupsForGame(g);
-    const ap = lg?.lineups?.away?.players || [];
-    const hp = lg?.lineups?.home?.players || [];
-    if (ap.length) _allAvgs.push(teamAvg(ap));
-    if (hp.length) _allAvgs.push(teamAvg(hp));
-  }
-  const _colStat = {};
-  for (const [, key] of metrics) {
-    const vals = _allAvgs.map(a => a[key]).filter(v => v != null);
-    if (vals.length >= 4) {
-      const m = vals.reduce((x, y) => x + y, 0) / vals.length;
-      const sd = Math.sqrt(vals.reduce((x, y) => x + (y - m) * (y - m), 0) / vals.length) || 1;
-      _colStat[key] = { m, sd };
-    }
-  }
+  // Team-average percentiles cluster near 50 (small between-team SD), so we
+  // z-score against league-wide stats from data/team_grades.json — those are
+  // recomputed daily across all 30 teams. This makes the grade for a given
+  // team STABLE regardless of slate size; previously a 2-game day used a
+  // different SD than a 14-game day, so the same team's grade would shift.
+  // Falls back to a hardcoded SD per category if team_grades.json hasn't
+  // loaded yet (early load, before background fetches resolve).
+  const HARDCODED_TG_SD = { xwoba: 4, xba: 4, xslg: 4, barrel: 5, hard_hit: 5,
+    exit_velocity: 5, max_ev: 4, chase: 8, whiff: 6, k_pct: 8, bb_pct: 8, sprint: 6 };
+  const HARDCODED_TG_MEAN = 50;
+  // TEAM_GRADES.stats only covers pwr/eye/bsr/def. For the Statcast tab's
+  // per-category metrics (xwOBA, xBA, etc.) we still need a fallback. Use
+  // pwr as the default if no metric-specific stat is published.
+  const tgStats = (TEAM_GRADES && TEAM_GRADES.stats) || {};
   const _SC_SPREAD = 18;
   const makeCells = (avgs) => metrics.map(([lbl, key]) => {
     const v = avgs[key];
     if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
-    const cs = _colStat[key];
-    const disp = cs ? Math.max(1, Math.min(99, 50 + ((v - cs.m) / cs.sd) * _SC_SPREAD)) : v;
+    const cs = tgStats[key] || { mean: HARDCODED_TG_MEAN, sd: HARDCODED_TG_SD[key] || 6 };
+    const disp = Math.max(1, Math.min(99, 50 + ((v - cs.mean) / cs.sd) * _SC_SPREAD));
     const l = gradeLetter(disp);
-    return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} — vs other teams' lineups (${Math.round(v)}th-pct raw avg)">${l}</span></td>`;
+    const ref = `vs league (μ=${cs.mean.toFixed ? cs.mean.toFixed(1) : cs.mean}, σ=${cs.sd.toFixed ? cs.sd.toFixed(1) : cs.sd})`;
+    return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} — ${ref} · raw avg ${Math.round(v)}th pct">${l}</span></td>`;
   }).join("");
   let rowsHTML = "";
   let n_games_with_data = 0;
