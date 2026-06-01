@@ -1,0 +1,54 @@
+name: Patch archive LOB (one-shot)
+
+# One-shot maintenance: refresh the team LOB field across every archived
+# BARTOLO game by re-reading the broadcast value from MLB's linescore
+# endpoint. Triggered manually after the LOB extraction logic in
+# scripts/bartolo/game_stats.py was fixed (commit b44233d82f) so the
+# previously-archived inflated numbers get healed without a full sim
+# rebuild.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Start date YYYY-MM-DD (blank = all archive dates)"
+        required: false
+        default: ""
+      end:
+        description: "End date YYYY-MM-DD (blank = all archive dates)"
+        required: false
+        default: ""
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run patch_lob.py
+        env:
+          PATCH_START: ${{ github.event.inputs.start }}
+          PATCH_END:   ${{ github.event.inputs.end }}
+        run: python scripts/patch_lob.py
+
+      - name: Commit & push (only if files changed)
+        run: |
+          if [ -z "$(git status --porcelain data/archive)" ]; then
+            echo "No archive files changed."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/archive
+          git commit -m "patch_lob.yml: refresh archive LOB from linescore [skip ci]"
+          git push
