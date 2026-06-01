@@ -1367,6 +1367,23 @@
   .hit-pa-toggle { display:inline-flex; gap:0; border:1px solid var(--border,#2a3b46); border-radius:5px; overflow:hidden; }
   .hit-pa-toggle button { background:transparent; color:var(--muted); border:0; padding:1px 8px; font-size:0.7rem; cursor:pointer; }
   .hit-pa-toggle button.active { background:var(--accent); color:#06231f; font-weight:700; }
+  /* Futures tab */
+  .ft-header { margin-bottom: 1rem; }
+  .ft-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+  .ft-legend { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.4; }
+  .ft-div-hdr { font-size: 0.9rem; margin: 1.1rem 0 0.3rem; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
+  .ft-table-wrap { overflow-x: auto; }
+  .ft-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; table-layout: fixed; }
+  .ft-table th { text-align: right; padding: 0.3rem 0.4rem; font-size: 0.7rem; color: var(--muted); border-bottom: 1px solid var(--border, #2a3b46); font-weight: 600; }
+  .ft-table th.left { text-align: left; }
+  .ft-table td { padding: 0.25rem 0.4rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .ft-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .ft-team { text-align: left !important; }
+  .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.74rem; }
+  .ft-edge { font-weight: 600; }
+  .ft-edge.pos { color: #6fdc7e; }
+  .ft-edge.neg { color: #ff7a7a; }
+  .ft-edge.neu { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -1440,6 +1457,7 @@
     <button class="tab" data-tab="rankings" role="tab">Rankings</button>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
+    <button class="tab" data-tab="futures" role="tab">Futures</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -1494,6 +1512,10 @@
 
   <section id="tab-proj" class="tab-content" hidden>
     <div id="proj-root" class="loading">Loading pre-game projections…</div>
+  </section>
+
+  <section id="tab-futures" class="tab-content" hidden>
+    <div id="futures-root" class="loading">Loading team futures…</div>
   </section>
 
   <section id="tab-winprob" class="tab-content" hidden>
@@ -2650,6 +2672,7 @@ async function loadForDate(date) {
     else if (id === 'pitchers' && typeof renderPitchersTab === 'function') renderPitchersTab();
     else if (id === 'bullpen' && typeof renderBullpenTab === 'function') renderBullpenTab();
     else if (id === 'proj' && typeof renderProjectionsTab === 'function') renderProjectionsTab();
+    else if (id === 'futures' && typeof renderFuturesTab === 'function') renderFuturesTab();
   }
 }
 
@@ -6876,6 +6899,113 @@ function renderPregameBacktestHTML() {
 }
 
 // ============================================================================
+// FUTURES TAB (team win totals / division / playoffs / WS)
+// ============================================================================
+// Joins data/team_futures.json (composite of PECOTA + FG/ATC/BatX/OOPSY + best
+// available market odds via BettingPros) into a sortable per-team table with
+// model edges. Sean's own projection column is null for now — placeholder for
+// when we wire up the personal model. Composite is a simple equal-weight
+// average across the 5 systems' projections.
+let TEAM_FUTURES = null;
+let FUTURES_RENDERED = false;
+
+async function renderFuturesTab() {
+  const root = document.getElementById("futures-root");
+  if (!root) return;
+  if (FUTURES_RENDERED && TEAM_FUTURES) { renderFuturesContent(root); return; }
+  root.innerHTML = `<div class="loading">Loading team futures…</div>`;
+  try {
+    const r = await fetch(`./data/team_futures.json?cb=${Date.now()}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    TEAM_FUTURES = await r.json();
+    FUTURES_RENDERED = true;
+    renderFuturesContent(root);
+  } catch (e) {
+    root.innerHTML = `<div class="empty">No team futures data yet. The daily pipeline (BettingPros odds + PECOTA + FG projections) runs at 10:45 AM and 6:30 PM ET. <br><span style="opacity:0.7;font-size:0.85rem;">Error: ${e.message}</span></div>`;
+  }
+}
+
+function _futEdgeCls(v) {
+  if (v == null) return '';
+  if (v >= 3)  return 'ft-edge pos';
+  if (v <= -3) return 'ft-edge neg';
+  return 'ft-edge neu';
+}
+function _futAmer(o) {
+  if (o == null) return '—';
+  return o > 0 ? `+${o}` : `${o}`;
+}
+function _futPct(v) {
+  if (v == null) return '—';
+  return v.toFixed(1) + '%';
+}
+
+function renderFuturesContent(root) {
+  const data = TEAM_FUTURES;
+  if (!data || !data.teams) { root.innerHTML = `<div class="empty">No data.</div>`; return; }
+  const teams = Object.values(data.teams);
+  const divs = {};
+  teams.forEach(t => { (divs[t.division] = divs[t.division] || []).push(t); });
+  Object.values(divs).forEach(arr => arr.sort((a, b) => (b.composite?.wins ?? 0) - (a.composite?.wins ?? 0)));
+  const genAt = data.generated_at?.slice(0, 16).replace('T', ' ') || '—';
+  const oddsAt = data.odds_at?.slice(0, 16).replace('T', ' ') || '—';
+  const rowFor = (t) => {
+    const c = t.composite || {};
+    const m = t.market || {};
+    const e = t.edges || {};
+    return `<tr>
+      <td class="ft-team"><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
+      <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
+      <td>${m.win_total_line != null ? m.win_total_line.toFixed(1) : '—'}</td>
+      <td class="${_futEdgeCls(e.win_total)}">${e.win_total != null ? (e.win_total > 0 ? '+' : '') + e.win_total.toFixed(1) : '—'}</td>
+      <td>${_futPct(c.div_pct)}</td>
+      <td>${_futPct(m.div_implied_pct)}</td>
+      <td class="${_futEdgeCls(e.div_pct)}">${e.div_pct != null ? (e.div_pct > 0 ? '+' : '') + e.div_pct.toFixed(1) + 'pp' : '—'}</td>
+      <td>${_futPct(c.playoff_pct)}</td>
+      <td>${_futPct(m.playoff_implied_pct)}</td>
+      <td class="${_futEdgeCls(e.playoff_pct)}">${e.playoff_pct != null ? (e.playoff_pct > 0 ? '+' : '') + e.playoff_pct.toFixed(1) + 'pp' : '—'}</td>
+      <td>${_futPct(c.ws_pct)}</td>
+      <td>${_futPct(m.ws_implied_pct)}</td>
+      <td class="${_futEdgeCls(e.ws_pct)}">${e.ws_pct != null ? (e.ws_pct > 0 ? '+' : '') + e.ws_pct.toFixed(1) + 'pp' : '—'}</td>
+    </tr>`;
+  };
+  const divHTML = Object.entries(divs).map(([div, arr]) => `
+    <h3 class="ft-div-hdr">${div}</h3>
+    <div class="ft-table-wrap">
+    <table class="ft-table">
+      <colgroup><col style="width:135px"><col><col><col><col><col><col><col><col><col><col><col><col></colgroup>
+      <thead><tr>
+        <th class="left">Team</th>
+        <th title="Composite projected wins — equal-weight mean of PECOTA / FG Depth Charts / ATC / BatX / OOPSY">Proj W</th>
+        <th title="Sportsbook win-total line">Line</th>
+        <th title="Composite wins − sportsbook line (positive = lean Over)">Edge</th>
+        <th title="Division win % from composite projection">Div%</th>
+        <th title="Market implied division %, de-vigged across the 5-team division">Mkt</th>
+        <th title="Composite − market (percentage points)">Edge</th>
+        <th title="Make playoffs %">PO%</th>
+        <th title="Market implied playoff %, no de-vig (per-team yes/no market)">Mkt</th>
+        <th>Edge</th>
+        <th title="Win World Series %">WS%</th>
+        <th title="Market implied WS %, de-vigged across all 30 teams">Mkt</th>
+        <th>Edge</th>
+      </tr></thead>
+      <tbody>${arr.map(rowFor).join("")}</tbody>
+    </table>
+    </div>
+  `).join("");
+  root.innerHTML = `
+    <div class="ft-header">
+      <div><b>Team Futures · Composite vs Market</b></div>
+      <div class="ft-meta">Projections: ${genAt} · Odds: ${oddsAt}</div>
+      <div class="ft-legend">
+        <span>Edges in <span class="ft-edge pos">+green</span> favor a bet on that side · <span class="ft-edge neg">red</span> against · <span class="ft-edge neu">neutral</span> if &lt; 3pp / 3 wins. Composite = equal weight across PECOTA + FG/ATC/BatX/OOPSY ROS projections. Sean's own column will populate when wired up.</span>
+      </div>
+    </div>
+    ${divHTML}
+  `;
+}
+
+// ============================================================================
 // TABS
 // ============================================================================
 document.querySelectorAll(".tab").forEach(btn => {
@@ -6889,6 +7019,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "rankings") renderRankingsTab();
     if (btn.dataset.tab === "proj")     renderProjectionsTab();
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
+    if (btn.dataset.tab === "futures")  renderFuturesTab();
   };
 });
 
