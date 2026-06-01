@@ -258,44 +258,60 @@ def expected_bb_k_rate_from_discipline(disc: dict) -> tuple[Optional[float], Opt
 
 
 def extract_lob(pbp: Optional[dict]) -> dict:
-    """True team LOB for both sides, per the broadcast/Baseball-Reference
-    convention: H + BB + HBP - R - CS - GIDP - SF.
+    """True team LOB for both sides — read directly from the linescore.
 
-    The MLB Stats API's `boxscore.teams.{side}.teamStats.batting.leftOnBase`
-    field is the **sum of player LOB**, which double- and triple-counts a
-    runner who's stranded by multiple batters in the same inning. For a normal
-    game it inflates roughly 1.5–2×. Real example (Sean spotted, 2026-05-30
-    BAL-TOR): API said TOR 17 / BAL 14; the actual scoreboard LOB was 9 / 9,
-    which the formula below correctly recovers.
+    The right field is `liveData.linescore.teams.{side}.leftOnBase`, which is
+    the broadcast-displayed team LOB (the same number shown on the bottom of
+    the scoreboard). It's *different* from
+    `boxscore.teams.{side}.teamStats.batting.leftOnBase`, which is the SUM of
+    player LOB and double-counts runners stranded across multiple batters
+    in the same inning — e.g. 2026-05-30 BAL-TOR returned 17 / 14 on
+    boxscore but the real scoreboard LOB was 8 / 9 (in linescore).
 
-    Returns {"away": int|None, "home": int|None}. Falls back to the API field
-    only when one of the formula components is missing (defensive)."""
+    Falls back to summing `linescore.innings[].{side}.leftOnBase` per half
+    inning if the team summary field is missing, and to the inflated boxscore
+    value only as a last resort."""
     out = {"away": None, "home": None}
     try:
-        teams = pbp["liveData"]["boxscore"]["teams"]
+        ld = pbp["liveData"]
     except Exception:
         return out
 
-    def _calc(side: str):
-        try:
-            b = teams[side]["teamStats"]["batting"]
-        except Exception:
-            return None
-        try:
-            h    = int(b.get("hits", 0))
-            bb   = int(b.get("baseOnBalls", 0))
-            hbp  = int(b.get("hitByPitch", 0))
-            r    = int(b.get("runs", 0))
-            cs   = int(b.get("caughtStealing", 0))
-            gidp = int(b.get("groundIntoDoublePlay", 0))
-            sf   = int(b.get("sacFlies", 0))
-        except (TypeError, ValueError):
-            # Components missing — fall back to whatever the API gave us.
-            return b.get("leftOnBase")
-        return max(0, h + bb + hbp - r - cs - gidp - sf)
+    # 1) Preferred: linescore.teams.{side}.leftOnBase (broadcast value).
+    ls_teams = ((ld.get("linescore") or {}).get("teams")) or {}
+    for side in ("away", "home"):
+        v = (ls_teams.get(side) or {}).get("leftOnBase")
+        if isinstance(v, int):
+            out[side] = v
 
-    out["away"] = _calc("away")
-    out["home"] = _calc("home")
+    # 2) Backstop: sum per-inning halves if the team summary didn't come through.
+    if out["away"] is None or out["home"] is None:
+        innings = (ld.get("linescore") or {}).get("innings") or []
+        sums = {"away": 0, "home": 0}
+        seen = {"away": False, "home": False}
+        for inn in innings:
+            for side in ("away", "home"):
+                v = (inn.get(side) or {}).get("leftOnBase")
+                if isinstance(v, int):
+                    sums[side] += v
+                    seen[side] = True
+        for side in ("away", "home"):
+            if out[side] is None and seen[side]:
+                out[side] = sums[side]
+
+    # 3) Last-resort backstop: the (inflated) boxscore field.
+    if out["away"] is None or out["home"] is None:
+        try:
+            bx_teams = ld["boxscore"]["teams"]
+            for side in ("away", "home"):
+                if out[side] is None:
+                    out[side] = (bx_teams.get(side, {})
+                                 .get("teamStats", {})
+                                 .get("batting", {})
+                                 .get("leftOnBase"))
+        except Exception:
+            pass
+
     return out
 
 
