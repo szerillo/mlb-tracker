@@ -2687,18 +2687,64 @@ async function loadForDate(date) {
   if (typeof invalidateRankings === 'function') invalidateRankings();
   if (typeof invalidateWinprob === 'function') invalidateWinprob();
   // Past-date closing odds: live odds.json only carries TODAY's slate (locked
-  // at first pitch). Past dates have their closing odds archived to
-  // data/archive/{date}/closing_odds.json by refresh_odds.py — fetch that
-  // and override ODDS so the scoreboard / Projections moneylines + totals
-  // show the actual closing price for that day instead of going blank.
+  // at first pitch). Past dates have their closing odds archived in two
+  // possible places:
+  //   1) data/archive/{date}/closing_odds.json   (refresh_odds.py snapshot in
+  //      live ODDS shape — fastest to load)
+  //   2) data/odds_archive/{date}.json           (scrape_action_archive.py
+  //      consensus odds — has run for every prior day, so it's the durable
+  //      backstop when (1) doesn't exist)
+  // We try (1) first, fall back to (2) and reshape to ODDS shape so the
+  // scoreboard / Projections moneylines + totals still render for past dates.
   if (date !== today()) {
+    let loaded = false;
     try {
       const r = await fetch(`data/archive/${date}/closing_odds.json?t=${Date.now()}`);
       if (r.ok) {
         const archived = await r.json();
-        if (archived && archived.games) ODDS = archived;
+        if (archived && archived.games) { ODDS = archived; loaded = true; }
       }
-    } catch (e) { /* leave ODDS alone; scoreboard will show no-odds */ }
+    } catch (e) { /* ignore, fall through to backstop */ }
+    if (!loaded) {
+      try {
+        const r2 = await fetch(`data/odds_archive/${date}.json?t=${Date.now()}`);
+        if (r2.ok) {
+          const arc2 = await r2.json();
+          if (arc2 && arc2.games && arc2.games.length) {
+            // Reshape consensus snapshot into live ODDS shape so oddsForGame()
+            // and downstream renderers see familiar fields.
+            const reshaped = (arc2.games || []).map(g => {
+              const c = g.consensus || g.open || {};
+              const t = c.total || {};
+              const book = (g.consensus ? "Consensus" : (g.open ? "Open" : ""));
+              return {
+                game_pk:    g.game_pk,
+                matchup:    `${g.away_team || ""} @ ${g.home_team || ""}`,
+                start_time: g.start_time,
+                status:     g.status,
+                odds_locked: true,
+                moneyline:  {
+                  away: c.ml_away != null ? { odds: c.ml_away, line: 0, book } : null,
+                  home: c.ml_home != null ? { odds: c.ml_home, line: 0, book } : null,
+                },
+                run_line:   { away: null, home: null },
+                total: {
+                  over:  t.line != null && t.over  != null ? { odds: t.over,  line: t.line, book } : null,
+                  under: t.line != null && t.under != null ? { odds: t.under, line: t.line, book } : null,
+                },
+              };
+            });
+            ODDS = {
+              generated_at: arc2.generated_at,
+              source: arc2.source || "Action Network consensus archive",
+              date,
+              n_games: reshaped.length,
+              games: reshaped,
+            };
+          }
+        }
+      } catch (e) { /* leave ODDS alone; scoreboard will show no-odds */ }
+    }
   }
   // If a lazy tab is currently visible, re-render it so the user doesn't have
   // to click away and back to see the new date's data.
