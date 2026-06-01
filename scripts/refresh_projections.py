@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
 """
-Merge multiple Fangraphs FIP projections into pitcher_stats.json.
+Merge ROS (rest-of-season) FIP projections from Fangraphs into pitcher_stats.json.
 
-Sources: ATC, The BAT X, OOPSY, ZiPS (each has its own FIP projection).
-Keyed on normalized name (matches the rest of the pipeline).
+Sources (ROS, not preseason/full-season):
+  rfangraphsdc → ROS FG Depth Charts (multi-system blend; substitutes for ATC)
+  rthebatx     → ROS The BAT X
+  steamerr     → ROS Steamer (substitutes for OOPSY, which has no public ROS API)
+  rzips        → ROS ZiPS
+
+We previously hit ?type=atc / thebatx / oopsy / zips which are FULL-SEASON
+projections — they anchor heavily to preseason talent estimates and barely
+move in response to actual in-season performance. For breakout pitchers like
+Misiorowski (1.65 ERA mid-season) the full-season blend stayed around fip_proj
+3.9, while ROS reflects his current form at ~3.3. Switched to ROS endpoints
+in June 2026 to surface in-season form properly.
+
+Field-name mapping (kept old keys so frontend doesn't need to update labels
+this same push — TODO: rename fip_atc→fip_fgdc and fip_oopsy→fip_steamer in
+the frontend tooltips on a follow-up commit):
+  fip_atc   ← rfangraphsdc  (display label will be relabeled later)
+  fip_batx  ← rthebatx
+  fip_oopsy ← steamerr      (display label will be relabeled later)
+  fip_zips  ← rzips
 
 Reads  pitcher_stats.json from argv[1]
 Writes enriched JSON to stdout (pipe to /tmp/ps.json && mv into place).
@@ -14,11 +32,15 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36")
 
 # Each tuple: (output-field name, Fangraphs API `type` param)
+# All four point at ROS endpoints. ATC and OOPSY don't expose ROS variants
+# (their `?type=ratc` / `?type=roopsy` return HTTP 500), so we substitute
+# rfangraphsdc and steamerr — both are FG-published ROS projections that
+# also blend multiple systems internally.
 SYSTEMS = [
-    ("fip_atc",   "atc"),
-    ("fip_batx",  "thebatx"),   # The BAT X
-    ("fip_oopsy", "oopsy"),
-    ("fip_zips",  "zips"),
+    ("fip_atc",   "rfangraphsdc"),  # ROS FG Depth Charts (substitute for ATC)
+    ("fip_batx",  "rthebatx"),       # ROS The BAT X
+    ("fip_oopsy", "steamerr"),       # ROS Steamer (substitute for OOPSY)
+    ("fip_zips",  "rzips"),          # ROS ZiPS
 ]
 
 
@@ -53,6 +75,16 @@ def main():
 
     season = datetime.date.today().year
     pitchers = payload.get("pitchers", {})
+
+    # CRITICAL: clear stale full-season projection values BEFORE writing fresh
+    # ROS values. Otherwise pitchers who got dropped from a ROS source (e.g.
+    # rzips has 620 rows vs zips' ~700) keep their old full-season number,
+    # producing a misleading "mixed" blend with one stale full-season source.
+    proj_keys = [f for f, _ in SYSTEMS]
+    for k, row in pitchers.items():
+        for f in proj_keys:
+            if f in row:
+                row[f] = None  # explicit null, not delete — keeps schema stable
 
     enriched_count = {k: 0 for k, _ in SYSTEMS}
     for field, proj_type in SYSTEMS:
@@ -89,7 +121,6 @@ def main():
     # The fix: recompute fip_proj every run as the mean of whatever subset of
     # [fip_atc, fip_batx, fip_oopsy, fip_zips] is populated. ALWAYS overwrite -
     # so a stuck value from an older script can't survive a refresh.
-    proj_keys = [f for f, _ in SYSTEMS]   # four projection field names
     for k, row in pitchers.items():
         vals = [row[f] for f in proj_keys if isinstance(row.get(f), (int, float))]
         if vals:
@@ -105,9 +136,12 @@ def main():
     payload["projections_enriched_at"] = datetime.datetime.utcnow().isoformat() + "Z"
     payload["projections_counts"] = enriched_count
     payload.setdefault("sources", [])
-    src_line = "Fangraphs projections — ATC / The BAT X / OOPSY / ZiPS (FIP)"
-    if src_line not in payload["sources"]:
-        payload["sources"].append(src_line)
+    src_line = "Fangraphs ROS projections — FG Depth Charts / The BAT X / Steamer / ZiPS (FIP)"
+    # Drop old preseason source line if present
+    payload["sources"] = [s for s in payload["sources"]
+                          if "ATC / The BAT X / OOPSY / ZiPS" not in s
+                          and s != src_line]
+    payload["sources"].append(src_line)
 
     json.dump(payload, sys.stdout, indent=2)
     for field, ct in enriched_count.items():
