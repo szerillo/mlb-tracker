@@ -974,6 +974,10 @@
   @media (max-width: 700px) {
     .bt-stats { grid-template-columns: repeat(2, 1fr); }
   }
+  /* Centered metric pills inside Quality-of-Contact + Sequencing-&-Luck
+     sections — Sean's ask: center the pills instead of left-aligning. */
+  .wp-section-centered .wp-metrics { justify-content: center; }
+  .wp-section-centered .wp-disc { text-align: center; }
   .m-team-wrc { font-size: 0.78rem; font-weight: 500; margin-left: 0.5rem;
     color: var(--muted); letter-spacing: 0.02em; }
   .m-team-wrc .val { font-family: var(--mono); font-weight: 700; }
@@ -5310,18 +5314,10 @@ function renderRankingsTab() {
     root.innerHTML = `
       <div class="rk-grid">
         <div class="rk-box">
-          <h3>SP Power Rankings <span class="rk-sub">ranked by weighted FIP · rolling xFIP/SIERA + xERA/botERA/proj · starters only</span></h3>
-          <div class="rk-filter" id="rk-sp-filter">
-            <button data-flt="qualified" class="${RANKINGS_SP_FILTER==='qualified'?'active':''}">Qualified (≥20 IP)</button>
-            <button data-flt="all" class="${RANKINGS_SP_FILTER==='all'?'active':''}">All SPs</button>
-          </div>
+          <h3>SP Power Rankings <span class="rk-sub">≥10 IP as a starter (GS≥3, IP/GS≥3.5) · ranked by weighted FIP</span></h3>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
 
-          <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">ranked by weighted FIP · non-starters only</span></h3>
-          <div class="rk-filter" id="rk-rp-filter">
-            <button data-flt="qualified" class="${RANKINGS_RP_FILTER==='qualified'?'active':''}">Qualified (≥10 IP)</button>
-            <button data-flt="all" class="${RANKINGS_RP_FILTER==='all'?'active':''}">All RPs</button>
-          </div>
+          <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">≥10 IP non-starters · ranked by weighted FIP</span></h3>
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
         <div class="rk-right">
@@ -5536,22 +5532,22 @@ function gradeByRank(rank, total) {
 function renderSPRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-sp-wrap");
   if (!wrap) return;
-  // Filter: only "known starters" (pitchers assigned as probable SP in current/recent windows)
-  // + qualified tier requires ≥20 IP for stability, else "all SPs" mode.
-  const qualifiedMode = RANKINGS_SP_FILTER === "qualified";
+  // Gate: known starters with ≥10 IP AS A STARTER. We approximate "as a
+  // starter" by requiring GS≥3 AND IP/GS ≥ 3.5 — that knocks out openers
+  // (typically 1-2 IP/start) and one-off SP cameos while keeping real
+  // rotation arms in. Previously the "All SPs" toggle let openers polute
+  // the leaderboard; that toggle is now gone.
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
-    // Gate: must be a known starter
     if (!isStarter(k)) return;
     const ip = s.ip || 0;
-    if (qualifiedMode && ip < 20) return;
-    // Composite metrics: xFIP, SIERA, xERA, botERA, K-BB%. xFIP/SIERA use the
-    // rolling (L5-led) figure the wFIP weights so columns reconcile with wFIP.
+    const gs = s.gs || 0;
+    if (ip < 10 || gs < 3) return;
+    if ((ip / gs) < 3.5) return;   // openers / bulk-relievers-cameo'ing out
     const metrics = {
       xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
     };
     const present = Object.values(metrics).filter(v => v != null).length;
-    // Need at least 3 of 5 to avoid garbage rankings from 1-2 noisy stats
     if (present < 3) return;
     pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
   });
@@ -5580,18 +5576,17 @@ function renderSPRankings(pitchers, nameToTeam) {
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
       <td>${fmtPct(p.metrics.kbb)}</td>
-      <td style="color:var(--muted);font-size:0.75rem;">${p.ip || 0}</td>
     </tr>`;
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
       <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
-      <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
+      <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -5605,12 +5600,13 @@ function pitcherDisplayName(key) {
 function renderReliverRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-rp-wrap");
   if (!wrap) return;
-  const qualifiedMode = RANKINGS_RP_FILTER === "qualified";
+  // Single-tier gate: ≥10 IP non-starter. "All RPs" toggle is gone — the
+  // unqualified pool was dominated by garbage-time arms anyway.
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (isStarter(k)) return;  // starters excluded
+    if (isStarter(k)) return;
     const ip = s.ip || 0;
-    if (qualifiedMode && ip < 10) return;
+    if (ip < 10) return;
     // xFIP/SIERA use the rolling (L5-led) figure the wFIP weights.
     const metrics = {
       xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
@@ -5653,18 +5649,17 @@ function renderReliverRankings(pitchers, nameToTeam) {
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
       <td>${fmtPct(p.metrics.kbb)}</td>
-      <td style="color:var(--muted);font-size:0.75rem;">${p.ip || 0}</td>
     </tr>`;
   }).join("");
 
   wrap.innerHTML = `<table class="rk-table">
-    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"><col style="width:34px"></colgroup>
+    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
       <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
-      <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th><th>IP</th>
+      <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="10" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
   </table>`;
 }
 
@@ -6263,6 +6258,14 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
            '<div class="wp-haxis">runs scored · bar height = share of 10,000 sims</div>';
   };
 
+  // Ump-adjusted WP is what we headline in the scorebox now (Sean's pref).
+  // Fall back to base sim WP when the ump adjustment isn't available.
+  const awayWPdisp = sim?.ump_adj_away_wp != null ? (sim.ump_adj_away_wp * 100).toFixed(1) + '%'
+                  : (sim?.away_win_prob != null ? (sim.away_win_prob * 100).toFixed(1) + '%' : awayWP);
+  const homeWPdisp = sim?.ump_adj_home_wp != null ? (sim.ump_adj_home_wp * 100).toFixed(1) + '%'
+                  : (sim?.home_win_prob != null ? (sim.home_win_prob * 100).toFixed(1) + '%' : homeWP);
+  const wpLabel = sim?.ump_adj_away_wp != null ? 'WP (ump-adj)' : 'Sim WP';
+
   // Centered favor: positive away_favor = ump's zone net helped the away team's offense.
   const favA = (sim && sim.ump_favor_away != null) ? sim.ump_favor_away : null;
   let umpNote;
@@ -6287,7 +6290,7 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
         <div class="wp-truns">${aRuns}</div>
         <div class="wp-tcap">actual</div>
         <div class="wp-tdes">${awayDes != null ? awayDes : '—'}<span class="wp-tcap2"> deserved</span></div>
-        <div class="wp-twp">Sim WP: ${awayWP}</div>
+        <div class="wp-twp">${wpLabel}: ${awayWPdisp}</div>
       </div>
       <div class="wp-vs">vs</div>
       <div class="wp-team">
@@ -6295,24 +6298,11 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
         <div class="wp-truns">${hRuns}</div>
         <div class="wp-tcap">actual</div>
         <div class="wp-tdes">${homeDes != null ? homeDes : '—'}<span class="wp-tcap2"> deserved</span></div>
-        <div class="wp-twp">Sim WP: ${homeWP}</div>
+        <div class="wp-twp">${wpLabel}: ${homeWPdisp}</div>
       </div>
     </div>
 
-    <div class="wp-section">
-      <h4>Win Probability &amp; Deserved Runs</h4>
-      <p style="color:var(--muted);font-size:0.78rem;margin:-0.2rem 0 0.6rem;line-height:1.45;">
-        <b>Sim WP</b> = how often this team wins across 10,000 resamples with each side anchored on its <b>deserved</b> (luck-neutral) runs — i.e. who deserved to win, not who actually scored more.
-        <b>Deserved</b> = calibrated runs from quality of contact; compare to the actual score to see who out-hit or under-hit their result.</p>
-      <div class="wp-metrics">
-        <div class="wp-metric"><div class="wp-mlabel">${away} Sim WP</div><div class="wp-mval">${awayWP}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} Sim WP</div><div class="wp-mval">${homeWP}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${away} Deserved Runs</div><div class="wp-mval">${awayDes != null ? awayDes : '—'}</div><div class="wp-mdelta">Actual: ${aRuns}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} Deserved Runs</div><div class="wp-mval">${homeDes != null ? homeDes : '—'}</div><div class="wp-mdelta">Actual: ${hRuns}</div></div>
-      </div>
-    </div>
-
-    ${gs ? `<div class="wp-section">
+    ${gs ? `<div class="wp-section wp-section-centered">
       <h4>Quality of Contact &amp; Plate Discipline</h4>
       <div class="wp-metrics">
         <div class="wp-metric"><div class="wp-mlabel">${away} xwOBA</div><div class="wp-mval">${f3(ga.xwoba)}</div><div class="wp-mdelta">xBA ${f3(ga.xba)}</div></div>
@@ -6323,7 +6313,7 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
       <p style="color:var(--muted);font-size:0.74rem;margin:0.5rem 0 0;line-height:1.4;">Chase &amp; CSW feed the process layer that nudges deserved BB/K; xwOBA/xBA are quality-of-contact context.</p>
     </div>` : ''}
 
-    ${gs ? `<div class="wp-section">
+    ${gs ? `<div class="wp-section wp-section-centered">
       <h4>Sequencing &amp; Luck</h4>
       <div class="wp-metrics">
         <div class="wp-metric"><div class="wp-mlabel">${away} w/ RISP</div><div class="wp-mval">${risp(ga.risp)}</div><div class="wp-mdelta">LOB ${ga.lob != null ? ga.lob : '—'}</div></div>
@@ -6348,7 +6338,6 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
     <div class="wp-section">
       <h4>Umpire Adjustment</h4>
       ${umpNote}
-      ${sim?.ump_adj_away_wp != null ? `<p style="font-size:0.9rem;margin:0.3rem 0 0;">Ump-adjusted WP: <strong>${away} ${(sim.ump_adj_away_wp*100).toFixed(1)}%</strong> · <strong>${home} ${(sim.ump_adj_home_wp*100).toFixed(1)}%</strong></p>` : ''}
     </div>
 
     <div class="wp-section">
@@ -6376,9 +6365,70 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
 // ============================================================================
 // PROJECTIONS vs MARKET TAB (pre-game model)
 // ============================================================================
+// Past-date render: fetch the archived pregame snapshot for the given date
+// and render the same table shape using model output captured at lock time.
+async function renderProjectionsArchive(date, root) {
+  root.innerHTML = '<div class="loading">Loading archived projections…</div>';
+  let snap = null;
+  try {
+    const r = await fetch(`data/archive/${date}/pregame_inputs.json?t=${Date.now()}`);
+    if (r.ok) snap = await r.json();
+  } catch (e) { /* fall through */ }
+  if (!snap || !snap.games || !Object.keys(snap.games).length) {
+    root.innerHTML = `<div class="wp-empty">No archived pre-game snapshot for ${date}. The pre-game archive started 2026-05-30 — earlier dates have no record.</div>`;
+    return;
+  }
+  // Rebuild rows from snapshot. game_pk → { away_abbr, home_abbr, model: {away_runs, home_runs_for_total, home_wp, total} }
+  const rows = [];
+  for (const [pk, g] of Object.entries(snap.games)) {
+    if (!g.model) continue;
+    rows.push({
+      pk,
+      away: g.away_abbr,
+      home: g.home_abbr,
+      game_time: g.game_time,
+      away_runs: g.model.away_runs,
+      home_runs: g.model.home_runs_for_total,
+      home_wp: g.model.home_wp,
+      total: g.model.total,
+      confirmed: g.model.confirmed,
+    });
+  }
+  rows.sort((a, b) => new Date(a.game_time) - new Date(b.game_time));
+  const fav = r => r.home_wp >= 0.5 ? r.home : r.away;
+  const favPct = r => Math.round(Math.max(r.home_wp, 1 - r.home_wp) * 100);
+  const body = rows.map(r => `<tr>
+    <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.game_time)}</span>${r.confirmed ? '' : ' <span class="sb-pg-flag" title="Projected lineup at lock time">proj</span>'}</td>
+    <td class="proj-mono">${r.away_runs.toFixed(1)}–${r.home_runs.toFixed(1)}</td>
+    <td class="proj-mono"><b>${fav(r)} ${favPct(r)}%</b></td>
+    <td class="proj-mono">${r.total.toFixed(1)}</td>
+  </tr>`).join("");
+  root.innerHTML = `
+    <div class="wp-intro" style="margin-bottom:0.8rem;">
+      <strong>Archived pre-game projections — ${date}.</strong> Captured at lock time and frozen here so they persist after games finalize. Market edges aren't shown because the odds snapshot we kept at lock time isn't joined yet.
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="proj-table">
+      <thead><tr><th>Matchup</th><th>Proj Score</th><th>Model WP</th><th>Proj Tot</th></tr></thead>
+      <tbody>${body || '<tr><td colspan="4" class="rk-empty">No modeled games in this snapshot.</td></tr>'}</tbody>
+    </table></div>`;
+}
+
 function renderProjectionsTab() {
   const root = document.getElementById("proj-root");
   if (!root) return;
+  // Past-date view: load the archived pregame snapshot for that date so the
+  // projections persist after games finalize. The frontend's live
+  // computePregame() would produce wrong numbers for past dates because the
+  // input JSONs (hitters, pitcher_stats, lineups) have evolved since then —
+  // the snapshot in data/archive/{date}/pregame_inputs.json is the model's
+  // actual lock-time output for that day.
+  const viewDate = (typeof VIEW_DATE !== 'undefined' && VIEW_DATE) ? VIEW_DATE : today();
+  const isPast = viewDate < today();
+  if (isPast) {
+    renderProjectionsArchive(viewDate, root);
+    return;
+  }
   const games = (CURRENT_GAMES || []).filter(g => {
     const s = g.status && g.status.detailedState;
     return s !== "Final" && s !== "Game Over" && s !== "Completed Early";
