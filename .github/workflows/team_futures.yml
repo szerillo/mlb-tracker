@@ -1,0 +1,69 @@
+name: Team Futures (daily)
+
+# Daily aggregation of team-level projections + futures odds. Lands a single
+# data/team_futures.json that the Futures tab reads. FG / BP publish their
+# morning updates around 10–11 AM ET; we fire after that window to catch
+# the freshest data. The BettingPros API is live so the timing only matters
+# for the projection sources.
+
+on:
+  schedule:
+    # 14:45 UTC = 10:45 AM ET (daylight) / 9:45 AM ET (standard). Picks up
+    # PECOTA + FG morning updates which generally land by ~11:00 AM ET.
+    - cron: "45 14 * * *"
+    # 22:30 UTC = 6:30 PM ET — second pull for live odds movement during
+    # the day. Projections won't change much but market odds will.
+    - cron: "30 22 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: team-futures
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  futures:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Refresh team projections (PECOTA + FG 4 modes)
+        run: python scripts/refresh_team_projections.py
+        continue-on-error: true
+
+      - name: Refresh team futures odds (BettingPros)
+        run: python scripts/refresh_team_futures_odds.py
+        continue-on-error: true
+        env:
+          BETTINGPROS_KEY: ${{ secrets.BETTINGPROS_KEY }}
+
+      - name: Compute team futures aggregate
+        run: python scripts/compute_team_futures.py
+        continue-on-error: true
+
+      - name: Commit changed data (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/team_projections.json data/team_futures_odds.json data/team_futures.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Team futures refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            # Race-proof push (rebase + retry once if main moved during our run)
+            for i in 1 2 3; do
+              if git push; then break; fi
+              echo "push failed, rebasing and retrying (attempt $i)…"
+              git pull --rebase --autostash || true
+            done
+          fi
