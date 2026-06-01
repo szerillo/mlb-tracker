@@ -93,6 +93,26 @@ def main():
     proj_data = json.loads(PROJ_FILE.read_text())
     odds_data = json.loads(ODDS_FILE.read_text())
 
+    # PRESERVE-ON-EMPTY-ODDS: if the odds fetcher hit the BettingPros IP block
+    # (Cloudflare on GH Actions runners), team_futures_odds.json may have
+    # n_teams=0 or have teams with all-null market data. In that case do NOT
+    # overwrite the existing team_futures.json — its market data is still
+    # valid from a previous successful run. Without this guard, every blocked
+    # run would wipe the frontend Futures tab back to "—" cells.
+    odds_teams = odds_data.get("teams") or {}
+    has_any_market_data = any(
+        (t.get("win_total") and t["win_total"].get("line") is not None)
+        or (t.get("division") and t["division"].get("odds") is not None)
+        or (t.get("world_series") and t["world_series"].get("odds") is not None)
+        for t in odds_teams.values()
+    )
+    if odds_data.get("n_teams", 0) == 0 or not has_any_market_data:
+        if OUTPUT.exists():
+            print("[team-futures] odds file is empty (IP block?) — "
+                  "leaving existing team_futures.json unchanged", file=sys.stderr)
+            return 0
+        # If no existing output, fall through and produce best-effort
+
     teams_proj = proj_data["teams"]
     teams_odds = odds_data["teams"]
 
