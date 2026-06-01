@@ -191,9 +191,15 @@ jobs:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
       - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
+        # Triggers if odds.json is missing, has no games, OR has yesterday's date.
+        # Date-freshness check was added because ActionNetwork's API sometimes
+        # blocks GitHub Actions runner IPs (Cloudflare 403), in which case
+        # refresh_odds.py returns silently and odds.json keeps yesterday's
+        # content. Without this check, the multi-source fallback would never
+        # trigger because the file still has (stale) games in it.
         run: |
-          if [ ! -s data/odds.json ] || ! python -c "import json; d=json.load(open('data/odds.json')); exit(0 if d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) else 1)" 2>/dev/null; then
-            echo "Primary odds empty - trying multi-source fallback"
+          if [ ! -s data/odds.json ] || ! python -c "import json, datetime as dt; d=json.load(open('data/odds.json')); today=(dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat(); exit(0 if (d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) and d.get('date')==today) else 1)" 2>/dev/null; then
+            echo "Primary odds empty or stale - trying multi-source fallback"
             python scripts/refresh_odds_multi.py > data/odds.json || true
           fi
         continue-on-error: true
@@ -202,8 +208,8 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
-          if [ -n "$ODDS_API_KEY" ] && { [ ! -s data/odds.json ] || ! python -c "import json; d=json.load(open('data/odds.json')); exit(0 if d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) else 1)" 2>/dev/null; }; then
-            echo "Still empty - using The Odds API"
+          if [ -n "$ODDS_API_KEY" ] && { [ ! -s data/odds.json ] || ! python -c "import json, datetime as dt; d=json.load(open('data/odds.json')); today=(dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat(); exit(0 if (d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) and d.get('date')==today) else 1)" 2>/dev/null; }; then
+            echo "Still empty or stale - using The Odds API"
             python scripts/refresh_odds_oddsapi.py > data/odds.json || true
           fi
         continue-on-error: true
