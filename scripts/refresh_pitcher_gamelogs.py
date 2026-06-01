@@ -108,7 +108,12 @@ def http_json(url, timeout=25):
         return json.loads(r.read())
 
 
-# ── universe: every pitcher with a start this season (MLB Stats API) ──────
+# ── universe: every pitcher who's either started OR thrown enough innings ─
+# to be a candidate for the rotation. Broadening from "GS > 0" so bulk relievers
+# / openers / call-ups who transition to SP have gamelog history available the
+# moment they're announced. MIN_IP_FOR_UNIVERSE = 20 keeps fringe arms out.
+MIN_IP_FOR_UNIVERSE = 20.0
+
 def get_starter_universe(season: int):
     url = (f"https://statsapi.mlb.com/api/v1/stats?stats=season&season={season}"
            f"&group=pitching&gameType=R&sportId=1&limit=2000&playerPool=all")
@@ -121,7 +126,13 @@ def get_starter_universe(season: int):
     out = []
     for s in splits:
         st = s.get("stat", {})
-        if (st.get("gamesStarted") or 0) <= 0:
+        gs = st.get("gamesStarted") or 0
+        try:
+            ip = float(st.get("inningsPitched") or 0)
+        except (TypeError, ValueError):
+            ip = 0.0
+        # Include if they've started any games OR thrown >= MIN_IP_FOR_UNIVERSE.
+        if gs <= 0 and ip < MIN_IP_FOR_UNIVERSE:
             continue
         p = s.get("player", {})
         if p.get("id") and p.get("fullName"):
@@ -201,8 +212,6 @@ def fg_starts(fg_id, season):
         date = strip_html(r.get("Date"))
         if not date or "2050" in date or not re.match(r"\d{4}-\d{2}-\d{2}", date):
             continue
-        if (_f(r.get("GS")) or 0) < 1:
-            continue  # relief outing — starters only
         kpct = _f(r.get("K%"))
         bbpct = _f(r.get("BB%"))
         starts.append({
