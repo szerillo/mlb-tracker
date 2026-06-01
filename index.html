@@ -3662,7 +3662,7 @@ function renderLineupTable(side, opts={}) {
         ${wrcCell}
         ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        ${expanded ? barrelCell + kbbCells : ""}
+        ${barrelCell}${expanded ? kbbCells : ""}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
@@ -3702,7 +3702,7 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
     <th class="right" style="width:48px;" title="Season OPS — actual current-season (projection fallback)">OPS</th>
-    ${expanded ? `<th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${kbbHeaders}` : ""}
+    <th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${expanded ? kbbHeaders : ""}
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
