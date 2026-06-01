@@ -1418,10 +1418,13 @@
   .grade.gr-c { color: var(--text); background: rgba(139, 149, 161, 0.10); border: 1px solid rgba(139, 149, 161, 0.20); }
   .grade.gr-d { color: #c8a8ff; background: rgba(200, 168, 255, 0.12); border: 1px solid rgba(200, 168, 255, 0.30); }
   .grade.gr-f { color: #b794f4; background: rgba(183, 148, 244, 0.14); border: 1px solid rgba(183, 148, 244, 0.32); }
-  /* Lineup SP card: enforce a min-height so the two boxes (away/home) inside one
-     game panel start the lineup table at the same vertical offset, even when one
-     SP has more decorations (opener tag, plus line) than the other. */
-  .lu-sp { min-height: 64px; }
+  /* Lineup SP card: enforce a min-height so SP cards across ALL games on the
+     page line up — Sean's ask. The tallest variant (with rank chip + Stuff+/Pit+
+     plus line + opener tag + handedness chip) is ~82px, so we set a min that
+     comfortably fits that without padding the shorter variants too much. The
+     interior aligns top so the SP label sits in the same spot regardless. */
+  .lu-sp { min-height: 84px; align-content: start; }
+  .lu-sp-left { align-content: start; }
 </style>
 </head>
 <body>
