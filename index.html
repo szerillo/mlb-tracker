@@ -1080,6 +1080,14 @@
   .rk-table td.bad   { color: var(--tier-bad); }
   .rk-table td.worst { color: var(--tier-worst); }
   .rk-sp-wrap { max-height: 820px; overflow-y: auto; }
+  /* Season vs Rolling 30-day mode toggle on SP/RP rankings */
+  .rk-mode-toggle { display: inline-flex; gap: 4px; margin: 0 0.4rem; vertical-align: middle; }
+  .rk-mode-toggle button { padding: 2px 7px; font-size: 0.62rem; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; border-radius: 999px;
+    font-family: inherit; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rk-mode-toggle button.active { background: rgba(76, 208, 208, 0.18); color: var(--text);
+    border-color: rgba(76, 208, 208, 0.55); }
+  .rk-mode-toggle button:hover:not(.active) { color: var(--text); border-color: var(--muted); }
   .rk-sp-wrap::-webkit-scrollbar { width: 8px; }
   .rk-sp-wrap::-webkit-scrollbar-track { background: rgba(36, 46, 58, 0.3); }
   .rk-sp-wrap::-webkit-scrollbar-thumb { background: rgba(139, 149, 161, 0.25); border-radius: 4px; }
@@ -5371,10 +5379,22 @@ function renderRankingsTab() {
     root.innerHTML = `
       <div class="rk-grid">
         <div class="rk-box">
-          <h3>SP Power Rankings <span class="rk-sub">probable starters · ≥10 IP · ranked by weighted FIP</span></h3>
+          <h3>SP Power Rankings
+            <span class="rk-mode-toggle" id="rk-sp-mode">
+              <button data-mode="season" class="active" title="Season-to-date wFIP (the rolling-led L5 figures stabilized into the season composite).">Season</button>
+              <button data-mode="rolling30" title="Aggregated only over starts in the last 30 days. Smaller pool — pitchers without recent starts drop out.">Rolling 30d</button>
+            </span>
+            <span class="rk-sub">probable starters · ≥10 IP · ranked by weighted FIP</span>
+          </h3>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
 
-          <h3 style="margin-top:1.5rem;">Reliever Power Rankings <span class="rk-sub">≥10 IP non-starters · ranked by weighted FIP</span></h3>
+          <h3 style="margin-top:1.5rem;">Reliever Power Rankings
+            <span class="rk-mode-toggle" id="rk-rp-mode">
+              <button data-mode="season" class="active" title="Season-to-date wFIP (the rolling-led L5 figures stabilized into the season composite).">Season</button>
+              <button data-mode="rolling30" title="Aggregated only over appearances in the last 30 days. Smaller pool — relievers without recent outings drop out.">Rolling 30d</button>
+            </span>
+            <span class="rk-sub">≥10 IP non-starters · ranked by weighted FIP</span>
+          </h3>
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
         <div class="rk-right">
@@ -5402,7 +5422,8 @@ function renderRankingsTab() {
     renderDefRankings(hitters, nameToTeam, teams);
     renderBsrRankings(hitters, nameToTeam, teams);
 
-    // Filter button handlers
+    // Filter button handlers (legacy — the qualified/all SP filter UI was
+    // removed earlier but the hooks are harmless if the elements don't exist)
     document.querySelectorAll("#rk-sp-filter button").forEach(btn => {
       btn.onclick = () => {
         RANKINGS_SP_FILTER = btn.dataset.flt;
@@ -5414,6 +5435,21 @@ function renderRankingsTab() {
       btn.onclick = () => {
         RANKINGS_RP_FILTER = btn.dataset.flt;
         document.querySelectorAll("#rk-rp-filter button").forEach(b => b.classList.toggle("active", b.dataset.flt === RANKINGS_RP_FILTER));
+        renderReliverRankings(pitchers, nameToTeam);
+      };
+    });
+    // Season / Rolling 30d mode toggle
+    document.querySelectorAll("#rk-sp-mode button").forEach(btn => {
+      btn.onclick = () => {
+        RANKINGS_SP_MODE = btn.dataset.mode;
+        document.querySelectorAll("#rk-sp-mode button").forEach(b => b.classList.toggle("active", b.dataset.mode === RANKINGS_SP_MODE));
+        renderSPRankings(pitchers, nameToTeam);
+      };
+    });
+    document.querySelectorAll("#rk-rp-mode button").forEach(btn => {
+      btn.onclick = () => {
+        RANKINGS_RP_MODE = btn.dataset.mode;
+        document.querySelectorAll("#rk-rp-mode button").forEach(b => b.classList.toggle("active", b.dataset.mode === RANKINGS_RP_MODE));
         renderReliverRankings(pitchers, nameToTeam);
       };
     });
@@ -5472,6 +5508,67 @@ function computeSPRanks() {
   pool.forEach((p, i) => { byKey.set(p.key, { rank: i + 1, total }); });
   SP_RANK_CACHE = { byKey, total };
   return SP_RANK_CACHE;
+}
+
+// ─── Rolling 30-day rankings ──────────────────────────────────────────────
+// Pool/sort sources for the Rankings page when the user toggles "Rolling 30d"
+// instead of season. Reads pitcher_gamelogs.json (per-start metrics over the
+// season) and aggregates only starts within the last 30 days.
+//
+// Why not just trust unified_components.roll_xfip? Those are L5 (last-5)
+// figures stabilized into the wFIP — great for the season composite but they
+// always reflect the latest five appearances regardless of date. A rolling
+// 30d window can be 0 (cold IL stint) or 12+ (heavy usage) starts, and that
+// IS the question Sean wants: "who's been good IN THE LAST MONTH". So we
+// derive metrics ground-up here from per-game logs.
+let RANKINGS_SP_MODE = 'season';   // 'season' | 'rolling30'
+let RANKINGS_RP_MODE = 'season';
+
+function buildRolling30Metrics(pitcherKey) {
+  const gl = GAMELOGS && GAMELOGS.pitchers && GAMELOGS.pitchers[pitcherKey];
+  if (!gl || !Array.isArray(gl.starts) || !gl.starts.length) return null;
+  const cutoff = new Date(Date.now() - 30 * 86400000);
+  const window = gl.starts.filter(s => {
+    if (!s || !s.date) return false;
+    const d = new Date(s.date);
+    return !isNaN(d) && d >= cutoff;
+  });
+  if (!window.length) return null;
+  let sumIp = 0, sumK = 0, sumBb = 0, sumTbf = 0;
+  let xfipNum = 0, xfipDen = 0;
+  let sieraNum = 0, sieraDen = 0;
+  for (const s of window) {
+    const ip = s.ip || 0;
+    sumIp  += ip;
+    sumK   += s.k   || 0;
+    sumBb  += s.bb  || 0;
+    sumTbf += s.tbf || 0;
+    if (s.xfip != null && ip > 0)  { xfipNum  += s.xfip  * ip; xfipDen  += ip; }
+    if (s.siera != null && ip > 0) { sieraNum += s.siera * ip; sieraDen += ip; }
+  }
+  return {
+    ip: sumIp,
+    n_starts: window.length,
+    xfip: xfipDen  > 0 ? xfipNum  / xfipDen  : null,
+    siera: sieraDen > 0 ? sieraNum / sieraDen : null,
+    // K-BB% from TBF aggregates — TBF is always present in our gamelogs.
+    kbb: sumTbf > 0 ? ((sumK - sumBb) / sumTbf) * 100 : null,
+    // xERA and botERA aren't per-start, so we can't compute a rolling figure.
+    // The columns render "—" in rolling mode; the toggle subtitle calls this out.
+    xera: null,
+    bot:  null,
+  };
+}
+
+// wFIP-equivalent for rolling 30 mode. wFIP weights are 28/22/18/17/15
+// (xFIP / SIERA / xERA / botERA / proj). Only xFIP + SIERA are available
+// per-start, so renormalize to that 28/22 → ~56/44 split.
+function rollingComposite(m) {
+  if (!m) return null;
+  if (m.xfip == null && m.siera == null) return null;
+  if (m.xfip == null)  return m.siera;
+  if (m.siera == null) return m.xfip;
+  return 0.56 * m.xfip + 0.44 * m.siera;
 }
 
 // Display the rolling component the weighted FIP actually weights (stabilized
@@ -5589,37 +5686,44 @@ function gradeByRank(rank, total) {
 function renderSPRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-sp-wrap");
   if (!wrap) return;
-  // Gate: known starters with ≥10 IP AS A STARTER. We approximate "as a
-  // starter" by requiring GS≥3 AND IP/GS ≥ 3.5 — that knocks out openers
-  // (typically 1-2 IP/start) and one-off SP cameos while keeping real
-  // rotation arms in. Previously the "All SPs" toggle let openers polute
-  // the leaderboard; that toggle is now gone.
+  const mode = RANKINGS_SP_MODE || 'season';
   const pool = [];
-  Object.entries(pitchers).forEach(([k, s]) => {
-    if (!isStarter(k)) return;
-    const ip = s.ip || 0;
-    const gs = s.gs || 0;
-    if (ip < 10) return;
-    // pitcher_stats.json frequently has gs=null (FanGraphs dump doesn't
-    // always include the GS field). Only enforce the GS/IP-per-GS gates
-    // when gs is actually known — otherwise we trust isStarter() (which
-    // already uses the live probable-pitcher set + Steamer roles) to keep
-    // bulk relievers out.
-    if (gs >= 1) {
-      if (gs < 3) return;
-      if ((ip / gs) < 3.5) return;   // openers / bulk-relievers-cameo'ing out
-    }
-    const metrics = {
-      xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
-    };
-    const present = Object.values(metrics).filter(v => v != null).length;
-    if (present < 3) return;
-    pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
-  });
 
-  // Rank by the weighted FIP (unified_score — rolling-led blend). Lower = better.
-  // Arms without a weighted FIP sink to the bottom.
-  pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+  if (mode === 'rolling30') {
+    // Pool from per-start gamelogs. We only have ~264 pitchers in there
+    // (those tracked + with starts) but that covers every viable SP.
+    const glPitchers = (typeof GAMELOGS !== 'undefined' && GAMELOGS && GAMELOGS.pitchers) || {};
+    Object.keys(glPitchers).forEach(k => {
+      if (!isStarter(k)) return;
+      const m = buildRolling30Metrics(k);
+      if (!m || m.ip < 10) return;
+      const present = [m.xfip, m.siera, m.kbb].filter(v => v != null).length;
+      if (present < 2) return;
+      pool.push({ key: k, name: pitcherDisplayName(k), metrics: m, ip: m.ip });
+    });
+    pool.forEach(p => { p.wfip = rollingComposite(p.metrics); });
+  } else {
+    // SEASON mode — gate: known starters with ≥10 IP. When GS is populated,
+    // additionally require GS≥3 and IP/GS≥3.5 to knock out openers. When GS
+    // is null (FG dump omitted it), trust isStarter() alone.
+    Object.entries(pitchers).forEach(([k, s]) => {
+      if (!isStarter(k)) return;
+      const ip = s.ip || 0;
+      const gs = s.gs || 0;
+      if (ip < 10) return;
+      if (gs >= 1) {
+        if (gs < 3) return;
+        if ((ip / gs) < 3.5) return;
+      }
+      const metrics = {
+        xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
+      };
+      const present = Object.values(metrics).filter(v => v != null).length;
+      if (present < 3) return;
+      pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
+    });
+    pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+  }
   pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
 
   const total = pool.length;
@@ -5644,14 +5748,20 @@ function renderSPRankings(pitchers, nameToTeam) {
     </tr>`;
   }).join("");
 
+  const wfipTitle = mode === 'rolling30'
+    ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% (the two metrics available per-start). xERA/botERA are season-only so they are excluded here. Lower = better.'
+    : 'Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.';
+  const emptyMsg = mode === 'rolling30'
+    ? 'No starters with ≥10 IP in the last 30 days.'
+    : 'No starters matched filter.';
   wrap.innerHTML = `<table class="rk-table">
     <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
-      <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
+      <th title="${wfipTitle}">wFIP</th>
       <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No starters matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || `<tr><td colspan="9" class="rk-empty">${emptyMsg}</td></tr>`}</tbody>
   </table>`;
 }
 
@@ -5665,35 +5775,35 @@ function pitcherDisplayName(key) {
 function renderReliverRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-rp-wrap");
   if (!wrap) return;
-  // Single-tier gate: ≥10 IP non-starter. "All RPs" toggle is gone — the
-  // unqualified pool was dominated by garbage-time arms anyway.
+  const mode = RANKINGS_RP_MODE || 'season';
   const pool = [];
-  Object.entries(pitchers).forEach(([k, s]) => {
-    if (isStarter(k)) return;
-    const ip = s.ip || 0;
-    if (ip < 10) return;
-    // xFIP/SIERA use the rolling (L5-led) figure the wFIP weights.
-    const metrics = {
-      xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
-    };
-    const present = Object.values(metrics).filter(v => v != null).length;
-    if (present < 3) return;
-    pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
-  });
-  const metricKeys = ["xfip", "siera", "xera", "bot", "kbb"];
-  const stats = {};
-  metricKeys.forEach(m => { stats[m] = zScores(pool.map(p => p.metrics[m])); });
-  pool.forEach(p => {
-    const zs = [];
-    metricKeys.forEach(m => {
-      if (p.metrics[m] != null && stats[m]) {
-        const z = (p.metrics[m] - stats[m].mean) / stats[m].sd;
-        zs.push(m === "kbb" ? -z : z);
-      }
+  if (mode === 'rolling30') {
+    const glPitchers = (typeof GAMELOGS !== 'undefined' && GAMELOGS && GAMELOGS.pitchers) || {};
+    Object.keys(glPitchers).forEach(k => {
+      if (isStarter(k)) return;
+      const m = buildRolling30Metrics(k);
+      if (!m || m.ip < 10) return;
+      const present = [m.xfip, m.siera, m.kbb].filter(v => v != null).length;
+      if (present < 2) return;
+      pool.push({ key: k, name: pitcherDisplayName(k), metrics: m, ip: m.ip });
     });
-    p.composite = zs.length ? zs.reduce((a, b) => a + b, 0) / zs.length : null;
-  });
-  pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+    pool.forEach(p => { p.wfip = rollingComposite(p.metrics); });
+  } else {
+    // Single-tier gate: ≥10 IP non-starter. xFIP/SIERA use the rolling
+    // (L5-led) figure the season wFIP weights.
+    Object.entries(pitchers).forEach(([k, s]) => {
+      if (isStarter(k)) return;
+      const ip = s.ip || 0;
+      if (ip < 10) return;
+      const metrics = {
+        xfip: rollComp(s, 'xfip'), siera: rollComp(s, 'siera'), xera: s.xera, bot: s.bot_era, kbb: s.k_bb_pct
+      };
+      const present = Object.values(metrics).filter(v => v != null).length;
+      if (present < 3) return;
+      pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
+    });
+    pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+  }
   pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
   const total = pool.length;
   const fmt = v => v == null ? "—" : v.toFixed(2);
@@ -5717,14 +5827,20 @@ function renderReliverRankings(pitchers, nameToTeam) {
     </tr>`;
   }).join("");
 
+  const rpWfipTitle = mode === 'rolling30'
+    ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% (the two metrics available per-start). xERA/botERA are season-only so they are excluded here. Lower = better.'
+    : 'Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.';
+  const rpEmptyMsg = mode === 'rolling30'
+    ? 'No relievers with ≥10 IP in the last 30 days.'
+    : 'No relievers matched filter.';
   wrap.innerHTML = `<table class="rk-table">
     <colgroup><col style="width:30px"><col style="width:130px"><col style="width:40px"><col style="width:54px"><col style="width:48px"><col style="width:48px"><col style="width:48px"><col style="width:52px"><col style="width:50px"></colgroup>
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
-      <th title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better). Ranked by this.">wFIP</th>
+      <th title="${rpWfipTitle}">wFIP</th>
       <th title="rolling (L5-led) xFIP — the figure the wFIP weights">xFIP</th><th title="rolling (L5-led) SIERA — the figure the wFIP weights">SIERA</th><th>xERA</th><th>botERA</th><th>K-BB%</th>
     </tr></thead>
-    <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No relievers matched filter.</td></tr>'}</tbody>
+    <tbody>${rows || `<tr><td colspan="9" class="rk-empty">${rpEmptyMsg}</td></tr>`}</tbody>
   </table>`;
 }
 
