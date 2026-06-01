@@ -2523,11 +2523,32 @@ async function loadForDate(date) {
   }
 
   document.getElementById("updated").textContent = new Date().toLocaleTimeString();
+  // Always re-render the eager tabs (Scoreboard / Env / Lineups) since they
+  // tend to be visible right after a date change.
   renderScoreboard();
   renderEnvTab();
   renderLineupsTab();
+  // Invalidate every lazy-rendered tab's cache so reopening it re-runs against
+  // the new VIEW_DATE. Previously only Pitchers + Bullpen were invalidated,
+  // so Rankings / Win Prob would silently render stale data after a date
+  // scroll. Rank caches depend on PITCHER_STATS — already invalidated by
+  // loadStaticData. Projections has no cache flag (always re-renders on tab
+  // switch), so it picks up the new date automatically.
   invalidatePitchersTab();
   invalidateBullpenTab();
+  if (typeof invalidateRankings === 'function') invalidateRankings();
+  if (typeof invalidateWinprob === 'function') invalidateWinprob();
+  // If a lazy tab is currently visible, re-render it so the user doesn't have
+  // to click away and back to see the new date's data.
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab) {
+    const id = activeTab.dataset.tab;
+    if (id === 'rankings' && typeof renderRankingsTab === 'function') renderRankingsTab();
+    else if (id === 'winprob' && typeof renderWinprobTab === 'function') renderWinprobTab();
+    else if (id === 'pitchers' && typeof renderPitchersTab === 'function') renderPitchersTab();
+    else if (id === 'bullpen' && typeof renderBullpenTab === 'function') renderBullpenTab();
+    else if (id === 'proj' && typeof renderProjectionsTab === 'function') renderProjectionsTab();
+  }
 }
 
 // ============================================================================
@@ -4368,8 +4389,21 @@ function renderSPStatRows(s, thr) {
     if (!pills) return "";
     return '<div class="m-sp-row"><div class="m-sp-row-label">' + label + '</div><div class="m-sp-row-pills">' + pills + '</div></div>';
   }
+  // wFIP headline chip — the unified score (rolling xFIP 28 / SIERA 22 / xERA
+  // 18 / botERA 17 / proj 15) gets its own row above the component-stat rows
+  // because it's the single number that should anchor the card. Same wFIP
+  // bands as the Rankings page (elite 3.25 / good 3.75 / bad 4.25 / worst 4.75).
+  var wfip = s.unified_score;
+  var wfipPill = "";
+  if (wfip != null && wfip < 10) {
+    var wfipBands = thr.wfip || {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75};
+    var wfipCls = tier(wfip, wfipBands, false);
+    var wfipTitle = "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15. Lower = better.";
+    wfipPill = '<span class="plus-chip ' + wfipCls + '" style="font-size:0.9rem;font-weight:600;" title="' + wfipTitle.replace(/"/g,'&quot;') + '">wFIP <b>' + n2(wfip) + '</b></span>';
+  }
+  var wfipRow = wfipPill ? '<div class="m-sp-row"><div class="m-sp-row-label">Score</div><div class="m-sp-row-pills">' + wfipPill + '</div></div>' : '';
   var ipLine = s.ip != null ? '<div class="m-sp-sub" style="margin-top:0.4rem;">' + s.ip + ' IP season</div>' : '';
-  return row("Actual", actual) + row("Expected", expected)
+  return wfipRow + row("Actual", actual) + row("Expected", expected)
        + row("Pitching Model", pitchingModel) + row("Projections", projections) + ipLine;
 }
 
