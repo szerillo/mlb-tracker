@@ -93,8 +93,18 @@ def main() -> int:
         _emit_stub("missing_pybaseball")
         return 0
 
-    target = _today_et()
-    print(f"[bartolo_daily] target date: {target.isoformat()}")
+    # The script runs at overnight anchors (~midnight / 2 AM / 8 AM ET) plus
+    # during the day. At the overnight anchors, _today_et() returns the
+    # upcoming slate whose games haven't started — fetch_schedule then returns
+    # 0 Final games and we emit a stub, freezing bartolo_wp.json. Target
+    # YESTERDAY when we're in the overnight window so the post-game sim runs
+    # against games that actually finished.
+    today_et = _today_et()
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    is_overnight = now_utc.hour < 13  # before 9 AM ET, target yesterday
+    target = (today_et - datetime.timedelta(days=1)) if is_overnight else today_et
+    print(f"[bartolo_daily] now_utc={now_utc.hour}h, today_et={today_et.isoformat()}, "
+          f"target={target.isoformat()} (overnight={is_overnight})")
 
     games = fetch_schedule(target)
     if not games:
