@@ -240,6 +240,15 @@ jobs:
         run: python scripts/bartolo_backtest.py
         continue-on-error: true
 
+      - name: Pre-game backtest aggregate (joins pregame snapshots → actuals)
+        # Reads every data/archive/{date}/pregame_inputs.json and joins by
+        # game_pk to bartolo_wp finals. Outputs data/pregame_backtest.json
+        # with per-game model-vs-actual rows + headline calibration stats
+        # (total MAE, WP Brier, fav-cover %, calibration buckets).
+        # Pre-game snapshots start landing 2026-05-30 (see refresh_pregame_archive.py).
+        run: python scripts/refresh_pregame_backtest.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
