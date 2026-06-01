@@ -239,7 +239,14 @@ def fg_starts(fg_id, season):
 
 
 def mlb_starts_fallback(mlbam_id, season):
-    """Line scores + K%/BB% only, when FG is unavailable for this pitcher."""
+    """Per-appearance line scores + K%/BB% from MLB Stats API gameLog.
+
+    Returns ALL appearances (starts + relief), not just starts — Sean's ask:
+    bulk pitchers like Luinder Avila who relieve between spot starts were
+    showing only their 1 start with no relief data. The K/BB% rolling
+    aggregates downstream are PA-weighted via TBF, so relief outings just
+    flow into the rolling pool naturally.
+    """
     url = (f"https://statsapi.mlb.com/api/v1/people/{mlbam_id}/stats"
            f"?stats=gameLog&group=pitching&season={season}")
     try:
@@ -250,8 +257,9 @@ def mlb_starts_fallback(mlbam_id, season):
     starts = []
     for s in splits:
         st = s.get("stat", {})
-        if (_f(st.get("gamesStarted")) or 0) < 1:
-            continue
+        # Was: if gamesStarted < 1: continue  (filtered out relief). Now we
+        # keep every appearance — the IP/TBF gate downstream still excludes
+        # zero-batter cameos.
         tbf = _f(st.get("battersFaced"))
         k = _f(st.get("strikeOuts"))
         bb = _f(st.get("baseOnBalls"))
@@ -458,6 +466,19 @@ def main():
         fg_id = fg_map.get(mlbam_id)
         if fg_id:
             starts = fg_starts(fg_id, season)
+            # FG's game-log endpoint (type=1) returns starts only. Pull the
+            # MLB Stats API gameLog for ALL appearances, then merge in any
+            # relief outings FG missed. Keyed by date.
+            try:
+                full = mlb_starts_fallback(mlbam_id, season)
+                if full:
+                    fg_dates = {s["date"] for s in (starts or [])}
+                    extras = [s for s in full if s.get("date") and s["date"] not in fg_dates]
+                    if extras:
+                        starts = (starts or []) + extras
+                        starts.sort(key=lambda s: s.get("date") or "")
+            except Exception:
+                pass
             time.sleep(THROTTLE_S)
         if starts:
             fg_ok += 1
