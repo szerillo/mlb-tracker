@@ -920,6 +920,60 @@
     padding: 0.2rem 0.32rem; }
   .pg-tbl td.pg-lbl { font-family: inherit; text-align: left; color: var(--muted); }
   .pg-tbl td:nth-child(2) { text-align: left; color: var(--text); font-family: inherit; }
+  /* Backtest sub-view (Projections tab) */
+  .proj-subtoggle { display: flex; gap: 0.4rem; margin-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .proj-sub-btn { background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.32rem 0.7rem; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; }
+  .proj-sub-btn:hover { color: var(--text); border-color: var(--muted); }
+  .proj-sub-btn.active { background: var(--accent); color: var(--bg);
+    border-color: var(--accent); }
+  .bt-intro { font-size: 0.86rem; color: var(--text); margin-bottom: 0.8rem;
+    padding: 0.6rem 0.8rem; background: var(--surface);
+    border-radius: 6px; border: 1px solid var(--border); }
+  .bt-sample { display: inline-block; margin-left: 0.5rem;
+    font-family: var(--mono); font-size: 0.76rem;
+    padding: 0.12rem 0.42rem; border-radius: 4px; }
+  .bt-sample.sig-thin { color: var(--projected); background: rgba(232, 99, 99, 0.10); }
+  .bt-sample.sig-mid { color: var(--tier-bad); }
+  .bt-sample.sig-strong { color: var(--tier-good); }
+  .bt-stats { display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem; margin-bottom: 1rem; }
+  .bt-stat { background: var(--panel); border-radius: 6px;
+    padding: 0.7rem 0.8rem; border: 1px solid var(--border); }
+  .bt-stat-lbl { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em;
+    text-transform: uppercase; font-weight: 700; margin-bottom: 0.2rem; }
+  .bt-stat-val { font-family: var(--mono); font-size: 1.4rem; font-weight: 700;
+    color: var(--text); }
+  .bt-stat-val.bt-pos { color: var(--tier-good); }
+  .bt-stat-val.bt-neg { color: var(--projected); }
+  .bt-stat-unit { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+  .bt-stat-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+  .bt-cal-wrap, .bt-games-wrap { margin-bottom: 1rem; }
+  .bt-cal-hdr { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.35rem;
+    letter-spacing: 0.02em; }
+  .bt-tbl { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  .bt-tbl th { color: var(--muted); font-weight: 600;
+    text-align: left; padding: 0.4rem 0.55rem;
+    border-bottom: 1px solid var(--border); }
+  .bt-tbl td { padding: 0.32rem 0.55rem; border-bottom: 1px solid var(--border); }
+  .bt-tbl .bt-tbl-num { font-family: var(--mono); text-align: right; }
+  .bt-tbl .bt-na { color: var(--muted); }
+  .bt-cal-good { color: var(--tier-good); }
+  .bt-cal-mid { color: var(--tier-bad); }
+  .bt-cal-bad { color: var(--projected); }
+  .bt-cal-gap { font-size: 0.74rem; color: var(--muted); }
+  .bt-err-big { color: var(--projected); font-weight: 700; }
+  .bt-err-mid { color: var(--tier-bad); }
+  .bt-err-small { color: var(--tier-good); }
+  .bt-ml-win { color: var(--tier-good); text-align: center; font-weight: 700; }
+  .bt-ml-loss { color: var(--projected); text-align: center; }
+  .bt-games-tbl { font-size: 0.8rem; }
+  @media (max-width: 700px) {
+    .bt-stats { grid-template-columns: repeat(2, 1fr); }
+  }
   .m-team-wrc { font-size: 0.78rem; font-weight: 500; margin-left: 0.5rem;
     color: var(--muted); letter-spacing: 0.02em; }
   .m-team-wrc .val { font-family: var(--mono); font-weight: 700; }
@@ -1466,7 +1520,8 @@ const RUNS_PER_PCT = 0.1;
 let UMP_STATS = null;
 let FATIGUE = null;
 let GAMELOGS = null;   // data/pitcher_gamelogs.json — per-start SP trends
-let HITTER_GAMELOGS = null; // data/hitter_gamelogs.json — per-game rolling form + vs-pitch-type
+let HITTER_GAMELOGS = null;
+let PREGAME_BACKTEST = null; // data/hitter_gamelogs.json — per-game rolling form + vs-pitch-type
 let HITTERS = null;
 let PITCHERS = null;
 let WEATHER = null;
@@ -1525,7 +1580,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs, pgbt] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1547,11 +1602,15 @@ async function loadStaticData() {
     fetchJSON(`pitcher_roles.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_gamelogs.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_gamelogs.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/pregame_backtest.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
   HITTER_SPLITS = hsplits; PITCHER_ROLES = proles; GAMELOGS = glogs;
   HITTER_GAMELOGS = hglogs;
+  // Pre-game backtest payload — model proj vs actual outcomes (joined by
+  // game_pk via refresh_pregame_backtest.py).
+  PREGAME_BACKTEST = pgbt;
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
@@ -6383,7 +6442,12 @@ function renderProjectionsTab() {
   </tr>`).join("");
 
   root.innerHTML = `
-    <div class="wp-intro" style="margin-bottom:0.8rem;">
+    <div class="proj-subtoggle">
+      <button class="proj-sub-btn ${PROJ_SUB === 'today' ? 'active' : ''}" onclick="setProjSub('today')">Today's slate</button>
+      <button class="proj-sub-btn ${PROJ_SUB === 'backtest' ? 'active' : ''}" onclick="setProjSub('backtest')">Backtest</button>
+    </div>
+    ${PROJ_SUB === 'backtest' ? renderPregameBacktestHTML() : ''}
+    ${PROJ_SUB !== 'backtest' ? `<div class="wp-intro" style="margin-bottom:0.8rem;">
       <strong>Pre-game model vs. the market.</strong> Projected score, win probability and total from the
       run-projection model, set against the live moneyline (de-vigged) and total. <b>Edges</b> are the model's
       lean: ML in win-prob points on the model's side, total in projected runs vs. the posted line.
@@ -6396,7 +6460,80 @@ function renderProjectionsTab() {
         <th>Proj Tot</th><th>Mkt Tot</th><th>Tot Edge</th>
       </tr></thead>
       <tbody>${body}</tbody>
-    </table></div>`;
+    </table></div>` : ''}`;
+}
+
+// Pre-game backtest sub-view — joins archived pregame snapshots against post-
+// game finals (data/pregame_backtest.json). Shows headline calibration stats
+// (total MAE/bias, WP Brier, fav-cover %, WP calibration buckets) and a
+// game-by-game table sorted by absolute total error. Sample size note up top
+// since the archive only started accumulating 2026-05-30.
+let PROJ_SUB = 'today';
+function setProjSub(s) {
+  PROJ_SUB = s;
+  renderProjectionsTab();
+}
+
+function renderPregameBacktestHTML() {
+  if (!PREGAME_BACKTEST || PREGAME_BACKTEST.n_games === 0) {
+    return `<div class="wp-empty">No backtest data yet. Pre-game snapshots first started landing 2026-05-30 — a meaningful backtest needs ~14 days. Check back after a couple weeks.</div>`;
+  }
+  const d = PREGAME_BACKTEST;
+  const s = d.stats || {};
+  const sigCls = (n) => n >= 100 ? 'sig-strong' : n >= 30 ? 'sig-mid' : 'sig-thin';
+  const sampleNote = `<span class="bt-sample ${sigCls(d.n_games)}">n=${d.n_games}${d.n_games < 100 ? ' (early sample, results noisy)' : ''}</span>`;
+  // Headline stat cards
+  const headline = !s ? '' : `
+    <div class="bt-stats">
+      <div class="bt-stat"><div class="bt-stat-lbl">Total MAE</div><div class="bt-stat-val">${s.total_mae.toFixed(2)} <span class="bt-stat-unit">runs</span></div></div>
+      <div class="bt-stat"><div class="bt-stat-lbl">Total bias</div><div class="bt-stat-val ${s.total_bias >= 0 ? 'bt-pos' : 'bt-neg'}">${s.total_bias >= 0 ? '+' : ''}${s.total_bias.toFixed(2)} <span class="bt-stat-unit">runs</span></div><div class="bt-stat-sub">${s.total_bias >= 0 ? 'over-projects' : 'under-projects'}</div></div>
+      <div class="bt-stat"><div class="bt-stat-lbl">WP Brier</div><div class="bt-stat-val">${s.wp_brier.toFixed(3)}</div><div class="bt-stat-sub">${s.wp_brier <= 0.20 ? 'beats baseline' : s.wp_brier <= 0.25 ? 'roughly baseline' : 'worse than 50/50'}</div></div>
+      <div class="bt-stat"><div class="bt-stat-lbl">Fav-cover</div><div class="bt-stat-val">${s.fav_cover_pct.toFixed(1)}%</div><div class="bt-stat-sub">model's favorite wins</div></div>
+    </div>`;
+  // WP calibration buckets — each row is one bucket of model home_wp values,
+  // showing model-avg vs actual-win rate. A well-calibrated model has these
+  // tracking diagonally.
+  const calBody = (s.calibration || []).map(c => {
+    if (!c.n) return `<tr><td>${c.bucket}</td><td class="bt-tbl-num bt-na">—</td><td class="bt-tbl-num bt-na">—</td><td class="bt-tbl-num">0</td></tr>`;
+    const gap = (c.actual - c.model) * 100;
+    const gapCls = Math.abs(gap) < 5 ? 'bt-cal-good' : Math.abs(gap) < 15 ? 'bt-cal-mid' : 'bt-cal-bad';
+    return `<tr><td>${c.bucket}</td><td class="bt-tbl-num">${(c.model * 100).toFixed(1)}%</td><td class="bt-tbl-num ${gapCls}">${(c.actual * 100).toFixed(1)}% <span class="bt-cal-gap">(${gap >= 0 ? '+' : ''}${gap.toFixed(1)})</span></td><td class="bt-tbl-num">${c.n}</td></tr>`;
+  }).join("");
+  // Game-by-game table (sorted by abs total error desc)
+  const games = (d.games || []).slice().sort((a, b) => Math.abs(b.total_err) - Math.abs(a.total_err));
+  const gameRows = games.map(g => {
+    const errCls = Math.abs(g.total_err) >= 5 ? 'bt-err-big' : Math.abs(g.total_err) >= 2 ? 'bt-err-mid' : 'bt-err-small';
+    const mlCls = g.ml_correct ? 'bt-ml-win' : 'bt-ml-loss';
+    return `<tr>
+      <td>${g.date}</td>
+      <td>${g.away_abbr}@${g.home_abbr}</td>
+      <td class="bt-tbl-num">${g.proj_away.toFixed(1)}–${g.proj_home.toFixed(1)}</td>
+      <td class="bt-tbl-num">${g.actual_away}–${g.actual_home}</td>
+      <td class="bt-tbl-num">${g.proj_total.toFixed(1)} → ${g.actual_total}</td>
+      <td class="bt-tbl-num ${errCls}">${g.total_err >= 0 ? '+' : ''}${g.total_err.toFixed(1)}</td>
+      <td class="bt-tbl-num">${(g.proj_home_wp * 100).toFixed(0)}%</td>
+      <td class="${mlCls}">${g.ml_correct ? '✓' : '✗'}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div class="bt-intro">
+      <strong>Pre-game model backtest.</strong> Every archived pregame snapshot joined to its post-game final — model projection vs actual outcome. Stats below include all completed games we have snapshots for. ${sampleNote}
+    </div>
+    ${headline}
+    <div class="bt-cal-wrap">
+      <div class="bt-cal-hdr">Win-prob calibration — does the "60% home" cohort actually win 60% of the time?</div>
+      <table class="bt-tbl"><thead><tr>
+        <th>Model home WP</th><th class="bt-tbl-num">Avg model</th><th class="bt-tbl-num">Actual home win %</th><th class="bt-tbl-num">n</th>
+      </tr></thead><tbody>${calBody}</tbody></table>
+    </div>
+    <div class="bt-games-wrap">
+      <div class="bt-cal-hdr">Per-game results (sorted by absolute total error)</div>
+      <div style="overflow-x:auto;">
+      <table class="bt-tbl bt-games-tbl"><thead><tr>
+        <th>Date</th><th>Matchup</th><th class="bt-tbl-num">Proj score</th><th class="bt-tbl-num">Actual</th><th class="bt-tbl-num">Total</th><th class="bt-tbl-num">Err</th><th class="bt-tbl-num">Home WP</th><th>ML</th>
+      </tr></thead><tbody>${gameRows}</tbody></table>
+      </div>
+    </div>`;
 }
 
 // ============================================================================
