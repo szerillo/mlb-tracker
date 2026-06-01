@@ -258,14 +258,44 @@ def expected_bb_k_rate_from_discipline(disc: dict) -> tuple[Optional[float], Opt
 
 
 def extract_lob(pbp: Optional[dict]) -> dict:
-    """(away_lob, home_lob) from the MLB live-feed boxscore."""
+    """True team LOB for both sides, per the broadcast/Baseball-Reference
+    convention: H + BB + HBP - R - CS - GIDP - SF.
+
+    The MLB Stats API's `boxscore.teams.{side}.teamStats.batting.leftOnBase`
+    field is the **sum of player LOB**, which double- and triple-counts a
+    runner who's stranded by multiple batters in the same inning. For a normal
+    game it inflates roughly 1.5–2×. Real example (Sean spotted, 2026-05-30
+    BAL-TOR): API said TOR 17 / BAL 14; the actual scoreboard LOB was 9 / 9,
+    which the formula below correctly recovers.
+
+    Returns {"away": int|None, "home": int|None}. Falls back to the API field
+    only when one of the formula components is missing (defensive)."""
     out = {"away": None, "home": None}
     try:
         teams = pbp["liveData"]["boxscore"]["teams"]
-        out["away"] = teams["away"]["teamStats"]["batting"].get("leftOnBase")
-        out["home"] = teams["home"]["teamStats"]["batting"].get("leftOnBase")
     except Exception:
-        pass
+        return out
+
+    def _calc(side: str):
+        try:
+            b = teams[side]["teamStats"]["batting"]
+        except Exception:
+            return None
+        try:
+            h    = int(b.get("hits", 0))
+            bb   = int(b.get("baseOnBalls", 0))
+            hbp  = int(b.get("hitByPitch", 0))
+            r    = int(b.get("runs", 0))
+            cs   = int(b.get("caughtStealing", 0))
+            gidp = int(b.get("groundIntoDoublePlay", 0))
+            sf   = int(b.get("sacFlies", 0))
+        except (TypeError, ValueError):
+            # Components missing — fall back to whatever the API gave us.
+            return b.get("leftOnBase")
+        return max(0, h + bb + hbp - r - cs - gidp - sf)
+
+    out["away"] = _calc("away")
+    out["home"] = _calc("home")
     return out
 
 
