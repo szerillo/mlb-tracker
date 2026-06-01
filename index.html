@@ -1141,6 +1141,7 @@
   .wp-game-card .wpg-score { font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
     color: var(--text); margin-top: 0.25rem; }
   .wp-game-card .wpg-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+  .wp-game-card .wpg-exp { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); margin-top: 0.15rem; opacity: 0.85; }
   .wp-game-card .wpg-wp { font-size: 0.78rem; color: var(--accent); font-weight: 700; margin-top: 0.3rem; }
   .wp-game-card .wpg-wp-pending { color: var(--muted); font-weight: 500; font-style: italic; }
   .wp-game-card.selected { border-color: var(--accent); background: var(--panel-hover);
@@ -1367,6 +1368,7 @@
   .hit-pa-toggle { display:inline-flex; gap:0; border:1px solid var(--border,#2a3b46); border-radius:5px; overflow:hidden; }
   .hit-pa-toggle button { background:transparent; color:var(--muted); border:0; padding:1px 8px; font-size:0.7rem; cursor:pointer; }
   .hit-pa-toggle button.active { background:var(--accent); color:#06231f; font-weight:700; }
+  .m-wrc-proj { font-size: 0.62rem; opacity: 0.6; font-weight: 500; letter-spacing: 0.04em; margin-left: 0.1rem; }
   /* Futures tab */
   .ft-header { margin-bottom: 1rem; }
   .ft-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
@@ -5060,7 +5062,7 @@ function teamWrcSpan(game, side) {
   const thr = HITTERS?.thresholds?.wrc_splits || {elite:140,good:115,bad:80,worst:65};
   const cls = tier(avg, thr, true);
   const cov = `${n_have}/${players.length} hitters had data`;
-  return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9). ${cov} — missing entries excluded from the average (NOT averaged in as 0).">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+</span>`;
+  return `<span class="m-team-wrc" title="PA-weighted by lineup slot (1-2-3 hitters count more than 7-8-9). ${cov} — missing entries excluded from the average (NOT averaged in as 0).">vs ${oppHand}HP: <span class="val ${cls}">${Math.round(avg)}</span> wRC+ <span class="m-wrc-proj">(proj)</span></span>`;
 }
 
 // Team contact chip — PA-weighted K% across the posted lineup mapped to an
@@ -6422,6 +6424,8 @@ async function renderWinprobTab() {
     const away = teamAbbr(sim.away_team) || sim.away_team || "?";
     const home = teamAbbr(sim.home_team) || sim.home_team || "?";
     const aR = sim.actual_away_runs, hR = sim.actual_home_runs;
+    const aE = sim?.away_exp_runs != null ? sim.away_exp_runs.toFixed(1) : null;
+    const hE = sim?.home_exp_runs != null ? sim.home_exp_runs.toFixed(1) : null;
     // "Lucky win" = the team that actually won was out-deserved by its opponent.
     const ad = sim.away_deserved_runs, hd = sim.home_deserved_runs;
     let lucky = false, luckTip = "";
@@ -6446,6 +6450,7 @@ async function renderWinprobTab() {
     return `<div class="wp-game-card${sel}${lucky ? " wp-lucky" : ""}" data-pk="${pk}">
       <div class="wpg-matchup">${away} @ ${home}${lucky ? ` <span class="wpg-luck" title="${luckTip}">🍀</span>` : ""}</div>
       <div class="wpg-score">${aR != null ? aR : "—"}–${hR != null ? hR : "—"}</div>
+      ${aE != null && hE != null ? `<div class="wpg-exp">xR ${aE}–${hE}</div>` : ""}
       ${wpChip}
     </div>`;
   }).join("");
