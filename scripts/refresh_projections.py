@@ -2,26 +2,25 @@
 """
 Merge ROS (rest-of-season) FIP projections from Fangraphs into pitcher_stats.json.
 
-Sources (ROS, not preseason/full-season):
-  rfangraphsdc → ROS FG Depth Charts (multi-system blend; substitutes for ATC)
-  rthebatx     → ROS The BAT X
-  steamerr     → ROS Steamer (substitutes for OOPSY, which has no public ROS API)
-  rzips        → ROS ZiPS
+Sources (ROS DC where available — Depth-Charts-blended ROS projections):
+  ratcdc    → ATC DC ROS
+  rthebatx  → The BAT X ROS  (no DC variant exists for BAT X)
+  roopsydc  → OOPSY DC ROS
+  rzipsdc   → ZiPS DC ROS
 
 We previously hit ?type=atc / thebatx / oopsy / zips which are FULL-SEASON
 projections — they anchor heavily to preseason talent estimates and barely
 move in response to actual in-season performance. For breakout pitchers like
 Misiorowski (1.65 ERA mid-season) the full-season blend stayed around fip_proj
-3.9, while ROS reflects his current form at ~3.3. Switched to ROS endpoints
-in June 2026 to surface in-season form properly.
+3.9, while ROS DC reflects his current form at ~3.4. Switched to ROS DC
+endpoints in June 2026 to surface in-season form properly.
 
 Field-name mapping (kept old keys so frontend doesn't need to update labels
-this same push — TODO: rename fip_atc→fip_fgdc and fip_oopsy→fip_steamer in
-the frontend tooltips on a follow-up commit):
-  fip_atc   ← rfangraphsdc  (display label will be relabeled later)
-  fip_batx  ← rthebatx
-  fip_oopsy ← steamerr      (display label will be relabeled later)
-  fip_zips  ← rzips
+this same push):
+  fip_atc   ← ratcdc    (ATC DC ROS)
+  fip_batx  ← rthebatx  (The BAT X ROS — no DC variant exists)
+  fip_oopsy ← roopsydc  (OOPSY DC ROS)
+  fip_zips  ← rzipsdc   (ZiPS DC ROS)
 
 Reads  pitcher_stats.json from argv[1]
 Writes enriched JSON to stdout (pipe to /tmp/ps.json && mv into place).
@@ -32,15 +31,13 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36")
 
 # Each tuple: (output-field name, Fangraphs API `type` param)
-# All four point at ROS endpoints. ATC and OOPSY don't expose ROS variants
-# (their `?type=ratc` / `?type=roopsy` return HTTP 500), so we substitute
-# rfangraphsdc and steamerr — both are FG-published ROS projections that
-# also blend multiple systems internally.
+# All four point at ROS DC endpoints where they exist. BAT X has no DC variant
+# (rthebatxdc returns HTTP 500), so we fall back to the plain ROS BAT X.
 SYSTEMS = [
-    ("fip_atc",   "rfangraphsdc"),  # ROS FG Depth Charts (substitute for ATC)
-    ("fip_batx",  "rthebatx"),       # ROS The BAT X
-    ("fip_oopsy", "steamerr"),       # ROS Steamer (substitute for OOPSY)
-    ("fip_zips",  "rzips"),          # ROS ZiPS
+    ("fip_atc",   "ratcdc"),     # ATC DC ROS
+    ("fip_batx",  "rthebatx"),   # The BAT X ROS (no DC variant)
+    ("fip_oopsy", "roopsydc"),   # OOPSY DC ROS
+    ("fip_zips",  "rzipsdc"),    # ZiPS DC ROS
 ]
 
 
@@ -136,10 +133,11 @@ def main():
     payload["projections_enriched_at"] = datetime.datetime.utcnow().isoformat() + "Z"
     payload["projections_counts"] = enriched_count
     payload.setdefault("sources", [])
-    src_line = "Fangraphs ROS projections — FG Depth Charts / The BAT X / Steamer / ZiPS (FIP)"
-    # Drop old preseason source line if present
+    src_line = "Fangraphs ROS DC projections — ATC DC / The BAT X / OOPSY DC / ZiPS DC (FIP)"
+    # Drop any older preseason / interim source-line variants
     payload["sources"] = [s for s in payload["sources"]
                           if "ATC / The BAT X / OOPSY / ZiPS" not in s
+                          and "FG Depth Charts / The BAT X / Steamer / ZiPS" not in s
                           and s != src_line]
     payload["sources"].append(src_line)
 
