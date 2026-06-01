@@ -51,9 +51,42 @@ FG_MAP_CACHE = os.path.join(DATA, "_mlbam_fg_map.json")
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-LOOKBACK_L5 = 5
+LOOKBACK_L5 = 5         # legacy SP last-N appearances target (kept for back-compat)
+LOOKBACK_MIN_IP  = 20   # IP target for the "rolling" window — applies to ALL pitchers
+LOOKBACK_MIN_APP = 5    # always span at least 5 appearances (so an SP w/ short
+                        # outings still gets enough sample; an RP almost always
+                        # needs more appearances than this to clear 20 IP).
+LOOKBACK_MAX_APP = 30   # hard cap so we never grab months-old reliever data
 THROTTLE_S = 0.5      # polite delay between FG calls
 MAX_RETRIES = 3
+
+
+def _select_rolling_window(starts):
+    """Return the trailing slice of `starts` that satisfies the rolling-IP
+    policy: span at least LOOKBACK_MIN_IP innings, never fewer than
+    LOOKBACK_MIN_APP appearances, never more than LOOKBACK_MAX_APP.
+
+    Sean's ask (2026-06): the old 'last 5 appearances' window meant relievers
+    had a 5-IP rolling sample, which produced wildly volatile component values
+    and pushed top arms down the rankings. This window is IP-anchored — for SPs
+    it still resolves to roughly 5 starts; for RPs it grows to whatever count of
+    appearances is needed to clear 20 IP."""
+    if not starts:
+        return []
+    # starts are time-ordered ascending; we want the most recent end
+    rev = list(reversed(starts))
+    picked = []
+    outs = 0
+    for s in rev:
+        picked.append(s)
+        outs += (s.get("outs") or 0)
+        if (len(picked) >= LOOKBACK_MIN_APP
+                and outs >= LOOKBACK_MIN_IP * 3):
+            break
+        if len(picked) >= LOOKBACK_MAX_APP:
+            break
+    # restore chronological order before returning
+    return list(reversed(picked))
 
 
 # ── name normalization (must match index.html normName exactly) ───────────
@@ -499,13 +532,20 @@ def main():
         merge_discipline(starts, statcast_discipline(mlbam_id, season))
         time.sleep(THROTTLE_S)
         key = norm_name(full_name)
+        rolling_window = _select_rolling_window(starts)
         pitchers[key] = {
             "name": full_name,
             "mlbam_id": mlbam_id,
             "fg_id": fg_id,
             "source": src,
             "starts": starts,
-            "l5": aggregate(starts[-LOOKBACK_L5:]),
+            # `l5` keeps its key (so compute_pitcher_score + the frontend keep
+            # working) but is now IP-anchored, not appearance-anchored. For SPs
+            # this is ≈5 starts; for RPs it's whatever many appearances clear
+            # ~20 IP (typical RP rolling window is 15-25 appearances).
+            "l5": aggregate(rolling_window),
+            "l5_n": len(rolling_window),
+            "l5_ip_outs": sum((s.get("outs") or 0) for s in rolling_window),
             "season": aggregate(starts),
         }
         if (i + 1) % 25 == 0:
@@ -520,6 +560,13 @@ def main():
         "coverage": {"universe": len(universe), "fg_matched": len(fg_map),
                      "fg_ok": fg_ok, "mlb_fallback": mlb_fb, "failed": fg_fail},
         "lookback_l5": LOOKBACK_L5,
+        "rolling_policy": {
+            "min_ip": LOOKBACK_MIN_IP,
+            "min_appearances": LOOKBACK_MIN_APP,
+            "max_appearances": LOOKBACK_MAX_APP,
+            "note": ("IP-anchored rolling window: SPs ≈ 5 starts, RPs grow "
+                     "to whatever appearance count clears the IP floor."),
+        },
         "pitchers": pitchers,
     }
     os.makedirs(DATA, exist_ok=True)
