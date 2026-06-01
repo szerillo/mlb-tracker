@@ -985,6 +985,26 @@
      sections — Sean's ask: center the pills instead of left-aligning. */
   .wp-section-centered .wp-metrics { justify-content: center; }
   .wp-section-centered .wp-disc { text-align: center; }
+
+  /* Win-Prob detail team snapshot — side-by-side per-team column with
+     xwOBA / xBA / plate-discipline / RISP / LOB stacked. Centered on page. */
+  .wp-team-snapshot .wp-teamcols { display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.8rem; max-width: 620px; margin: 0 auto; }
+  @media (max-width: 600px) { .wp-team-snapshot .wp-teamcols { grid-template-columns: 1fr; } }
+  .wp-teamcol { background: rgba(36,46,58,0.4); border-radius: 8px;
+    padding: 0.65rem 0.9rem; }
+  .wp-teamcol-name { font-family: var(--display); font-weight: 700;
+    font-size: 0.95rem; text-align: center; color: var(--text);
+    margin-bottom: 0.4rem; padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border); letter-spacing: 0.04em; }
+  .wp-tc-row { display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--mono); font-size: 0.78rem; padding: 0.14rem 0; }
+  .wp-tc-row.lead .wp-tc-val { font-size: 1.05rem; font-weight: 700; }
+  .wp-tc-lbl { color: var(--muted); font-size: 0.66rem; text-transform: uppercase;
+    letter-spacing: 0.06em; }
+  .wp-tc-val { color: var(--text); font-weight: 600; }
+  .wp-tc-divider { height: 1px; background: var(--border); margin: 0.4rem 0;
+    opacity: 0.55; }
   .m-team-wrc { font-size: 0.78rem; font-weight: 500; margin-left: 0.5rem;
     color: var(--muted); letter-spacing: 0.02em; }
   .m-team-wrc .val { font-family: var(--mono); font-weight: 700; }
@@ -6635,26 +6655,36 @@ function renderWinprobDetail(game, winprobData, dateLabel) {
       </div>
     </div>
 
-    ${gs ? `<div class="wp-section wp-section-centered">
-      <h4>Quality of Contact &amp; Plate Discipline</h4>
-      <div class="wp-metrics">
-        <div class="wp-metric"><div class="wp-mlabel">${away} xwOBA</div><div class="wp-mval">${f3(ga.xwoba)}</div><div class="wp-mdelta">xBA ${f3(ga.xba)}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} xwOBA</div><div class="wp-mval">${f3(gh.xwoba)}</div><div class="wp-mdelta">xBA ${f3(gh.xba)}</div></div>
+    ${gs ? (() => {
+      const teamCol = (abbr, g) => {
+        const d = g.discipline || {};
+        return `<div class="wp-teamcol">
+          <div class="wp-teamcol-name">${abbr}</div>
+          <div class="wp-tc-row lead"><span class="wp-tc-lbl">xwOBA</span><span class="wp-tc-val">${f3(g.xwoba)}</span></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">xBA</span><span class="wp-tc-val">${f3(g.xba)}</span></div>
+          <div class="wp-tc-divider"></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">Chase</span><span class="wp-tc-val">${fpct(d.o_swing)}</span></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">Z-Swing</span><span class="wp-tc-val">${fpct(d.z_swing)}</span></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">Whiff</span><span class="wp-tc-val">${fpct(d.whiff)}</span></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">CSW</span><span class="wp-tc-val">${fpct(d.csw)}</span></div>
+          <div class="wp-tc-divider"></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">RISP</span><span class="wp-tc-val">${risp(g.risp)}</span></div>
+          <div class="wp-tc-row"><span class="wp-tc-lbl">LOB</span><span class="wp-tc-val">${g.lob != null ? g.lob : '—'}</span></div>
+        </div>`;
+      };
+      return `<div class="wp-section wp-team-snapshot">
+        <h4>Contact, Discipline &amp; Sequencing</h4>
+        <div class="wp-teamcols">
+          ${teamCol(away, ga)}
+          ${teamCol(home, gh)}
+        </div>
+        <p style="color:var(--muted);font-size:0.74rem;margin:0.55rem auto 0;line-height:1.4;max-width:620px;text-align:center;">xwOBA/xBA = contact quality. Chase/CSW feed deserved BB/K. RISP/LOB are sequencing — the luck the model strips out, and a tell for any deserved-vs-actual gap.</p>
       </div>
-      <div class="wp-disc"><span class="wp-disc-team">${away}</span> ${discLine(ga.discipline)}</div>
-      <div class="wp-disc"><span class="wp-disc-team">${home}</span> ${discLine(gh.discipline)}</div>
-      <p style="color:var(--muted);font-size:0.74rem;margin:0.5rem 0 0;line-height:1.4;">Chase &amp; CSW feed the process layer that nudges deserved BB/K; xwOBA/xBA are quality-of-contact context.</p>
-    </div>` : ''}
-
-    ${gs ? `<div class="wp-section wp-section-centered">
-      <h4>Sequencing &amp; Luck</h4>
-      <div class="wp-metrics">
-        <div class="wp-metric"><div class="wp-mlabel">${away} w/ RISP</div><div class="wp-mval">${risp(ga.risp)}</div><div class="wp-mdelta">LOB ${ga.lob != null ? ga.lob : '—'}</div></div>
-        <div class="wp-metric"><div class="wp-mlabel">${home} w/ RISP</div><div class="wp-mval">${risp(gh.risp)}</div><div class="wp-mdelta">LOB ${gh.lob != null ? gh.lob : '—'}</div></div>
-      </div>
-      <p style="color:var(--muted);font-size:0.74rem;margin:0.5rem 0 0.5rem;line-height:1.4;">RISP &amp; LOB are timing/sequencing — the luck the model strips out; they explain a deserved-vs-actual gap. Outlier batted balls:</p>
-      ${luckList}
-    </div>` : ''}
+      ${luckEvents.length ? `<div class="wp-section">
+        <h4>Outlier Batted Balls</h4>
+        ${luckList}
+      </div>` : ''}`;
+    })() : ''}
 
     <div class="wp-section">
       <h4>Run Distribution — ${away}</h4>
