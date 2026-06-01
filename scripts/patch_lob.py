@@ -166,18 +166,19 @@ def main():
     print(f"[patch_lob] done: {n_games_seen} games scanned, "
           f"{n_games_changed} changed, {n_files_written} files written")
 
-    # Rebuild the flat data/bartolo_wp.json so the Win Prob tab picks up the
-    # patched LOBs without waiting on the next daily refresh.
-    if n_files_written > 0:
-        try:
-            sys.path.insert(0, str(REPO_ROOT / "scripts"))
-            from bartolo.archive import aggregate_archives
-            payload = aggregate_archives(REPO_ROOT)
-            print(f"[patch_lob] rebuilt flat bartolo_wp.json — "
-                  f"{payload.get('n_games', '?')} games")
-        except Exception as e:
-            print(f"[patch_lob] aggregate_archives failed: {e}",
-                  file=sys.stderr)
+    # Always rebuild the flat data/bartolo_wp.json so the Win Prob tab reflects
+    # whatever is currently in the per-date archives, even when this run had no
+    # archive-side writes (e.g. the previous run already patched everything but
+    # the flat aggregate is still stale).
+    try:
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from bartolo.archive import aggregate_archives
+        payload = aggregate_archives(REPO_ROOT)
+        print(f"[patch_lob] rebuilt flat bartolo_wp.json — "
+              f"{payload.get('n_games', '?')} games")
+    except Exception as e:
+        print(f"[patch_lob] aggregate_archives failed: {e}",
+              file=sys.stderr)
 
     return 0
 
