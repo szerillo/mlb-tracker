@@ -531,7 +531,11 @@ def _mvp_pool(hitters, league, team_futures, pitchers=None):
                 "rbi": _eos(h, "rbi"),  "sb":  _eos(h, "sb"),
             },
             "atc": {"vol": _atc(h, "vol"), "skew": _atc(h, "skew"), "dim": _atc(h, "dim")},
-            "team_bonus": 0.06 * (playoff_pct or 0) + 0.04 * (div_pct or 0),
+            # team_futures stores playoff/div_pct on a 0–100 scale; V5.1 RTF
+            # treats the bonus as a TIEBREAKER (`+0.06 × Playoff% + 0.04 ×
+            # Division%` with % as fraction). Divide by 100 so the bonus stays
+            # tiebreaker-sized (~0.10 max) instead of dominating the composite.
+            "team_bonus": 0.06 * ((playoff_pct or 0) / 100.0) + 0.04 * ((div_pct or 0) / 100.0),
         })
     return pool
 
@@ -689,11 +693,15 @@ def _score_roy(pool_h, pool_p):
 
 
 # ── Render market output ───────────────────────────────────────────────────
-def _render_market(scored, market_key, market_meta, top_n):
+def _render_market(scored, market_key, market_meta, top_n, filter_actionable=False):
     """Take scored candidates, join with odds, calibrate temp, emit final list.
 
     Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
     via _name_variants() to bridge VegasInsider vs FG/MLB naming conventions.
+
+    `filter_actionable=True` (used for MVP) trims the output to entries the
+    user might actually bet — model_p ≥ 1%, market_p ≥ 1%, or positive edge ≥
+    1%. CY/ROY skip the filter since those pools are already short enough.
     """
     odds_idx = {}
     for p in market_meta.get("players", []):
@@ -741,6 +749,14 @@ def _render_market(scored, market_key, market_meta, top_n):
         elif edge >= 0.02:       stars = "★★"
         elif edge >= 0.005:      stars = "★"
         else:                    stars = ""
+        # Actionable filter — used for MVP markets where the top-N pool is
+        # diluted with sub-1% candidates the user wouldn't bet anyway.
+        if filter_actionable:
+            keep = (p_mod >= 0.01) \
+                or (market_p is not None and market_p >= 0.01) \
+                or (edge is not None and edge >= 0.01)
+            if not keep:
+                continue
         results.append({
             "name":         x["player"].get("name"),
             "team_abbr":    x["player"].get("team_abbr"),
@@ -794,7 +810,7 @@ def main():
         mvp_scored = _score_mvp(mvp_pool)
         out_markets[mvp_key] = _render_market(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
-            top_n=30)
+            top_n=30, filter_actionable=True)
 
         # CY
         cy_key = f"{league}_CY"
