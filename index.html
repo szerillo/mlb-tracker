@@ -10,8 +10,8 @@
 <style>
   :root {
     --bg: #0a0e13; --panel: #141a22; --panel-hover: #1c242e; --border: #242e3a;
-    --text: #e6edf3; --muted: #7d8692; --accent: #5eead4;
-    --confirmed: #4ec37c; --projected: #e5a449; --tbd: #8b95a1;
+    --text: #e6edf3; --muted: #9aa4b2; --accent: #5eead4;
+    --confirmed: #4ec37c; --projected: #e5a449; --tbd: #a3adba;
     --over: #6eff94; --under: #ff8e6e;
     /* Colorblind-friendly tier palette — matches the gr-a..gr-f grade chips.
        Elite is yellow (was orange #ff9140); worst is purple (was red #f87171).
@@ -620,11 +620,14 @@
   .grade { display: inline-block; min-width: 23px; text-align: center;
     font-weight: 800; font-size: 0.8rem; line-height: 1.25;
     padding: 0.05rem 0.32rem; border-radius: 4px; letter-spacing: 0.01em; }
-  .grade.gr-a { background: rgba(110, 255, 148, 0.18); color: #6eff94; }
-  .grade.gr-b { background: rgba(166, 227, 125, 0.15); color: #a6e37d; }
-  .grade.gr-c { background: rgba(148, 163, 184, 0.13); color: #aab3bf; }
-  .grade.gr-d { background: rgba(255, 145, 64, 0.16);  color: #ff9140; }
-  .grade.gr-f { background: rgba(248, 113, 113, 0.18); color: #f87171; }
+  /* Colorblind-safe ladder: yellow → green → gray → blue → purple. Matches
+     --tier-elite / --tier-good / --tier-bad / --tier-worst on rank chips so a
+     single shape language reads across letter grades and rank pills. */
+  .grade.gr-a { background: rgba(255, 217, 90, 0.18); color: var(--tier-elite); }   /* A grades — yellow */
+  .grade.gr-b { background: rgba(110, 255, 148, 0.14); color: var(--tier-good); }   /* B grades — green */
+  .grade.gr-c { background: rgba(148, 163, 184, 0.13); color: #aab3bf; }            /* C grades — neutral gray */
+  .grade.gr-d { background: rgba(91, 184, 245, 0.16);  color: var(--tier-bad); }    /* D grades — blue */
+  .grade.gr-f { background: rgba(200, 168, 255, 0.18); color: var(--tier-worst); }  /* legacy F shim */
   .grade-cell { text-align: center; }
   .grade-cell .gr-na { color: var(--muted); opacity: 0.5; }
 
@@ -1517,7 +1520,6 @@
   </div>
   <div class="sub">
     Last loaded: <span id="updated">—</span>
-    · Projections: <span id="data_age">—</span>
     · <span id="status" class="live">● live</span>
   </div>
   <div class="tabs" role="tablist">
@@ -1759,7 +1761,8 @@ async function loadStaticData() {
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
   PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
-  document.getElementById("data_age").textContent = UMP_STATS.generated_at || "—";
+  const _dataAgeEl = document.getElementById("data_age");
+  if (_dataAgeEl) _dataAgeEl.textContent = UMP_STATS.generated_at || "—";
 }
 
 // ============================================================================
