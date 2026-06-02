@@ -428,6 +428,41 @@ def _atc(player, mod):
     return _ros_blend(player, mod) or 0.0
 
 
+def _season_progress():
+    """Fraction of MLB regular season completed (0.0 → 1.0).
+
+    Used to fade out the ATC variance modifiers (Vol/Skew/Dim) as the season
+    progresses — they encode forecasting uncertainty around a player's TALENT,
+    which becomes less relevant once actual stats cover a meaningful sample.
+    """
+    today = datetime.date.today()
+    season_start = datetime.date(today.year, 3, 28)
+    season_end   = datetime.date(today.year, 9, 28)
+    if today <= season_start: return 0.0
+    if today >= season_end:   return 1.0
+    return (today - season_start).days / (season_end - season_start).days
+
+
+def _atc_weight():
+    """Linear ramp-down: ATC modifiers carry full weight at opening day,
+    fade to ~0 by season end. Mid-season (~½ done) → 0.5 of original weight."""
+    return max(0.10, 1.0 - _season_progress())
+
+
+def _clean_pos(pos):
+    """FG's ROS endpoint sometimes returns the positional-adjustment NUMBER in
+    the 'Pos' field rather than the actual position string. Strip those out so
+    the frontend doesn't show 'pos: 0.018' for Bobby Witt etc."""
+    if pos is None: return None
+    if isinstance(pos, (int, float)): return None
+    s = str(pos).strip()
+    if not s: return None
+    try:
+        float(s); return None
+    except ValueError:
+        return s
+
+
 def _proj_pa(player):
     """Total expected PA for a hitter — YTD PA + ROS blend PA."""
     return _eos(player, "pa") or 0
@@ -489,6 +524,7 @@ def _mvp_pool(hitters, league, team_futures, pitchers=None):
         combined_war = (hit_war + pit_war) if pit_war > 0 else _eos(h, "war")
         pool.append({
             "player": h,
+            "combined_war": combined_war,  # 2-way players: hit + pitch (Ohtani)
             "stats": {
                 "war": combined_war,    "ops": _eos(h, "ops"),
                 "r":   _eos(h, "r"),    "hr":  _eos(h, "hr"),
@@ -589,11 +625,14 @@ def _score_mvp(pool):
     vol_pool  = [p["atc"]["vol"]  for p in pool]
     skew_pool = [p["atc"]["skew"] for p in pool]
     dim_pool  = [p["atc"]["dim"]  for p in pool]
+    # ATC variance modifiers fade as actual stats accumulate. Full weight at
+    # opening day, ~67% by June, ~30% by August.
+    w = _atc_weight()
     out = []
     for i, p in enumerate(pool):
-        atc_adj = (0.20 * _zscore(p["atc"]["dim"], dim_pool)
-                  + 0.10 * _zscore(p["atc"]["skew"], skew_pool)
-                  - 0.10 * _zscore(p["atc"]["vol"], vol_pool))
+        atc_adj = w * (0.20 * _zscore(p["atc"]["dim"], dim_pool)
+                     + 0.10 * _zscore(p["atc"]["skew"], skew_pool)
+                     - 0.10 * _zscore(p["atc"]["vol"], vol_pool))
         score = base_z[i] + atc_adj + p["team_bonus"]
         out.append({**p, "score": score})
     return out
@@ -605,11 +644,12 @@ def _score_cy(pool):
     vol_pool  = [p["atc"]["vol"]  for p in pool]
     skew_pool = [p["atc"]["skew"] for p in pool]
     dim_pool  = [p["atc"]["dim"]  for p in pool]
+    w = _atc_weight()
     out = []
     for i, p in enumerate(pool):
-        atc_adj = (0.10 * _zscore(p["atc"]["skew"], skew_pool)
-                  - 0.10 * _zscore(p["atc"]["vol"], vol_pool)
-                  + 0.05 * _zscore(p["atc"]["dim"], dim_pool))
+        atc_adj = w * (0.10 * _zscore(p["atc"]["skew"], skew_pool)
+                     - 0.10 * _zscore(p["atc"]["vol"], vol_pool)
+                     + 0.05 * _zscore(p["atc"]["dim"], dim_pool))
         score = base_z[i] + atc_adj
         out.append({**p, "score": score})
     return out
@@ -705,8 +745,10 @@ def _render_market(scored, market_key, market_meta, top_n):
             "name":         x["player"].get("name"),
             "team_abbr":    x["player"].get("team_abbr"),
             "league":       x["player"].get("league"),
-            "pos":          x.get("pos") or x["player"].get("pos"),
-            "p_war":        _eos(x["player"], "war"),
+            "pos":          _clean_pos(x.get("pos") or x["player"].get("pos")),
+            # combined_war set on 2-way players (Ohtani) by _mvp_pool, falls back
+            # to single-source WAR otherwise.
+            "p_war":        x.get("combined_war") if x.get("combined_war") is not None else _eos(x["player"], "war"),
             "p_ops":        _eos(x["player"], "ops") if x["player"].get("ros", {}).get("blend", {}).get("ops") is not None or _eos(x["player"], "ops") else None,
             "p_fip":        _eos(x["player"], "fip"),
             "p_ip":         _eos(x["player"], "ip"),
