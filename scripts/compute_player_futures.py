@@ -254,6 +254,74 @@ def _norm_name(s):
     return s.replace(".", "").replace("'", "").strip()
 
 
+# Formal-first-name → colloquial mappings. Sportsbooks (VegasInsider) list
+# players under their official MLB first name; FG/MLB display the colloquial
+# one. Without this map ~half of MVP candidates have no market price because
+# of mismatches like "Robert Witt" vs "Bobby Witt Jr."
+_FN_REMAP = {
+    "robert": ["bobby"], "robbie": ["bobby"],
+    "cameron": ["cam"], "kameron": ["kam"],
+    "jonathan": ["jon", "jj"],
+    "nicholas": ["nick", "nicky"],
+    "benjamin": ["ben", "benny"],
+    "michael": ["mike", "mikey"],
+    "joshua": ["josh"],
+    "matthew": ["matt"],
+    "william": ["will", "billy"],
+    "samuel": ["sam"],
+    "anthony": ["tony"],
+    "christopher": ["chris", "topher"],
+    "alexander": ["alex"], "alexandre": ["alex"],
+    "andrew": ["andy", "drew"],
+    "thomas": ["tom", "tommy"],
+    "daniel": ["dan", "danny"],
+    "joseph": ["joe", "joey"],
+    "richard": ["rick", "ricky"],
+    "edward": ["ed", "eddie"],
+    "francisco": ["frankie", "paco"],
+    "salvador": ["sal", "salvy"],
+    "rafael": ["raffy"],
+    "alejandro": ["alex"],
+    "gabriel": ["gabe"],
+    "jasson": ["jason"],
+    "zachary": ["zach", "zack"],
+    "patrick": ["pat", "patty"],
+    "raymond": ["ray"],
+    "kenneth": ["ken", "kenny"],
+    "ronald": ["ron", "ronny"],
+    "vincent": ["vince", "vinny"],
+    "lawrence": ["larry"],
+    "stephen": ["steve", "steph"],
+    "ezequiel": ["zeke"],
+}
+_FN_REVERSE = {alt: formal for formal, alts in _FN_REMAP.items() for alt in alts}
+
+
+def _name_variants(name):
+    """Return all normalized variants that should resolve to the same player.
+
+    Order of fallbacks:
+      1. The exact normalized name.
+      2. formal ↔ colloquial (Robert ↔ Bobby) both directions.
+      3. First-initial + last-name (b witt) as a last-resort fuzzy match.
+    """
+    base = _norm_name(name)
+    if not base: return set()
+    out = {base}
+    parts = base.split()
+    if len(parts) >= 2:
+        first, rest = parts[0], parts[1:]
+        if first in _FN_REMAP:
+            for alt in _FN_REMAP[first]:
+                out.add(" ".join([alt] + rest))
+        if first in _FN_REVERSE:
+            out.add(" ".join([_FN_REVERSE[first]] + rest))
+        # First-initial + last-name fallback (helps "jj wetherholt" match anything
+        # with last name "wetherholt" regardless of first-name variant).
+        out.add(f"{first[0]} {parts[-1]}")
+    return out
+
+
 def _build_rookie_index():
     """ROOKIE_BY_NORM[normalized name] = {avg_rank, is_roy, team, league}."""
     for nm, rk, roy, tm, lg in ROOKIES_RAW:
@@ -393,9 +461,17 @@ def _weighted_z(pool_player_stats, weights):
     return composites
 
 
-def _mvp_pool(hitters, league, team_futures):
-    """All hitters with PA ≥ 400 in this league, plus their stat dicts."""
+def _mvp_pool(hitters, league, team_futures, pitchers=None):
+    """All hitters with PA ≥ 400 in this league. For 2-way players (Ohtani),
+    combines hitter + pitcher WAR for the MVP composite per the V5.1 RTF:
+    "Ohtani uses combined hit + pitch WAR."
+    """
     tf_by_abbr = (team_futures or {}).get("teams", {})
+    pit_by_norm = {}
+    if pitchers:
+        for p in pitchers.values():
+            nm = _norm_name(p.get("name") or "")
+            if nm: pit_by_norm[nm] = p
     pool = []
     for h in hitters.values():
         if h.get("league") != league: continue
@@ -405,10 +481,16 @@ def _mvp_pool(hitters, league, team_futures):
                        .get("playoff_pct") or 0)
         div_pct = (tf_by_abbr.get(team, {}).get("composite", {})
                    .get("div_pct") or 0)
+        # 2-way special case: combine WARs if same name has pitcher entry with ≥50 IP.
+        hit_war = _eos(h, "war") or 0
+        nm_key  = _norm_name(h.get("name") or "")
+        pit_e   = pit_by_norm.get(nm_key)
+        pit_war = (_eos(pit_e, "war") if pit_e and (_proj_ip(pit_e) or 0) >= 50 else 0) or 0
+        combined_war = (hit_war + pit_war) if pit_war > 0 else _eos(h, "war")
         pool.append({
             "player": h,
             "stats": {
-                "war": _eos(h, "war"),  "ops": _eos(h, "ops"),
+                "war": combined_war,    "ops": _eos(h, "ops"),
                 "r":   _eos(h, "r"),    "hr":  _eos(h, "hr"),
                 "rbi": _eos(h, "rbi"),  "sb":  _eos(h, "sb"),
             },
@@ -568,13 +650,24 @@ def _score_roy(pool_h, pool_p):
 
 # ── Render market output ───────────────────────────────────────────────────
 def _render_market(scored, market_key, market_meta, top_n):
-    """Take scored candidates, join with odds, calibrate temp, emit final list."""
-    odds_by_norm = {_norm_name(p["name"]): p for p in market_meta.get("players", [])}
-    # Attach market odds to scored list (zero-fill if not on board)
+    """Take scored candidates, join with odds, calibrate temp, emit final list.
+
+    Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
+    via _name_variants() to bridge VegasInsider vs FG/MLB naming conventions.
+    """
+    odds_idx = {}
+    for p in market_meta.get("players", []):
+        for v in _name_variants(p["name"]):
+            if v not in odds_idx:
+                odds_idx[v] = p
     enriched = []
     for x in scored:
         nm = (x["player"].get("name") or "")
-        odds_rec = odds_by_norm.get(_norm_name(nm))
+        odds_rec = None
+        for v in _name_variants(nm):
+            if v in odds_idx:
+                odds_rec = odds_idx[v]
+                break
         x["best_odds"]    = (odds_rec or {}).get("best_odds")
         x["best_book"]    = (odds_rec or {}).get("best_book")
         x["all_book_odds"]= (odds_rec or {}).get("all_book_odds", {})
@@ -655,7 +748,7 @@ def main():
     for league in ("AL", "NL"):
         # MVP
         mvp_key = f"{league}_MVP"
-        mvp_pool = _mvp_pool(hitters, league, tf)
+        mvp_pool = _mvp_pool(hitters, league, tf, pitchers)
         mvp_scored = _score_mvp(mvp_pool)
         out_markets[mvp_key] = _render_market(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
