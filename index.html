@@ -1415,6 +1415,7 @@
   /* Column group separators — vertical lines between markets. */
   .ft-table .ft-grp-sep { border-left: 1px solid rgba(255,255,255,0.12); }
   .ft-team { text-align: left !important; }
+  .ft-team .ft-logo { display: inline-flex; vertical-align: middle; margin-right: 0.35rem; }
   .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.8rem; }
   .ft-edge { font-weight: 700; }
   .ft-edge.pos { color: #6fdc7e; }
@@ -2109,6 +2110,19 @@ function teamLogo(teamId, size=28) {
   return `<img src="https://www.mlbstatic.com/team-logos/${teamId}.svg"
     width="${size}" height="${size}" alt=""
     style="vertical-align:middle;">`;
+}
+
+// MLB team-ID lookup by our internal abbreviation. Used wherever the data
+// payload only has the abbr (e.g. Team Futures rows). Keep in sync with
+// MLB Stats API team IDs (stable: NYY=147, LAD=119, etc).
+const MLB_TEAM_IDS = {
+  ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112, CWS: 145, CIN: 113, CLE: 114,
+  COL: 115, DET: 116, HOU: 117, KC:  118, LAA: 108, LAD: 119, MIA: 146, MIL: 158,
+  MIN: 142, NYM: 121, NYY: 147, ATH: 133, PHI: 143, PIT: 134, SD:  135, SEA: 136,
+  SF:  137, STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
+};
+function teamLogoByAbbr(abbr, size = 16) {
+  return teamLogo(MLB_TEAM_IDS[abbr], size);
 }
 
 // Field diagram
@@ -4504,7 +4518,7 @@ function renderEnvTab() {
     div.className = "panel env-game";
     div.innerHTML = `
       <h3 class="env-game-hdr">
-        <span class="env-match">${teamAbbr(away)} @ ${teamAbbr(home)}</span>
+        <span class="env-match">${teamLogo(g.teams.away.team.id, 18)} ${teamAbbr(away)} @ ${teamLogo(g.teams.home.team.id, 18)} ${teamAbbr(home)}</span>
         <span class="env-venue">${venue} · ${fmtTime(g.gameDate)}</span>
       </h3>
       <div class="env-row">
@@ -7135,18 +7149,16 @@ function renderFuturesContent(root) {
   // within the stack the positive (winning) row gets full opacity and the
   // negative row is dimmed via .sec.
   const wtEdgeCell = (winsEdge, pctEdge) => {
+    // Condensed single-side display (matches playoff Y/N edge format): show
+    // only the side with the positive edge (O if composite > line, U otherwise).
+    // Magnitude is the absolute value of the wins edge; colour by magnitude.
     if (winsEdge == null) return '—';
     const cls = edgeCls(pctEdge != null ? Math.abs(pctEdge) : null);
-    const fmtPair = (w, p) =>
-      `${w > 0 ? '+' : ''}${w.toFixed(1)}w` +
-      (p != null ? ` (${p > 0 ? '+' : ''}${p.toFixed(1)}%)` : '');
-    const overW  = winsEdge,  overP  = pctEdge;
-    const underW = -winsEdge, underP = pctEdge != null ? -pctEdge : null;
-    // Class each row by whether IT'S the winning side, not by stack position.
-    const rowCls = (w) => w >= 0 ? '' : 'sec';
-    return `<div class="ft-edge-stack ${cls}">
-      <span class="${rowCls(overW)}"><span class="ft-side">O</span>${fmtPair(overW, overP)}</span>
-      <span class="${rowCls(underW)}"><span class="ft-side">U</span>${fmtPair(underW, underP)}</span>
+    const sideLabel = winsEdge >= 0 ? 'O' : 'U';
+    const magWins   = Math.abs(winsEdge).toFixed(1);
+    const magPct    = pctEdge != null ? `+${Math.abs(pctEdge).toFixed(1)}%` : null;
+    return `<div class="ft-edge-stack ${cls}" title="Composite wins − line, expressed as the side with the positive edge. O = composite leans Over the posted total, U = leans Under. Color = magnitude.">
+      <span><span class="ft-side">${sideLabel}</span>+${magWins}w${magPct != null ? ` (${magPct})` : ''}</span>
     </div>`;
   };
   // Playoff Y/N edge — single signed value. VegasInsider and Action Network
@@ -7171,7 +7183,7 @@ function renderFuturesContent(root) {
     const e = t.edges || {};
     const wtPctEdge = (e.win_total != null && m.win_total_line) ? (e.win_total / m.win_total_line * 100) : null;
     return `<tr>
-      <td class="ft-team"><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
+      <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
       <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
       <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds)}</td>
       <td>${wtEdgeCell(e.win_total, wtPctEdge)}</td>
