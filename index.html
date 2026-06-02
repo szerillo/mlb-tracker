@@ -1484,6 +1484,35 @@
     text-shadow: 0 0 4px rgba(255,210,77,0.25); }
   /* Edge value + stars never wrap to two lines on narrow PF columns. */
   .pf-edge-row { white-space: nowrap; }
+
+  /* ────────── Luck Ratings tab ────────── */
+  .luck-header { padding: 0 1rem; }
+  .luck-header h2 { margin: 1rem 0 0.25rem; font-size: 1.4rem; font-weight: 700; }
+  .luck-meta { color: var(--muted); font-size: 0.75rem; font-style: italic;
+    margin-bottom: 0.5rem; }
+  .luck-explain { color: var(--muted); font-size: 0.85rem; line-height: 1.5;
+    max-width: 720px; margin-bottom: 1rem; }
+  .luck-table-wrap { overflow-x: auto; padding: 0 1rem 1.5rem; }
+  .luck-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .luck-table th { padding: 0.45rem 0.6rem; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.05em; color: var(--muted);
+    border-bottom: 1px solid var(--border); text-align: left;
+    background: rgba(36, 46, 58, 0.4); user-select: none; }
+  .luck-table th.r { text-align: right; }
+  .luck-table th[data-sort]:hover { color: var(--accent); }
+  .luck-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(36, 46, 58, 0.5);
+    font-family: var(--mono, monospace); }
+  .luck-table td.r { text-align: right; }
+  .luck-table td.team { font-family: inherit; }
+  .luck-table td.team img { vertical-align: middle; margin-right: 4px; }
+  .luck-table td.rank { font-family: inherit; color: var(--muted); width: 40px; }
+  .luck-table tbody tr:hover { background: rgba(36, 46, 58, 0.25); }
+  /* Luck cell colors — yellow good (positive luck) → blue/purple bad (negative).
+     Matches the colorblind-safe palette used for grade chips. */
+  .luck-table td.luck-pos-3 { color: #ffd24d; font-weight: 700; }
+  .luck-table td.luck-pos-1 { color: #d6c47a; }
+  .luck-table td.luck-neg-1 { color: #8aa6c4; }
+  .luck-table td.luck-neg-3 { color: #b487d8; font-weight: 700; }
   /* Pitcher Ranks: SP | RP side-by-side */
   .rk-grid-pitcher { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
   @media (max-width: 1100px) { .rk-grid-pitcher { grid-template-columns: 1fr; } }
@@ -1609,6 +1638,7 @@
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
+    <button class="tab" data-tab="luck" role="tab">Luck Ratings</button>
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="futures" role="tab">Team Futures</button>
     <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
@@ -1714,6 +1744,10 @@
 
   <section id="tab-winprob" class="tab-content" hidden>
     <div id="winprob-root" class="loading">Loading post-game win probability…</div>
+  </section>
+
+  <section id="tab-luck" class="tab-content" hidden>
+    <div id="luck-root" class="loading">Loading season luck ratings…</div>
   </section>
 
   <footer class="methodology-note" style="max-width: 1100px; margin: 2.5rem auto 1.5rem;
@@ -2924,6 +2958,7 @@ async function loadForDate(date) {
     if (id === 'rankings' && typeof renderRankingsTab === 'function') renderRankingsTab();
     else if (id === 'team-rankings' && typeof renderTeamRankingsTab === 'function') renderTeamRankingsTab();
     else if (id === 'winprob' && typeof renderWinprobTab === 'function') renderWinprobTab();
+    else if (id === 'luck' && typeof renderLuckTab === 'function') renderLuckTab();
     else if (id === 'pitchers' && typeof renderPitchersTab === 'function') renderPitchersTab();
     else if (id === 'bullpen' && typeof renderBullpenTab === 'function') renderBullpenTab();
     else if (id === 'proj' && typeof renderProjectionsTab === 'function') renderProjectionsTab();
@@ -7370,6 +7405,111 @@ let FUTURES_RENDERED = false;
 // ============================================================================
 let PLAYER_FUTURES_RENDERED = false;
 function invalidatePlayerFutures() { PLAYER_FUTURES_RENDERED = false; }
+
+// ============================================================================
+// LUCK RATINGS TAB — season-cumulative team luck (Off + Def + QoC + Ump)
+// ============================================================================
+// Reads data/luck_ratings.json (produced by scripts/refresh_luck_ratings.py
+// during refresh.yml runs). Renders a single sortable 30-team table.
+let LUCK_DATA = null;
+let LUCK_SORT_KEY = 'net_luck';
+let LUCK_SORT_DIR = -1;  // -1 = desc (luckiest first)
+
+async function renderLuckTab() {
+  const root = document.getElementById('luck-root');
+  if (!root) return;
+  if (!LUCK_DATA) {
+    root.innerHTML = '<div class="loading">Loading luck ratings…</div>';
+    try {
+      const r = await fetch(`./data/luck_ratings.json?cb=${Date.now()}`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      LUCK_DATA = await r.json();
+    } catch (e) {
+      root.innerHTML = '<div class="empty">No luck ratings yet. The aggregator runs as part of refresh.yml after the BARTOLO backtest. <br><span style="opacity:0.7;font-size:0.85rem;">Error: ' + e.message + '</span></div>';
+      return;
+    }
+  }
+  _renderLuckTable(root);
+}
+
+function _renderLuckTable(root) {
+  const data = LUCK_DATA;
+  if (!data || !data.teams) { root.innerHTML = '<div class="empty">No data.</div>'; return; }
+  const rows = Object.values(data.teams);
+  // Sort
+  rows.sort((a, b) => {
+    const av = a[LUCK_SORT_KEY], bv = b[LUCK_SORT_KEY];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return (av - bv) * LUCK_SORT_DIR;
+  });
+  const fmt = (v, d=1) => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(d);
+  const cls = (v) => {
+    if (v == null) return '';
+    if (v >= 3)  return 'luck-pos-3';
+    if (v >= 1)  return 'luck-pos-1';
+    if (v <= -3) return 'luck-neg-3';
+    if (v <= -1) return 'luck-neg-1';
+    return '';
+  };
+  const fmtUmp = (v) => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(2);
+  const cols = [
+    {k: 'rank',     l: '#',         num: false},
+    {k: 'team',     l: 'Team',      num: false},
+    {k: 'games',    l: 'G',         num: true, fmt: r => r.games},
+    {k: 'net_luck', l: 'Net Luck',  num: true, fmt: r => fmt(r.net_luck), cls: r => cls(r.net_luck),
+      tip: 'Off Luck + Def Luck (in runs). Positive = team won more games than xwOBA-deserved.'},
+    {k: 'off_luck', l: 'Off (R)',   num: true, fmt: r => fmt(r.off_luck), cls: r => cls(r.off_luck),
+      tip: 'Actual runs scored − deserved runs scored. Positive = scored more than xwOBA said they should.'},
+    {k: 'def_luck', l: 'Def (RA)',  num: true, fmt: r => fmt(r.def_luck), cls: r => cls(r.def_luck),
+      tip: 'Deserved runs allowed − actual runs allowed. Positive = allowed fewer runs than xwOBA-against said they should.'},
+    {k: 'qoc_diff', l: 'QoC Diff',  num: true, fmt: r => r.qoc_diff == null ? '—' : (r.qoc_diff > 0 ? '+' : '') + r.qoc_diff.toFixed(0),
+      tip: '(xwOBA on own contact − xwOBA on contact allowed) × 1000. Positive = team\'s contact mix beats what they allowed.'},
+    {k: 'ump_luck', l: 'Ump',       num: true, fmt: r => fmtUmp(r.ump_luck), cls: r => cls(r.ump_luck * 5),
+      tip: 'Cumulative umpire favor in WP units. Positive = umps tilted WP in team\'s direction across the season.'},
+  ];
+  const thead = '<thead><tr>' + cols.map(c =>
+    `<th class="${c.num ? 'r' : ''}" ${c.k && c.k !== 'rank' && c.k !== 'team' ? 'data-sort="' + c.k + '"' : ''} ${c.tip ? 'title="' + c.tip + '"' : ''}>${c.l}${c.k === LUCK_SORT_KEY ? (LUCK_SORT_DIR < 0 ? ' ↓' : ' ↑') : ''}</th>`
+  ).join('') + '</tr></thead>';
+  const body = rows.map((r, i) => {
+    return '<tr>' + cols.map(c => {
+      if (c.k === 'rank') return `<td class="rank">${i+1}</td>`;
+      if (c.k === 'team') return `<td class="team">${typeof teamLogoByAbbr === 'function' ? teamLogoByAbbr(r.abbr, 16) : ''} <b>${r.abbr}</b></td>`;
+      const cell = c.fmt ? c.fmt(r) : (r[c.k] == null ? '—' : r[c.k]);
+      const ccls = c.cls ? c.cls(r) : '';
+      return `<td class="${c.num ? 'r' : ''} ${ccls}">${cell}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+  const gen = data.generated_at ? data.generated_at.slice(0, 16).replace('T', ' ') : '—';
+  root.innerHTML = `
+    <div class="luck-header">
+      <h2>Season Luck Ratings</h2>
+      <div class="luck-meta">${data.n_teams || 0} teams · ${data.n_games_seen || 0} games · generated ${gen} UTC</div>
+      <p class="luck-explain">
+        Luck = the gap between what teams <em>actually</em> did and what xwOBA-based deserved-runs say they <em>should</em> have done.
+        Positive = lucky (got the breaks). Click any column to re-sort.
+      </p>
+    </div>
+    <div class="luck-table-wrap">
+      <table class="luck-table">${thead}<tbody>${body}</tbody></table>
+    </div>
+  `;
+  // Wire click-to-sort on header cells with data-sort
+  root.querySelectorAll('th[data-sort]').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      const k = th.getAttribute('data-sort');
+      if (LUCK_SORT_KEY === k) {
+        LUCK_SORT_DIR = -LUCK_SORT_DIR;
+      } else {
+        LUCK_SORT_KEY = k;
+        LUCK_SORT_DIR = -1;
+      }
+      _renderLuckTable(root);
+    });
+  });
+}
 // Module-level odds helpers so PF_COLS (defined at module scope) can render
 // stacked Fair % / Market % cells showing both percentage and American odds —
 // mirrors Team Futures. Fair % → projected American via implied-prob inversion
