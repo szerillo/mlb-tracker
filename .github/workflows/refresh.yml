@@ -273,6 +273,14 @@ jobs:
         run: python scripts/refresh_pregame_backtest.py
         continue-on-error: true
 
+      - name: Aggregate season luck ratings (Off + Def + QoC + Ump)
+        # Walks data/archive/{date}/bartolo_wp.json across the season and
+        # produces data/luck_ratings.json — per-team net luck (actual vs
+        # deserved runs), xwOBA QoC differential, and cumulative ump favor.
+        # Powers the Luck Ratings tab. Pure local read; trivial runtime.
+        run: python scripts/refresh_luck_ratings.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
