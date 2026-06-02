@@ -1505,6 +1505,10 @@
      (% implied) is muted underneath. */
   .ft-stack-row.primary { font-size: 1.05em; font-weight: 600; color: var(--text); }
   .ft-stack-row.sec { color: var(--muted); font-size: 0.92em; }
+  /* Wins delta inside the Win Total line cell — secondary in size so the
+     line value (91.5) reads first; the (O+3.4w) sits inline like a chip. */
+  .ft-wt-delta { color: var(--muted); font-size: 0.85em; font-weight: 500;
+    margin-left: 0.15rem; }
   /* Edge cell stacks the two sides of a paired market (O/U for win total,
      Y/N for playoff prop) at the same font size so neither reads like a
      footnote. The .sec class dims the losing side slightly while keeping size. */
@@ -7560,31 +7564,30 @@ function renderFuturesContent(root) {
       <span class="ft-stack-row sec">${fmtPct(imp)}</span>
     </div>`;
   };
-  // Win Total line cell: project line + o/u prices, same font size pair.
-  const wtLineCell = (line, oOdds, uOdds) => {
+  // Win Total line cell: line on top, o/u prices below — plus inline wins
+  // delta after the line per user spec ("91.5 (O+3.4w)") so the edge column
+  // can shed the magnitude and match Division/Playoff/WS shape (just % +★).
+  const wtLineCell = (line, oOdds, uOdds, winsEdge) => {
     if (line == null) return '—';
+    const sideLabel = winsEdge != null ? (winsEdge >= 0 ? 'O' : 'U') : null;
+    const magWins   = winsEdge != null ? Math.abs(winsEdge).toFixed(1) : null;
+    const winsHtml  = (sideLabel && magWins) ? ` <span class="ft-wt-delta">(${sideLabel}+${magWins}w)</span>` : '';
     return `<div class="ft-stack">
-      <span class="ft-stack-row">${line.toFixed(1)}</span>
+      <span class="ft-stack-row primary">${line.toFixed(1)}${winsHtml}</span>
       <span class="ft-stack-row sec">o${fmtAm(oOdds)} / u${fmtAm(uOdds)}</span>
     </div>`;
   };
-  // Win Total edge: dual-sided O vs U. Composite wins minus market line gives
-  // the Over edge (positive = lean Over); the Under edge is its mirror. The
-  // CELL color is based on |edge| since either side can be the bettable one;
-  // within the stack the positive (winning) row gets full opacity and the
-  // negative row is dimmed via .sec.
+  // Win Total edge: matches Division/Playoff/WS shape now — just side + %edge
+  // + star, no wins magnitude (that moved to the Line column in parens).
   const wtEdgeCell = (winsEdge, pctEdge, star) => {
-    // Star embedded INSIDE the magnitude span so it sits inline next to the
-    // number across every market (consistent positioning vs prior version
-    // where it floated below the column stack).
     if (winsEdge == null) return '—';
     const cls = edgeCls(pctEdge != null ? Math.abs(pctEdge) : null);
     const sideLabel = winsEdge >= 0 ? 'O' : 'U';
-    const magWins   = Math.abs(winsEdge).toFixed(1);
-    const magPct    = pctEdge != null ? `+${Math.abs(pctEdge).toFixed(1)}%` : null;
+    const magPct    = pctEdge != null ? Math.abs(pctEdge).toFixed(1) : null;
     const starHtml  = star ? ` <span class="ft-stars">${star}</span>` : '';
-    return `<div class="ft-edge-stack ${cls}" title="Composite wins − line, expressed as the side with the positive edge. O = composite leans Over the posted total, U = leans Under. Color = magnitude.">
-      <span><span class="ft-side">${sideLabel}</span>+${magWins}w${magPct != null ? ` (${magPct})` : ''}${starHtml}</span>
+    if (magPct == null) return '—';
+    return `<div class="ft-edge-stack ${cls}" title="Composite wins − line, expressed as the % edge on the bettable side (O = lean Over, U = lean Under). Wins delta shown next to the line in the column at left.">
+      <span><span class="ft-side">${sideLabel}</span>+${magPct}%${starHtml}</span>
     </div>`;
   };
   // Playoff Y/N edge — single signed value. VegasInsider and Action Network
@@ -7617,7 +7620,7 @@ function renderFuturesContent(root) {
     return `<tr>
       <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
       <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
-      <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds)}</td>
+      <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds, e.win_total)}</td>
       <td>${wtEdgeCell(e.win_total, wtPctEdge, st.win_total)}</td>
       <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
