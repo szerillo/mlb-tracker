@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 """
-Refresh team-level futures odds (best-available across sportsbooks) from
-the BettingPros v3 API. Mirrors the format Sean uses in his win-totals
-article: per team, capture the best price we can find for:
+Refresh team-level futures odds by scraping VegasInsider.
 
-  • Season win total O/U  (market_id 192)
-  • Win division           (market_id 190)
-  • Make playoffs          (market_id 191)
-  • Win World Series       (market_id 188)
+Why VegasInsider: BettingPros' v3 API (the previous source) is fronted by
+Cloudflare and blocks GitHub Actions runners, so the script returned empty
+markets and ran "preserve-on-empty" indefinitely. VI is a public HTML page,
+not Cloudflare-fronted, and exposes per-book pricing for the markets we care
+about. We scrape best-available American odds across whichever books they
+show (BetMGM / DraftKings / Caesars / RiversCasino / Hard Rock / Polymarket
+depending on market).
 
-For each market we walk all selections, then within each selection we walk
-every book's "lines" array and find the BEST American-odds price (highest
-payout for the bettor). That matches the "best available" framing — same
-philosophy we use for scoreboard moneylines.
+Markets pulled:
+  • World Series winner    → /mlb/odds/futures/                  (table-world-series-winner)
+  • Make playoffs Y/N      → /mlb/odds/playoff-prop/              (table-to-make-the-playoffs)
+  • Division winner (×6)   → /mlb/odds/{league}-{div}/            (table-{league}-{div}-winner)
 
-Output: data/team_futures_odds.json
+Win totals are JS-rendered on VI's win-totals page and not available in the
+returned HTML, so this script PRESERVES the win_total block from the
+existing data/team_futures_odds.json file (which can be manually seeded or
+filled by an alternate source).
+
+Output schema (matches what compute_team_futures.py expects):
+  data/team_futures_odds.json
   {
-    "generated_at": ISO,
-    "season": 2026,
+    "generated_at": ISO, "season": 2026,
     "books_seen": [...],
     "teams": {
       "NYY": {
@@ -35,238 +41,245 @@ USAGE:
     python scripts/refresh_team_futures_odds.py
 """
 from __future__ import annotations
-import datetime, json, os, sys, urllib.request
+import datetime, json, os, re, sys, time, urllib.request
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "data" / "team_futures_odds.json"
 
-# Public key BettingPros uses for their own web UI — exposed in the page's JS
-# bundle. They allow it from any origin so no auth flow needed. If they ever
-# rotate it we can pull it back out of /dist/assets/api-*.js.
-API_KEY = os.environ.get("BETTINGPROS_KEY", "CHi8Hy5CEE4khd46XNYL23dCFX96oUdw6qOt1Dnh")
-BASE = "https://api.bettingpros.com/v3/offers"
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-MARKETS = {
-    "win_total":    192,  # Season Win Total (O/U)
-    "division":     190,  # Division Winner
-    "playoffs":     191,  # Make Playoffs
-    "world_series": 188,  # World Series Winner
+# VegasInsider's team-abbr → our standard abbr. VI mostly matches MLB
+# Stats API conventions, but has a few historical aliases. Anything not in
+# this dict is assumed to be already correct.
+VI_ABBR_MAP = {
+    "OAK": "ATH",   # Athletics renamed
+    "CHW": "CWS",   # White Sox shorthand
+    "WAS": "WSH",   # Nationals shorthand
+    "SDP": "SD",
+    "SFG": "SF",
+    "KCR": "KC",
+    "TBR": "TB",
 }
 
-# BettingPros book IDs → friendly names (display only). Their API returns
-# numeric ids; we look up the name from this map. ID 0 = Consensus (skip).
+WS_URL          = "https://www.vegasinsider.com/mlb/odds/futures/"
+PLAYOFFS_URL    = "https://www.vegasinsider.com/mlb/odds/playoff-prop/"
+DIVISIONS = [
+    ("/mlb/odds/american-league-east/",     "table-al-east-winner",     "AL East"),
+    ("/mlb/odds/american-league-central/",  "table-al-central-winner",  "AL Central"),
+    ("/mlb/odds/american-league-west/",     "table-al-west-winner",     "AL West"),
+    ("/mlb/odds/national-league-east/",     "table-nl-east-winner",     "NL East"),
+    ("/mlb/odds/national-league-central/",  "table-nl-central-winner",  "NL Central"),
+    ("/mlb/odds/national-league-west/",     "table-nl-west-winner",     "NL West"),
+]
+
+# Map of VI's header column logo alt text → friendly book name.
 BOOK_NAMES = {
-    0: "Consensus", 2: "Pinnacle",
-    10: "FanDuel", 12: "DraftKings", 13: "Caesars", 14: "Fanatics",
-    15: "SugarHouse", 18: "BetRivers", 19: "BetMGM",
-    24: "bet365", 33: "thescore Bet", 36: "Underdog", 37: "PrizePicks",
-    38: "ProphetX", 39: "Fliff", 45: "Betr", 49: "Hard Rock",
-    60: "Novig", 63: "Sleeper", 68: "Kalshi", 70: "DraftKings Pick6",
-    73: "Polymarket", 74: "DraftKings Predictions",
+    "BetMGM": "BetMGM", "DraftKings": "DraftKings", "Caesars": "Caesars",
+    "RiversCasino": "RiversCasino", "FanDuel": "FanDuel",
+    "Hard Rock": "Hard Rock", "Hard Rock Bet": "Hard Rock", "BetRivers": "BetRivers",
+    "ESPN BET": "ESPN BET", "Bet365": "bet365",
+    "Polymarket": "Polymarket", "Fanatics": "Fanatics",
 }
 
-# BettingPros team-abbr quirks → match our standard 30
-BP_ABBR_FIXUP = {"SAC": "ATH", "OAK": "ATH"}
 
-
-def _http_get(url: str, timeout: int = 30) -> dict | None:
+def _http_get(url, timeout=25):
     try:
         req = urllib.request.Request(url, headers={
-            "x-api-key": API_KEY,
-            "User-Agent": "mlb-tracker/1.0 (+github.com/szerillo/mlb-tracker)",
-            "Accept": "application/json",
+            "User-Agent": UA,
+            "Accept": "text/html,application/xhtml+xml,*/*",
         })
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.load(r)
+            return r.read().decode("utf-8", errors="replace")
     except Exception as e:
         print(f"  http err {url}: {e}", file=sys.stderr)
         return None
 
 
-def best_american(books: list, want_best_payout: bool = True) -> tuple[int | None, int | None]:
-    """Find best (American odds, book id) across an offer's books list.
-    BettingPros returns one book per books[] item with a `lines` array.
-    `best: true` flag is sometimes set but unreliable, so we re-derive."""
-    best_cost = None
-    best_book = None
-    for b in books or []:
-        bid = b.get("id", 0)
-        if bid == 0:
-            continue  # skip consensus
-        for line in b.get("lines") or []:
-            if line.get("is_off") or not line.get("active"):
-                continue
-            cost = line.get("cost")
-            if cost is None:
-                continue
-            # American odds: higher number = better for bettor BUT positive
-            # values pay more than -100, and negative values pay LESS as they
-            # get more negative. Convert to implied payout to compare.
-            payout = cost / 100 if cost > 0 else 100 / abs(cost)
-            if best_cost is None or (want_best_payout and payout > _payout(best_cost)):
-                best_cost = cost
-                best_book = bid
-    return best_cost, best_book
+def _is_better(cand: int, best: int) -> bool:
+    """American-odds best-price comparison: higher payout for bettor."""
+    def payout(o): return o / 100 if o > 0 else 100 / abs(o)
+    return payout(cand) > payout(best)
 
 
-def _payout(cost: int) -> float:
-    return cost / 100 if cost > 0 else 100 / abs(cost)
+def _normalize_book(alt: str) -> str:
+    """Normalize an <img alt> book name into one of our friendly labels."""
+    alt = (alt or "").strip()
+    for needle, friendly in BOOK_NAMES.items():
+        if needle.lower() in alt.lower():
+            return friendly
+    return alt or "Book"
 
 
-def fetch_win_totals(season: int) -> dict[str, dict]:
-    """Win totals are different — each offer is per-team with two selections
-    (Over / Under). We capture the best over-odds and best under-odds for
-    each team along with the line (typically the most common one)."""
+def _extract_table(html: str, table_id: str) -> str | None:
+    m = re.search(
+        rf'<table id="{re.escape(table_id)}"[^>]*>(.*?)</table>',
+        html, re.DOTALL)
+    return m.group(1) if m else None
+
+
+def _parse_book_columns(table_html: str) -> list[str]:
+    """Read the header row to learn which book each column belongs to.
+    Returns a list of book names. Skips the first column (team) and any
+    "Time" column. Empty entries become "Book N"."""
+    # Header row is the first <tr> in the table
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_html, re.DOTALL)
+    if not rows: return []
+    hdr_cells = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", rows[0], re.DOTALL)
+    books = []
+    # First cell is team — drop it. Then read each header cell.
+    for i, cell in enumerate(hdr_cells[1:], start=1):
+        alt_match = re.search(r'alt="([^"]+)"', cell)
+        if alt_match:
+            books.append(_normalize_book(alt_match.group(1)))
+            continue
+        # Plaintext header
+        txt = re.sub(r"<[^>]+>", " ", cell)
+        txt = re.sub(r"\s+", " ", txt).strip()
+        if not txt or txt.lower() in ("time",):
+            books.append(None)   # skip column when reading rows
+        else:
+            books.append(txt)
+    return books
+
+
+def _parse_data_rows(table_html: str, books: list[str]) -> dict[str, dict]:
+    """Return { our_abbr: { "best_odds": int, "best_book": str } } for the
+    table, picking best-available across whichever books posted a price."""
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_html, re.DOTALL)
     out = {}
-    page = 1
-    while True:
-        url = f"{BASE}?sport=MLB&market_id=192&season={season}&location=ALL&limit=10&page={page}"
-        d = _http_get(url)
-        if not d:
-            break
-        offers = d.get("offers") or []
-        for o in offers:
-            team_abbr = None
-            for p in o.get("participants") or []:
-                abbr = (p.get("team") or {}).get("abbreviation") or p.get("id")
-                if abbr:
-                    team_abbr = BP_ABBR_FIXUP.get(abbr, abbr)
-                    break
-            if not team_abbr:
+    for row in rows[1:]:  # skip header
+        # Team abbr from the data-abbr attr inside the first cell's link.
+        abbr_match = re.search(r'data-abbr="([A-Z]{2,4})"', row)
+        if not abbr_match:
+            continue
+        vi_abbr = abbr_match.group(1)
+        abbr = VI_ABBR_MAP.get(vi_abbr, vi_abbr)
+        # Pull all td cells; index 0 is team, rest are odds columns aligned
+        # with `books`.
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
+        if len(cells) < 2: continue
+        best = None
+        best_book = None
+        # Walk odds cells against books. cells[1:] may be ordered different
+        # than `books[1:]` depending on rendering; we assume same order.
+        for cell, book in zip(cells[1:], books):
+            if book is None:  # column we skip (e.g., "Time")
                 continue
-            sels = o.get("selections") or []
-            # Find Over and Under sides
-            row = {"line": None, "over_odds": None, "over_book": None,
-                   "under_odds": None, "under_book": None}
-            for s in sels:
-                side = (s.get("label") or s.get("selection") or "").lower()
-                # Line is the same for both sides
-                cost, book = best_american(s.get("books") or [])
-                if cost is None:
-                    continue
-                # Grab the line value from any line entry
-                for b in s.get("books") or []:
-                    for ln in b.get("lines") or []:
-                        if ln.get("line") is not None and not ln.get("is_off"):
-                            row["line"] = ln["line"]
-                            break
-                    if row["line"] is not None:
-                        break
-                if "over" in side:
-                    row["over_odds"] = cost
-                    row["over_book"] = BOOK_NAMES.get(book, f"Book {book}")
-                elif "under" in side:
-                    row["under_odds"] = cost
-                    row["under_book"] = BOOK_NAMES.get(book, f"Book {book}")
-            if row["line"] is not None:
-                out[team_abbr] = row
-        pg = d.get("_pagination") or {}
-        if page >= pg.get("total_pages", 1):
-            break
-        page += 1
+            # Look for `<span class="data-value"> -110 </span>`
+            val = re.search(
+                r'<span class="data-value"[^>]*>\s*([+\-]?\d+)\s*</span>',
+                cell)
+            if not val: continue
+            try:
+                odds = int(val.group(1))
+            except ValueError:
+                continue
+            if best is None or _is_better(odds, best):
+                best = odds
+                best_book = book
+        if best is not None:
+            out[abbr] = {"best_odds": best, "best_book": best_book}
     return out
 
 
-def fetch_winner_market(market_id: int, season: int) -> dict[str, dict]:
-    """Division / Playoffs / World Series — one offer with N selections, each
-    selection = one team's odds to win. Returns {team_abbr: {odds, book}}."""
-    out = {}
-    page = 1
-    while True:
-        url = f"{BASE}?sport=MLB&market_id={market_id}&season={season}&location=ALL&limit=10&page={page}"
-        d = _http_get(url)
-        if not d:
-            break
-        for o in d.get("offers") or []:
-            for s in o.get("selections") or []:
-                abbr = s.get("participant") or s.get("short_label")
-                if not abbr:
-                    continue
-                abbr = BP_ABBR_FIXUP.get(abbr, abbr)
-                cost, book = best_american(s.get("books") or [])
-                if cost is None:
-                    continue
-                out[abbr] = {
-                    "odds": cost,
-                    "book": BOOK_NAMES.get(book, f"Book {book}"),
-                }
-        pg = d.get("_pagination") or {}
-        if page >= pg.get("total_pages", 1):
-            break
-        page += 1
-    return out
+def fetch_market(url: str, table_id: str, label: str) -> dict[str, dict]:
+    print(f"[futures-odds] fetch {label}: {url}", file=sys.stderr)
+    html = _http_get(url)
+    if not html:
+        return {}
+    tbl = _extract_table(html, table_id)
+    if not tbl:
+        print(f"  WARN: table '{table_id}' not found on {url}", file=sys.stderr)
+        return {}
+    books = _parse_book_columns(tbl)
+    rows = _parse_data_rows(tbl, books)
+    print(f"  {len(rows)} teams via {sum(1 for b in books if b)} books",
+          file=sys.stderr)
+    return rows
 
 
 def main():
-    season = datetime.date.today().year
-    print(f"[futures-odds] season={season}", file=sys.stderr)
+    teams_out: dict[str, dict] = {}
 
-    print(f"  fetching win totals…", file=sys.stderr)
-    win_totals = fetch_win_totals(season)
-    print(f"    {len(win_totals)} teams", file=sys.stderr)
-
-    print(f"  fetching division winners…", file=sys.stderr)
-    division = fetch_winner_market(190, season)
-    print(f"    {len(division)} teams", file=sys.stderr)
-
-    print(f"  fetching playoffs…", file=sys.stderr)
-    playoffs = fetch_winner_market(191, season)
-    print(f"    {len(playoffs)} teams", file=sys.stderr)
-
-    print(f"  fetching world series…", file=sys.stderr)
-    world_series = fetch_winner_market(188, season)
-    print(f"    {len(world_series)} teams", file=sys.stderr)
-
-    # Stitch by abbr
-    all_teams = (set(win_totals) | set(division) | set(playoffs) | set(world_series))
-
-    # PRESERVE-ON-EMPTY: BettingPros' Cloudflare blocks GitHub Actions runner
-    # IPs intermittently — when blocked, all 4 fetch_* calls return {} and
-    # all_teams is empty. Overwriting with an empty file would wipe the last
-    # known good odds (which the frontend Futures tab depends on). If we got
-    # nothing, exit 0 without writing so the previous file survives until the
-    # next pass (or a manual run from an unblocked IP) succeeds.
-    if not all_teams:
-        print("[futures-odds] all markets returned 0 teams (likely IP block) — "
-              "leaving existing data/team_futures_odds.json unchanged",
-              file=sys.stderr)
-        return 0
-
-    teams_out = {}
-    for abbr in sorted(all_teams):
-        teams_out[abbr] = {
-            "abbr":         abbr,
-            "win_total":    win_totals.get(abbr),
-            "division":     division.get(abbr),
-            "playoffs":     playoffs.get(abbr),
-            "world_series": world_series.get(abbr),
+    # 1) World Series
+    for abbr, info in fetch_market(WS_URL, "table-world-series-winner",
+                                   "World Series").items():
+        teams_out.setdefault(abbr, {"abbr": abbr})
+        teams_out[abbr]["world_series"] = {
+            "odds": info["best_odds"], "book": info["best_book"],
         }
 
-    # Track which books are showing up (debug aid)
-    books_seen = set()
-    for abbr in teams_out:
-        for k in ("division", "playoffs", "world_series"):
-            v = teams_out[abbr].get(k)
-            if v and v.get("book"):
-                books_seen.add(v["book"])
-        wt = teams_out[abbr].get("win_total")
-        if wt:
-            for k in ("over_book", "under_book"):
-                if wt.get(k):
-                    books_seen.add(wt[k])
+    # 2) Playoff Y/N
+    for abbr, info in fetch_market(PLAYOFFS_URL, "table-to-make-the-playoffs",
+                                   "Playoffs Y/N").items():
+        teams_out.setdefault(abbr, {"abbr": abbr})
+        teams_out[abbr]["playoffs"] = {
+            "odds": info["best_odds"], "book": info["best_book"],
+        }
+
+    # 3) Division winner (×6)
+    for path, table_id, label in DIVISIONS:
+        url = f"https://www.vegasinsider.com{path}"
+        for abbr, info in fetch_market(url, table_id, label).items():
+            teams_out.setdefault(abbr, {"abbr": abbr})
+            teams_out[abbr]["division"] = {
+                "odds": info["best_odds"], "book": info["best_book"],
+            }
+        time.sleep(0.4)  # pace polite
+
+    # 4) PRESERVE-ON-EMPTY: if our scrape missed every market (e.g. VI
+    #    rotates structure), do NOT overwrite the existing file. Keeps
+    #    whatever the last good run wrote so the Futures tab stays populated.
+    has_any = any(
+        ("world_series" in t and t["world_series"].get("odds") is not None)
+        or ("playoffs" in t and t["playoffs"].get("odds") is not None)
+        or ("division" in t and t["division"].get("odds") is not None)
+        for t in teams_out.values()
+    )
+    if not has_any:
+        if OUTPUT.exists():
+            print("[futures-odds] scrape returned nothing — leaving existing "
+                  "team_futures_odds.json unchanged", file=sys.stderr)
+            return 0
+
+    # 5) Merge with existing file so we preserve any win_total block that
+    #    came from another source (e.g. manual seed; VI doesn't surface win
+    #    totals in scrapeable HTML).
+    if OUTPUT.exists():
+        try:
+            prev = json.loads(OUTPUT.read_text())
+            for abbr, prev_team in (prev.get("teams") or {}).items():
+                wt = prev_team.get("win_total")
+                if wt and isinstance(wt, dict) and wt.get("line") is not None:
+                    teams_out.setdefault(abbr, {"abbr": abbr})
+                    teams_out[abbr]["win_total"] = wt
+        except Exception as e:
+            print(f"[futures-odds] couldn't merge prior file: {e}",
+                  file=sys.stderr)
+
+    # 6) Collect distinct books seen for the payload header
+    books_seen = sorted({
+        t[mkt]["book"]
+        for t in teams_out.values()
+        for mkt in ("world_series", "playoffs", "division", "win_total")
+        if isinstance(t.get(mkt), dict) and t[mkt].get("book")
+    })
 
     payload = {
-        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-        "season": season,
-        "source": "BettingPros v3 API · best-available American odds per market",
-        "n_teams": len(teams_out),
-        "markets": MARKETS,
-        "books_seen": sorted(books_seen),
-        "teams": teams_out,
+        "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "season":       datetime.date.today().year,
+        "source":       ("VegasInsider — World Series + Playoff Y/N + 6 "
+                         "Division pages; win totals preserved from prior file"),
+        "books_seen":   books_seen,
+        "n_teams":      len(teams_out),
+        "teams":        teams_out,
     }
-    OUTPUT.write_text(json.dumps(payload, separators=(",", ":")))
-    print(f"[futures-odds] wrote {OUTPUT}", file=sys.stderr)
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_text(json.dumps(payload, indent=2))
+    print(f"[futures-odds] wrote {len(teams_out)} teams → {OUTPUT}",
+          file=sys.stderr)
     return 0
 
 
