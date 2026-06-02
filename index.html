@@ -1122,7 +1122,8 @@
   .rk-box h3 .rk-sub { font-size: 0.68rem; font-family: var(--body); color: var(--muted);
     letter-spacing: 0.04em; font-weight: 500; text-transform: uppercase; }
   .rk-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  .rk-table th { font-size: 0.62rem; color: var(--muted); text-transform: uppercase;
+  /* Dropped uppercase here too so wFIP/xFIP/pFIP read correctly. */
+  .rk-table th { font-size: 0.65rem; color: var(--muted); font-weight: 700;
     letter-spacing: 0.06em; font-weight: 600; padding: 0.25rem 0.35rem; text-align: right;
     border-bottom: 1px solid var(--border); }
   .rk-table th:first-child, .rk-table th.left { text-align: left; }
@@ -1457,7 +1458,9 @@
   .pf-section h3 { margin: 0 0 6px; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--text); }
   .pf-section .pf-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
   .pf-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-  .pf-table thead th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+  /* Removed text-transform uppercase so lowercase prefixes (pWAR, pOPS,
+     pFIP, wFIP, xFIP) render correctly. */
+  .pf-table thead th { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
     color: var(--muted); text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
   .pf-table thead th.lhs { text-align: left; }
   .pf-table tbody td { padding: 5px 6px; text-align: right; color: var(--text);
@@ -1485,7 +1488,11 @@
      SAME font size, top-aligned. No more 0.66rem "subtitle" treatment. */
   .ft-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; line-height: 1.25; }
   .ft-stack-row { font-family: var(--mono, monospace); }
-  .ft-stack-row.sec { color: var(--muted); }
+  /* Primary row (American odds — fair or listed) sits on top with slightly
+     bigger weight + size so the bettable price reads first. Secondary row
+     (% implied) is muted underneath. */
+  .ft-stack-row.primary { font-size: 1.05em; font-weight: 600; color: var(--text); }
+  .ft-stack-row.sec { color: var(--muted); font-size: 0.92em; }
   /* Edge cell stacks the two sides of a paired market (O/U for win total,
      Y/N for playoff prop) at the same font size so neither reads like a
      footnote. The .sec class dims the losing side slightly while keeping size. */
@@ -7359,18 +7366,23 @@ function _pfPctToAmer(p) {
   return Math.round(((100 - q) / q) * 100);
 }
 function _pfFmtAm(o) { return o == null ? '—' : (o > 0 ? '+' + o : String(o)); }
-function _pfStack(top, sec) {
-  return `<div class="ft-stack"><span class="ft-stack-row">${top}</span><span class="ft-stack-row sec">${sec}</span></div>`;
+// 3rd arg (primary=true) makes the top row use .primary — bigger font +
+// heavier weight so the bettable American odds read first.
+function _pfStack(top, sec, primary) {
+  const topCls = primary ? 'ft-stack-row primary' : 'ft-stack-row';
+  return `<div class="ft-stack"><span class="${topCls}">${top}</span><span class="ft-stack-row sec">${sec}</span></div>`;
 }
+// Flipped per user spec: projected American on TOP (primary — the price
+// you'd bet), model % beneath as muted secondary. Same for Market cell.
 function _pfFairCell(p) {
   if (p.model_p == null) return '—';
   const pct = p.model_p * 100;
-  return _pfStack(pct.toFixed(1) + '%', _pfFmtAm(_pfPctToAmer(pct)));
+  return _pfStack(_pfFmtAm(_pfPctToAmer(pct)), pct.toFixed(1) + '%', true);
 }
 function _pfMktCell(p) {
   if (p.market_p == null && p.best_odds == null) return '—';
   const pct = p.market_p != null ? (p.market_p * 100).toFixed(1) + '%' : '—';
-  return _pfStack(pct, _pfFmtAm(p.best_odds));
+  return _pfStack(_pfFmtAm(p.best_odds), pct, true);
 }
 const PF_COLS = {
   MVP: [
@@ -7514,25 +7526,24 @@ function renderFuturesContent(root) {
     return 'ft-edge neu';
   };
   const fmtPctEdge = (v) => v == null ? '—' : ((v > 0 ? '+' : '') + v.toFixed(1) + '%');
-  // Stacked Fair % cell: composite percentage on top, fair American odds
-  // derived from it below — both at the SAME font size. No "fair" prefix
-  // since the column header now reads "Fair %".
+  // Stacked Fair % cell: projected American odds on TOP (primary — bigger),
+  // composite percentage as muted secondary beneath. Inverted vs the prior
+  // layout per user spec — bettable price reads first.
   const fairCell = (pct) => {
     if (pct == null) return '—';
     return `<div class="ft-stack">
-      <span class="ft-stack-row">${fmtPct(pct)}</span>
-      <span class="ft-stack-row sec">${fmtAm(pctToAmerican(pct))}</span>
+      <span class="ft-stack-row primary">${fmtAm(pctToAmerican(pct))}</span>
+      <span class="ft-stack-row sec">${fmtPct(pct)}</span>
     </div>`;
   };
-  // Stacked Market % cell: implied % on TOP (column header reads "Market %"),
-  // listed American odds below. Same font size. The de-vigged percentage is
-  // what the user is comparing against the composite fair %.
+  // Stacked Market % cell: listed American odds on TOP (primary), market
+  // implied % beneath as muted secondary.
   const mktCell = (odds, implied) => {
     if (odds == null) return '—';
     const imp = implied != null ? implied : americanToImplied(odds);
     return `<div class="ft-stack">
-      <span class="ft-stack-row">${fmtPct(imp)}</span>
-      <span class="ft-stack-row sec">${fmtAm(odds)}</span>
+      <span class="ft-stack-row primary">${fmtAm(odds)}</span>
+      <span class="ft-stack-row sec">${fmtPct(imp)}</span>
     </div>`;
   };
   // Win Total line cell: project line + o/u prices, same font size pair.
@@ -7548,17 +7559,18 @@ function renderFuturesContent(root) {
   // CELL color is based on |edge| since either side can be the bettable one;
   // within the stack the positive (winning) row gets full opacity and the
   // negative row is dimmed via .sec.
-  const wtEdgeCell = (winsEdge, pctEdge) => {
-    // Condensed single-side display (matches playoff Y/N edge format): show
-    // only the side with the positive edge (O if composite > line, U otherwise).
-    // Magnitude is the absolute value of the wins edge; colour by magnitude.
+  const wtEdgeCell = (winsEdge, pctEdge, star) => {
+    // Star embedded INSIDE the magnitude span so it sits inline next to the
+    // number across every market (consistent positioning vs prior version
+    // where it floated below the column stack).
     if (winsEdge == null) return '—';
     const cls = edgeCls(pctEdge != null ? Math.abs(pctEdge) : null);
     const sideLabel = winsEdge >= 0 ? 'O' : 'U';
     const magWins   = Math.abs(winsEdge).toFixed(1);
     const magPct    = pctEdge != null ? `+${Math.abs(pctEdge).toFixed(1)}%` : null;
+    const starHtml  = star ? ` <span class="ft-stars">${star}</span>` : '';
     return `<div class="ft-edge-stack ${cls}" title="Composite wins − line, expressed as the side with the positive edge. O = composite leans Over the posted total, U = leans Under. Color = magnitude.">
-      <span><span class="ft-side">${sideLabel}</span>+${magWins}w${magPct != null ? ` (${magPct})` : ''}</span>
+      <span><span class="ft-side">${sideLabel}</span>+${magWins}w${magPct != null ? ` (${magPct})` : ''}${starHtml}</span>
     </div>`;
   };
   // Playoff Y/N edge — single signed value. VegasInsider and Action Network
@@ -7568,13 +7580,14 @@ function renderFuturesContent(root) {
   // color keeps the cell honest: a +5% means lean YES (5pp of edge on YES);
   // a -5% means lean NO (5pp of edge on NO); the cell glows green in either
   // case because there's a bettable side.
-  const binaryEdgeCell = (yesEdge) => {
+  const binaryEdgeCell = (yesEdge, star) => {
     if (yesEdge == null) return '—';
     const cls = edgeCls(Math.abs(yesEdge));
     const sideLabel = yesEdge >= 0 ? 'Y' : 'N';
     const mag = Math.abs(yesEdge).toFixed(1);
+    const starHtml = star ? ` <span class="ft-stars">${star}</span>` : '';
     return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied %. +5% = 5pp of edge on the YES side, -5% = 5pp of edge on NO. Real NO odds aren't published as a separate book line, so the bettable side is implied by sign.">
-      <span><span class="ft-side">${sideLabel}</span>+${mag}%</span>
+      <span><span class="ft-side">${sideLabel}</span>+${mag}%${starHtml}</span>
     </div>`;
   };
   const starChip = (s) => s ? ` <span class="ft-stars">${s}</span>` : '';
@@ -7588,13 +7601,13 @@ function renderFuturesContent(root) {
       <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
       <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
       <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds)}</td>
-      <td>${wtEdgeCell(e.win_total, wtPctEdge)}${starChip(st.win_total)}</td>
+      <td>${wtEdgeCell(e.win_total, wtPctEdge, st.win_total)}</td>
       <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
       <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${starChip(st.div_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
       <td>${mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
-      <td>${binaryEdgeCell(e.playoff_pct)}${starChip(st.playoff_pct)}</td>
+      <td>${binaryEdgeCell(e.playoff_pct, st.playoff_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
       <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${starChip(st.ws_pct)}</td>
