@@ -473,7 +473,13 @@ def _proj_ip(player):
 
 
 # ── Pool filtering + score computation ─────────────────────────────────────
-MVP_WEIGHTS = {"war": .791, "ops": .714, "r": .587, "hr": .561, "rbi": .450, "sb": .187}
+# MVP weights — V5.1 RTF baseline lifts WAR from .791 → 1.10 (24% → 31% share).
+# Rationale: voters under-credit defensive + baserunning value, which WAR
+# captures and HR/RBI/R/OPS don't. Baseline weights made Witt #4 (behind Rice)
+# despite a +3.4 WAR lead; bumped weights put him #2 (+0.15) and lift Ohtani's
+# combined-WAR composite ~+0.09 → ~+4% model_p. Counting-stat weights kept
+# intact to preserve voter-narrative signal (HR/RBI still drive MVP voting).
+MVP_WEIGHTS = {"war": 1.10, "ops": .714, "r": .587, "hr": .561, "rbi": .450, "sb": .187}
 CY_WEIGHTS  = {"war": .705, "era_inv": .409, "k_bb_pct": .350, "k": .368,
                "w": .300, "whip_inv": .243, "ip": .174}
 ROY_HIT_WEIGHTS = {"war": .731, "r": .615, "rbi": .459, "h": .455, "hr": .419, "ops": .400}
