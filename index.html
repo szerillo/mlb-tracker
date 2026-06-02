@@ -76,6 +76,11 @@
   .tab::after { content: "↗"; position: absolute; top: 0.3rem; right: 0.25rem;
     font-size: 0.55rem; opacity: 0.45; transition: opacity 0.15s; }
   .tab:hover::after, .tab.active::after { opacity: 0.9; }
+  .tab-sep { display: inline-block; width: 1px; height: 18px; background: var(--border);
+    margin: 0 0.45rem; align-self: center; opacity: 0.7; }
+  .ft-stars { display: inline-block; margin-left: 0.25rem; color: #ffd24d;
+    font-size: 0.78em; letter-spacing: -0.02em; vertical-align: middle;
+    text-shadow: 0 0 4px rgba(255,210,77,0.25); }
   .tabs-hint { font-size: 0.68rem; color: var(--muted); padding: 0.35rem 1rem 0;
     font-style: italic; letter-spacing: 0.02em; }
   .tabs-hint code { background: rgba(36,46,58,0.4); padding: 1px 5px; border-radius: 3px;
@@ -1575,12 +1580,15 @@
     <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
+    <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="rankings" role="tab">Pitcher Ranks</button>
+    <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
+    <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
-    <button class="tab" data-tab="futures" role="tab">Futures</button>
+    <span class="tab-sep" aria-hidden="true"></span>
+    <button class="tab" data-tab="futures" role="tab">Team Futures</button>
     <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
-    <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -7499,25 +7507,27 @@ function renderFuturesContent(root) {
       <span><span class="ft-side">${sideLabel}</span>+${mag}%</span>
     </div>`;
   };
+  const starChip = (s) => s ? ` <span class="ft-stars">${s}</span>` : '';
   const rowFor = (t) => {
     const c = t.composite || {};
     const m = t.market || {};
     const e = t.edges || {};
+    const st = t.stars || {};
     const wtPctEdge = (e.win_total != null && m.win_total_line) ? (e.win_total / m.win_total_line * 100) : null;
     return `<tr>
       <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
       <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
       <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds)}</td>
-      <td>${wtEdgeCell(e.win_total, wtPctEdge)}</td>
+      <td>${wtEdgeCell(e.win_total, wtPctEdge)}${starChip(st.win_total)}</td>
       <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
-      <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}</td>
+      <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${starChip(st.div_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
       <td>${mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
-      <td>${binaryEdgeCell(e.playoff_pct)}</td>
+      <td>${binaryEdgeCell(e.playoff_pct)}${starChip(st.playoff_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
-      <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}</td>
+      <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${starChip(st.ws_pct)}</td>
     </tr>`;
   };
   const divHTML = Object.entries(divs).map(([div, arr]) => `
