@@ -113,8 +113,10 @@
     background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
     overflow: hidden; margin-bottom: 1rem; }
   .sb-table thead { background: rgba(42, 51, 64, 0.6); }
-  .sb-table th { font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.1em; color: var(--muted); padding: 0.6rem 0.4rem;
+  /* Dropped uppercase so lowercase-prefix labels (wRC+, wOBA, xwOBA, pwOBA,
+     pFIP) render correctly. Weight + spacing keep header visual hierarchy. */
+  .sb-table th { font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--muted); padding: 0.6rem 0.4rem;
     border-bottom: 1px solid var(--border); text-align: center; }
   .sb-table td { padding: 0.8rem 0.5rem; border-bottom: 1px solid var(--border);
     vertical-align: middle; text-align: center; }
@@ -270,8 +272,9 @@
   .sb-edge.edge-flat { color: var(--muted); }
   /* Projections vs Market tab */
   .proj-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-  .proj-table th { text-align: left; font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase;
-    color: var(--muted); font-weight: 600; padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  /* Dropped uppercase so wRC+, xwOBA, pFIP etc render correctly. */
+  .proj-table th { text-align: left; font-size: 0.66rem; letter-spacing: 0.05em;
+    color: var(--muted); font-weight: 700; padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .proj-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .proj-table tbody tr:hover { background: var(--panel-hover); }
   .proj-mono { font-family: var(--mono); }
@@ -450,8 +453,9 @@
     background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
     overflow: hidden; }
   .sc-table thead { background: rgba(42, 51, 64, 0.5); }
-  .sc-table th { padding: 0.55rem 0.5rem; font-size: 0.66rem; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--muted); font-weight: 700;
+  /* Dropped uppercase so wRC+, xwOBA, pFIP etc render correctly. */
+  .sc-table th { padding: 0.55rem 0.5rem; font-size: 0.68rem;
+    letter-spacing: 0.07em; color: var(--muted); font-weight: 700;
     border-bottom: 1px solid var(--border); text-align: left; }
   .sc-table th.r { text-align: right; }
   .sc-table td { padding: 0.48rem 0.5rem; border-bottom: 1px solid var(--border);
@@ -706,8 +710,9 @@
 
   .bpt-table { width: 100%; border-collapse: collapse; table-layout: fixed;
     font-size: 0.82rem; }
-  .bpt-table th { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted); font-weight: 600; padding: 0.25rem 0.4rem 0.3rem;
+  /* Dropped uppercase so wFIP, xFIP, K-BB% etc render correctly. */
+  .bpt-table th { font-size: 0.62rem; letter-spacing: 0.07em;
+    color: var(--muted); font-weight: 700; padding: 0.25rem 0.4rem 0.3rem;
     text-align: left; border-bottom: 1px solid var(--border); }
   .bpt-table th.r { text-align: right; }
   .bpt-table th:first-child, .bpt-table td:first-child { text-align: center; }
@@ -750,8 +755,9 @@
 
   /* Lineup table */
   .lineup-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 0.3rem; }
-  .lineup-table th { font-size: 0.66rem; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 0.06em; padding: 0.25rem 0.2rem; font-weight: 600; }
+  /* Dropped uppercase so wRC+, pwOBA, xwOBA, wOBA etc render correctly. */
+  .lineup-table th { font-size: 0.68rem; color: var(--muted);
+    letter-spacing: 0.06em; padding: 0.25rem 0.2rem; font-weight: 700; }
   .lineup-table th.center { text-align: center; }
   .lineup-table th.left   { text-align: left; }
   .lineup-table th.right  { text-align: right; }
@@ -1471,7 +1477,13 @@
   .pf-edge-pos { color: var(--tier-good); font-weight: 600; }
   .pf-edge-neg { color: var(--tier-worst); }
   .pf-edge-zero { color: var(--muted); }
-  .pf-stars { letter-spacing: 1px; color: var(--tier-elite); }
+  /* Unified with .ft-stars — same gold + glow on both Team and Player Futures
+     so the tier signal reads identical across markets. */
+  .pf-stars { display: inline-block; margin-left: 0.25rem; color: #ffd24d;
+    font-size: 0.78em; letter-spacing: -0.02em; vertical-align: middle;
+    text-shadow: 0 0 4px rgba(255,210,77,0.25); }
+  /* Edge value + stars never wrap to two lines on narrow PF columns. */
+  .pf-edge-row { white-space: nowrap; }
   /* Pitcher Ranks: SP | RP side-by-side */
   .rk-grid-pitcher { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
   @media (max-width: 1100px) { .rk-grid-pitcher { grid-template-columns: 1fr; } }
@@ -7421,8 +7433,10 @@ function _pfEdgeCell(p) {
   const sign = p.edge >= 0 ? "+" : "";
   const cls  = p.edge >= 0.005 ? "pf-edge-pos" : p.edge <= -0.005 ? "pf-edge-neg" : "pf-edge-zero";
   const pct  = (p.edge * 100).toFixed(1);
-  const stars = p.stars ? ` <span class="pf-stars">${p.stars}</span>` : "";
-  return `<span class="${cls}">${sign}${pct}%</span>${stars}`;
+  const stars = p.stars ? `<span class="pf-stars">${p.stars}</span>` : "";
+  // Wrap edge + stars in a single nowrap span so they always render on one
+  // line — prior version put them as separate siblings which could wrap.
+  return `<span class="pf-edge-row"><span class="${cls}">${sign}${pct}%</span>${stars}</span>`;
 }
 function _pfMarketKey(mkt) {
   return mkt.endsWith("_MVP") ? "MVP" : mkt.endsWith("_CY") ? "CY" : "ROY";
