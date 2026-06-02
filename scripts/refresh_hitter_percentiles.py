@@ -141,7 +141,8 @@ def main():
                     if v is not None: d[dest] = v
                 if d:
                     prior[norm_name(nm)] = d
-            backfilled = 0
+            backfilled = added = 0
+            # Pass 1: fill missing cells in hitters who DO have a current-year row
             for k, e in hitters.items():
                 pc = prior.get(k)
                 if not pc: continue
@@ -150,7 +151,34 @@ def main():
                         e[dest] = pc[dest]
                         e["_backfilled"] = True
                         backfilled += 1
-            print(f"[percentiles] backfilled {backfilled} cells from {year-1}",
+            # Pass 2: add hitters who have a prior-year row but NO current-year
+            # row at all (rookies returning from IL, traded-in mid-season, etc.)
+            # Without this, those players never appear in HITTER_PCT so the
+            # frontend can't render their PWR/EYE grades. Carry the prior-year
+            # name forward and mark the whole entry _backfilled.
+            # Re-parse prior CSV once more to get player names + IDs (the
+            # earlier prior loop dropped them).
+            for row in csv.DictReader(io.StringIO(prior_text)):
+                raw = row.get("player_name") or ""
+                if "," in raw:
+                    last, first = [p.strip() for p in raw.split(",", 1)]
+                    nm = f"{first} {last}"
+                else:
+                    nm = raw.strip()
+                if not nm: continue
+                k = norm_name(nm)
+                if k in hitters: continue   # already covered by pass 1
+                pc = prior.get(k)
+                if not pc: continue          # no usable data
+                entry = {"name": nm, "mlbam_id": _i(row.get("player_id")),
+                         "_backfilled": True}
+                for dest in COLS.values():
+                    if dest in pc:
+                        entry[dest] = pc[dest]
+                hitters[k] = entry
+                added += 1
+            print(f"[percentiles] backfilled {backfilled} cells "
+                  f"+ added {added} prior-year-only hitters from {year-1}",
                   file=sys.stderr)
         except Exception as e:
             print(f"[percentiles] prior-year backfill failed: {e}",
