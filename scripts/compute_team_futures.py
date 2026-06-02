@@ -39,6 +39,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PROJ_FILE = REPO_ROOT / "data" / "team_projections.json"
 ODDS_FILE = REPO_ROOT / "data" / "team_futures_odds.json"
 OUTPUT    = REPO_ROOT / "data" / "team_futures.json"
+# Optional Rotowire snapshot of Miss-Playoffs (NO) odds across 4 books. When
+# present, compute_team_futures merges the actual NO American + implied % per
+# team into the market dict so the frontend can show real prices for the No
+# side instead of the mathematical mirror of YES.
+NO_PLAYOFFS_FILE = REPO_ROOT / "data" / "team_no_playoff_odds.json"
 
 
 def american_to_prob(odds: int | float) -> float | None:
@@ -106,6 +111,16 @@ def main():
 
     proj_data = json.loads(PROJ_FILE.read_text())
     odds_data = json.loads(ODDS_FILE.read_text())
+    # Optional NO playoff odds snapshot (Rotowire). Falls back to empty dict
+    # when the file is missing — the rest of the pipeline still emits valid
+    # output, just without the playoff_no_* fields.
+    no_data = {}
+    if NO_PLAYOFFS_FILE.exists():
+        try:
+            no_data = json.loads(NO_PLAYOFFS_FILE.read_text()).get("teams", {}) or {}
+        except Exception as e:
+            print(f"[team-futures] could not load {NO_PLAYOFFS_FILE.name}: {e}", file=sys.stderr)
+            no_data = {}
 
     # PRESERVE-ON-EMPTY-ODDS: if the odds fetcher hit the BettingPros IP block
     # (Cloudflare on GH Actions runners), team_futures_odds.json may have
@@ -192,6 +207,28 @@ def main():
 
         po_imp = playoff_implied.get(abbr)
         po_edge = round(comp["playoff_pct"] - po_imp, 2) if (comp.get("playoff_pct") is not None and po_imp is not None) else None
+        # Real NO (Miss Playoffs) odds from the optional Rotowire snapshot.
+        # po_no_edge = composite_NO − market_NO_implied, where composite_NO
+        # = 100 − composite_YES. Positive edge = lean NO (bet they miss).
+        no_team = no_data.get(abbr) or {}
+        po_no_odds = no_team.get("no_odds")
+        po_no_book = no_team.get("no_book")
+        po_no_imp  = round(american_to_prob(po_no_odds) * 100, 2) if po_no_odds is not None else None
+        po_no_edge = None
+        if comp.get("playoff_pct") is not None and po_no_imp is not None:
+            po_no_edge = round((100.0 - comp["playoff_pct"]) - po_no_imp, 2)
+        # Bettable side = larger |edge|. Pick that as the displayed binary edge
+        # so frontend's binaryEdgeCell shows the side the user should actually
+        # bet (instead of always reading YES even when NO has a bigger edge).
+        # We keep edges.playoff_pct = YES edge (signed; negative = lean NO) so
+        # the existing sign-based frontend keeps working unchanged. The NO
+        # edge ships alongside in edges.playoff_no_pct for callers that want
+        # both directly.
+        po_best_side = 'Y'
+        po_best_edge = po_edge
+        if po_no_edge is not None and (po_edge is None or abs(po_no_edge) > abs(po_edge)):
+            po_best_side = 'N'
+            po_best_edge = po_no_edge
 
         ws_imp = ws_implied_all.get(abbr)
         ws_edge = round(comp["ws_pct"] - ws_imp, 2) if (comp.get("ws_pct") is not None and ws_imp is not None) else None
@@ -215,20 +252,26 @@ def main():
                 "playoff_odds":      po.get("odds"),
                 "playoff_book":      po.get("book"),
                 "playoff_implied_pct": po_imp,
+                "playoff_no_odds":     po_no_odds,
+                "playoff_no_book":     po_no_book,
+                "playoff_no_implied_pct": po_no_imp,
                 "ws_odds":           ws.get("odds"),
                 "ws_book":           ws.get("book"),
                 "ws_implied_pct":    ws_imp,
             },
             "edges": {
-                "win_total":   wt_edge,
-                "div_pct":     div_edge,
-                "playoff_pct": po_edge,
-                "ws_pct":      ws_edge,
+                "win_total":      wt_edge,
+                "div_pct":        div_edge,
+                "playoff_pct":    po_edge,
+                "playoff_no_pct": po_no_edge,
+                "playoff_best_pct": po_best_edge,
+                "playoff_best_side": po_best_side,
+                "ws_pct":         ws_edge,
             },
             "stars": {
                 "win_total":   _star_tier(wt_edge),
                 "div_pct":     _star_tier(div_edge),
-                "playoff_pct": _star_tier(po_edge),
+                "playoff_pct": _star_tier(po_best_edge if po_best_edge is not None else po_edge),
                 "ws_pct":      _star_tier(ws_edge),
             },
         }
