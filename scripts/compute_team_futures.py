@@ -82,6 +82,17 @@ def _star_tier(edge_pct):
     return ""
 
 
+def _star_tier(edge_pct):
+    """Star rating for a market edge. Edges are in percentage points (e.g. 4.5).
+    Matches player_futures.py tiers: ★★★ 4%+, ★★ 2-4%, ★ 0.5-2%, blank ≤0.5%."""
+    if edge_pct is None:
+        return ""
+    if edge_pct >= 4.0:  return "★★★"
+    if edge_pct >= 2.0:  return "★★"
+    if edge_pct >= 0.5:  return "★"
+    return ""
+
+
 def devig_field(odds_by_team: dict[str, int]) -> dict[str, float]:
     """For division / playoffs / WS futures: sum the raw implied probabilities
     across all teams and scale each by that sum (de-vig). Returns each team's
