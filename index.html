@@ -7594,13 +7594,16 @@ function renderFuturesContent(root) {
   // color keeps the cell honest: a +5% means lean YES (5pp of edge on YES);
   // a -5% means lean NO (5pp of edge on NO); the cell glows green in either
   // case because there's a bettable side.
-  const binaryEdgeCell = (yesEdge, star) => {
-    if (yesEdge == null) return '—';
-    const cls = edgeCls(Math.abs(yesEdge));
-    const sideLabel = yesEdge >= 0 ? 'Y' : 'N';
-    const mag = Math.abs(yesEdge).toFixed(1);
+  // Optional 3rd arg: explicit side ("Y"/"N") so when the compute step picks
+  // the bettable side using both real YES and real NO odds, we render that
+  // side instead of inferring from sign. Magnitude is always abs(edge).
+  const binaryEdgeCell = (signedEdge, star, sideOverride) => {
+    if (signedEdge == null) return '—';
+    const cls = edgeCls(Math.abs(signedEdge));
+    const sideLabel = sideOverride || (signedEdge >= 0 ? 'Y' : 'N');
+    const mag = Math.abs(signedEdge).toFixed(1);
     const starHtml = star ? ` <span class="ft-stars">${star}</span>` : '';
-    return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied %. +5% = 5pp of edge on the YES side, -5% = 5pp of edge on NO. Real NO odds aren't published as a separate book line, so the bettable side is implied by sign.">
+    return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied %. Side label = the bettable direction (Y / N). Real NO odds from the Rotowire snapshot when present; otherwise mirror of YES.">
       <span><span class="ft-side">${sideLabel}</span>+${mag}%${starHtml}</span>
     </div>`;
   };
@@ -7620,8 +7623,8 @@ function renderFuturesContent(root) {
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
       <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${starChip(st.div_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
-      <td>${mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
-      <td>${binaryEdgeCell(e.playoff_pct, st.playoff_pct)}</td>
+      <td>${(e.playoff_best_side === 'N' && m.playoff_no_odds != null) ? mktCell(m.playoff_no_odds, m.playoff_no_implied_pct) : mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
+      <td>${binaryEdgeCell((e.playoff_best_pct != null ? e.playoff_best_pct : e.playoff_pct), st.playoff_pct, e.playoff_best_side)}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
       <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${starChip(st.ws_pct)}</td>
