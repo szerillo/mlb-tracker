@@ -1444,6 +1444,26 @@
   .ft-table .ft-grp-sep { border-left: 1px solid rgba(255,255,255,0.12); }
   .ft-team { text-align: left !important; }
   .ft-team .ft-logo { display: inline-flex; vertical-align: middle; margin-right: 0.35rem; }
+  /* Player Futures tab — 6 award markets in 2-col grid (AL | NL × MVP/CY/ROY) */
+  .pf-toolbar { color: var(--muted); font-size: 0.75rem; margin: 0.2rem 0 0.8rem; }
+  .pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 1000px) { .pf-grid { grid-template-columns: 1fr; } }
+  .pf-section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .pf-section h3 { margin: 0 0 6px; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--text); }
+  .pf-section .pf-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
+  .pf-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .pf-table thead th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--muted); text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .pf-table thead th.lhs { text-align: left; }
+  .pf-table tbody td { padding: 5px 6px; text-align: right; color: var(--text);
+    border-bottom: 1px dashed var(--border); }
+  .pf-table tbody td.lhs { text-align: left; }
+  .pf-table tbody tr:last-child td { border-bottom: none; }
+  .pf-table .pf-team { color: var(--muted); font-size: 0.74rem; margin-left: 4px; }
+  .pf-edge-pos { color: var(--tier-good); font-weight: 600; }
+  .pf-edge-neg { color: var(--tier-worst); }
+  .pf-edge-zero { color: var(--muted); }
+  .pf-stars { letter-spacing: 1px; color: var(--tier-elite); }
   /* Pitcher Ranks: SP | RP side-by-side */
   .rk-grid-pitcher { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
   @media (max-width: 1100px) { .rk-grid-pitcher { grid-template-columns: 1fr; } }
@@ -1559,6 +1579,7 @@
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
     <button class="tab" data-tab="futures" role="tab">Futures</button>
+    <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
     <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
   </div>
   <div class="tabs-hint">
@@ -1622,6 +1643,42 @@
 
   <section id="tab-futures" class="tab-content" hidden>
     <div id="futures-root" class="loading">Loading team futures…</div>
+  </section>
+
+  <section id="tab-player-futures" class="tab-content" hidden>
+    <div class="pf-toolbar"><span class="muted" id="pf-updated">Loading…</span></div>
+    <div class="pf-grid">
+      <div class="pf-section" id="pf-AL_MVP">
+        <h3>AL MVP</h3>
+        <div class="pf-sub" id="pf-AL_MVP-sub"></div>
+        <table class="pf-table" data-mkt="AL_MVP"></table>
+      </div>
+      <div class="pf-section" id="pf-NL_MVP">
+        <h3>NL MVP</h3>
+        <div class="pf-sub" id="pf-NL_MVP-sub"></div>
+        <table class="pf-table" data-mkt="NL_MVP"></table>
+      </div>
+      <div class="pf-section" id="pf-AL_CY">
+        <h3>AL Cy Young</h3>
+        <div class="pf-sub" id="pf-AL_CY-sub"></div>
+        <table class="pf-table" data-mkt="AL_CY"></table>
+      </div>
+      <div class="pf-section" id="pf-NL_CY">
+        <h3>NL Cy Young</h3>
+        <div class="pf-sub" id="pf-NL_CY-sub"></div>
+        <table class="pf-table" data-mkt="NL_CY"></table>
+      </div>
+      <div class="pf-section" id="pf-AL_ROY">
+        <h3>AL Rookie of the Year</h3>
+        <div class="pf-sub" id="pf-AL_ROY-sub"></div>
+        <table class="pf-table" data-mkt="AL_ROY"></table>
+      </div>
+      <div class="pf-section" id="pf-NL_ROY">
+        <h3>NL Rookie of the Year</h3>
+        <div class="pf-sub" id="pf-NL_ROY-sub"></div>
+        <table class="pf-table" data-mkt="NL_ROY"></table>
+      </div>
+    </div>
   </section>
 
   <section id="tab-winprob" class="tab-content" hidden>
@@ -2840,6 +2897,7 @@ async function loadForDate(date) {
     else if (id === 'bullpen' && typeof renderBullpenTab === 'function') renderBullpenTab();
     else if (id === 'proj' && typeof renderProjectionsTab === 'function') renderProjectionsTab();
     else if (id === 'futures' && typeof renderFuturesTab === 'function') renderFuturesTab();
+    else if (id === 'player-futures' && typeof renderPlayerFuturesTab === 'function') renderPlayerFuturesTab();
   }
 }
 
@@ -7231,6 +7289,88 @@ function renderPregameBacktestHTML() {
 let TEAM_FUTURES = null;
 let FUTURES_RENDERED = false;
 
+// ============================================================================
+// PLAYER FUTURES TAB — MVP / Cy Young / ROY model output
+// ============================================================================
+let PLAYER_FUTURES_RENDERED = false;
+function invalidatePlayerFutures() { PLAYER_FUTURES_RENDERED = false; }
+const PF_COLS = {
+  MVP: [
+    {key:"name",  label:"Player",   lhs:true,
+      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
+    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war  != null ? p.p_war.toFixed(1) : "—"},
+    {key:"pops",  label:"pOPS",     fmt:p => p.p_ops  != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—"},
+    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
+    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
+  ],
+  CY: [
+    {key:"name",  label:"Pitcher",  lhs:true,
+      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
+    {key:"pfip",  label:"wFIP",     fmt:p => p.p_fip != null ? p.p_fip.toFixed(2) : "—"},
+    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
+    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
+    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
+  ],
+  ROY: [
+    {key:"name",  label:"Rookie",   lhs:true,
+      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""} · ${p.pos||""}</span>`},
+    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
+    {key:"stat2", label:"pOPS / wFIP",
+      fmt:p => (p.pos === "SP" || p.pos === "RP")
+        ? (p.p_fip != null ? p.p_fip.toFixed(2) : "—")
+        : (p.p_ops != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—")},
+    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
+    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
+  ],
+};
+function _pfEdgeCell(p) {
+  if (p.edge == null) return '<span class="pf-edge-zero">—</span>';
+  const sign = p.edge >= 0 ? "+" : "";
+  const cls  = p.edge >= 0.005 ? "pf-edge-pos" : p.edge <= -0.005 ? "pf-edge-neg" : "pf-edge-zero";
+  const pct  = (p.edge * 100).toFixed(1);
+  const stars = p.stars ? ` <span class="pf-stars">${p.stars}</span>` : "";
+  return `<span class="${cls}">${sign}${pct}%</span>${stars}`;
+}
+function _pfMarketKey(mkt) {
+  return mkt.endsWith("_MVP") ? "MVP" : mkt.endsWith("_CY") ? "CY" : "ROY";
+}
+async function renderPlayerFuturesTab() {
+  if (PLAYER_FUTURES_RENDERED) return;
+  const upd = document.getElementById("pf-updated");
+  try {
+    const resp = await fetch("data/player_futures.json", {cache:"no-store"});
+    if (!resp.ok) {
+      if (upd) upd.textContent = "Player futures data not generated yet — the workflow will populate it on the next cron pull.";
+      return;
+    }
+    const data = await resp.json();
+    if (upd && data.generated_at) {
+      const dt = new Date(data.generated_at);
+      upd.textContent = "Model · updated " + dt.toLocaleString();
+    }
+    for (const [mkt, payload] of Object.entries(data.markets || {})) {
+      const tbl = document.querySelector('.pf-table[data-mkt="' + mkt + '"]');
+      if (!tbl) continue;
+      const cols = PF_COLS[_pfMarketKey(mkt)];
+      const sub  = document.getElementById("pf-" + mkt + "-sub");
+      if (sub) sub.textContent = (payload.n_pool || 0) + " candidates · temp " + payload.temperature
+        + " · calibrated vs " + (payload.calibrated_against_n_books || 0) + " priced names";
+      const thead = '<thead><tr>' + cols.map(c => '<th class="' + (c.lhs ? 'lhs' : '') + '">' + c.label + '</th>').join('') + '</tr></thead>';
+      const body  = (payload.candidates || []).map(p =>
+        '<tr>' + cols.map(c => '<td class="' + (c.lhs ? 'lhs' : '') + '">' + c.fmt(p) + '</td>').join('') + '</tr>'
+      ).join('');
+      tbl.innerHTML = thead + '<tbody>' + body + '</tbody>';
+    }
+    PLAYER_FUTURES_RENDERED = true;
+  } catch (e) {
+    console.warn("Player Futures load failed:", e);
+    if (upd) upd.textContent = "Couldn't load player futures: " + e.message;
+  }
+}
+
 async function renderFuturesTab() {
   const root = document.getElementById("futures-root");
   if (!root) return;
@@ -7440,6 +7580,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "proj")     renderProjectionsTab();
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
     if (btn.dataset.tab === "futures")  renderFuturesTab();
+    if (btn.dataset.tab === "player-futures") renderPlayerFuturesTab();
   };
 });
 
