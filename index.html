@@ -7073,11 +7073,16 @@ function renderFuturesContent(root) {
   Object.values(divs).forEach(arr => arr.sort((a, b) => (b.composite?.wins ?? 0) - (a.composite?.wins ?? 0)));
   const genAt = data.generated_at?.slice(0, 16).replace('T', ' ') || '—';
   const oddsAt = data.odds_at?.slice(0, 16).replace('T', ' ') || '—';
+  // Always compute a fair-odds number from the composite %, even at the
+  // extremes (e.g. LAD 99.6% division, COL 0.0% WS). Clamp into [0.2, 99.8]
+  // so we don't divide by ~zero — outputs land in roughly ±50,000 at the
+  // edge, which displays as a clear "near lock" / "near impossible" price.
   const pctToAmerican = (p) => {
-    if (p == null || p <= 0.5 || p >= 99.5) return null;
-    if (p === 50) return 100;
-    if (p > 50)   return Math.round(-(p / (100 - p)) * 100);
-    return Math.round(((100 - p) / p) * 100);
+    if (p == null) return null;
+    const q = Math.max(0.2, Math.min(99.8, p));
+    if (q === 50) return 100;
+    if (q > 50)   return Math.round(-(q / (100 - q)) * 100);
+    return Math.round(((100 - q) / q) * 100);
   };
   const americanToImplied = (o) => {
     if (o == null) return null;
