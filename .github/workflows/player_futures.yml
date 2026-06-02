@@ -1,0 +1,70 @@
+name: Player Futures (daily)
+
+# Daily refresh of MLB Player Futures awards model:
+#   - Scrape VegasInsider for AL/NL MVP / Cy Young / ROY odds boards
+#   - Pull YTD + ROS FanGraphs projections (5-system blend) for every hitter +
+#     pitcher -> derive end-of-season pWAR + pOPS + wFIP
+#   - Run the V5.1 / V6.3 awards model - z-weighted composites + ATC
+#     modifiers + softmax-KL calibration vs market - to emit per-market top-N
+#     candidates with fair %, market %, and edge.
+#
+# Cadence mirrors team_futures.yml: 3 morning probes (8 / 9 / 10:30 AM ET) so
+# we can spot when VI/FG actually refresh, plus an evening pull. Once we know
+# the update window we'll narrow.
+
+on:
+  schedule:
+    - cron: "0 12 * * *"     # 12:00 UTC = 8:00 AM ET
+    - cron: "0 13 * * *"     # 13:00 UTC = 9:00 AM ET
+    - cron: "30 14 * * *"    # 14:30 UTC = 10:30 AM ET
+    - cron: "30 22 * * *"    # 22:30 UTC = 6:30 PM ET
+  workflow_dispatch:
+
+concurrency:
+  group: player-futures
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  futures:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Refresh player futures odds (VegasInsider)
+        run: python scripts/refresh_player_futures_odds.py
+        continue-on-error: true
+
+      - name: Refresh player WAR projections (FG 5-system ROS + YTD)
+        run: python scripts/refresh_player_war_projections.py
+        continue-on-error: true
+
+      - name: Compute player futures awards model
+        run: python scripts/compute_player_futures.py
+        continue-on-error: true
+
+      - name: Commit changed data (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/player_futures_odds.json data/player_war_projections.json data/player_futures.json data/_player_team_cache.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Player futures refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            for i in 1 2 3; do
+              if git push; then break; fi
+              echo "push failed, rebasing and retrying (attempt $i)..."
+              git pull --rebase --autostash || true
+            done
+          fi
