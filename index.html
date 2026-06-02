@@ -4213,7 +4213,6 @@ function renderPitcherDeepSP(spName, teamName) {
       ${headerHand}${headerOpener}
       ${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
       ${unifiedScoreChip(s)}
-      ${ipTxt ? `<span class="pt-sp-ip">${ipTxt}</span>` : ''}
     </div>
     ${renderSPTrends(spName)}
     <div class="pt-stat-grid">${tiles}</div>
@@ -4653,9 +4652,10 @@ function renderSPStatRows(s, thr) {
     wfipPill = '<span class="plus-chip ' + wfipCls + '" style="font-size:0.9rem;font-weight:600;" title="' + wfipTitle.replace(/"/g,'&quot;') + '">wFIP <b>' + n2(wfip) + '</b></span>';
   }
   var wfipRow = wfipPill ? '<div class="m-sp-row"><div class="m-sp-row-label">Score</div><div class="m-sp-row-pills">' + wfipPill + '</div></div>' : '';
-  var ipLine = s.ip != null ? '<div class="m-sp-sub" style="margin-top:0.4rem;">' + s.ip + ' IP season</div>' : '';
+  // Sean's ask: don't show IP outside the per-start box-score table. The wFIP
+  // row and component pills are enough headline; raw IP just clutters the card.
   return wfipRow + row("Actual", actual) + row("Expected", expected)
-       + row("Pitching Model", pitchingModel) + row("Projections", projections) + ipLine;
+       + row("Pitching Model", pitchingModel) + row("Projections", projections);
 }
 
 // ============================================================================
@@ -5016,6 +5016,7 @@ function renderSPBox(name, teamAbbrStr) {
     return `<div class="m-sp-box">
       <div class="m-sp-header">
         <span>${name}</span><span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
+        ${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
       </div>
       <div class="coming-soon">No stats loaded</div></div>`;
   }
@@ -5057,6 +5058,7 @@ function renderSPBox(name, teamAbbrStr) {
     <div class="m-sp-header">
       <span>${name}</span>
       <span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
+      ${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
     </div>
     ${renderSPStatRows(s, thr)}
     ${sp ? `<table class="m-sp-splits">
