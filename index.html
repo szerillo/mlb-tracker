@@ -3788,8 +3788,8 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
     <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
+    <th class="center" style="width:34px;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → D−). Lower K% = better contact.">CON</th>
     <th class="center" style="width:34px;" title="Power grade vs MLB — barrel / hard-hit / xSLG / xISO / bat-speed percentiles. C ≈ avg.">PWR</th>
-    <th class="center" style="width:34px;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → F). Lower K% = better contact.">CON</th>
     <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
@@ -6214,12 +6214,11 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
       <td class="comp ${tierCls}">${Math.round(r.score)}</td>
-      <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>wRC+</th><th>Gr</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups available.</td></tr>'}</tbody>
+    <thead><tr><th>#</th><th class="left">Team</th><th title="Projected wRC+ — PA-weighted across the posted lineup, vs opposing SP hand">wRC+ <span style="opacity:.55;font-size:0.82em;font-weight:normal;">(proj)</span></th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="3" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
