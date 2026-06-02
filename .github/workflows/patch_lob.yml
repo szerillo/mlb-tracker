@@ -57,4 +57,13 @@ jobs:
           git add data/archive data/bartolo_wp.json
           git commit -m "patch_lob.yml: refresh archive LOB from linescore [skip ci]"
           # Push; if main moved while we were processing, rebase once and retry.
-          git push || (git pull --rebase origin main && git push)
+          # Push; if main moved while we were processing (the regular refresh
+          # cron runs every 15 min during game hours), autostash any leftover
+          # working-tree changes (e.g. python __pycache__) so rebase can run,
+          # then retry. Try a few times to handle rapid-fire pushes.
+          for attempt in 1 2 3; do
+            if git push; then break; fi
+            echo "push attempt $attempt rejected; rebasing onto origin/main"
+            git fetch origin main
+            git rebase --autostash origin/main || { git rebase --abort; exit 1; }
+          done
