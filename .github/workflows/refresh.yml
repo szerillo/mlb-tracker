@@ -266,7 +266,7 @@ jobs:
 
       - name: Pre-game backtest aggregate (joins pregame snapshots → actuals)
         # Reads every data/archive/{date}/pregame_inputs.json and joins by
-        # game_pk to bartolo_wp finals. Outputs data/pregame_backtest.json
+        # game_pk → bartolo_wp finals. Outputs data/pregame_backtest.json
         # with per-game model-vs-actual rows + headline calibration stats
         # (total MAE, WP Brier, fav-cover %, calibration buckets).
         # Pre-game snapshots start landing 2026-05-30 (see refresh_pregame_archive.py).
@@ -286,5 +286,15 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "Data refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
-            git push
+            # Push with rebase-on-reject retry. The refresh cron runs every 15
+            # min during game hours and frequently races with other scheduled
+            # workflows (pitcher_data, weather, team_futures, manual dispatches).
+            # Without this, a single concurrent push fails the whole run and
+            # the data sits uncommitted until the next 15-min slot.
+            for attempt in 1 2 3; do
+              if git push; then break; fi
+              echo "push attempt $attempt rejected; rebasing onto origin/main"
+              git fetch origin main
+              git rebase --autostash origin/main || { git rebase --abort; exit 1; }
+            done
           fi
