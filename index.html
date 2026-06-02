@@ -7131,32 +7131,39 @@ function renderFuturesContent(root) {
     </div>`;
   };
   // Win Total edge: dual-sided O vs U. Composite wins minus market line gives
-  // the Over edge (positive = lean Over); the Under edge is its mirror. Both
-  // sides displayed at same font size so the bettable side is obvious.
+  // the Over edge (positive = lean Over); the Under edge is its mirror. The
+  // CELL color is based on |edge| since either side can be the bettable one;
+  // within the stack the positive (winning) row gets full opacity and the
+  // negative row is dimmed via .sec.
   const wtEdgeCell = (winsEdge, pctEdge) => {
     if (winsEdge == null) return '—';
-    const cls = edgeCls(pctEdge);
+    const cls = edgeCls(pctEdge != null ? Math.abs(pctEdge) : null);
     const fmtPair = (w, p) =>
       `${w > 0 ? '+' : ''}${w.toFixed(1)}w` +
-      (p != null ? ` <span class="sec">(${p > 0 ? '+' : ''}${p.toFixed(1)}%)</span>` : '');
+      (p != null ? ` (${p > 0 ? '+' : ''}${p.toFixed(1)}%)` : '');
     const overW  = winsEdge,  overP  = pctEdge;
     const underW = -winsEdge, underP = pctEdge != null ? -pctEdge : null;
+    // Class each row by whether IT'S the winning side, not by stack position.
+    const rowCls = (w) => w >= 0 ? '' : 'sec';
     return `<div class="ft-edge-stack ${cls}">
-      <span><span class="ft-side">O</span>${fmtPair(overW, overP)}</span>
-      <span class="sec"><span class="ft-side">U</span>${fmtPair(underW, underP)}</span>
+      <span class="${rowCls(overW)}"><span class="ft-side">O</span>${fmtPair(overW, overP)}</span>
+      <span class="${rowCls(underW)}"><span class="ft-side">U</span>${fmtPair(underW, underP)}</span>
     </div>`;
   };
   // Binary Y/N edge cell — composite YES % vs market YES implied % gives the
-  // YES edge; for a binary market the NO edge is the mirror. Color tier
-  // follows the magnitude/direction of the YES edge (positive = bet YES).
+  // YES edge; the NO edge is its mirror. Cell color is magnitude-based so a
+  // bettable NO edge lights up green (not red like the signed YES would
+  // suggest). Within the stack the positive side gets full opacity, the
+  // mirrored negative side is dimmed.
   const binaryEdgeCell = (yesEdge) => {
     if (yesEdge == null) return '—';
     const noEdge = -yesEdge;
-    const cls = edgeCls(yesEdge);
+    const cls = edgeCls(Math.abs(yesEdge));
     const fmt = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+    const rowCls = (v) => v >= 0 ? '' : 'sec';
     return `<div class="ft-edge-stack ${cls}">
-      <span><span class="ft-side">Y</span>${fmt(yesEdge)}</span>
-      <span class="sec"><span class="ft-side">N</span>${fmt(noEdge)}</span>
+      <span class="${rowCls(yesEdge)}"><span class="ft-side">Y</span>${fmt(yesEdge)}</span>
+      <span class="${rowCls(noEdge)}"><span class="ft-side">N</span>${fmt(noEdge)}</span>
     </div>`;
   };
   const rowFor = (t) => {
