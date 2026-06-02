@@ -7150,20 +7150,20 @@ function renderFuturesContent(root) {
       <span class="${rowCls(underW)}"><span class="ft-side">U</span>${fmtPair(underW, underP)}</span>
     </div>`;
   };
-  // Binary Y/N edge cell — composite YES % vs market YES implied % gives the
-  // YES edge; the NO edge is its mirror. Cell color is magnitude-based so a
-  // bettable NO edge lights up green (not red like the signed YES would
-  // suggest). Within the stack the positive side gets full opacity, the
-  // mirrored negative side is dimmed.
+  // Playoff Y/N edge — single signed value. VegasInsider and Action Network
+  // both only expose YES prices for the make-playoffs market, so any "NO"
+  // edge we could display would just be -1 × YES (mathematical mirror with no
+  // independent information). Showing one signed edge with magnitude-based
+  // color keeps the cell honest: a +5% means lean YES (5pp of edge on YES);
+  // a -5% means lean NO (5pp of edge on NO); the cell glows green in either
+  // case because there's a bettable side.
   const binaryEdgeCell = (yesEdge) => {
     if (yesEdge == null) return '—';
-    const noEdge = -yesEdge;
     const cls = edgeCls(Math.abs(yesEdge));
-    const fmt = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
-    const rowCls = (v) => v >= 0 ? '' : 'sec';
-    return `<div class="ft-edge-stack ${cls}">
-      <span class="${rowCls(yesEdge)}"><span class="ft-side">Y</span>${fmt(yesEdge)}</span>
-      <span class="${rowCls(noEdge)}"><span class="ft-side">N</span>${fmt(noEdge)}</span>
+    const sideLabel = yesEdge >= 0 ? 'Y' : 'N';
+    const mag = Math.abs(yesEdge).toFixed(1);
+    return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied %. +5% = 5pp of edge on the YES side, -5% = 5pp of edge on NO. Real NO odds aren't published as a separate book line, so the bettable side is implied by sign.">
+      <span><span class="ft-side">${sideLabel}</span>+${mag}%</span>
     </div>`;
   };
   const rowFor = (t) => {
@@ -7209,7 +7209,7 @@ function renderFuturesContent(root) {
           <th class="ft-sub-hdr" title="Composite % minus market implied %">Edge</th>
           <th class="ft-sub-hdr ft-grp-sep" title="Composite playoff % + fair American odds for that %">Fair %</th>
           <th class="ft-sub-hdr" title="Market implied % + best-available American odds for the playoff Y/N market">Market %</th>
-          <th class="ft-sub-hdr" title="Composite playoff % − market implied %. Top = YES edge, bottom = NO edge (mirror). Green when composite leans YES, red when NO.">Edge</th>
+          <th class="ft-sub-hdr" title="|Composite playoff % − market implied %|. The single value shows the magnitude; the Y/N letter indicates which side has the edge. Green = bettable in either direction (≥ 3pp).">Edge</th>
           <th class="ft-sub-hdr ft-grp-sep" title="Composite WS % + fair American odds for that %">Fair %</th>
           <th class="ft-sub-hdr" title="De-vigged WS implied % + best-available American odds">Market %</th>
           <th class="ft-sub-hdr" title="Composite WS % minus de-vigged market implied %">Edge</th>
