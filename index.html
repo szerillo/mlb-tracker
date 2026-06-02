@@ -1425,10 +1425,13 @@
   .ft-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; line-height: 1.25; }
   .ft-stack-row { font-family: var(--mono, monospace); }
   .ft-stack-row.sec { color: var(--muted); }
-  /* Edge cell also stacks the secondary unit (e.g. % equivalent of win edge)
-     at the same size so it doesn't read like a footnote. */
-  .ft-edge-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; line-height: 1.25; }
-  .ft-edge-stack .sec { font-weight: 600; opacity: 0.85; font-size: 0.85em; }
+  /* Edge cell stacks the two sides of a paired market (O/U for win total,
+     Y/N for playoff prop) at the same font size so neither reads like a
+     footnote. The .sec class dims the losing side slightly while keeping size. */
+  .ft-edge-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; line-height: 1.25; font-family: var(--mono, monospace); }
+  .ft-edge-stack .sec { opacity: 0.7; }
+  .ft-edge-stack .ft-side { display: inline-block; min-width: 1.05em; font-weight: 700;
+    color: var(--muted); margin-right: 0.2rem; }
   .ft-table-implied tbody tr { vertical-align: top; }
 
   /* Colorblind-friendly grade palette (yellow=elite, white=avg, purple=bad).
@@ -7127,13 +7130,33 @@ function renderFuturesContent(root) {
       <span class="ft-stack-row sec">o${fmtAm(oOdds)} / u${fmtAm(uOdds)}</span>
     </div>`;
   };
-  // Win Total edge: wins-edge + %-of-line equivalent at same size.
+  // Win Total edge: dual-sided O vs U. Composite wins minus market line gives
+  // the Over edge (positive = lean Over); the Under edge is its mirror. Both
+  // sides displayed at same font size so the bettable side is obvious.
   const wtEdgeCell = (winsEdge, pctEdge) => {
     if (winsEdge == null) return '—';
     const cls = edgeCls(pctEdge);
+    const fmtPair = (w, p) =>
+      `${w > 0 ? '+' : ''}${w.toFixed(1)}w` +
+      (p != null ? ` <span class="sec">(${p > 0 ? '+' : ''}${p.toFixed(1)}%)</span>` : '');
+    const overW  = winsEdge,  overP  = pctEdge;
+    const underW = -winsEdge, underP = pctEdge != null ? -pctEdge : null;
     return `<div class="ft-edge-stack ${cls}">
-      <span>${(winsEdge > 0 ? '+' : '') + winsEdge.toFixed(1)}w</span>
-      ${pctEdge != null ? `<span class="sec">${(pctEdge > 0 ? '+' : '') + pctEdge.toFixed(1)}%</span>` : ''}
+      <span><span class="ft-side">O</span>${fmtPair(overW, overP)}</span>
+      <span class="sec"><span class="ft-side">U</span>${fmtPair(underW, underP)}</span>
+    </div>`;
+  };
+  // Binary Y/N edge cell — composite YES % vs market YES implied % gives the
+  // YES edge; for a binary market the NO edge is the mirror. Color tier
+  // follows the magnitude/direction of the YES edge (positive = bet YES).
+  const binaryEdgeCell = (yesEdge) => {
+    if (yesEdge == null) return '—';
+    const noEdge = -yesEdge;
+    const cls = edgeCls(yesEdge);
+    const fmt = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+    return `<div class="ft-edge-stack ${cls}">
+      <span><span class="ft-side">Y</span>${fmt(yesEdge)}</span>
+      <span class="sec"><span class="ft-side">N</span>${fmt(noEdge)}</span>
     </div>`;
   };
   const rowFor = (t) => {
@@ -7151,7 +7174,7 @@ function renderFuturesContent(root) {
       <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
       <td>${mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
-      <td class="${edgeCls(e.playoff_pct)}">${fmtPctEdge(e.playoff_pct)}</td>
+      <td>${binaryEdgeCell(e.playoff_pct)}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
       <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}</td>
@@ -7161,7 +7184,7 @@ function renderFuturesContent(root) {
     <h3 class="ft-div-hdr">${div}</h3>
     <div class="ft-table-wrap">
     <table class="ft-table ft-table-implied">
-      <colgroup><col style="width:135px"><col style="width:54px"><col style="width:92px"><col style="width:76px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:64px"></colgroup>
+      <colgroup><col style="width:135px"><col style="width:54px"><col style="width:96px"><col style="width:92px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:80px"><col style="width:82px"><col style="width:82px"><col style="width:64px"></colgroup>
       <thead>
         <tr>
           <th class="ft-grp" rowspan="2" style="text-align:left;border-bottom:1px solid var(--border,#2a3b46);">Team</th>
@@ -7173,13 +7196,13 @@ function renderFuturesContent(root) {
         <tr>
           <th class="ft-sub-hdr" title="Composite projected wins (equal-weight mean across the 4 ROS systems)">Proj</th>
           <th class="ft-sub-hdr" title="Sportsbook win-total line + over/under American odds">Line</th>
-          <th class="ft-sub-hdr" title="Composite wins − sportsbook line; second row = same edge as % of line">Edge</th>
+          <th class="ft-sub-hdr" title="Composite wins − line. Top row = Over side (+wins, +%); bottom = Under side (mirror). Green when composite leans the Over, red when Under.">Edge</th>
           <th class="ft-sub-hdr ft-grp-sep" title="Composite division-win % on top, fair American odds for that % below">Fair %</th>
           <th class="ft-sub-hdr" title="Market implied % (top) and best-available American odds (bottom)">Market %</th>
           <th class="ft-sub-hdr" title="Composite % minus market implied %">Edge</th>
           <th class="ft-sub-hdr ft-grp-sep" title="Composite playoff % + fair American odds for that %">Fair %</th>
           <th class="ft-sub-hdr" title="Market implied % + best-available American odds for the playoff Y/N market">Market %</th>
-          <th class="ft-sub-hdr" title="Composite playoff % minus market implied %">Edge</th>
+          <th class="ft-sub-hdr" title="Composite playoff % − market implied %. Top = YES edge, bottom = NO edge (mirror). Green when composite leans YES, red when NO.">Edge</th>
           <th class="ft-sub-hdr ft-grp-sep" title="Composite WS % + fair American odds for that %">Fair %</th>
           <th class="ft-sub-hdr" title="De-vigged WS implied % + best-available American odds">Market %</th>
           <th class="ft-sub-hdr" title="Composite WS % minus de-vigged market implied %">Edge</th>
