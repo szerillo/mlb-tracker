@@ -1416,6 +1416,13 @@
   .ft-table .ft-grp-sep { border-left: 1px solid rgba(255,255,255,0.12); }
   .ft-team { text-align: left !important; }
   .ft-team .ft-logo { display: inline-flex; vertical-align: middle; margin-right: 0.35rem; }
+  /* Pitcher Ranks: SP | RP side-by-side */
+  .rk-grid-pitcher { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  @media (max-width: 1100px) { .rk-grid-pitcher { grid-template-columns: 1fr; } }
+  /* Team Ranks: BP | Off top row, combined DEF+BSR full-width below */
+  .rk-grid-team { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+  .rk-grid-team .rk-box-full { grid-column: 1 / -1; }
+  @media (max-width: 1100px) { .rk-grid-team { grid-template-columns: 1fr; } }
   .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.8rem; }
   .ft-edge { font-weight: 700; }
   .ft-edge.pos { color: #6fdc7e; }
@@ -1519,10 +1526,11 @@
     <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
-    <button class="tab" data-tab="rankings" role="tab">Rankings</button>
+    <button class="tab" data-tab="rankings" role="tab">Pitcher Ranks</button>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
     <button class="tab" data-tab="futures" role="tab">Futures</button>
+    <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -1572,7 +1580,11 @@
   </section>
 
   <section id="tab-rankings" class="tab-content" hidden>
-    <div id="rankings-root" class="loading">Loading power rankings…</div>
+    <div id="rankings-root" class="loading">Loading pitcher rankings…</div>
+  </section>
+
+  <section id="tab-team-rankings" class="tab-content" hidden>
+    <div id="team-rankings-root" class="loading">Loading team rankings…</div>
   </section>
 
   <section id="tab-proj" class="tab-content" hidden>
@@ -2792,6 +2804,7 @@ async function loadForDate(date) {
   if (activeTab) {
     const id = activeTab.dataset.tab;
     if (id === 'rankings' && typeof renderRankingsTab === 'function') renderRankingsTab();
+    else if (id === 'team-rankings' && typeof renderTeamRankingsTab === 'function') renderTeamRankingsTab();
     else if (id === 'winprob' && typeof renderWinprobTab === 'function') renderWinprobTab();
     else if (id === 'pitchers' && typeof renderPitchersTab === 'function') renderPitchersTab();
     else if (id === 'bullpen' && typeof renderBullpenTab === 'function') renderBullpenTab();
@@ -5451,6 +5464,11 @@ let RANKINGS_SP_FILTER = "qualified"; // qualified | all
 let RANKINGS_RP_FILTER = "qualified"; // qualified | all (relievers)
 
 function invalidateRankings() { RANKINGS_RENDERED = false; }
+function renderTeamRankingsTab() {
+  // Team Ranks is rendered as a side-effect of the main rankings data-load.
+  // Just delegate so both tabs share one data fetch + one render pass.
+  if (typeof renderRankingsTab === 'function') renderRankingsTab();
+}
 
 async function fetchAllTeams() {
   if (ALL_TEAMS_CACHE) return ALL_TEAMS_CACHE;
@@ -5538,8 +5556,9 @@ function renderRankingsTab() {
       });
     }
 
+    // Pitcher Ranks tab: SP + RP side-by-side
     root.innerHTML = `
-      <div class="rk-grid">
+      <div class="rk-grid-pitcher">
         <div class="rk-box">
           <h3>SP Power Rankings
             <span class="rk-mode-toggle" id="rk-sp-mode">
@@ -5549,8 +5568,9 @@ function renderRankingsTab() {
             <span class="rk-sub">probable starters · ≥10 IP · wFIP blends rolling form (≥20 IP) + season xFIP/SIERA/xERA/botERA + FG rest-of-season projection</span>
           </h3>
           <div class="rk-sp-wrap" id="rk-sp-wrap"></div>
-
-          <h3 style="margin-top:1.5rem;">Reliever Power Rankings
+        </div>
+        <div class="rk-box">
+          <h3>Reliever Power Rankings
             <span class="rk-mode-toggle" id="rk-rp-mode">
               <button data-mode="season" class="active" title="Season wFIP — blends rolling form (≥20 IP window), season-to-date xFIP/SIERA, season xERA/botERA, and rest-of-season FG projection.">Season</button>
               <button data-mode="rolling30" title="Aggregated only over appearances in the last 30 days. Pure recent-form signal — relievers without recent outings drop out.">Rolling 30d</button>
@@ -5559,7 +5579,15 @@ function renderRankingsTab() {
           </h3>
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
-        <div class="rk-right">
+      </div>
+    `;
+
+    // Team Ranks tab: Team Bullpen | Team Offense (top row) + combined DEF+BSR (full width below)
+    const teamRoot = document.getElementById("team-rankings-root");
+    if (teamRoot) {
+      teamRoot.classList.remove("loading");
+      teamRoot.innerHTML = `
+        <div class="rk-grid-team">
           <div class="rk-box"><h3>Team Bullpen Rankings <span class="rk-sub">today's available relievers (active roster, likely-out excluded) · avg weighted FIP</span></h3>
             <div id="rk-bp-body"></div></div>
           <div class="rk-box"><h3>Team Offense <span class="rk-sub">all 30 teams · PA-weighted wRC+ · splits vs RHP / LHP · today's posted lineup or earliest upcoming</span></h3>
@@ -5568,21 +5596,18 @@ function renderRankingsTab() {
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
             </div>
           </div>
-          <div class="rk-box"><h3>Team Defense <span class="rk-sub">all 30 teams · projected fielding runs, today's posted lineup or earliest upcoming</span></h3>
-            <div id="rk-def-body"></div></div>
-          <div class="rk-box"><h3>Team Baserunning <span class="rk-sub">all 30 teams · projected baserunning runs, today's posted lineup or earliest upcoming</span></h3>
-            <div id="rk-bsr-body"></div></div>
+          <div class="rk-box rk-box-full"><h3>Team Defense + Baserunning <span class="rk-sub">all 30 teams · projected fielding + baserunning runs → letter grades · ranked by avg of DEF + BSR ranks</span></h3>
+            <div id="rk-defbsr-body"></div></div>
         </div>
-      </div>
-    `;
+      `;
+    }
 
     renderSPRankings(pitchers, nameToTeam);
     renderReliverRankings(pitchers, nameToTeam);
     renderBullpenRankings(pitchers, nameToTeam, teams);
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_r", "rk-luR-body");
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_l", "rk-luL-body");
-    renderDefRankings(hitters, nameToTeam, teams);
-    renderBsrRankings(hitters, nameToTeam, teams);
+    renderDefBsrCombined(hitters, nameToTeam, teams);
 
     // Filter button handlers (legacy — the qualified/all SP filter UI was
     // removed earlier but the hooks are harmless if the elements don't exist)
@@ -6236,41 +6261,68 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
   </table>`;
 }
 
-// Team Defense — projected fielding runs (FLD) summed across the team's
-// next-game lineup (today's posted, else earliest upcoming), ranked and
-// graded on the curve. Covers all 30 teams.
-function renderDefRankings(hitters, nameToTeam, teams) {
-  const body = document.getElementById("rk-def-body");
+// Combined Team Defense + Baserunning rankings — drops the standalone DEF
+// and BSR tables. Each team gets a DEF letter (from FLD-runs rank), a BSR
+// letter (from BsR-runs rank), and an Avg letter (from the mean of those
+// two ranks). Sorted by Avg rank. Both component grades are rank-curved so
+// they read consistently against the per-game lineup grades on Lineups tab.
+function renderDefBsrCombined(hitters, nameToTeam, teams) {
+  const body = document.getElementById("rk-defbsr-body");
   if (!body) return;
   const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
   const teamRows = Object.values(byTeam).map(tb => {
-    const vals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
-    if (!vals.length) return null;
-    return { team: tb.team, fld: vals.reduce((a, b) => a + b, 0), tb };
+    const defVals = tb.list.map(x => x.hitter.fld).filter(v => v != null);
+    const bsrVals = tb.list.map(x => x.hitter.bsr).filter(v => v != null);
+    if (!defVals.length && !bsrVals.length) return null;
+    return {
+      team: tb.team,
+      def: defVals.length ? defVals.reduce((a,b)=>a+b,0) : null,
+      bsr: bsrVals.length ? bsrVals.reduce((a,b)=>a+b,0) : null,
+      tb,
+    };
   }).filter(Boolean);
-  teamRows.sort((a, b) => b.fld - a.fld);
   const total = teamRows.length;
-  const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+  // Rank DEF + BSR independently, then combine via avg-rank
+  const sortedDef = [...teamRows].filter(r => r.def != null).sort((a,b) => b.def - a.def);
+  const sortedBsr = [...teamRows].filter(r => r.bsr != null).sort((a,b) => b.bsr - a.bsr);
+  const defRank = new Map(sortedDef.map((r, i) => [r.team.id, i + 1]));
+  const bsrRank = new Map(sortedBsr.map((r, i) => [r.team.id, i + 1]));
+  teamRows.forEach(r => {
+    r.defRank = defRank.get(r.team.id) || (total + 1);
+    r.bsrRank = bsrRank.get(r.team.id) || (total + 1);
+    r.avgRank = (r.defRank + r.bsrRank) / 2;
+  });
+  teamRows.sort((a, b) => a.avgRank - b.avgRank);
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
-    const g = gradeByRank(rank, total);
+    const defG = r.def != null ? gradeByRank(r.defRank, total) : '—';
+    const bsrG = r.bsr != null ? gradeByRank(r.bsrRank, total) : '—';
+    const avgG = gradeByRank(rank, total);
     const upcoming = r.tb && r.tb._fromUpcoming
       ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
+    const gradeCell = (g) => g === '—'
+      ? '<td class="grade-cell"><span class="grade">—</span></td>'
+      : `<td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>`;
     return `<tr>
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
-      <td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>
-      <td class="comp">${fmt(r.fld)}</td>
+      ${gradeCell(defG)}${gradeCell(bsrG)}${gradeCell(avgG)}
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th>Gr</th><th>FLD runs</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4" class="rk-empty">No lineups available.</td></tr>'}</tbody>
+    <thead><tr>
+      <th>#</th>
+      <th class="left">Team</th>
+      <th title="Projected fielding-runs rank → letter grade">DEF</th>
+      <th title="Projected baserunning-runs rank → letter grade">BSR</th>
+      <th title="Average of DEF + BSR ranks → letter grade. Table is sorted by this column.">Avg</th>
+    </tr></thead>
+    <tbody>${rows || '<tr><td colspan="5" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
-// Team Baserunning — projected BsR runs summed across today's lineup, ranked
-// and graded on the curve.
+// LEGACY shim — kept so any external caller (e.g. a hot-reload) doesn't break,
+// but the rendered output now lives in the combined renderer above.
 function renderBsrRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-bsr-body");
   if (!body) return;
@@ -7254,6 +7306,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "bullpen")  renderBullpenTab();
     if (btn.dataset.tab === "pitchers") renderPitchersTab();
     if (btn.dataset.tab === "rankings") renderRankingsTab();
+    if (btn.dataset.tab === "team-rankings") renderTeamRankingsTab();
     if (btn.dataset.tab === "proj")     renderProjectionsTab();
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
     if (btn.dataset.tab === "futures")  renderFuturesTab();
