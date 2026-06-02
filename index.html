@@ -3662,6 +3662,39 @@ function handOfPitcher(name) {
   return h === 'L' || h === 'R' ? h : null;
 }
 
+// Reconcile lineups-page DEF/BSR team chip with the Team Ranks tab. Team Ranks
+// uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
+// the SAME map. Lazily compute, cache on HITTERS identity.
+let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null;
+function _ensureTeamRankGrades() {
+  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR) return;
+  if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
+      typeof gradeByRank !== 'function' ||
+      !HITTERS || !Array.isArray(ALL_TEAMS_CACHE) || !ALL_TEAMS_CACHE.length) return;
+  const byTeam = _allTeamsLineupHittersByTeam(HITTERS.hitters || {}, ALL_TEAMS_CACHE || []);
+  const rows = Object.values(byTeam).map(tb => {
+    let dS=0,dN=0,bS=0,bN=0;
+    for (const x of tb.list) {
+      if (typeof x.hitter?.fld === 'number') { dS+=x.hitter.fld; dN++; }
+      if (typeof x.hitter?.bsr === 'number') { bS+=x.hitter.bsr; bN++; }
+    }
+    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null };
+  }).filter(r => r.abbr);
+  const total = rows.length || 30;
+  const sD = rows.filter(r=>r.def!=null).sort((a,b)=>b.def-a.def);
+  const sB = rows.filter(r=>r.bsr!=null).sort((a,b)=>b.bsr-a.bsr);
+  _TEAM_RANK_DEF = {}; _TEAM_RANK_BSR = {};
+  sD.forEach((r,i)=>{ _TEAM_RANK_DEF[r.abbr] = gradeByRank(i+1, total); });
+  sB.forEach((r,i)=>{ _TEAM_RANK_BSR[r.abbr] = gradeByRank(i+1, total); });
+  _TEAM_RANK_SRC = HITTERS;
+}
+function teamRankGradeLetter(abbr, cat) {
+  _ensureTeamRankGrades();
+  if (cat === 'def') return _TEAM_RANK_DEF?.[abbr] || null;
+  if (cat === 'bsr') return _TEAM_RANK_BSR?.[abbr] || null;
+  return null;
+}
+
 // PA-weighted team-average percentile for one category over a lineup side.
 // cat: 'pwr' | 'eye' | 'bsr' | 'def'
 function teamGradePct(players, cat) {
@@ -3706,10 +3739,23 @@ function teamGradeBar(game, side) {
   if (!HITTERS || !players.length) return "";
   const wrc = teamWrcSpan(game, side);
   const con = teamContactSpan(players);
+  // DEF + BSR routed through the same rank-curved grader the Team Ranks tab
+  // uses — letters match across both pages. PWR + EYE keep SD-stretched MLB-
+  // population pctile (no rank-curved Team Ranks display exists for those).
+  const abbr = game?.teams?.[side]?.team?.abbreviation || null;
   const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
-    const g = teamGradeLetter(teamGradePct(players, cat), cat);
-    if (!g) return "";
-    return `<span class="tg-chip" title="Team ${lbl} grade ${g.letter} — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary). Hitters with no Savant/projection data are excluded from the average (NOT counted as 0)."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
+    let letter = null, titleSuffix = '';
+    if ((cat === 'def' || cat === 'bsr') && abbr) {
+      letter = teamRankGradeLetter(abbr, cat);
+      titleSuffix = ' (rank-curved across all 30 teams — matches Team Ranks tab)';
+    }
+    if (!letter) {
+      const g = teamGradeLetter(teamGradePct(players, cat), cat);
+      if (!g) return "";
+      letter = g.letter;
+      titleSuffix = ` — vs an average MLB lineup (${g.raw}th-pct raw avg, normalized to how teams vary)`;
+    }
+    return `<span class="tg-chip" title="Team ${lbl} grade ${letter}${titleSuffix}. Hitters with no Savant/projection data are excluded from the average (NOT counted as 0)."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(letter)}">${letter}</span></span>`;
   }).join("");
   if (!wrc && !con && !chips) return "";
   return `<div class="team-grade-bar">${wrc}${con}${chips}</div>`;
