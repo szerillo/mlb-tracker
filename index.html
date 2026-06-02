@@ -3719,17 +3719,16 @@ function teamGradePct(players, cat) {
   return tw > 0 ? wsum / tw : null;
 }
 
-// Team-level spread: averaging ~9 player percentiles regresses every team toward
-// 50 (real team SD is only ~7–12), so raw team means all grade C. We normalize by
-// how teams actually vary (per-category team SD, centered at 50) and stretch onto
-// the full A–F ladder, so a strong lineup reaches A and a weak one D/F.
-const TEAM_GRADE_SD = { pwr: 7.5, eye: 12, bsr: 9, def: 12 };
-const TEAM_GRADE_SPREAD = 18;
+// Team-level grade: PA-weighted average of per-player MLB-pctile chips, mapped
+// directly through gradeLetter — no SD stretch. Previous version stretched
+// (raw-50)/sd*18 onto the full A–F ladder which inflated any above-mean team
+// (NYM PWR raw=64 was displaying as A- after stretching to disp 83). Now an
+// above-average lineup grades B, an average one C, a weak one D — matching
+// per-player chip semantics on the same row. DEF/BSR are routed elsewhere
+// through the rank-curved Team Ranks grader (see teamRankGradeLetter).
 function teamGradeLetter(rawPct, cat) {
   if (rawPct == null) return null;
-  const sd = TEAM_GRADE_SD[cat] || 10;
-  const disp = Math.max(1, Math.min(99, 50 + ((rawPct - 50) / sd) * TEAM_GRADE_SPREAD));
-  return { letter: gradeLetter(disp), raw: Math.round(rawPct) };
+  return { letter: gradeLetter(rawPct), raw: Math.round(rawPct) };
 }
 
 // Team-grade bar: wRC+ (vs opp hand) + team contact (K%) + PWR/EYE/BSR/DEF letter chips.
