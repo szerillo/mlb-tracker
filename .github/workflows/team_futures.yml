@@ -1,18 +1,23 @@
 name: Team Futures (daily)
 
 # Daily aggregation of team-level projections + futures odds. Lands a single
-# data/team_futures.json that the Futures tab reads. FG / BP publish their
-# morning updates around 10–11 AM ET; we fire after that window to catch
-# the freshest data. The BettingPros API is live so the timing only matters
-# for the projection sources.
+# data/team_futures.json that the Futures tab reads. Odds are scraped from
+# VegasInsider; projections come from PECOTA (BP) + FG 4-mode ROS DC.
+#
+# Cadence: 3 morning probes (8 / 9 / 10:30 AM ET) so we can compare
+# generated_at timestamps and figure out when VI actually refreshes its
+# lines, plus an evening pull. Once we know VI's update minute we'll narrow
+# back to a single morning slot.
 
 on:
   schedule:
-    # 14:45 UTC = 10:45 AM ET (daylight) / 9:45 AM ET (standard). Picks up
-    # PECOTA + FG morning updates which generally land by ~11:00 AM ET.
-    - cron: "45 14 * * *"
-    # 22:30 UTC = 6:30 PM ET — second pull for live odds movement during
-    # the day. Projections won't change much but market odds will.
+    # 12:00 UTC = 8:00 AM ET (EDT) — earliest morning probe
+    - cron: "0 12 * * *"
+    # 13:00 UTC = 9:00 AM ET — second probe
+    - cron: "0 13 * * *"
+    # 14:30 UTC = 10:30 AM ET — third probe (was 10:45 previously)
+    - cron: "30 14 * * *"
+    # 22:30 UTC = 6:30 PM ET — evening pull for end-of-day odds movement
     - cron: "30 22 * * *"
   workflow_dispatch:
 
@@ -41,11 +46,9 @@ jobs:
         run: python scripts/refresh_team_projections.py
         continue-on-error: true
 
-      - name: Refresh team futures odds (BettingPros)
+      - name: Refresh team futures odds (VegasInsider)
         run: python scripts/refresh_team_futures_odds.py
         continue-on-error: true
-        env:
-          BETTINGPROS_KEY: ${{ secrets.BETTINGPROS_KEY }}
 
       - name: Compute team futures aggregate
         run: python scripts/compute_team_futures.py
