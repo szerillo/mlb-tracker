@@ -71,6 +71,17 @@ def composite_for_team(projs: dict) -> dict:
     return out
 
 
+def _star_tier(edge_pct):
+    """Star rating for a market edge. Edges are in percentage points (e.g. 4.5).
+    Matches player_futures.py tiers: ★★★ 4%+, ★★ 2-4%, ★ 0.5-2%, blank ≤0.5%."""
+    if edge_pct is None:
+        return ""
+    if edge_pct >= 4.0:  return "★★★"
+    if edge_pct >= 2.0:  return "★★"
+    if edge_pct >= 0.5:  return "★"
+    return ""
+
+
 def devig_field(odds_by_team: dict[str, int]) -> dict[str, float]:
     """For division / playoffs / WS futures: sum the raw implied probabilities
     across all teams and scale each by that sum (de-vig). Returns each team's
@@ -129,16 +140,12 @@ def main():
     ws_odds = {a: ((teams_odds.get(a) or {}).get("world_series") or {}).get("odds")
                for a in teams_proj}
 
-    # Division: there are 6 separate "win this division" markets (one per
-    # division), so de-vig per-division rather than across the whole league.
-    div_implied = {}
-    by_div = {}
-    for abbr, info in teams_proj.items():
-        by_div.setdefault(info["division"], []).append(abbr)
-    for div, abbrs in by_div.items():
-        odds_subset = {a: div_odds.get(a) for a in abbrs}
-        odds_subset = {a: o for a, o in odds_subset.items() if o is not None}
-        div_implied.update(devig_field(odds_subset))
+    # Division: raw American-odds → implied probability per team. Previously
+    # this de-vigged per division; user spec is raw across all markets for
+    # consistency with Player Futures. Edges still meaningful since model_p is
+    # fair, even if market_p carries the book's vig.
+    div_implied = {a: round(american_to_prob(o) * 100, 2) if o is not None else None
+                   for a, o in div_odds.items()}
 
     # Playoffs: ~6 teams will eventually be in (12 with WC), but market is
     # per-team yes/no, so we don't de-vig across teams — just compute the
@@ -147,7 +154,9 @@ def main():
                        for a, o in playoff_odds.items()}
 
     # WS: single championship market, all 30 teams compete, de-vig across all.
-    ws_implied_all = devig_field({a: o for a, o in ws_odds.items() if o is not None})
+    # WS: raw implied per team (no de-vig, matches Player Futures)
+    ws_implied_all = {a: round(american_to_prob(o) * 100, 2) if o is not None else None
+                      for a, o in ws_odds.items()}
 
     # 3) Build per-team output
     teams_out = {}
@@ -212,6 +221,12 @@ def main():
                 "div_pct":     div_edge,
                 "playoff_pct": po_edge,
                 "ws_pct":      ws_edge,
+            },
+            "stars": {
+                "win_total":   _star_tier(wt_edge),
+                "div_pct":     _star_tier(div_edge),
+                "playoff_pct": _star_tier(po_edge),
+                "ws_pct":      _star_tier(ws_edge),
             },
         }
 
