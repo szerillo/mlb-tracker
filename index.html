@@ -5631,6 +5631,8 @@ function renderRankingsTab() {
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
             </div>
           </div>
+          <div class="rk-box rk-box-full"><h3>Team Offense (Combined) <span class="rk-sub">all 30 teams · wRC+ + PWR + CON + EYE each rank-curved to letter, averaged into the OFF column · sorted by OFF</span></h3>
+            <div id="rk-offcombined-body"></div></div>
           <div class="rk-box rk-box-full"><h3>Team Defense + Baserunning <span class="rk-sub">all 30 teams · projected fielding + baserunning runs → letter grades · ranked by avg of DEF + BSR ranks</span></h3>
             <div id="rk-defbsr-body"></div></div>
         </div>
@@ -5642,6 +5644,7 @@ function renderRankingsTab() {
     renderBullpenRankings(pitchers, nameToTeam, teams);
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_r", "rk-luR-body");
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_l", "rk-luL-body");
+    renderCombinedOffenseRankings(hitters, nameToTeam, teams);
     renderDefBsrCombined(hitters, nameToTeam, teams);
 
     // Filter button handlers (legacy — the qualified/all SP filter UI was
@@ -6293,6 +6296,98 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
   body.innerHTML = `<table class="rk-table">
     <thead><tr><th>#</th><th class="left">Team</th><th title="Projected wRC+ — PA-weighted across the posted lineup, vs opposing SP hand">wRC+ <span style="opacity:.55;font-size:0.82em;font-weight:normal;">(proj)</span></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="3" class="rk-empty">No lineups available.</td></tr>'}</tbody>
+  </table>`;
+}
+
+// Combined Team Offense rankings — PA-weighted team-level averages of wRC+,
+// PWR, CON, EYE → each rank-curved to a letter → average the four ranks for
+// the headline OFF column. Sorted by OFF rank. Mirrors the DEF+BSR combined
+// table so the two read consistently. wRC+ uses the avg of vR + vL splits to
+// give one overall offensive grade (split tables remain in their own box).
+function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
+  const body = document.getElementById("rk-offcombined-body");
+  if (!body) return;
+  const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
+  const teamRows = Object.values(byTeam).map(tb => {
+    let wrcSum=0, wrcW=0, pwrSum=0, pwrW=0, conSum=0, conW=0, eyeSum=0, eyeW=0;
+    tb.list.forEach((x, i) => {
+      const h = x.hitter || hitters[normName(x.name || "")];
+      if (!h) return;
+      const splitEntry = HITTER_SPLITS?.hitters?.[normName(x.name || h.name || "")];
+      const vR = splitEntry?.wrc_vs_r ?? h.wrc_vs_r;
+      const vL = splitEntry?.wrc_vs_l ?? h.wrc_vs_l;
+      const wrc = (vR != null && vL != null) ? (vR + vL) / 2 : (vR != null ? vR : vL);
+      const pc  = HITTER_PCT?.hitters?.[normName(x.name || h.name || "")];
+      const pwr = powerPct(pc);
+      const con = conPct(h);
+      const eye = eyePct(pc);
+      const slot = i;
+      const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
+      const w = SLOT_BASE_PA + delta;
+      if (wrc != null) { wrcSum += wrc * w; wrcW += w; }
+      if (pwr != null) { pwrSum += pwr * w; pwrW += w; }
+      if (con != null) { conSum += con * w; conW += w; }
+      if (eye != null) { eyeSum += eye * w; eyeW += w; }
+    });
+    return {
+      team: tb.team, tb,
+      wrcAvg: wrcW ? wrcSum / wrcW : null,
+      pwrAvg: pwrW ? pwrSum / pwrW : null,
+      conAvg: conW ? conSum / conW : null,
+      eyeAvg: eyeW ? eyeSum / eyeW : null,
+    };
+  }).filter(r => r.wrcAvg != null || r.pwrAvg != null);
+  const total = teamRows.length;
+  const rankMap = (key) => {
+    const sorted = [...teamRows].filter(r => r[key] != null).sort((a,b) => b[key] - a[key]);
+    return new Map(sorted.map((r, i) => [r.team.id, i + 1]));
+  };
+  const ranks = {
+    wrc: rankMap('wrcAvg'),
+    pwr: rankMap('pwrAvg'),
+    con: rankMap('conAvg'),
+    eye: rankMap('eyeAvg'),
+  };
+  teamRows.forEach(r => {
+    r.wrcR = ranks.wrc.get(r.team.id) || (total + 1);
+    r.pwrR = ranks.pwr.get(r.team.id) || (total + 1);
+    r.conR = ranks.con.get(r.team.id) || (total + 1);
+    r.eyeR = ranks.eye.get(r.team.id) || (total + 1);
+    r.avgRank = (r.wrcR + r.pwrR + r.conR + r.eyeR) / 4;
+  });
+  teamRows.sort((a, b) => a.avgRank - b.avgRank);
+  const gc = (g) => g === '—'
+    ? '<td class="grade-cell"><span class="grade">—</span></td>'
+    : `<td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>`;
+  const rows = teamRows.map((r, i) => {
+    const rank = i + 1;
+    const wrcG = r.wrcAvg != null ? gradeByRank(r.wrcR, total) : '—';
+    const pwrG = r.pwrAvg != null ? gradeByRank(r.pwrR, total) : '—';
+    const conG = r.conAvg != null ? gradeByRank(r.conR, total) : '—';
+    const eyeG = r.eyeAvg != null ? gradeByRank(r.eyeR, total) : '—';
+    const avgG = gradeByRank(rank, total);
+    const upcoming = r.tb && r.tb._fromUpcoming
+      ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
+    const wrcRaw = r.wrcAvg != null ? Math.round(r.wrcAvg) : '—';
+    return `<tr>
+      <td class="rank">${rank}</td>
+      <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
+      <td class="comp" style="color:var(--muted);font-size:0.78rem;">${wrcRaw}</td>
+      ${gc(wrcG)}${gc(pwrG)}${gc(conG)}${gc(eyeG)}${gc(avgG)}
+    </tr>`;
+  }).join("");
+  body.innerHTML = `<table class="rk-table">
+    <thead><tr>
+      <th>#</th>
+      <th class="left">Team</th>
+      <th title="Raw PA-weighted team wRC+ (avg of vR + vL splits) — shown for context next to the rank-curved grade">wRC+</th>
+      <th title="PA-weighted team wRC+ rank → letter grade">wRC+ Gr</th>
+      <th title="PA-weighted team PWR percentile rank → letter grade">PWR</th>
+      <th title="PA-weighted team CON (K%-derived) percentile rank → letter grade">CON</th>
+      <th title="PA-weighted team EYE (BB% + chase) percentile rank → letter grade">EYE</th>
+      <th title="Average of wRC+ / PWR / CON / EYE ranks → letter. Table sorted by this column.">OFF</th>
+    </tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" class="rk-empty">No lineups available.</td></tr>'}</tbody>
   </table>`;
 }
 
