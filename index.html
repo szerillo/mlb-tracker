@@ -1397,24 +1397,38 @@
   .m-wrc-proj { font-size: 0.62rem; opacity: 0.6; font-weight: 500; letter-spacing: 0.04em; margin-left: 0.1rem; }
   /* Futures tab */
   .ft-header { margin-bottom: 1rem; }
-  .ft-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
-  .ft-legend { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.4; }
-  .ft-div-hdr { font-size: 0.9rem; margin: 1.1rem 0 0.3rem; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
+  .ft-meta { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+  .ft-legend { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.45; }
+  .ft-div-hdr { font-size: 1rem; margin: 1.2rem 0 0.35rem; color: var(--accent); font-weight: 700; letter-spacing: 0.02em; }
   .ft-table-wrap { overflow-x: auto; }
-  .ft-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; table-layout: fixed; }
-  .ft-table th { text-align: right; padding: 0.3rem 0.4rem; font-size: 0.7rem; color: var(--muted); border-bottom: 1px solid var(--border, #2a3b46); font-weight: 600; }
-  .ft-table th.left { text-align: left; }
-  .ft-table td { padding: 0.25rem 0.4rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  /* Bumped from 0.78 → 0.88 for readability — Sean's ask. */
+  .ft-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; table-layout: fixed; }
+  /* Two-row header: section group (top) + per-column sub-headers (bottom). */
+  .ft-table thead th { padding: 0.4rem 0.45rem; color: var(--muted); border-bottom: 1px solid var(--border, #2a3b46); font-weight: 600; }
+  .ft-table thead .ft-grp { font-size: 0.78rem; font-weight: 700; color: var(--accent);
+    border-bottom: 1px solid rgba(255,255,255,0.12); text-align: center;
+    text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 0.3rem; }
+  .ft-table thead .ft-sub-hdr { font-size: 0.74rem; text-align: right; }
+  .ft-table thead .ft-sub-hdr.left { text-align: left; }
+  .ft-table td { padding: 0.4rem 0.45rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
   .ft-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  /* Column group separators — vertical lines between markets. */
+  .ft-table .ft-grp-sep { border-left: 1px solid rgba(255,255,255,0.12); }
   .ft-team { text-align: left !important; }
-  .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.74rem; }
-  .ft-edge { font-weight: 600; }
+  .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.8rem; }
+  .ft-edge { font-weight: 700; }
   .ft-edge.pos { color: #6fdc7e; }
   .ft-edge.neg { color: #ff7a7a; }
   .ft-edge.neu { color: var(--muted); }
-  .ft-num { line-height: 1.2; }
-  .ft-sub { font-size: 0.66rem; color: var(--muted); line-height: 1.2; margin-top: 1px; font-family: var(--mono, monospace); }
-  .ft-table-implied td { padding: 0.35rem 0.4rem; line-height: 1.25; }
+  /* Stacked cells where main value + American-odds companion live at the
+     SAME font size, top-aligned. No more 0.66rem "subtitle" treatment. */
+  .ft-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; line-height: 1.25; }
+  .ft-stack-row { font-family: var(--mono, monospace); }
+  .ft-stack-row.sec { color: var(--muted); }
+  /* Edge cell also stacks the secondary unit (e.g. % equivalent of win edge)
+     at the same size so it doesn't read like a footnote. */
+  .ft-edge-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; line-height: 1.25; }
+  .ft-edge-stack .sec { font-weight: 600; opacity: 0.85; font-size: 0.85em; }
   .ft-table-implied tbody tr { vertical-align: top; }
 
   /* Colorblind-friendly grade palette (yellow=elite, white=avg, purple=bad).
@@ -7079,14 +7093,43 @@ function renderFuturesContent(root) {
     return 'ft-edge neu';
   };
   const fmtPctEdge = (v) => v == null ? '—' : ((v > 0 ? '+' : '') + v.toFixed(1) + '%');
-  const compCell = (pct) => {
+  // Stacked Fair % cell: composite percentage on top, fair American odds
+  // derived from it below — both at the SAME font size. No "fair" prefix
+  // since the column header now reads "Fair %".
+  const fairCell = (pct) => {
     if (pct == null) return '—';
-    return `<div class="ft-num">${fmtPct(pct)}</div><div class="ft-sub">fair ${fmtAm(pctToAmerican(pct))}</div>`;
+    return `<div class="ft-stack">
+      <span class="ft-stack-row">${fmtPct(pct)}</span>
+      <span class="ft-stack-row sec">${fmtAm(pctToAmerican(pct))}</span>
+    </div>`;
   };
+  // Stacked Market % cell: implied % on TOP (column header reads "Market %"),
+  // listed American odds below. Same font size. The de-vigged percentage is
+  // what the user is comparing against the composite fair %.
   const mktCell = (odds, implied) => {
     if (odds == null) return '—';
     const imp = implied != null ? implied : americanToImplied(odds);
-    return `<div class="ft-num">${fmtAm(odds)}</div><div class="ft-sub">${fmtPct(imp)}</div>`;
+    return `<div class="ft-stack">
+      <span class="ft-stack-row">${fmtPct(imp)}</span>
+      <span class="ft-stack-row sec">${fmtAm(odds)}</span>
+    </div>`;
+  };
+  // Win Total line cell: project line + o/u prices, same font size pair.
+  const wtLineCell = (line, oOdds, uOdds) => {
+    if (line == null) return '—';
+    return `<div class="ft-stack">
+      <span class="ft-stack-row">${line.toFixed(1)}</span>
+      <span class="ft-stack-row sec">o${fmtAm(oOdds)} / u${fmtAm(uOdds)}</span>
+    </div>`;
+  };
+  // Win Total edge: wins-edge + %-of-line equivalent at same size.
+  const wtEdgeCell = (winsEdge, pctEdge) => {
+    if (winsEdge == null) return '—';
+    const cls = edgeCls(pctEdge);
+    return `<div class="ft-edge-stack ${cls}">
+      <span>${(winsEdge > 0 ? '+' : '') + winsEdge.toFixed(1)}w</span>
+      ${pctEdge != null ? `<span class="sec">${(pctEdge > 0 ? '+' : '') + pctEdge.toFixed(1)}%</span>` : ''}
+    </div>`;
   };
   const rowFor = (t) => {
     const c = t.composite || {};
@@ -7096,15 +7139,15 @@ function renderFuturesContent(root) {
     return `<tr>
       <td class="ft-team"><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
       <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
-      <td>${m.win_total_line != null ? m.win_total_line.toFixed(1) : '—'}<div class="ft-sub">o ${fmtAm(m.win_total_over?.odds)} / u ${fmtAm(m.win_total_under?.odds)}</div></td>
-      <td class="${edgeCls(wtPctEdge)}">${e.win_total != null ? (e.win_total > 0 ? '+' : '') + e.win_total.toFixed(1) + 'w' : '—'}<div class="ft-sub">${wtPctEdge != null ? (wtPctEdge > 0 ? '+' : '') + wtPctEdge.toFixed(1) + '%' : ''}</div></td>
-      <td>${compCell(c.div_pct)}</td>
+      <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds)}</td>
+      <td>${wtEdgeCell(e.win_total, wtPctEdge)}</td>
+      <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
       <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}</td>
-      <td>${compCell(c.playoff_pct)}</td>
+      <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
       <td>${mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
       <td class="${edgeCls(e.playoff_pct)}">${fmtPctEdge(e.playoff_pct)}</td>
-      <td>${compCell(c.ws_pct)}</td>
+      <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
       <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}</td>
     </tr>`;
@@ -7113,22 +7156,30 @@ function renderFuturesContent(root) {
     <h3 class="ft-div-hdr">${div}</h3>
     <div class="ft-table-wrap">
     <table class="ft-table ft-table-implied">
-      <colgroup><col style="width:135px"><col style="width:48px"><col style="width:78px"><col style="width:62px"><col style="width:78px"><col style="width:72px"><col style="width:56px"><col style="width:78px"><col style="width:72px"><col style="width:56px"><col style="width:78px"><col style="width:72px"><col style="width:56px"></colgroup>
-      <thead><tr>
-        <th class="left">Team</th>
-        <th title="Composite projected wins">Proj W</th>
-        <th title="Sportsbook win-total line + over/under American odds">Line (o/u)</th>
-        <th title="Composite wins − sportsbook line; bottom = same edge as % of line">Edge</th>
-        <th title="Composite division win % + fair American odds derived from it">Comp %</th>
-        <th title="Best-available American odds + implied %">Mkt</th>
-        <th title="Composite % − market implied %">Edge</th>
-        <th title="Composite playoff % + fair American odds">Comp %</th>
-        <th title="Best-available American odds + implied %">Mkt</th>
-        <th>Edge</th>
-        <th title="Composite WS % + fair American odds">Comp %</th>
-        <th title="De-vigged best-available WS odds + implied %">Mkt</th>
-        <th>Edge</th>
-      </tr></thead>
+      <colgroup><col style="width:135px"><col style="width:54px"><col style="width:92px"><col style="width:76px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:64px"></colgroup>
+      <thead>
+        <tr>
+          <th class="ft-grp" rowspan="2" style="text-align:left;border-bottom:1px solid var(--border,#2a3b46);">Team</th>
+          <th class="ft-grp" colspan="3">Win Total (O/U)</th>
+          <th class="ft-grp ft-grp-sep" colspan="3">Division Winner</th>
+          <th class="ft-grp ft-grp-sep" colspan="3">Make Playoffs (Y/N)</th>
+          <th class="ft-grp ft-grp-sep" colspan="3">World Series</th>
+        </tr>
+        <tr>
+          <th class="ft-sub-hdr" title="Composite projected wins (equal-weight mean across the 4 ROS systems)">Proj</th>
+          <th class="ft-sub-hdr" title="Sportsbook win-total line + over/under American odds">Line</th>
+          <th class="ft-sub-hdr" title="Composite wins − sportsbook line; second row = same edge as % of line">Edge</th>
+          <th class="ft-sub-hdr ft-grp-sep" title="Composite division-win % on top, fair American odds for that % below">Fair %</th>
+          <th class="ft-sub-hdr" title="Market implied % (top) and best-available American odds (bottom)">Market %</th>
+          <th class="ft-sub-hdr" title="Composite % minus market implied %">Edge</th>
+          <th class="ft-sub-hdr ft-grp-sep" title="Composite playoff % + fair American odds for that %">Fair %</th>
+          <th class="ft-sub-hdr" title="Market implied % + best-available American odds for the playoff Y/N market">Market %</th>
+          <th class="ft-sub-hdr" title="Composite playoff % minus market implied %">Edge</th>
+          <th class="ft-sub-hdr ft-grp-sep" title="Composite WS % + fair American odds for that %">Fair %</th>
+          <th class="ft-sub-hdr" title="De-vigged WS implied % + best-available American odds">Market %</th>
+          <th class="ft-sub-hdr" title="Composite WS % minus de-vigged market implied %">Edge</th>
+        </tr>
+      </thead>
       <tbody>${arr.map(rowFor).join("")}</tbody>
     </table>
     </div>
@@ -7138,7 +7189,7 @@ function renderFuturesContent(root) {
       <div><b>Team Futures · Composite vs Market</b></div>
       <div class="ft-meta">Projections: ${genAt} · Odds: ${oddsAt}</div>
       <div class="ft-legend">
-        <span>Each cell shows the figure + its derived companion: <b>Comp %</b> shows fair American odds for that %, <b>Mkt</b> shows the implied % for that line. <span class="ft-edge pos">Green</span> edge ≥ +3% favors a bet · <span class="ft-edge neg">red</span> ≤ −3% against · <span class="ft-edge neu">neutral</span> in between. Composite = equal-weight mean across PECOTA + FG/ATC/BatX/OOPSY ROS.</span>
+        <span><b>Fair %</b> = composite projection (top) and the American odds that match that probability (bottom). <b>Market %</b> = sportsbook implied % (top) and best-available American odds (bottom). <span class="ft-edge pos">Green</span> edge ≥ +3% favors a bet · <span class="ft-edge neg">red</span> ≤ −3% against · <span class="ft-edge neu">neutral</span> between. Composite = equal-weight mean across the four FG ROS DC projection systems.</span>
       </div>
     </div>
     ${divHTML}
