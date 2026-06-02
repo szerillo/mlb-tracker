@@ -7348,14 +7348,39 @@ let FUTURES_RENDERED = false;
 // ============================================================================
 let PLAYER_FUTURES_RENDERED = false;
 function invalidatePlayerFutures() { PLAYER_FUTURES_RENDERED = false; }
+// Module-level odds helpers so PF_COLS (defined at module scope) can render
+// stacked Fair % / Market % cells showing both percentage and American odds —
+// mirrors Team Futures. Fair % → projected American via implied-prob inversion
+// clamped to [0.2, 99.8] to avoid divide-by-zero at the extremes.
+function _pfPctToAmer(p) {
+  if (p == null) return null;
+  const q = Math.max(0.2, Math.min(99.8, p));
+  if (q === 50) return 100;
+  if (q > 50)   return Math.round(-(q / (100 - q)) * 100);
+  return Math.round(((100 - q) / q) * 100);
+}
+function _pfFmtAm(o) { return o == null ? '—' : (o > 0 ? '+' + o : String(o)); }
+function _pfStack(top, sec) {
+  return `<div class="ft-stack"><span class="ft-stack-row">${top}</span><span class="ft-stack-row sec">${sec}</span></div>`;
+}
+function _pfFairCell(p) {
+  if (p.model_p == null) return '—';
+  const pct = p.model_p * 100;
+  return _pfStack(pct.toFixed(1) + '%', _pfFmtAm(_pfPctToAmer(pct)));
+}
+function _pfMktCell(p) {
+  if (p.market_p == null && p.best_odds == null) return '—';
+  const pct = p.market_p != null ? (p.market_p * 100).toFixed(1) + '%' : '—';
+  return _pfStack(pct, _pfFmtAm(p.best_odds));
+}
 const PF_COLS = {
   MVP: [
     {key:"name",  label:"Player",   lhs:true,
       fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
     {key:"pwar",  label:"pWAR",     fmt:p => p.p_war  != null ? p.p_war.toFixed(1) : "—"},
     {key:"pops",  label:"pOPS",     fmt:p => p.p_ops  != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—"},
-    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
-    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
+    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
     {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
   ],
   CY: [
@@ -7363,8 +7388,8 @@ const PF_COLS = {
       fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
     {key:"pfip",  label:"wFIP",     fmt:p => p.p_fip != null ? p.p_fip.toFixed(2) : "—"},
     {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
-    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
-    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
+    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
     {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
   ],
   ROY: [
@@ -7375,8 +7400,8 @@ const PF_COLS = {
       fmt:p => (p.pos === "SP" || p.pos === "RP")
         ? (p.p_fip != null ? p.p_fip.toFixed(2) : "—")
         : (p.p_ops != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—")},
-    {key:"fair",  label:"Fair %",   fmt:p => p.model_p  != null ? (p.model_p  * 100).toFixed(1) + "%" : "—"},
-    {key:"mkt",   label:"Market %", fmt:p => p.market_p != null ? (p.market_p * 100).toFixed(1) + "%" : "—"},
+    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
+    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
     {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
   ],
 };
