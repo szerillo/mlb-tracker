@@ -513,23 +513,35 @@ def _mvp_pool(hitters, league, team_futures, pitchers=None):
         for p in pitchers.values():
             nm = _norm_name(p.get("name") or "")
             if nm: pit_by_norm[nm] = p
-    pool = []
-    for h in hitters.values():
-        if h.get("league") != league: continue
-        if _proj_pa(h) < 300: continue
-        team = h.get("team_abbr")
+    def _team_bonus(team):
         playoff_pct = (tf_by_abbr.get(team, {}).get("composite", {})
                        .get("playoff_pct") or 0)
         div_pct = (tf_by_abbr.get(team, {}).get("composite", {})
                    .get("div_pct") or 0)
+        # team_futures stores playoff/div_pct on a 0–100 scale; V5.1 RTF
+        # treats the bonus as a TIEBREAKER (`+0.06 × Playoff% + 0.04 ×
+        # Division%` with % as fraction). Divide by 100 so the bonus stays
+        # tiebreaker-sized (~0.10 max) instead of dominating the composite.
+        return 0.06 * ((playoff_pct or 0) / 100.0) + 0.04 * ((div_pct or 0) / 100.0)
+
+    pool = []
+    twoway = set()
+    for h in hitters.values():
+        if h.get("league") != league: continue
+        if _proj_pa(h) < 300: continue
+        team = h.get("team_abbr")
         # 2-way special case: combine WARs if same name has pitcher entry with ≥50 IP.
         hit_war = _eos(h, "war") or 0
         nm_key  = _norm_name(h.get("name") or "")
         pit_e   = pit_by_norm.get(nm_key)
         pit_war = (_eos(pit_e, "war") if pit_e and (_proj_ip(pit_e) or 0) >= 50 else 0) or 0
-        combined_war = (hit_war + pit_war) if pit_war > 0 else _eos(h, "war")
+        if pit_war > 0:
+            combined_war = hit_war + pit_war
+            twoway.add(nm_key)        # don't double-count Ohtani as a pitcher below
+        else:
+            combined_war = _eos(h, "war")
         pool.append({
-            "player": h,
+            "player": h, "side": "hit",
             "combined_war": combined_war,  # 2-way players: hit + pitch (Ohtani)
             "stats": {
                 "war": combined_war,    "ops": _eos(h, "ops"),
@@ -537,12 +549,28 @@ def _mvp_pool(hitters, league, team_futures, pitchers=None):
                 "rbi": _eos(h, "rbi"),  "sb":  _eos(h, "sb"),
             },
             "atc": {"vol": _atc(h, "vol"), "skew": _atc(h, "skew"), "dim": _atc(h, "dim")},
-            # team_futures stores playoff/div_pct on a 0–100 scale; V5.1 RTF
-            # treats the bonus as a TIEBREAKER (`+0.06 × Playoff% + 0.04 ×
-            # Division%` with % as fraction). Divide by 100 so the bonus stays
-            # tiebreaker-sized (~0.10 max) instead of dominating the composite.
-            "team_bonus": 0.06 * ((playoff_pct or 0) / 100.0) + 0.04 * ((div_pct or 0) / 100.0),
+            "team_bonus": _team_bonus(team),
         })
+    # Pitchers are MVP-eligible too (per user: "weigh in pitchers for MVP").
+    # Their composite is WAR-driven only — see _score_mvp's cross-pool merge
+    # — so an ace lands as a realistic longshot rather than competing on the
+    # hitter counting-stat weights they can't post.
+    if pitchers:
+        for p in pitchers.values():
+            if p.get("league") != league: continue
+            nm_key = _norm_name(p.get("name") or "")
+            if nm_key in twoway: continue           # already counted as a 2-way hitter
+            if _proj_ip(p) < 90: continue
+            if (_eos(p, "sv") or 0) >= 5: continue   # exclude closers
+            war = _eos(p, "war")
+            pool.append({
+                "player": p, "side": "pit",
+                "combined_war": war,
+                "stats": {"war": war, "ops": None, "r": None,
+                          "hr": None, "rbi": None, "sb": None},
+                "atc": {"vol": _atc(p, "vol"), "skew": _atc(p, "skew"), "dim": _atc(p, "dim")},
+                "team_bonus": _team_bonus(p.get("team_abbr")),
+            })
     return pool
 
 
@@ -630,20 +658,51 @@ def _roy_pool(hitters, pitchers, league, odds_players):
 
 # ── Compute composite scores per market ────────────────────────────────────
 def _score_mvp(pool):
+    """Cross-pool MVP scoring so pitchers compete fairly with hitters.
+
+    Hitters get the full V5.1 counting-stat composite; pitchers get a
+    WAR-only within-pool composite (they can't post OPS/HR/RBI). Each side's
+    within-pool composite is z-normalized to its own pool, then merged with a
+    raw-combined-WAR cross term:  score = 0.55·within_z + 0.45·war_z. The WAR
+    anchor keeps aces below the elite-WAR hitters (realistic longshots) while
+    still surfacing them as candidates."""
     if not pool: return []
-    base_z = _weighted_z([p["stats"] for p in pool], MVP_WEIGHTS)
-    vol_pool  = [p["atc"]["vol"]  for p in pool]
-    skew_pool = [p["atc"]["skew"] for p in pool]
-    dim_pool  = [p["atc"]["dim"]  for p in pool]
-    # ATC variance modifiers fade as actual stats accumulate. Full weight at
-    # opening day, ~67% by June, ~30% by August.
+    hitters  = [p for p in pool if p.get("side") == "hit"]
+    pitchers = [p for p in pool if p.get("side") == "pit"]
     w = _atc_weight()
+
+    # Hitter within-pool composite: counting-stat weighted z + ATC + team bonus
+    h_within = []
+    if hitters:
+        base_z = _weighted_z([p["stats"] for p in hitters], MVP_WEIGHTS)
+        vol_pool  = [p["atc"]["vol"]  for p in hitters]
+        skew_pool = [p["atc"]["skew"] for p in hitters]
+        dim_pool  = [p["atc"]["dim"]  for p in hitters]
+        for i, p in enumerate(hitters):
+            atc_adj = w * (0.20 * _zscore(p["atc"]["dim"], dim_pool)
+                         + 0.10 * _zscore(p["atc"]["skew"], skew_pool)
+                         - 0.10 * _zscore(p["atc"]["vol"], vol_pool))
+            h_within.append(base_z[i] + atc_adj + p["team_bonus"])
+
+    # Pitcher within-pool composite: WAR-only (per user) + team bonus
+    p_within = []
+    if pitchers:
+        war_pool = [p["stats"]["war"] for p in pitchers]
+        for p in pitchers:
+            p_within.append(_zscore(p["stats"]["war"], war_pool) + p["team_bonus"])
+
+    # z-normalize each side's within composite so the scales are comparable
+    h_within_z = [_zscore(x, h_within) for x in h_within]
+    p_within_z = [_zscore(x, p_within) for x in p_within]
+    for i, p in enumerate(hitters):  p["_within_z"] = h_within_z[i]
+    for i, p in enumerate(pitchers): p["_within_z"] = p_within_z[i]
+
+    # Cross-pool WAR anchor across everyone
+    war_all = [p["combined_war"] for p in pool]
     out = []
-    for i, p in enumerate(pool):
-        atc_adj = w * (0.20 * _zscore(p["atc"]["dim"], dim_pool)
-                     + 0.10 * _zscore(p["atc"]["skew"], skew_pool)
-                     - 0.10 * _zscore(p["atc"]["vol"], vol_pool))
-        score = base_z[i] + atc_adj + p["team_bonus"]
+    for p in pool:
+        warz  = _zscore(p["combined_war"], war_all)
+        score = 0.55 * p["_within_z"] + 0.45 * warz
         out.append({**p, "score": score})
     return out
 
@@ -699,7 +758,7 @@ def _score_roy(pool_h, pool_p):
 
 
 # ── Render market output ───────────────────────────────────────────────────
-def _render_market(scored, market_key, market_meta, top_n, filter_actionable=False):
+def _render_market(scored, market_key, market_meta, top_n):
     """Take scored candidates, join with odds, calibrate temp, emit final list.
 
     Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
@@ -755,14 +814,13 @@ def _render_market(scored, market_key, market_meta, top_n, filter_actionable=Fal
         elif edge >= 0.02:       stars = "★★"
         elif edge >= 0.005:      stars = "★"
         else:                    stars = ""
-        # Actionable filter — used for MVP markets where the top-N pool is
-        # diluted with sub-1% candidates the user wouldn't bet anyway.
-        if filter_actionable:
-            keep = (p_mod >= 0.01) \
-                or (market_p is not None and market_p >= 0.01) \
-                or (edge is not None and edge >= 0.01)
-            if not keep:
-                continue
+        # Display filter (all markets): evaluate a big field, but only SHOW
+        # players with a model win prob ≥ 0.5% OR longshots (<0.5%) that still
+        # carry a positive edge vs the market. Per user: surface anyone
+        # bettable, hide the dead weight.
+        keep = (p_mod >= 0.005) or (edge is not None and edge >= 0.0005)
+        if not keep:
+            continue
         results.append({
             "name":         x["player"].get("name"),
             "team_abbr":    x["player"].get("team_abbr"),
@@ -816,7 +874,7 @@ def main():
         mvp_scored = _score_mvp(mvp_pool)
         out_markets[mvp_key] = _render_market(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
-            top_n=30, filter_actionable=True)
+            top_n=70)
 
         # CY
         cy_key = f"{league}_CY"
@@ -824,7 +882,7 @@ def main():
         cy_scored = _score_cy(cy_pool)
         out_markets[cy_key] = _render_market(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=15)
+            top_n=70)
 
         # ROY
         roy_key = f"{league}_ROY"
@@ -833,7 +891,7 @@ def main():
         roy_scored = _score_roy(pool_h, pool_p)
         out_markets[roy_key] = _render_market(
             roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
-            top_n=12)
+            top_n=50)
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
