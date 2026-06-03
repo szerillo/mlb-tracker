@@ -658,20 +658,20 @@ def _roy_pool(hitters, pitchers, league, odds_players):
 
 # ── Compute composite scores per market ────────────────────────────────────
 def _score_mvp(pool):
-    """Cross-pool MVP scoring so pitchers compete fairly with hitters.
-
-    Hitters get the full V5.1 counting-stat composite; pitchers get a
-    WAR-only within-pool composite (they can't post OPS/HR/RBI). Each side's
-    within-pool composite is z-normalized to its own pool, then merged with a
-    raw-combined-WAR cross term:  score = 0.55·within_z + 0.45·war_z. The WAR
-    anchor keeps aces below the elite-WAR hitters (realistic longshots) while
-    still surfacing them as candidates."""
+    """WAR-anchored MVP scoring. Raw combined WAR (comparable across hitters &
+    pitchers) is the backbone, so a 3-WAR leader like Ohtani separates from the
+    field instead of being flattened. The hitter counting-stat composite
+    (V5.1 weights) enters only as a modest tiebreaker AMONG hitters — it no
+    longer gets z-normalized per side, which previously put the #1 pitcher on
+    equal footing with the #1 hitter and both inflated pitchers and suppressed
+    the WAR leader."""
     if not pool: return []
     hitters  = [p for p in pool if p.get("side") == "hit"]
     pitchers = [p for p in pool if p.get("side") == "pit"]
     w = _atc_weight()
 
-    # Hitter within-pool composite: counting-stat weighted z + ATC + team bonus
+    # Hitter narrative composite (counting stats + ATC), z-normalized among
+    # hitters only -> a tiebreaker layered on top of the WAR backbone.
     h_within = []
     if hitters:
         base_z = _weighted_z([p["stats"] for p in hitters], MVP_WEIGHTS)
@@ -682,27 +682,17 @@ def _score_mvp(pool):
             atc_adj = w * (0.20 * _zscore(p["atc"]["dim"], dim_pool)
                          + 0.10 * _zscore(p["atc"]["skew"], skew_pool)
                          - 0.10 * _zscore(p["atc"]["vol"], vol_pool))
-            h_within.append(base_z[i] + atc_adj + p["team_bonus"])
-
-    # Pitcher within-pool composite: WAR-only (per user) + team bonus
-    p_within = []
-    if pitchers:
-        war_pool = [p["stats"]["war"] for p in pitchers]
-        for p in pitchers:
-            p_within.append(_zscore(p["stats"]["war"], war_pool) + p["team_bonus"])
-
-    # z-normalize each side's within composite so the scales are comparable
+            h_within.append(base_z[i] + atc_adj)
     h_within_z = [_zscore(x, h_within) for x in h_within]
-    p_within_z = [_zscore(x, p_within) for x in p_within]
-    for i, p in enumerate(hitters):  p["_within_z"] = h_within_z[i]
-    for i, p in enumerate(pitchers): p["_within_z"] = p_within_z[i]
+    for i, p in enumerate(hitters):  p["_hbonus"] = h_within_z[i]
+    for p in pitchers:               p["_hbonus"] = 0.0
 
-    # Cross-pool WAR anchor across everyone
+    # WAR backbone across the whole pool (hitter + pitcher WAR are comparable).
     war_all = [p["combined_war"] for p in pool]
     out = []
     for p in pool:
         warz  = _zscore(p["combined_war"], war_all)
-        score = 0.55 * p["_within_z"] + 0.45 * warz
+        score = warz + 0.25 * p["_hbonus"] + p["team_bonus"]
         out.append({**p, "score": score})
     return out
 
@@ -814,9 +804,14 @@ def _render_market(scored, market_key, market_meta, top_n):
         elif edge >= 0.02:       stars = "★★"
         elif edge >= 0.005:      stars = "★"
         else:                    stars = ""
-        # Display filter (all markets): evaluate a big field, but only SHOW
-        # players with a model win probability ≥ 1% to win the award.
-        if p_mod < 0.01:
+        # Display filter (all markets): evaluate a big field, but SHOW a player
+        # if EITHER (a) they have ≥ 1% model chance to win the award, OR
+        # (b) they're a longshot (<1%) carrying a positive edge vs the market
+        # (good +EV value) — important for ROY where value rookies sit at long
+        # odds. The edge floor (0.0005) keeps a +0.0%-rounding edge from
+        # sneaking in.
+        keep = (p_mod >= 0.01) or (edge is not None and edge >= 0.0005)
+        if not keep:
             continue
         results.append({
             "name":         x["player"].get("name"),
