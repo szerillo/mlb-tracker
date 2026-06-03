@@ -1561,6 +1561,114 @@
      interior aligns top so the SP label sits in the same spot regardless. */
   .lu-sp { min-height: 84px; align-content: start; }
   .lu-sp-left { align-content: start; }
+
+  /* ============================================================================
+     EMBED MODE — iframe-friendly chromeless view (WordPress embed support)
+     Triggered by ?embed=scoreboard or ?embed=game URL params. The bootstrap
+     script at the bottom adds .embed-mode + .embed-{scoreboard,game} to body.
+     ============================================================================ */
+  body.embed-mode {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  body.embed-mode > header,
+  body.embed-mode > footer,
+  body.embed-mode .tabs,
+  body.embed-mode .tabs-hint,
+  body.embed-mode .ctrl-date-label,
+  body.embed-mode .ctrl-showing,
+  body.embed-mode #datePicker,
+  body.embed-mode #showingLabel,
+  body.embed-mode #refreshBtn,
+  body.embed-mode #prevDayBtn,
+  body.embed-mode #nextDayBtn,
+  body.embed-mode #todayBtn,
+  body.embed-mode #updated,
+  body.embed-mode #theme-toggle,
+  body.embed-mode .methodology-note,
+  body.embed-mode .top-bar {
+    display: none !important;
+  }
+  /* Hide every tab except #tab-scoreboard by default */
+  body.embed-mode #tab-env,
+  body.embed-mode #tab-pitchers,
+  body.embed-mode #tab-lineups,
+  body.embed-mode #tab-bullpen,
+  body.embed-mode #tab-rankings,
+  body.embed-mode #tab-team-rankings,
+  body.embed-mode #tab-proj,
+  body.embed-mode #tab-futures,
+  body.embed-mode #tab-player-futures,
+  body.embed-mode #tab-winprob,
+  body.embed-mode #tab-luck {
+    display: none !important;
+  }
+  body.embed-mode #tab-scoreboard {
+    display: block !important;
+    padding: 0.5rem !important;
+  }
+  /* embed=game: scoreboard hidden, modal is the only content */
+  body.embed-mode.embed-game #tab-scoreboard {
+    display: none !important;
+  }
+  /* When modal is active in ANY embed mode, render it inline so the iframe
+     auto-resize via postMessage measures the modal in document flow rather
+     than as a position:fixed overlay (which scrollHeight ignores). */
+  body.embed-mode .modal-bg.active {
+    position: static !important;
+    background: transparent !important;
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  body.embed-mode .modal-bg.active .modal {
+    position: static !important;
+    max-width: 1100px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border-radius: 8px;
+  }
+  /* In embed=scoreboard: hide scoreboard list while modal is open (clean
+     takeover — user navigates via modal prev/next arrows). */
+  body.embed-mode.embed-scoreboard:has(.modal-bg.active) #tab-scoreboard {
+    display: none !important;
+  }
+  /* In embed=game: no navigation between games — locked to the URL slug */
+  body.embed-mode.embed-game .modal-nav,
+  body.embed-mode.embed-game .modal-close,
+  body.embed-mode.embed-game .modal-counter {
+    display: none !important;
+  }
+  /* Mobile polish for embed mode — iOS Safari touch targets + tighter padding
+     on small screens. The base site already has @media queries down to 600px
+     for the modal interior; these just clean up the outer embed shell. */
+  @media (max-width: 600px) {
+    body.embed-mode #tab-scoreboard {
+      padding: 0.25rem !important;
+    }
+    body.embed-mode .modal-bg.active .modal {
+      padding: 1rem 0.7rem 1.2rem !important;
+      border-radius: 6px;
+    }
+    /* Finger-friendly close button in embed-scoreboard mode (Apple HIG 44pt) */
+    body.embed-mode.embed-scoreboard .modal-close {
+      font-size: 1.8rem !important;
+      padding: 0.5rem 0.75rem !important;
+      top: 0.25rem !important;
+      right: 0.25rem !important;
+    }
+    /* Modal nav arrows already shrink to 34x60 below 900px in the base CSS —
+       keep them, they're tap-able. Just nudge them out of the way of content. */
+    body.embed-mode.embed-scoreboard .modal-nav.prev { left: 0 !important; }
+    body.embed-mode.embed-scoreboard .modal-nav.next { right: 0 !important; }
+  }
 </style>
 </head>
 <body>
@@ -7897,11 +8005,116 @@ document.getElementById("datePicker").onchange = (e) => { if (e.target.value) lo
 document.addEventListener("click", spTrendDelegate);
 document.addEventListener("click", hitTrendDelegate);
 
-loadToday();
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") loadForDate(VIEW_DATE || today());
-});
-window.addEventListener("focus", () => loadForDate(VIEW_DATE || today()));
+// ============================================================================
+// EMBED MODE BOOT — iframe-friendly chromeless view for WordPress
+//   ?embed=scoreboard&date=YYYY-MM-DD              → daily scoreboard
+//   ?embed=game&date=YYYY-MM-DD&matchup=AWY-HME    → single-game modal
+//                                       &g=2      → 2nd game of a doubleheader
+//                                       &pk=...   → game_pk fallback (unambiguous)
+// In embed mode, the body gets .embed-mode + .embed-{scoreboard,game} classes
+// (CSS hides chrome). On every content size change, we postMessage the parent
+// window with {type:'mlb-tracker-resize', height: N} so the iframe auto-grows
+// when a modal opens and auto-shrinks when it closes.
+// ============================================================================
+(function bootEmbedOrNormal() {
+  const params = new URLSearchParams(location.search);
+  const embed = params.get('embed');
+
+  if (!embed) {
+    // Normal site boot — unchanged behavior
+    loadToday();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") loadForDate(VIEW_DATE || today());
+    });
+    window.addEventListener("focus", () => loadForDate(VIEW_DATE || today()));
+    return;
+  }
+
+  // --- Embed mode ---
+  document.body.classList.add('embed-mode', 'embed-' + embed);
+
+  // postMessage auto-resize. ResizeObserver covers most cases; the burst poll
+  // + slow poll cover async data renders the observer misses (charts, etc).
+  let lastH = 0;
+  function sendHeight() {
+    const h = Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight
+    );
+    if (Math.abs(h - lastH) > 4) {
+      try {
+        window.parent.postMessage(
+          { type: 'mlb-tracker-resize', height: h, embed: embed },
+          '*'
+        );
+      } catch (e) { /* parent gone */ }
+      lastH = h;
+    }
+  }
+  try { new ResizeObserver(sendHeight).observe(document.body); } catch (e) {}
+  // Burst poll for the first 8 seconds (covers async data loads)
+  let ticks = 0;
+  const burst = setInterval(() => {
+    sendHeight();
+    if (++ticks > 80) clearInterval(burst);
+  }, 100);
+  // Persistent slow poll so modal open/close + tab switches always sync
+  setInterval(sendHeight, 1500);
+
+  // Hook closeModal so we shrink immediately when modal closes (don't wait
+  // for the next slow poll tick). The CSS keeps the modal inline-flow while
+  // active, so closing it shrinks document height immediately.
+  if (typeof closeModal === 'function') {
+    const origClose = closeModal;
+    window.closeModal = function patchedClose() {
+      const r = origClose.apply(this, arguments);
+      setTimeout(sendHeight, 50);
+      return r;
+    };
+  }
+
+  // Boot data, then auto-open the requested modal if embed=game
+  (async function bootEmbedData() {
+    const reqDate = params.get('date');
+    try {
+      await loadForDate(reqDate || today());
+    } catch (e) {
+      console.error('Embed boot loadForDate failed:', e);
+      return;
+    }
+
+    if (embed === 'game') {
+      const matchup = (params.get('matchup') || '').toUpperCase();
+      const gIdx = Math.max(1, parseInt(params.get('g') || '1', 10));
+      const pk = params.get('pk');
+      let game = null;
+      if (pk) {
+        game = CURRENT_GAMES.find(x => String(x.gamePk) === String(pk));
+      } else if (matchup) {
+        const [away, home] = matchup.split('-');
+        const matches = CURRENT_GAMES.filter(x => {
+          const a = (x.teams.away.team.abbreviation || teamAbbr(x.teams.away.team.name)).toUpperCase();
+          const h = (x.teams.home.team.abbreviation || teamAbbr(x.teams.home.team.name)).toUpperCase();
+          return a === away && h === home;
+        });
+        game = matches[gIdx - 1] || matches[0];
+      }
+      if (game) {
+        try { await openModal(game); }
+        catch (e) { console.error('Embed openModal failed:', e); }
+      } else {
+        const list = document.getElementById('scoreboard-list');
+        if (list) {
+          list.innerHTML = '<div style="padding:1rem;color:#a33;text-align:center;font-family:system-ui,sans-serif">' +
+            'No game found for <strong>' + (matchup || ('pk=' + pk)) + '</strong> on ' +
+            (reqDate || today()) + '.</div>';
+          list.style.display = 'block';
+        }
+      }
+    }
+    sendHeight();
+  })();
+})();
 </script>
 <script>
 // Light / dark theme toggle — persists across reloads via localStorage.
