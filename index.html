@@ -1304,6 +1304,41 @@
   .se-edge { font-weight: 600; }
   .se-edge.pos { color: var(--tier-good); }
   .se-edge.neg { color: var(--tier-bad); }
+  .se-summary{display:flex;justify-content:space-between;gap:8px;margin:0.5rem 0 0.4rem;text-align:center;}
+  .se-sum-col{flex:1;}
+  .se-sum-ab{font-size:0.7rem;color:var(--muted);letter-spacing:0.04em;}
+  .se-sum-runs{font-size:1.4rem;font-weight:700;color:var(--text);}
+  .se-sum-sub{font-size:0.72rem;color:var(--muted);}
+  .se-sum-mid .se-sum-runs{color:var(--accent);}
+  .apx-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .apx-toggle{background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:5px 11px;border-radius:6px;cursor:pointer;}
+  .apx-toggle:hover{border-color:var(--accent);color:var(--accent);}
+  .apx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;}
+  .apx-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .15s,background .15s;}
+  .apx-card:hover{background:var(--panel-hover);border-color:var(--accent);}
+  .apx-head{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-bottom:8px;}
+  .apx-center{display:flex;align-items:center;gap:6px;}
+  .apx-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;}
+  .apx-abbr{font-size:0.95rem;font-weight:700;color:var(--text);}
+  .apx-fair{font-size:0.8rem;color:var(--muted);}
+  .apx-wp{font-size:0.72rem;color:var(--muted);}
+  .apx-wp.apx-wp-fav{color:var(--text);font-weight:600;}
+  .apx-mid{text-align:center;min-width:120px;}
+  .apx-runs{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:1.45rem;font-weight:700;color:var(--text);}
+  .apx-runs-lbl,.apx-final-lbl{font-size:0.58rem;font-weight:600;color:var(--muted);letter-spacing:0.04em;line-height:1.05;}
+  .apx-total{font-size:0.78rem;color:var(--muted);margin-top:3px;}
+  .apx-noproj{font-size:0.78rem;color:var(--muted);padding:10px 0;}
+  .apx-edgebar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;border-top:1px solid var(--border);padding-top:8px;}
+  .apx-pill{font-size:0.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-hover);color:var(--muted);}
+  .apx-edge-strong{background:rgba(110,255,148,.14);color:var(--tier-good);}
+  .apx-edge-mild{color:var(--text);}
+  .apx-tot{font-size:0.74rem;color:var(--muted);font-weight:600;}
+  .apx-tot.apx-tot-strong{color:var(--tier-bad);}
+  .apx-extra{display:none;margin-top:9px;border-top:1px dashed var(--border);padding-top:8px;font-size:0.72rem;color:var(--muted);}
+  .apx-grid.apx-detailed .apx-extra{display:block;}
+  .apx-extra-row{display:flex;justify-content:space-between;gap:8px;margin:2px 0;}
+  .apx-extra-row span:last-child{color:var(--text);}
+  .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
 
   /* Action Network PRO projections banner above scoreboard */
   .an-proj-banner { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
@@ -2368,6 +2403,9 @@ function sheetProjForGame(game_pk){
   if(eid!=null && SHEET_PROJ.byEid && SHEET_PROJ.byEid[eid]) return SHEET_PROJ.byEid[eid];
   return null;
 }
+let APX_DETAILED=false;
+function _apxFair(v){return v==null?'—':(v>0?'+'+v:''+v);}
+
 function renderSheetEdgesHTML(game){
   const sp=sheetProjForGame(game.gamePk);
   if(!sp) return '<div class="coming-soon">No projection uploaded for this game yet.</div>';
@@ -2377,6 +2415,15 @@ function renderSheetEdgesHTML(game){
   const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
   const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
   const dv=devigTwoWay(aO,hO); const mA=dv[0],mH=dv[1];
+  const f=v=>v==null?'—':(v>0?'+'+v:''+v);
+  let summary='';
+  if(sp.away_runs!=null&&sp.home_runs!=null){
+    summary='<div class="se-summary">'+
+      '<div class="se-sum-col"><div class="se-sum-ab">'+awayAbbr+'</div><div class="se-sum-runs">'+sp.away_runs.toFixed(2)+'</div><div class="se-sum-sub">'+f(sp.ml_away)+' · '+(sp.away_wp!=null?Math.round(sp.away_wp*100)+'%':'—')+'</div></div>'+
+      '<div class="se-sum-col se-sum-mid"><div class="se-sum-ab">TOTAL</div><div class="se-sum-runs">'+(sp.total!=null?sp.total.toFixed(2):'—')+'</div><div class="se-sum-sub">projected</div></div>'+
+      '<div class="se-sum-col"><div class="se-sum-ab">'+homeAbbr+'</div><div class="se-sum-runs">'+sp.home_runs.toFixed(2)+'</div><div class="se-sum-sub">'+f(sp.ml_home)+' · '+(sp.home_wp!=null?Math.round(sp.home_wp*100)+'%':'—')+'</div></div>'+
+    '</div>';
+  }
   let mlPills='';
   if(sp.away_wp!=null && sp.home_wp!=null){
     const favAway=sp.away_wp>=sp.home_wp;
@@ -2384,10 +2431,9 @@ function renderSheetEdgesHTML(game){
     const projWP=favAway?sp.away_wp:sp.home_wp;
     const mktWP=favAway?mA:mH;
     const edge=(mktWP!=null)?(projWP-mktWP)*100:null;
-    const fair=favAway?sp.ml_away:sp.ml_home;
     const cls=edge!=null&&edge>=0?'pos':'neg';
     mlPills='<div class="se-row"><span class="se-k">Moneyline</span>'+
-      '<span class="se-v">'+ab+' '+Math.round(projWP*100)+'%'+(fair!=null?' (fair '+(fair>0?'+':'')+fair+')':'')+'</span>'+
+      '<span class="se-v">'+ab+' '+Math.round(projWP*100)+'% to win</span>'+
       '<span class="se-edge '+cls+'">'+(edge==null?'—':(edge>=0?'+':'')+edge.toFixed(1)+'% vs mkt')+'</span></div>';
   }
   const line=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:(o&&o.total&&o.total.under?o.total.under.line:null);
@@ -2406,8 +2452,92 @@ function renderSheetEdgesHTML(game){
       '<span class="se-v">'+awayAbbr+' '+sp.away_runs.toFixed(2)+' · '+homeAbbr+' '+sp.home_runs.toFixed(2)+'</span>'+
       '<span class="se-edge"></span></div>';
   }
-  return '<div class="sheet-edges">'+mlPills+totPill+ttPill+'</div>';
+  return summary+'<div class="sheet-edges">'+mlPills+totPill+ttPill+'</div>';
 }
+
+function _apxEdgeBar(g){
+  const sp=sheetProjForGame(g.gamePk); const o=oddsForGame(g.gamePk);
+  if(!sp) return '';
+  const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
+  const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
+  const dv=devigTwoWay(aO,hO); const mA=dv[0],mH=dv[1];
+  let ml='<span class="apx-pill">ML —</span>';
+  if(sp.away_wp!=null&&sp.home_wp!=null&&mA!=null&&mH!=null){
+    const eA=(sp.away_wp-mA)*100, eH=(sp.home_wp-mH)*100;
+    const bestAway=eA>=eH; const edge=bestAway?eA:eH;
+    const ab=bestAway?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name);
+    const cls=edge>=3?'apx-edge-strong':(edge>=1?'apx-edge-mild':'');
+    ml='<span class="apx-pill '+cls+'">'+ab+' ML '+(edge>=0?'+':'')+edge.toFixed(1)+'%</span>';
+  }
+  const line=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:(o&&o.total&&o.total.under?o.total.under.line:null);
+  let tot='';
+  if(sp.total!=null){
+    const po=(typeof pgPOver==='function')?pgPOver(line,sp.total,1.5):null;
+    if(po!=null){ const over=po>=0.5; const strong=Math.abs(po-0.5)>=0.04;
+      tot='<span class="apx-tot '+(strong?'apx-tot-strong':'')+'">'+(over?'Over':'Under')+' '+line+' · '+Math.round(po*100)+'%</span>';
+    } else { tot='<span class="apx-tot">proj '+sp.total.toFixed(2)+'</span>'; }
+  }
+  return '<div class="apx-edgebar">'+ml+tot+'</div>';
+}
+
+function apxCardHTML(g){
+  const away=g.teams.away.team.name, home=g.teams.home.team.name;
+  const aAb=g.teams.away.team.abbreviation||teamAbbr(away);
+  const hAb=g.teams.home.team.abbreviation||teamAbbr(home);
+  const aId=g.teams.away.team.id, hId=g.teams.home.team.id;
+  const status=g.status.detailedState;
+  const isFinal=status==="Final"||status==="Game Over";
+  const sp=sheetProjForGame(g.gamePk);
+  const o=oddsForGame(g.gamePk);
+  const wpChip=isFinal?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
+  const head='<div class="apx-head"><span>'+aAb+' @ '+hAb+'</span><span class="apx-time">'+(isFinal?status:fmtTime(g.gameDate))+wpChip+'</span></div>';
+  let center;
+  if(isFinal && g._finalScore){
+    const fs=g._finalScore;
+    center='<div class="apx-center">'+
+      '<div class="apx-team">'+teamLogo(aId,34)+'<span class="apx-abbr">'+aAb+'</span></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+fs.away+'</span><span class="apx-final-lbl">FINAL</span><span>'+fs.home+'</span></div></div>'+
+      '<div class="apx-team">'+teamLogo(hId,34)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
+  } else if(sp){
+    const aFav=sp.away_wp>=sp.home_wp;
+    center='<div class="apx-center">'+
+      '<div class="apx-team">'+teamLogo(aId,40)+'<span class="apx-abbr">'+aAb+'</span><span class="apx-fair">'+_apxFair(sp.ml_away)+'</span><span class="apx-wp'+(aFav?' apx-wp-fav':'')+'">'+Math.round(sp.away_wp*100)+'%</span></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+sp.total.toFixed(2)+'</div></div>'+
+      '<div class="apx-team">'+teamLogo(hId,40)+'<span class="apx-abbr">'+hAb+'</span><span class="apx-fair">'+_apxFair(sp.ml_home)+'</span><span class="apx-wp'+(!aFav?' apx-wp-fav':'')+'">'+Math.round(sp.home_wp*100)+'%</span></div></div>';
+  } else {
+    center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,40)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No projection yet</div></div><div class="apx-team">'+teamLogo(hId,40)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
+  }
+  const edge=(!isFinal&&sp)?_apxEdgeBar(g):'';
+  const aSP=g.teams.away.probablePitcher?shortName(g.teams.away.probablePitcher.fullName):'TBD';
+  const hSP=g.teams.home.probablePitcher?shortName(g.teams.home.probablePitcher.fullName):'TBD';
+  const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
+  const hML=o&&o.moneyline&&o.moneyline.home?o.moneyline.home:null;
+  const mlMkt=(aML&&hML)?(_apxFair(aML.odds)+' / '+_apxFair(hML.odds)):'—';
+  const line=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:'—';
+  let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
+  const hp=umpByType(g._officials,"Home Plate");
+  const ump=hp?hp.split(' ').slice(-1)[0]:(g._projectedHP?g._projectedHP.name.split(' ').slice(-1)[0]+' (proj)':'TBD');
+  const extra='<div class="apx-extra">'+
+    '<div class="apx-extra-row"><span>SP</span><span>'+aSP+' vs '+hSP+'</span></div>'+
+    '<div class="apx-extra-row"><span>Market ML</span><span>'+mlMkt+'</span></div>'+
+    '<div class="apx-extra-row"><span>Market total</span><span>O/U '+line+'</span></div>'+
+    '<div class="apx-extra-row"><span>Park runs</span><span>'+(pfPct==null||isNaN(pfPct)?'—':(pfPct>=0?'+':'')+pfPct.toFixed(0)+'%')+'</span></div>'+
+    '<div class="apx-extra-row"><span>HP ump</span><span>'+ump+'</span></div>'+
+  '</div>';
+  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+center+edge+extra+'</div>';
+}
+
+function renderScoreboard(){
+  const el=document.getElementById("scoreboard-list");
+  if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
+  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
+  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(apxCardHTML).join("")+'</div>';
+  const tg=document.getElementById('apx-toggle');
+  if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
+  el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
+  el.querySelectorAll(".sb-wp-chip").forEach(chip=>{ const jump=(e)=>{ e.preventDefault(); e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; chip.onclick=jump; chip.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" ")jump(e); }; });
+}
+
 
 function renderPregameDetailHTML(game, pg) {
   if (!pg) return '<div class="coming-soon">Pre-game model not ready (lineups + probable SPs needed)</div>';
@@ -3286,218 +3416,6 @@ function pctChip(pct, label, title) {
   const sign = pct >= 0 ? "+" : "";
   return `<span class="sb-pct-chip ${cls}" title="${title}">
     <span class="pct-label">${label}</span>${sign}${pct.toFixed(1)}%</span>`;
-}
-
-function renderScoreboard() {
-  const el = document.getElementById("scoreboard-list");
-  if (!CURRENT_GAMES.length) {
-    el.innerHTML = `<div class="empty">No games scheduled today.</div>`;
-    return;
-  }
-
-  let html = `<table class="sb-table">
-    <colgroup>
-      <col class="sb-col-hide-mobile" style="width:17%">
-      <col style="width:28%">
-      <col class="sb-col-hide-mobile" style="width:17%">
-      <col style="width:10%">
-      <col style="width:13%">
-      <col class="sb-col-hide-mobile" style="width:15%">
-    </colgroup>
-    <thead><tr>
-      <th class="sb-col-hide-mobile">Away SP</th>
-      <th>Matchup</th>
-      <th class="sb-col-hide-mobile">Home SP</th>
-      <th>Total</th>
-      <th title="Runs Park Factor (Savant 3-yr) + blended Weather runs adj — both ±%">Runs PF / Wx</th>
-      <th class="sb-col-hide-mobile">HP Ump</th>
-    </tr></thead><tbody>`;
-
-  CURRENT_GAMES.forEach(g => {
-    const away = g.teams.away.team.name;
-    const home = g.teams.home.team.name;
-    const awayAbbr = g.teams.away.team.abbreviation || teamAbbr(away);
-    const homeAbbr = g.teams.home.team.abbreviation || teamAbbr(home);
-    const awayId = g.teams.away.team.id;
-    const homeId = g.teams.home.team.id;
-    const status = g.status.detailedState;
-    const statusCls = (status === "Final" || status === "Game Over") ? ""
-      : status === "In Progress" ? "sb-status-live" : "";
-
-    const hp = umpByType(g._officials, "Home Plate");
-    const projHP = g._projectedHP;
-    const pf = parkFactorFor(homeAbbr);
-    const o = oddsForGame(g.gamePk);
-    const aML = o?.moneyline?.away;
-    const hML = o?.moneyline?.home;
-    const mlCls = (ml) => !ml ? "empty" : (ml.odds < 0 ? "fav" : "dog");
-    const mlFmt = (ml) => ml
-      ? `<span class="ml-paren ${mlCls(ml)}" title="${ml.book}">(${ml.odds>0?'+':''}${ml.odds})</span>`
-      : `<span class="ml-paren empty">(—)</span>`;
-
-    // Scores (if final) sit next to team logos; odds remain in parens between teams.
-    // For Final games we ALSO surface the deserved runs from bartolo_wp in parens
-    // next to the actual — gives a glance at whether the score reflected the
-    // quality of play. Falls back to plain actual until bartolo_wp loads.
-    const isFinal = status === "Final" || status === "Game Over";
-    const fs = g._finalScore;
-    const wpSim = (isFinal && WINPROB_DATA?.games) ? WINPROB_DATA.games[String(g.gamePk)] : null;
-    const awayDes = wpSim?.away_deserved_runs;
-    const homeDes = wpSim?.home_deserved_runs;
-    // Plain actual scores next to logos (no inline deserved chip per Sean).
-    const awayScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.away > fs.home ? 'win' : 'loss'}">${fs.away}</span>` : "";
-    const homeScoreHTML = (isFinal && fs)
-      ? `<span class="sb-score ${fs.home > fs.away ? 'win' : 'loss'}">${fs.home}</span>` : "";
-    // Deserved-runs row — appears BELOW the actual score line, above the
-    // Final → WP link. Empty until WINPROB_DATA loads in the background.
-    const desRow = (isFinal && awayDes != null && homeDes != null)
-      ? `<div class="sb-des-row" title="Deserved runs from BARTOLO sim — calibrated quality-of-contact expectation (luck/sequencing removed). Compare to actual to see who out-hit / under-hit their result.">xR ${awayDes.toFixed(1)} – ${homeDes.toFixed(1)}</div>`
-      : '';
-    // On Final rows, append a "→ WP" chip that jumps to the Win Prob tab with
-    // this game pre-selected. Click handler attached below alongside row clicks.
-    const wpChip = isFinal
-      ? ` <span class="sb-wp-chip" data-wp-pk="${g.gamePk}" role="button" tabindex="0" title="Open post-game win-probability detail">→ WP</span>`
-      : '';
-    const bottomLine = isFinal
-      ? `<span class="${statusCls}">${status}</span>${wpChip}`
-      : `<span class="${statusCls}">${status}</span> · ${fmtTime(g.gameDate)}`;
-    // Pre-game model projection (predictive). For upcoming games we surface a
-    // row right under the matchup — projected score, win prob for the favorite,
-    // projected total — with edge pills comparing the model to the live market.
-    let pg = null;
-    // Skip computing pre-game for Finals entirely — the deserved chip above
-    // is what matters there, and Sean's pref is "dont need to put WP for all
-    // of them" (i.e. don't crowd the row with a pre-game pred we can't act on).
-    if (!isFinal) {
-      try { pg = computePregame(g); } catch (e) {}
-    }
-    let pgRow = "";
-    if (pg && !isFinal) {
-      const favHome = pg.homeWP >= 0.5;
-      const favAb = favHome ? homeAbbr : awayAbbr;
-      const favPct = Math.round(Math.max(pg.homeWP, pg.awayWP) * 100);
-      const wpCls = favPct >= 60 ? "pg-strong" : "";
-      // Compact chip only — full projected score / total / market edges live in the Projections tab.
-      const tip = `Pre-game model: ${favAb} ${favPct}% to win · proj ${awayAbbr} ${pg.awayRuns.toFixed(1)}–${pg.homeRuns.toFixed(1)} ${homeAbbr} (HFA-adjusted) · total ${pg.total.toFixed(1)} (home truncated for 9th-inning skip)${pg.confirmed ? '' : ' · projected lineup'}.`;
-      pgRow = `<div class="sb-pg-row">
-        <span class="sb-pg-wp ${wpCls}" title="${tip}">Proj ${favAb} ${favPct}%</span>${pg.confirmed ? '' : '<span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}
-      </div>`;
-    }
-
-    // Odds on the OUTSIDE (edges), scores (if any) INSIDE next to team abbrs
-    const matchHTML = `
-      <div class="sb-teams-line">
-        ${mlFmt(aML)}
-        <span class="team">${teamLogo(awayId,26)}<span class="abbr">${awayAbbr}</span>${awayScoreHTML}</span>
-        <span class="sb-at">@</span>
-        <span class="team">${homeScoreHTML}<span class="abbr">${homeAbbr}</span>${teamLogo(homeId,26)}</span>
-        ${mlFmt(hML)}
-      </div>
-      ${desRow}
-      <div class="sb-time-row">${bottomLine}</div>
-      ${pgRow}`;
-
-    const tOver = o?.total?.over, tUnder = o?.total?.under;
-    let totalCell = `<span class="sb-empty">—</span>`;
-    if (tOver) {
-      // Compute juice-adjusted implied total. De-vig over/under American
-      // odds → fair probability, then nudge the line by (p_over - 0.5) * K.
-      // K=12 calibrates 8.5 -120/+100 ≈ 8.75, -130/+110 ≈ 9.0 (matches the
-      // book-implied "true" line). When the lines differ, anchor to over.
-      const impliedTotal = (() => {
-        if (tOver.odds == null) return null;
-        if (!tUnder || tUnder.odds == null) return null;
-        const ap = o => o > 0 ? 100 / (o + 100) : -o / (-o + 100);
-        const op = ap(tOver.odds), up = ap(tUnder.odds);
-        if (!op || !up) return null;
-        const norm_over = op / (op + up);
-        const base = tOver.line;
-        if (base == null) return null;
-        return base + (norm_over - 0.5) * 12;
-      })();
-      const implTitle = impliedTotal != null
-        ? ` · juice-adj implied total ≈ ${impliedTotal.toFixed(2)}` : '';
-      totalCell = `<span class="sb-total-line" title="${tOver.book}${implTitle}">O ${tOver.line}</span> <span class="sb-total-odds" title="${tOver.book}${implTitle}">${tOver.odds>0?'+':''}${tOver.odds}</span>`;
-      if (tUnder) totalCell += `<br><span class="sb-total-line" title="${tUnder.book}${implTitle}">U ${tUnder.line}</span> <span class="sb-total-odds" title="${tUnder.book}${implTitle}">${tUnder.odds>0?'+':''}${tUnder.odds}</span>`;
-      // Surface the juice-adjusted implied total inline if it diverges from
-      // the posted line by ≥ 0.15. Keeps the column compact when totals are
-      // balanced -110/-110 (no divergence) but shows the truth when one side
-      // is juiced (8.5 -130/+110 ≈ 9.0 implied).
-      if (impliedTotal != null && Math.abs(impliedTotal - tOver.line) >= 0.15) {
-        totalCell += `<br><span class="sb-total-impl" title="De-vig over/under → fair implied total. Reflects the book's true number once the juice is stripped.">≈ ${impliedTotal.toFixed(2)}</span>`;
-      }
-    }
-
-    // PF / Wx stacked — both expressed as ±%
-    const pfPct = parkFactorRunsPct(pf);
-    const pfTitle = pf ? `${pf.venue} · Baseball Savant 3-yr rolling runs PF (100=avg)` : "No park factor data";
-    const pfChip = pctChip(pfPct, "PF", pfTitle);
-
-    const wxInfo = blendedWxPct(g);
-    let wxChip;
-    if (wxInfo.isDome) {
-      if (wxInfo.retractable && wxInfo.openValue != null) {
-        const ov = wxInfo.openValue;
-        const os = ov >= 0 ? "+" : "";
-        wxChip = `<span class="sb-wx-dome sb-wx-dual" title="Retractable roof — closed assumed (run adj 0). If the roof opens, the model adjustment is ${os}${ov.toFixed(1)}%.">🏟 0 · open ${os}${ov.toFixed(1)}%</span>`;
-      } else {
-        wxChip = `<span class="sb-wx-dome">🏟 DOME</span>`;
-      }
-    } else {
-      wxChip = pctChip(wxInfo.value, "Wx", "Blended weather runs adjustment");
-    }
-
-    // HP Ump: confirmed first, then projected fallback
-    let umpCell;
-    if (hp) {
-      umpCell = `<span class="sb-ump-name">${hp.split(" ").slice(-1)[0]}</span>${umpBadge(hp)}`;
-    } else if (projHP) {
-      umpCell = `<span class="sb-ump-name">${projHP.name.split(" ").slice(-1)[0]}</span>${umpBadge(projHP.name)}
-        <span class="sb-ump-proj">proj · ${projHP.projectedFrom}</span>`;
-    } else {
-      umpCell = `<span class="sb-empty">TBD</span>`;
-    }
-
-    html += `<tr class="sb-clickable" data-pk="${g.gamePk}">
-      <td class="sb-col-hide-mobile">${spMiniCell(g.teams.away.probablePitcher?.fullName, away, 'away')}</td>
-      <td class="sb-match-cell">${matchHTML}</td>
-      <td class="sb-col-hide-mobile">${spMiniCell(g.teams.home.probablePitcher?.fullName, home, 'home')}</td>
-      <td class="sb-total-cell">${totalCell}</td>
-      <td class="sb-pfwx-cell">
-        <div class="sb-pfwx-stack">${pfChip}${wxChip}</div>
-      </td>
-      <td class="sb-ump-cell sb-col-hide-mobile">${umpCell}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  el.innerHTML = html;
-
-  el.querySelectorAll("tr.sb-clickable").forEach(tr => {
-    tr.onclick = () => {
-      const pk = parseInt(tr.dataset.pk, 10);
-      const g = CURRENT_GAMES.find(x => x.gamePk === pk);
-      if (g) openModal(g);
-    };
-  });
-
-  // "→ WP" chip on Final rows: switch to Win Prob tab with this game selected.
-  // Must stopPropagation so the row-click modal doesn't also fire.
-  el.querySelectorAll(".sb-wp-chip").forEach(chip => {
-    const jumpToWP = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const pk = parseInt(chip.dataset.wpPk, 10);
-      if (!pk) return;
-      WINPROB_SELECTED = pk;
-      WINPROB_RENDERED = false;
-      const tabBtn = document.querySelector('.tab[data-tab="winprob"]');
-      if (tabBtn) tabBtn.click();
-      else renderWinprobTab();
-    };
-    chip.onclick = jumpToWP;
-    chip.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") jumpToWP(e); };
-  });
 }
 
 // ============================================================================
@@ -5810,16 +5728,8 @@ async function openModal(game) {
       <div class="m-venue-badge">${venueLine}</div>
     </div>
 
-    <div class="m-section-header"><span>Pre-Game Model</span>
-      <span class="right-note">projection · win prob · totals</span></div>
-    ${(() => {
-        let pg = null;
-        try { pg = computePregame(game); } catch (e) {}
-        return renderPregameDetailHTML(game, pg);
-    })()}
-
-    <div class="m-section-header"><span>Your Action PRO Projection</span>
-      <span class="right-note">ML &amp; totals edges vs market</span></div>
+    <div class="m-section-header"><span>Action PRO Projection</span>
+      <span class="right-note">proj score · fair odds · edges</span></div>
     ${renderSheetEdgesHTML(game)}
 
     <div class="m-section-header"><span>Best Odds</span>
@@ -7503,6 +7413,19 @@ function renderProjectionsTab() {
   const isPast = viewDate < today();
   if (isPast) {
     renderProjectionsArchive(viewDate, root);
+    return;
+  }
+
+  // Action PRO projections drive the "Today's slate" view (card grid).
+  if (PROJ_SUB !== 'backtest') {
+    const subtoggle = '<div class="proj-subtoggle">'+
+      '<button class="proj-sub-btn active" onclick="setProjSub(\'today\')">Today\'s slate</button>'+
+      '<button class="proj-sub-btn" onclick="setProjSub(\'backtest\')">Backtest</button></div>';
+    const ups = (CURRENT_GAMES || []);
+    if (!ups.length) { root.innerHTML = subtoggle + '<div class="wp-empty">No games scheduled today.</div>'; return; }
+    root.innerHTML = subtoggle + '<div class="apx-grid apx-detailed" id="proj-apx-grid">' + ups.map(apxCardHTML).join("") + '</div>';
+    root.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
+    root.querySelectorAll(".sb-wp-chip").forEach(chip=>{ chip.onclick=(e)=>{ e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; });
     return;
   }
   const games = (CURRENT_GAMES || []).filter(g => {
