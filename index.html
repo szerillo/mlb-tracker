@@ -909,6 +909,9 @@
   .m-sp-header .hand-tag { color: var(--muted); font-size: 0.78rem; font-weight: 600;
     margin-left: auto; }
   .m-sp-header .hand-tag.L { color: var(--tier-bad); }
+  .m-sp-wfip { font-size: 1.1rem; font-weight: 700; margin-left: 0.2rem; }
+  .m-sp-wfip.elite{color:var(--tier-elite);} .m-sp-wfip.good{color:var(--tier-good);} .m-sp-wfip.bad{color:var(--tier-bad);} .m-sp-wfip.worst{color:var(--tier-worst);}
+  .m-sp-rankbig .rank-chip{font-size:0.8rem;padding:0.12rem 0.55rem;}
   .m-sp-stats { display: flex; gap: 0.4rem; justify-content: space-between;
     margin: 0.25rem 0 0.4rem; }
   .m-sp-stats .sp-stat { flex: 1; text-align: center; padding: 0.2rem; }
@@ -1336,13 +1339,14 @@
   .apx-center{display:flex;align-items:center;gap:6px;}
   .apx-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;}
   .apx-abbr{font-size:0.95rem;font-weight:700;color:var(--text);}
-  .apx-fair{font-size:0.8rem;color:var(--muted);}
-  .apx-wp{font-size:0.72rem;color:var(--muted);}
+  .apx-fair{font-size:0.8rem;color:var(--accent);}
+  .apx-wp{font-size:0.72rem;color:var(--accent);}
   .apx-wp.apx-wp-fav{color:var(--text);font-weight:600;}
   .apx-mid{text-align:center;min-width:120px;}
   .apx-runs{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:1.45rem;font-weight:700;color:var(--text);}
   .apx-runs-lbl,.apx-final-lbl{font-size:0.58rem;font-weight:600;color:var(--muted);letter-spacing:0.04em;line-height:1.05;}
   .apx-total{font-size:0.78rem;color:var(--muted);margin-top:3px;}
+  .apx-proj-num{color:var(--accent);font-weight:700;}
   .apx-noproj{font-size:0.78rem;color:var(--muted);padding:10px 0;}
   .apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
   .apx-pill{font-size:0.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-hover);color:var(--muted);}
@@ -2616,7 +2620,7 @@ function apxCardHTML(g){
     const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
-      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+_juice+')</span>':'')+'</div></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total <span class="apx-proj-num">'+(sp.total!=null?sp.total.toFixed(2):'—')+'</span>'+(mktLine!=null?' <span class="apx-mkt">('+mktLine+_juice+')</span>':'')+'</div></div>'+
       team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.ml_home,sp.home_wp,!aFav)+
     '</div>';
   } else {
@@ -5307,7 +5311,7 @@ function renderSPStatRows(s, thr) {
   var wfipRow = wfipPill ? '<div class="m-sp-row"><div class="m-sp-row-label">Score</div><div class="m-sp-row-pills">' + wfipPill + '</div></div>' : '';
   // Sean's ask: don't show IP outside the per-start box-score table. The wFIP
   // row and component pills are enough headline; raw IP just clutters the card.
-  return wfipRow + row("Actual", actual) + row("Expected", expected)
+  return row("Actual", actual) + row("Expected", expected)
        + row("Pitching Model", pitchingModel) + row("Projections", projections);
 }
 
@@ -5713,8 +5717,10 @@ function renderSPBox(name, teamAbbrStr) {
   return `<div class="m-sp-box">
     <div class="m-sp-header">
       <span>${name}</span>
-      <span class="team-abbr">${teamAbbrStr}</span>${openerTag}${handTag}
-      ${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
+      <span class="team-abbr">${teamAbbrStr}</span>
+      ${(() => { const w=s.unified_score; if(w==null||w>=10) return ''; const wb=(thr.wfip||{elite:3.25,good:3.75,bad:4.25,worst:4.75}); const wc=tier(w,wb,false); return '<span class="m-sp-wfip '+wc+'" title="Weighted FIP — lower is better">wFIP <b>'+w.toFixed(2)+'</b></span>'; })()}
+      ${openerTag}${handTag}
+      <span class="m-sp-rankbig">${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</span>
     </div>
     ${renderSPStatRows(s, thr)}
     ${sp ? `<table class="m-sp-splits">
@@ -5921,14 +5927,7 @@ async function openModal(game) {
   const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
-    <div class="m-proj">
-      ${(() => {
-        let _lu='proj';
-        try{ const lg=lineupsForGame(game); const a=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const h=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(a==='confirmed'&&h==='confirmed')_lu='conf'; }catch(e){}
-        return '<div class="m-proj-status">'+(_lu==='conf'?'<span class="apx-lu conf">&#10003; Confirmed</span>':'<span class="apx-lu proj">&#9733; Projected</span>')+'</div>';
-      })()}
-      ${renderSheetEdgesHTML(game)}
-    </div>
+    <div class="apx-grid m-apx-wrap" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
 
     <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
     <div class="m-env-row">
