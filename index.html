@@ -1348,16 +1348,19 @@
   .apx-extra-row{display:flex;justify-content:space-between;gap:8px;margin:2px 0;}
   .apx-extra-row span:last-child{color:var(--text);}
   .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
-  .apx-head2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
+  .apx-head2{position:relative;text-align:center;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
+  .apx-luwrap{position:absolute;right:0;top:0;}
   .apx-lu{font-size:0.64rem;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;}
   .apx-lu.conf{background:rgba(78,195,124,0.16);color:var(--confirmed);}
   .apx-lu.proj{background:rgba(229,164,73,0.16);color:var(--projected);}
-  .apx-park{font-size:0.7rem;color:var(--muted);margin:0 0 9px;display:flex;align-items:center;justify-content:center;gap:5px 9px;flex-wrap:wrap;line-height:1.5;}
+  .apx-park{font-size:0.7rem;color:var(--muted);margin:0 0 9px;display:none;align-items:center;justify-content:center;gap:5px 9px;flex-wrap:wrap;line-height:1.5;}
+  .apx-grid.apx-detailed .apx-park{display:flex;}
   .apx-ump{color:var(--muted);}
   .apx-parkname{color:var(--text);}
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
-  .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:flex;flex-direction:column;gap:5px;}
+  .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
+  .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
   .apx-side-h{text-align:right;color:var(--text);}
@@ -2509,12 +2512,21 @@ function _apxHand(name){ try{ let h=null; if(typeof lookupSplits==='function'){c
 function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRank(name); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'sp'); } }catch(e){} return ''; }
 function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=getBullpenRank(id); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'bp'); } }catch(e){} return ''; }
 function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; if(!fd.teams[team]) return ''; const rows=(typeof _penRelievers==='function')?_penRelievers(fd.teams[team]):fd.teams[team]; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
+function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT; }catch(e){ return null; } }
+function _teamConLetter(players){ try{ if(typeof HITTERS==='undefined'||!HITTERS||!players||!players.length) return null; let wsum=0,tw=0; for(const p of players){ const h=HITTERS.hitters[normName(p.name||'')]; if(!h)continue; const k=(h.k_pct_actual!=null)?h.k_pct_actual:h.k_pct; if(k==null||k<0||k>80)continue; const slot=(p.order||0)-1; const delta=(slot>=0&&slot<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[slot]:0; const w=SLOT_BASE_PA+delta; wsum+=k*w; tw+=w; } if(tw<=0)return null; const k_pct=wsum/tw; const pctDisp=Math.max(1,Math.min(99,99-(k_pct-TEAM_K_BEST)/(TEAM_K_WORST-TEAM_K_BEST)*98)); return gradeLetter(pctDisp); }catch(e){ return null; } }
 function _apxTeamGrades(game,side){
   try{
-    if(typeof teamRankGradeLetter!=='function') return null;
     const t=game.teams[side].team; const abbr=t.abbreviation||teamAbbr(t.name);
-    return {off:teamRankGradeLetter(abbr,'off'), def:teamRankGradeLetter(abbr,'def'), bsr:teamRankGradeLetter(abbr,'bsr'),
-            con:teamRankGradeLetter(abbr,'con'), pow:teamRankGradeLetter(abbr,'pwr'), eye:teamRankGradeLetter(abbr,'eye')};
+    const lg=(typeof lineupsForGame==='function')?lineupsForGame(game):null;
+    const players=lg&&lg.lineups&&lg.lineups[side]?lg.lineups[side].players:null;
+    const out={con:null,pow:null,eye:null,bsr:null,def:null};
+    if(players&&players.length&&typeof teamGradePct==='function'&&typeof teamGradeLetter==='function'){
+      const pw=teamGradeLetter(teamGradePct(players,'pwr'),'pwr'); out.pow=pw?pw.letter:null;
+      const ey=teamGradeLetter(teamGradePct(players,'eye'),'eye'); out.eye=ey?ey.letter:null;
+      out.con=_teamConLetter(players);
+    }
+    if(typeof teamRankGradeLetter==='function'){ out.bsr=teamRankGradeLetter(abbr,'bsr'); out.def=teamRankGradeLetter(abbr,'def'); }
+    return out;
   }catch(e){ return null; }
 }
 
@@ -2565,15 +2577,15 @@ function apxCardHTML(g){
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
-  const head='<div class="apx-head2"><span class="apx-time2">'+(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''))+'</span>'+luChip+'</div>';
+  const head='<div class="apx-head2"><span class="apx-time2">'+(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''))+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
-  let umpName='', umpFac='';
-  try{ if(hp){ umpName=hp.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(hp):''; } else if(g._projectedHP){ umpName=g._projectedHP.name.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(g._projectedHP.name):''; } }catch(e){}
+  const hpFull=hp||(g._projectedHP&&g._projectedHP.name)||'';
+  let umpHtml='';
+  if(hpFull){ const _pp=hpFull.split(' '); const _last=_pp.slice(-1)[0]; const _init=_pp[0]?(_pp[0][0]+'. '):''; const _up=_umpPct(hpFull); const _uc=_up==null?'':(_up>0.5?'over':(_up<-0.5?'under':'')); const _uv=_init+_last+(_up!=null?(' '+(_up>=0?'+':'')+_up.toFixed(1)+'%'):''); umpHtml='<span class="sb-pct-chip '+_uc+'"><span class="pct-label">Ump</span>'+_uv+'</span>'; }
   let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
-  const umpHtml=umpName?('<span class="apx-ump">Ump '+umpName+' '+umpFac+'</span>'):'';
   const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span>':'')+pfChip+wxChip+umpHtml+'</div>';
   let center;
   if(isFinal && g._finalScore){
@@ -2584,7 +2596,7 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp && sp.away_runs!=null && sp.home_runs!=null){
     const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
-    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'% win':'—')+'</span></div>';
+    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.away_wp,aFav)+
       '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
