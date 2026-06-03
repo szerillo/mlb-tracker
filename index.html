@@ -876,6 +876,13 @@
     text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.55rem;
     padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: baseline; }
+  .m-sec { margin-top: 0.3rem; }
+  summary.m-section-header { cursor: pointer; list-style: none; outline: none; }
+  summary.m-section-header::-webkit-details-marker { display: none; }
+  summary.m-section-header::after { content: '▾'; float: right; color: var(--muted); font-weight: 400; }
+  .m-sec:not([open]) summary.m-section-header::after { content: '▸'; }
+  .m-proj { margin-bottom: 0.5rem; }
+  .m-proj-status { text-align: right; margin-bottom: 4px; }
   .m-section-header .right-note { font-size: 0.68rem; color: var(--muted);
     letter-spacing: 0.06em; text-transform: none; font-weight: 500; }
 
@@ -2579,6 +2586,8 @@ function apxCardHTML(g){
   const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
   const hML=o&&o.moneyline&&o.moneyline.home?o.moneyline.home:null;
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
+  const _tov=o&&o.total&&o.total.over?o.total.over.odds:null, _tun=o&&o.total&&o.total.under?o.total.under.odds:null;
+  const _juice=(_tov!=null||_tun!=null)?(' '+(_tov!=null?(_tov>0?'+'+_tov:''+_tov):'—')+'/'+(_tun!=null?(_tun>0?'+'+_tun:''+_tun):'—')):'';
   const wpChip=isFinal?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
@@ -2607,7 +2616,7 @@ function apxCardHTML(g){
     const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
-      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+_juice+')</span>':'')+'</div></div>'+
       team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.ml_home,sp.home_wp,!aFav)+
     '</div>';
   } else {
@@ -5912,14 +5921,16 @@ async function openModal(game) {
   const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
-    <div class="apx-grid apx-detailed m-apx-wrap" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
+    <div class="m-proj">
+      ${(() => {
+        let _lu='proj';
+        try{ const lg=lineupsForGame(game); const a=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const h=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(a==='confirmed'&&h==='confirmed')_lu='conf'; }catch(e){}
+        return '<div class="m-proj-status">'+(_lu==='conf'?'<span class="apx-lu conf">&#10003; Confirmed</span>':'<span class="apx-lu proj">&#9733; Projected</span>')+'</div>';
+      })()}
+      ${renderSheetEdgesHTML(game)}
+    </div>
 
-    <div class="m-section-header"><span>Best Odds</span>
-      <span class="right-note">best price across 7 NJ books</span></div>
-    ${renderOddsGrid(o)}
-
-    <!-- Environmental factors row: Weather | Park | Umpire -->
-    <div class="m-section-header"><span>Weather · Park · Umpire</span></div>
+    <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
     <div class="m-env-row">
       <div class="m-wx-box">
         ${renderWeatherDetail(wx, homeAbbr, game)}
@@ -5969,13 +5980,15 @@ async function openModal(game) {
       </div>
     </div>
 
-    <div class="m-section-header"><span>Starting Pitchers</span></div>
+    </details>
+    <details open class="m-sec"><summary class="m-section-header"><span>Starting Pitchers</span></summary>
     <div class="m-sp-grid">
       ${renderSPBox(probAway?.fullName, awayAbbr)}
       ${renderSPBox(probHome?.fullName, homeAbbr)}
     </div>
 
-    <div class="m-section-header"><span>Bullpens</span>
+    </details>
+    <details open class="m-sec"><summary class="m-section-header"><span>Bullpens</span>
       <span class="right-note">${(() => {
         const gIso = (game.gameDate || "").slice(0,10);
         const fd = fatigueForDate(gIso);
@@ -5983,13 +5996,14 @@ async function openModal(game) {
         // Identical label wording to the standalone Bullpen tab.
         const whenLabel = gIso === today() ? "today" : fmtDateShort(gIso);
         return `rest coming into ${whenLabel} · L5 ${fmtDateShort(fd.window.start)} – ${fmtDateShort(fd.window.end)}`;
-      })()}</span></div>
+      })()}</span></summary>
     <div class="m-split">
       <div class="m-bp-box"><h4>${away} ${(() => { const r = getBullpenRank(game.teams.away.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
       <div class="m-bp-box"><h4>${home} ${(() => { const r = getBullpenRank(game.teams.home.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
     </div>
 
-    <div class="m-section-header"><span>Lineups</span></div>
+    </details>
+    <details open class="m-sec"><summary class="m-section-header"><span>Lineups</span></summary>
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}</h4>
@@ -6002,6 +6016,7 @@ async function openModal(game) {
         ${renderLineupForTeam(game, 'home')}
       </div>
     </div>
+    </details>
   `;
 
 }
