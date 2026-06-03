@@ -815,11 +815,8 @@ def _render_market(scored, market_key, market_meta, top_n):
         elif edge >= 0.005:      stars = "★"
         else:                    stars = ""
         # Display filter (all markets): evaluate a big field, but only SHOW
-        # players with a model win prob ≥ 0.5% OR longshots (<0.5%) that still
-        # carry a positive edge vs the market. Per user: surface anyone
-        # bettable, hide the dead weight.
-        keep = (p_mod >= 0.005) or (edge is not None and edge >= 0.0005)
-        if not keep:
+        # players with a model win probability ≥ 1% to win the award.
+        if p_mod < 0.01:
             continue
         results.append({
             "name":         x["player"].get("name"),
