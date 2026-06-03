@@ -2621,7 +2621,6 @@ function apxCardHTML(g){
     sideRow('SP', aSP, hSP)+
     sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenRank(hId)+' '+_apxPenTag(home))+
     sideRow('CON·POW·EYE·BSR·DEF', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
-    sideRow('OFF RANK', aOR?('#'+aOR.rank):'—', hOR?('#'+hOR.rank):'—')+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -2680,7 +2679,7 @@ async function exportScoreboardPNG(){
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
-  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-png">Save PNG</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
+  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
   el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
