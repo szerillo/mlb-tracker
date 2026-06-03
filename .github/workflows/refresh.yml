@@ -190,7 +190,16 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
-      - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
+        - name: Import my Action PRO projections (GAME UPLOADER sheet -> sheet_projections.json)
+        run: |
+          if [ -n "$SHEET_CSV_URL" ]; then
+            python scripts/refresh_sheet_projections.py
+          else
+            echo "SHEET_CSV_URL not set - skipping sheet projection import"
+          fi
+        continue-on-error: true
+        env:
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }} - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
         # Triggers if odds.json is missing, has no games, OR has yesterday's date.
         # Date-freshness check was added because ActionNetwork's API sometimes
         # blocks GitHub Actions runner IPs (Cloudflare 403), in which case
