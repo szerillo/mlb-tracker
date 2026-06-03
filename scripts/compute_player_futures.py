@@ -748,7 +748,13 @@ def _score_roy(pool_h, pool_p):
 
 
 # ── Render market output ───────────────────────────────────────────────────
-def _render_market(scored, market_key, market_meta, top_n):
+# Sharpen factor applied to the MVP softmax temperature (<1 = more decisive).
+# Keeps a dominant WAR leader (e.g. Ohtani) reading as a clear favorite
+# instead of being flattened across the contender field.
+MVP_SHARPEN = 0.75
+
+
+def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
     """Take scored candidates, join with odds, calibrate temp, emit final list.
 
     Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
@@ -793,7 +799,7 @@ def _render_market(scored, market_key, market_meta, top_n):
         temp = 1.0
 
     all_scores = [x["score"] for x in pool]
-    model_p    = _softmax(all_scores, temp)
+    model_p    = _softmax(all_scores, temp * sharpen)
 
     results = []
     for x, p_mod in zip(pool, model_p):
@@ -866,7 +872,7 @@ def main():
         mvp_scored = _score_mvp(mvp_pool)
         out_markets[mvp_key] = _render_market(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
-            top_n=70)
+            top_n=70, sharpen=MVP_SHARPEN)
 
         # CY
         cy_key = f"{league}_CY"
