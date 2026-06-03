@@ -516,7 +516,7 @@ def _mvp_pool(hitters, league, team_futures, pitchers=None):
     pool = []
     for h in hitters.values():
         if h.get("league") != league: continue
-        if _proj_pa(h) < 400: continue
+        if _proj_pa(h) < 300: continue
         team = h.get("team_abbr")
         playoff_pct = (tf_by_abbr.get(team, {}).get("composite", {})
                        .get("playoff_pct") or 0)
@@ -550,7 +550,7 @@ def _cy_pool(pitchers, league):
     pool = []
     for p in pitchers.values():
         if p.get("league") != league: continue
-        if _proj_ip(p) < 120: continue
+        if _proj_ip(p) < 90: continue
         sv = _eos(p, "sv") or 0
         if sv >= 5: continue
         era = _eos(p, "era"); whip = _eos(p, "whip")
@@ -582,7 +582,7 @@ def _roy_pool(hitters, pitchers, league, odds_players):
         if not nm_key: continue
         rook = ROOKIE_BY_NORM.get(nm_key)
         if not rook and nm_key not in extra_names: continue
-        if _proj_pa(h) < 100: continue
+        if _proj_pa(h) < 80: continue
         rank = (rook or {}).get("avg_rank")
         prospect_bonus = 0.30 * max(0, 1 - ((rank or 150) / 150))
         # Playing time factor: PA / 600, capped at 1
@@ -607,7 +607,7 @@ def _roy_pool(hitters, pitchers, league, odds_players):
         if not nm_key: continue
         rook = ROOKIE_BY_NORM.get(nm_key)
         if not rook and nm_key not in extra_names: continue
-        if _proj_ip(p) < 30: continue
+        if _proj_ip(p) < 20: continue
         rank = (rook or {}).get("avg_rank")
         prospect_bonus = 0.30 * max(0, 1 - ((rank or 150) / 150))
         pt_ratio = min(1.0, max(0, _proj_ip(p)) / 200.0)

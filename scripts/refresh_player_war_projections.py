@@ -190,6 +190,20 @@ PIT_STAT_MAP = {
 }
 
 
+def _load_ytd_dump(side):
+    """FanGraphs blocks the live YTD leaders endpoint server-side (Cloudflare
+    403). Fall back to a committed browser dump: data/_fg_ytd.json with shape
+    {"bat":[...rows...], "pit":[...rows...]} (raw FG leader rows from the README
+    snippet), parsed by _player_meta / _pull just like the live endpoint."""
+    try:
+        d = json.loads((REPO_ROOT / "data" / "_fg_ytd.json").read_text())
+        rows = d.get(side) or []
+        return rows if isinstance(rows, list) else []
+    except Exception as e:
+        print(f"  [_load_ytd_dump] none ({e})", file=sys.stderr)
+        return []
+
+
 def _pull(row, keymap):
     """Walk a FG row dict pulling stat keys. FG keys are inconsistent across
     endpoints (sometimes 'WAR', sometimes 'war', sometimes 'projWAR'), so try
@@ -242,6 +256,9 @@ def main():
         # 1. YTD season-to-date
         print(f"[player-war] fetch YTD leaders ({side})…", file=sys.stderr)
         ytd_rows = fetch_leaders(side)
+        if not ytd_rows:
+            ytd_rows = _load_ytd_dump(side)
+            print(f"  YTD live blocked — using committed _fg_ytd.json ({len(ytd_rows)} rows)", file=sys.stderr)
         ytd_by_key = {}
         for row in ytd_rows:
             name, team, league, mlbam, fg_id, pos = _player_meta(row)

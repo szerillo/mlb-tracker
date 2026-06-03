@@ -19,7 +19,7 @@ Fangraphs' public leaderboard updates (which is after every game).
 BROWSER SNIPPET (paste into DevTools console on any
 https://www.fangraphs.com/leaders/major-league page):
 
-    fetch('/api/leaders/major-league/data?pos=all&stats=pit&lg=all&type=36&season=2026&month=0&season1=2026&ind=0&qual=10&pageitems=2000000000', {credentials:'include'})
+    fetch('/api/leaders/major-league/data?pos=all&stats=pit&lg=all&type=36&season=2026&month=0&season1=2026&ind=0&qual=0&pageitems=2000000000', {credentials:'include'})
       .then(r=>r.json()).then(d=>{
         const arr=d.data||d, norm=s=>(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/ jr\.?$|\sSr\.?$|\siii$|\sii$/g,'').replace(/\./g,'').trim();
         const en={}; for(const r of arr){const k=norm(r.PlayerName||r.Name); if(!k)continue; const e={}; if(r.xFIP!=null)e.xfip=r.xFIP; if(r.sp_stuff!=null)e.stuff_plus=r.sp_stuff; if(r.sp_location!=null)e.location_plus=r.sp_location; if(r.sp_pitching!=null)e.pitching_plus=r.sp_pitching; if(r.IP!=null)e.ip=r.IP; if(Object.keys(e).length)en[k]=e;}
@@ -57,7 +57,7 @@ UA_DESKTOP = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
 
 FG_URL = ("https://www.fangraphs.com/api/leaders/major-league/data"
           "?pos=all&stats=pit&lg=all&type=36&season={season}"
-          "&month=0&season1={season}&ind=0&qual=10&pageitems=2000000000")
+          "&month=0&season1={season}&ind=0&qual=0&pageitems=2000000000")
 
 
 def norm_name(s: str) -> str:

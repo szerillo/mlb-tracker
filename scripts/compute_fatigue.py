@@ -103,7 +103,9 @@ def extract_relievers(box):
             if pos != "P":
                 continue
             if gs > 0:
-                continue  # exclude true starters; keep bulk relief
+                continue  # exclude true starters
+            if pitches >= 50:
+                continue  # exclude bulk/opener-follower starts (gs=0 but heavy load)
             name = norm(p.get("person", {}).get("fullName", "?"))
             rps[name] = pitches
         res[tn] = rps

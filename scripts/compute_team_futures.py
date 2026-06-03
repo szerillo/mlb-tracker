@@ -76,6 +76,13 @@ def composite_for_team(projs: dict) -> dict:
     return out
 
 
+def _star_pos(edge_pct):
+    # Star only positive edges (no bettable opposite side, e.g. Division/WS).
+    if edge_pct is None or edge_pct <= 0:
+        return ""
+    return _star_tier(edge_pct)
+
+
 def _star_tier(edge_pct):
     """Star rating for a market edge. Edges in percentage points (e.g. 4.5)
     OR wins (for win_total). Uses ABS magnitude because either direction can
@@ -270,9 +277,9 @@ def main():
             },
             "stars": {
                 "win_total":   _star_tier(wt_edge),
-                "div_pct":     _star_tier(div_edge),
+                "div_pct":     _star_pos(div_edge),
                 "playoff_pct": _star_tier(po_best_edge if po_best_edge is not None else po_edge),
-                "ws_pct":      _star_tier(ws_edge),
+                "ws_pct":      _star_pos(ws_edge),
             },
         }
 
