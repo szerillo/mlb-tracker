@@ -79,7 +79,7 @@
   .tab-sep { display: inline-block; width: 1px; height: 18px; background: var(--border);
     margin: 0 0.45rem; align-self: center; opacity: 0.7; }
   .ft-stars { display: inline-block; margin-left: 0.25rem; color: #ffd24d;
-    font-size: 0.78em; letter-spacing: -0.02em; vertical-align: middle;
+    font-size: 0.8rem; letter-spacing: -0.02em; vertical-align: middle;
     text-shadow: 0 0 4px rgba(255,210,77,0.25); }
   .tabs-hint { font-size: 0.68rem; color: var(--muted); padding: 0.35rem 1rem 0;
     font-style: italic; letter-spacing: 0.02em; }
@@ -8156,20 +8156,20 @@ function renderFuturesContent(root) {
       <td>${wtEdgeCell(e.win_total, wtPctEdge, st.win_total)}</td>
       <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
-      <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${starChip(st.div_pct)}</td>
+      <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${(e.div_pct>0)?starChip(st.div_pct):""}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
       <td>${(e.playoff_best_side === 'N' && m.playoff_no_odds != null) ? mktCell(m.playoff_no_odds, m.playoff_no_implied_pct) : mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
       <td>${binaryEdgeCell((e.playoff_best_pct != null ? e.playoff_best_pct : e.playoff_pct), st.playoff_pct, e.playoff_best_side)}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
-      <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${starChip(st.ws_pct)}</td>
+      <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${(e.ws_pct>0)?starChip(st.ws_pct):""}</td>
     </tr>`;
   };
   const divHTML = Object.entries(divs).map(([div, arr]) => `
     <h3 class="ft-div-hdr">${div}</h3>
     <div class="ft-table-wrap">
     <table class="ft-table ft-table-implied">
-      <colgroup><col style="width:120px"><col style="width:60px"><col style="width:86px"><col style="width:92px"><col style="width:82px"><col style="width:82px"><col style="width:72px"><col style="width:82px"><col style="width:82px"><col style="width:80px"><col style="width:82px"><col style="width:82px"><col style="width:72px"></colgroup>
+      <colgroup><col style="width:100px"><col style="width:58px"><col style="width:84px"><col style="width:90px"><col style="width:80px"><col style="width:80px"><col style="width:84px"><col style="width:80px"><col style="width:80px"><col style="width:84px"><col style="width:80px"><col style="width:80px"><col style="width:84px"></colgroup>
       <thead>
         <tr>
           <th class="ft-grp" rowspan="2" style="text-align:left;border-bottom:1px solid var(--border,#2a3b46);">Team</th>
