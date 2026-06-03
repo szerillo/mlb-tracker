@@ -2598,8 +2598,7 @@ function apxCardHTML(g){
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
     sideRow('PEN', _apxPenRank(aId)+' '+_apxPenTag(away), _apxPenRank(hId)+' '+_apxPenTag(home))+
-    sideRow('CON·POW·EYE', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye))+
-    sideRow('BSR·DEF', gset(ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.bsr,gh&&gh.def))+
+    sideRow('CPE·BD', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -2607,34 +2606,43 @@ function apxCardHTML(g){
 
 async function exportScoreboardPNG(){
   if(typeof html2canvas==='undefined'){ alert('Image library still loading — try again in a moment.'); return; }
-  const grid=document.getElementById('apx-grid'); if(!grid) return;
+  const games=(typeof CURRENT_GAMES!=='undefined'&&CURRENT_GAMES)?CURRENT_GAMES.slice():[];
+  if(!games.length){ alert('No games to export yet.'); return; }
   const btn=document.getElementById('apx-png'); const oldT=btn?btn.textContent:''; if(btn){btn.textContent='Rendering…';btn.disabled=true;}
   let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
-  const nG=(typeof CURRENT_GAMES!=='undefined'&&CURRENT_GAMES)?CURRENT_GAMES.length:0;
-  const stage=document.createElement('div');
-  stage.id='apx-export-stage';
-  stage.style.cssText='position:fixed;left:-99999px;top:0;width:1340px;background:#0d1117;padding:24px 22px;box-sizing:border-box;';
-  const gridClone=grid.cloneNode(true);
-  gridClone.classList.add('apx-detailed');
-  gridClone.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
-  stage.innerHTML='<div style="text-align:center;margin-bottom:14px;">'+
-    '<div style="font-family:Inter,sans-serif;font-weight:800;font-style:italic;font-size:30px;color:#ffffff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
-    '<div style="font-family:Inter,sans-serif;font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+(nG?(' · '+nG+' games'):'')+'</div>'+
-  '</div>';
-  stage.appendChild(gridClone);
-  stage.insertAdjacentHTML('beforeend',
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-family:Inter,sans-serif;font-size:13px;color:#9aa4b2;">'+
-      '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
-      '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
-      '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
-    '</div>');
-  document.body.appendChild(stage);
+  const CHUNK=8; const chunks=[]; for(let i=0;i<games.length;i+=CHUNK) chunks.push(games.slice(i,i+CHUNK));
+  const logoCache={};
+  async function logoData(url){ if(logoCache[url])return logoCache[url]; try{ const r=await fetch(url,{mode:'cors'}); const t=await r.text(); const d='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(t); logoCache[url]=d; return d; }catch(e){ return url; } }
+  const dl=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today';
   try{
-    const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:1380});
-    const url=canvas.toDataURL('image/png');
-    const a=document.createElement('a'); a.href=url; a.download='mlb-scoreboard-'+((typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today')+'.png'; document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){ alert('PNG export failed (often a cross-origin logo). Error: '+e.message); }
-  finally{ stage.remove(); if(btn){btn.textContent=oldT;btn.disabled=false;} }
+    for(let ci=0; ci<chunks.length; ci++){
+      const chunk=chunks[ci];
+      const part=chunks.length>1?(' · part '+(ci+1)+' of '+chunks.length):'';
+      const stage=document.createElement('div'); stage.id='apx-export-stage';
+      stage.style.cssText='position:fixed;left:-99999px;top:0;width:920px;background:#0d1117;padding:24px 22px;box-sizing:border-box;font-family:Inter,sans-serif;';
+      stage.innerHTML='<div style="text-align:center;margin-bottom:14px;">'+
+        '<div style="font-weight:800;font-style:italic;font-size:30px;color:#fff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
+        '<div style="font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+part+'</div>'+
+      '</div>'+
+      '<div class="apx-grid apx-detailed" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">'+chunk.map(apxCardHTML).join('')+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:#9aa4b2;">'+
+        '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
+        '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
+        '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
+      '</div>';
+      if(chunk.length%2===1){ const grid=stage.querySelector('.apx-grid'); const last=grid&&grid.lastElementChild; if(last){ last.style.gridColumn='1 / -1'; last.style.maxWidth='calc(50% - 6px)'; last.style.margin='0 auto'; } }
+      const imgs=stage.querySelectorAll('img');
+      await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&im.src.indexOf('mlbstatic')>=0){ im.src=await logoData(im.src); } }catch(e){} }));
+      document.body.appendChild(stage);
+      try{
+        const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:960});
+        const url=canvas.toDataURL('image/png');
+        const a=document.createElement('a'); a.href=url; a.download='mlb-scoreboard-'+dl+(chunks.length>1?('-'+(ci+1)):'')+'.png'; document.body.appendChild(a); a.click(); a.remove();
+      } finally { stage.remove(); }
+      if(ci<chunks.length-1) await new Promise(r=>setTimeout(r,500));
+    }
+  }catch(e){ alert('PNG export failed: '+e.message); }
+  finally{ if(btn){btn.textContent=oldT;btn.disabled=false;} }
 }
 
 
@@ -4531,7 +4539,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
       <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
-      <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${fmt(s?.stuff_plus)}</span></td>
+      <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
