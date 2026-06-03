@@ -1348,6 +1348,8 @@
   .apx-extra-row{display:flex;justify-content:space-between;gap:8px;margin:2px 0;}
   .apx-extra-row span:last-child{color:var(--text);}
   .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
+  .m-apx-wrap .apx-card{cursor:default;}
+  .m-apx-wrap .apx-card:hover{background:var(--panel);border-color:var(--border);}
   .apx-head2{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
   .apx-luwrap{justify-self:end;}
   .apx-lu{font-size:0.64rem;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;}
@@ -1614,7 +1616,11 @@
   .rk-grid-team { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
   .rk-grid-team .rk-box-full { grid-column: 1 / -1; }
   @media (max-width: 1100px) { .rk-grid-team { grid-template-columns: 1fr; } }
-  .ft-team .ft-name { color: var(--muted); margin-left: 0.4rem; font-size: 0.8rem; }
+  .ft-team .ft-name { color: var(--muted); margin-left: 0.25rem; font-size: 0.72rem; }
+  .ft-projwins { font-size: 1.18em; font-weight: 800; color: var(--text); }
+  .ft-stack-row.ft-line { font-size: 0.92em; color: var(--muted); font-weight: 500; }
+  .ft-table td, .ft-table th { white-space: nowrap; }
+  .ft-stars { white-space: nowrap; }
   .ft-edge { font-weight: 700; }
   .ft-edge.pos { color: #6fdc7e; }
   .ft-edge.neg { color: #ff7a7a; }
@@ -4370,8 +4376,7 @@ function renderLineupTable(side, opts={}) {
         <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
         ${wrcCell}
         ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
-        <td class="split split-chip ${opsCls}" title="${opsTitle}">${opsStr}</td>
-        ${barrelCell}${expanded ? kbbCells : ""}
+        ${expanded ? kbbCells : ""}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
@@ -4410,8 +4415,7 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
-    <th class="right" style="width:48px;" title="Season OPS — actual current-season (projection fallback)">OPS</th>
-    <th class="right" style="width:46px;" title="Savant barrel rate — raw %. Elite ≥12%, MLB avg ~8%.">Brl%</th>${expanded ? kbbHeaders : ""}
+    ${expanded ? kbbHeaders : ""}
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
@@ -5908,32 +5912,7 @@ async function openModal(game) {
   const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
-    <div class="m-matchup-bar">
-      <div class="m-team away">
-        <div class="m-team-label">Away</div>
-        <div class="m-team-logo-name">
-          ${teamLogo(game.teams.away.team.id, 36)}
-          <span class="m-team-name">${awayAbbr}</span>
-        </div>
-        ${fmtMlBig(aML, aCls)}
-      </div>
-      ${centerBox}
-      <div class="m-team home">
-        <div class="m-team-label">Home</div>
-        <div class="m-team-logo-name">
-          ${teamLogo(game.teams.home.team.id, 36)}
-          <span class="m-team-name">${homeAbbr}</span>
-        </div>
-        ${fmtMlBig(hML, hCls)}
-      </div>
-    </div>
-    <div class="m-venue-row">
-      <div class="m-venue-badge">${venueLine}</div>
-    </div>
-
-    <div class="m-section-header"><span>Action PRO Projection</span>
-      <span class="right-note">proj score · fair odds · edges</span></div>
-    ${renderSheetEdgesHTML(game)}
+    <div class="apx-grid apx-detailed m-apx-wrap" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
 
     <div class="m-section-header"><span>Best Odds</span>
       <span class="right-note">best price across 7 NJ books</span></div>
@@ -8112,7 +8091,7 @@ function renderFuturesContent(root) {
     const magWins   = winsEdge != null ? Math.abs(winsEdge).toFixed(1) : null;
     const winsHtml  = (sideLabel && magWins) ? ` <span class="ft-wt-delta">(${sideLabel}+${magWins}w)</span>` : '';
     return `<div class="ft-stack">
-      <span class="ft-stack-row primary">${line.toFixed(1)}${winsHtml}</span>
+      <span class="ft-stack-row ft-line">${line.toFixed(1)}${winsHtml}</span>
       <span class="ft-stack-row sec">o${fmtAm(oOdds)} / u${fmtAm(uOdds)}</span>
     </div>`;
   };
@@ -8158,7 +8137,7 @@ function renderFuturesContent(root) {
     const wtPctEdge = (e.win_total != null && m.win_total_line) ? (e.win_total / m.win_total_line * 100) : null;
     return `<tr>
       <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
-      <td>${c.wins != null ? c.wins.toFixed(1) : '—'}</td>
+      <td><span class="ft-projwins">${c.wins != null ? c.wins.toFixed(1) : '—'}</span></td>
       <td>${wtLineCell(m.win_total_line, m.win_total_over?.odds, m.win_total_under?.odds, e.win_total)}</td>
       <td>${wtEdgeCell(e.win_total, wtPctEdge, st.win_total)}</td>
       <td class="ft-grp-sep">${fairCell(c.div_pct)}</td>
@@ -8176,7 +8155,7 @@ function renderFuturesContent(root) {
     <h3 class="ft-div-hdr">${div}</h3>
     <div class="ft-table-wrap">
     <table class="ft-table ft-table-implied">
-      <colgroup><col style="width:135px"><col style="width:54px"><col style="width:96px"><col style="width:92px"><col style="width:82px"><col style="width:82px"><col style="width:64px"><col style="width:82px"><col style="width:82px"><col style="width:80px"><col style="width:82px"><col style="width:82px"><col style="width:64px"></colgroup>
+      <colgroup><col style="width:120px"><col style="width:60px"><col style="width:86px"><col style="width:92px"><col style="width:82px"><col style="width:82px"><col style="width:72px"><col style="width:82px"><col style="width:82px"><col style="width:80px"><col style="width:82px"><col style="width:82px"><col style="width:72px"></colgroup>
       <thead>
         <tr>
           <th class="ft-grp" rowspan="2" style="text-align:left;border-bottom:1px solid var(--border,#2a3b46);">Team</th>
