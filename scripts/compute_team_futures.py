@@ -231,11 +231,20 @@ def main():
         # the existing sign-based frontend keeps working unchanged. The NO
         # edge ships alongside in edges.playoff_no_pct for callers that want
         # both directly.
-        po_best_side = 'Y'
-        po_best_edge = po_edge
-        if po_no_edge is not None and (po_edge is None or abs(po_no_edge) > abs(po_edge)):
-            po_best_side = 'N'
-            po_best_edge = po_no_edge
+        # Bettable side = the side with a POSITIVE edge (model beats the price
+        # you'd actually pay). A negative YES edge does NOT imply a bettable NO
+        # unless we have real NO odds showing positive NO value — otherwise the
+        # gap is just the book's vig, not an edge. Pick the largest positive
+        # edge; if neither side is positive there's no bettable edge (keep the
+        # signed YES edge for an honest display, but it won't be starred).
+        _cands = []
+        if po_edge is not None:    _cands.append(('Y', po_edge))
+        if po_no_edge is not None: _cands.append(('N', po_no_edge))
+        _pos = [c for c in _cands if c[1] is not None and c[1] > 0]
+        if _pos:
+            po_best_side, po_best_edge = max(_pos, key=lambda c: c[1])
+        else:
+            po_best_side, po_best_edge = ('Y', po_edge)
 
         ws_imp = ws_implied_all.get(abbr)
         ws_edge = round(comp["ws_pct"] - ws_imp, 2) if (comp.get("ws_pct") is not None and ws_imp is not None) else None
@@ -278,7 +287,7 @@ def main():
             "stars": {
                 "win_total":   _star_tier(wt_edge),
                 "div_pct":     _star_pos(div_edge),
-                "playoff_pct": _star_tier(po_best_edge if po_best_edge is not None else po_edge),
+                "playoff_pct": _star_pos(po_best_edge),
                 "ws_pct":      _star_pos(ws_edge),
             },
         }
