@@ -190,6 +190,16 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      - name: Capture CLV snapshot (today's PRO projection + opening line)
+        # Action's PRO projection is only served pre-game, so snapshot it (plus
+        # the Book-30 opener) into data/clv/{date}.json while games are pending.
+        run: python scripts/capture_clv_snapshot.py
+        continue-on-error: true
+
+      - name: Compute CLV / directional grades (open -> close vs our number)
+        run: python scripts/compute_clv.py
+        continue-on-error: true
+
       - name: Import my Action PRO projections (GAME UPLOADER sheet -> sheet_projections.json)
         # Reads the published GAME UPLOADER tab CSV, maps game_id (AN event id)
         # -> gamePk, writes data/sheet_projections.json. No-op if the secret is
