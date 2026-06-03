@@ -1357,9 +1357,10 @@
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
   .apx-side-h{text-align:right;color:var(--text);}
-  .apx-side-k{color:var(--muted);font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;}
+  .apx-side-k{color:var(--muted);font-size:0.55rem;letter-spacing:0.03em;text-transform:uppercase;white-space:nowrap;padding:0 4px;}
   .apx-info2 .apx-gp{display:inline-flex;align-items:center;gap:2px;margin:0 4px 0 0;font-size:0.58rem;color:var(--muted);}
-  .apx-info2 .grade{font-size:0.6rem;padding:0 3px;border-radius:4px;font-weight:700;}
+  .apx-info2 .grade{font-size:0.62rem;padding:0 2px;border-radius:3px;font-weight:700;}
+  .apx-side-a,.apx-side-h{font-size:0.68rem;white-space:nowrap;}
   .apx-side-a .grade,.apx-side-h .grade{margin:0 1px;}
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
@@ -2574,12 +2575,12 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(aId,36)+'<span class="apx-abbr">'+aAb+'</span></div>'+
       '<div class="apx-mid"><div class="apx-runs"><span>'+fs.away+'</span><span class="apx-final-lbl">FINAL</span><span>'+fs.home+'</span></div></div>'+
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
-  } else if(sp){
-    const aFav=sp.away_wp>=sp.home_wp;
+  } else if(sp && sp.away_runs!=null && sp.home_runs!=null){
+    const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
     const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'% win':'—')+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.away_wp,aFav)+
-      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+sp.total.toFixed(2)+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
       team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.home_wp,!aFav)+
     '</div>';
   } else {
@@ -2589,7 +2590,7 @@ function apxCardHTML(g){
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
   const aRk=aSPn?_apxRank(aSPn):'', hRk=hSPn?_apxRank(hSPn):'';
-  const aSP=aSPn?((aRk?aRk+' ':'')+shortName(aSPn)+_apxHand(aSPn)):'TBD';
+  const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+(aRk?' '+aRk:'')):'TBD';
   const hSP=hSPn?((hRk?hRk+' ':'')+shortName(hSPn)+_apxHand(hSPn)):'TBD';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
@@ -2597,8 +2598,8 @@ function apxCardHTML(g){
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('PEN', _apxPenRank(aId)+' '+_apxPenTag(away), _apxPenRank(hId)+' '+_apxPenTag(home))+
-    sideRow('CPE·BD', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
+    sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenRank(hId)+' '+_apxPenTag(home))+
+    sideRow('CON·POW·EYE·BSR·DEF', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -2612,7 +2613,15 @@ async function exportScoreboardPNG(){
   let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
   const CHUNK=8; const chunks=[]; for(let i=0;i<games.length;i+=CHUNK) chunks.push(games.slice(i,i+CHUNK));
   const logoCache={};
-  async function logoData(url){ if(logoCache[url])return logoCache[url]; try{ const r=await fetch(url,{mode:'cors'}); const t=await r.text(); const d='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(t); logoCache[url]=d; return d; }catch(e){ return url; } }
+  async function logoData(url){ if(logoCache[url])return logoCache[url]; try{
+      const r=await fetch(url,{mode:'cors'}); const svg=await r.text();
+      const svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      const img=new Image(); img.decoding='sync';
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=svgUrl; });
+      const sz=96, c=document.createElement('canvas'); c.width=sz; c.height=sz;
+      c.getContext('2d').drawImage(img,0,0,sz,sz);
+      const png=c.toDataURL('image/png'); logoCache[url]=png; return png;
+    }catch(e){ return url; } }
   const dl=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today';
   try{
     for(let ci=0; ci<chunks.length; ci++){
@@ -2624,7 +2633,7 @@ async function exportScoreboardPNG(){
         '<div style="font-weight:800;font-style:italic;font-size:30px;color:#fff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
         '<div style="font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+part+'</div>'+
       '</div>'+
-      '<div class="apx-grid apx-detailed" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">'+chunk.map(apxCardHTML).join('')+'</div>'+
+      '<div class="apx-grid apx-detailed" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">'+chunk.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:#9aa4b2;">'+
         '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
         '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
@@ -2650,7 +2659,7 @@ function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
   const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-png">Save PNG</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
-  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(apxCardHTML).join("")+'</div>';
+  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
   const pngBtn=document.getElementById('apx-png'); if(pngBtn) pngBtn.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
