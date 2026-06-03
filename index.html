@@ -2597,11 +2597,12 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp && sp.away_runs!=null && sp.home_runs!=null){
     const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
-    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+'</span></div>';
+    const fo=v=>v==null?'':' <span class="apx-mkt">('+(v>0?'+'+v:''+v)+')</span>';
+    const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center">'+
-      team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.away_wp,aFav)+
+      team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
       '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+(sp.total!=null?sp.total.toFixed(2):'—')+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
-      team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.home_wp,!aFav)+
+      team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.ml_home,sp.home_wp,!aFav)+
     '</div>';
   } else {
     center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
