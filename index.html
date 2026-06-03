@@ -265,6 +265,25 @@
   .sb-pg-flag { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--under); border: 1px solid var(--under); border-radius: 4px;
     padding: 0 0.25rem; opacity: 0.8; }
+  .clv-summary { display:flex; gap:0.8rem; flex-wrap:wrap; margin:0.6rem 0 0.4rem; }
+  .clv-sumcard { flex:1 1 220px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:0.6rem 0.8rem; }
+  .clv-sum-lbl { font-weight:700; font-size:0.82rem; margin-bottom:0.35rem; color:var(--accent); }
+  .clv-sum-row { display:flex; justify-content:space-between; align-items:baseline; font-size:0.8rem; gap:0.4rem; padding:0.12rem 0; }
+  .clv-sum-row b { font-family:var(--mono); }
+  .clv-sub { color:var(--muted); font-size:0.7rem; }
+  .clv-datebar { margin:0.5rem 0; font-size:0.82rem; color:var(--muted); }
+  .clv-datebar select { background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:0.2rem 0.4rem; font-family:var(--mono); }
+  .clv-table th, .clv-table td { font-size:0.82rem; }
+  .clv-match { white-space:nowrap; }
+  .clv-final { color:var(--muted); font-family:var(--mono); font-size:0.72rem; margin-left:0.3rem; }
+  .clv-ok { color:var(--tier-good); font-weight:700; }
+  .clv-no { color:var(--tier-worst,#e2706a); font-weight:700; }
+  .clv-na { color:var(--muted); }
+  .clv-pos { color:var(--tier-good); font-weight:700; }
+  .clv-neg { color:#e2706a; font-weight:700; }
+  .clv-edge { font-family:var(--mono); font-size:0.72rem; margin-left:0.3rem; }
+  .clv-edge.pos { color:var(--tier-good); }
+  .clv-edge.neg { color:var(--muted); }
   .sb-edge { font-family: var(--mono); font-size: 0.7rem; font-weight: 700;
     padding: 0 0.25rem; border-radius: 4px; margin-left: 0.15rem; }
   .sb-edge.edge-pos, .sb-edge.edge-over { color: var(--over); background: rgba(110,255,148,0.12); }
@@ -2565,6 +2584,22 @@ function totalEdgeInfo(projTotal,overLine,overOdds,underLine,underOdds){
   return {lean:'Under',line:uL,edge:eU};
 }
 
+function _apxBestEdge(g){
+  // Largest positive edge (ML or total) for a game's Action PRO projection.
+  // Used to sort the Projections "today's slate" with the biggest edges first.
+  try{
+    const sp=sheetProjForGame(g.gamePk); if(!sp) return -1;
+    const o=oddsForGame(g.gamePk);
+    let best=0;
+    const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
+    const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
+    const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO); if(mi&&mi.edge>best)best=mi.edge;
+    const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
+    const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
+    const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO); if(ti&&ti.edge>best)best=ti.edge;
+    return best;
+  }catch(e){ return -1; }
+}
 function _apxEdgeBar(g){
   const sp=sheetProjForGame(g.gamePk); const o=oddsForGame(g.gamePk);
   if(!sp) return '';
@@ -7615,14 +7650,17 @@ function renderProjectionsTab() {
     return;
   }
 
+  if (PROJ_SUB === 'clv') { renderClvView(root); return; }
+
   // Action PRO projections drive the "Today's slate" view (card grid).
   if (PROJ_SUB !== 'backtest') {
     const subtoggle = '<div class="proj-subtoggle">'+
       '<button class="proj-sub-btn active" onclick="setProjSub(\'today\')">Today\'s slate</button>'+
+      '<button class="proj-sub-btn" onclick="setProjSub(\'clv\')">CLV / Archive</button>'+
       '<button class="proj-sub-btn" onclick="setProjSub(\'backtest\')">Backtest</button></div>';
-    const ups = (CURRENT_GAMES || []);
+    const ups = [...(CURRENT_GAMES || [])].sort((a,b)=>_apxBestEdge(b)-_apxBestEdge(a));
     if (!ups.length) { root.innerHTML = subtoggle + '<div class="wp-empty">No games scheduled today.</div>'; return; }
-    root.innerHTML = subtoggle + '<div class="apx-grid apx-detailed" id="proj-apx-grid">' + ups.map(apxCardHTML).join("") + '</div>';
+    root.innerHTML = subtoggle + '<div class="wp-intro" style="margin-bottom:0.7rem;">Sorted by biggest Action PRO edge first (ML or total).</div><div class="apx-grid apx-detailed" id="proj-apx-grid">' + ups.map(apxCardHTML).join("") + '</div>';
     root.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
     root.querySelectorAll(".sb-wp-chip").forEach(chip=>{ chip.onclick=(e)=>{ e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; });
     return;
@@ -7692,6 +7730,7 @@ function renderProjectionsTab() {
   root.innerHTML = `
     <div class="proj-subtoggle">
       <button class="proj-sub-btn ${PROJ_SUB === 'today' ? 'active' : ''}" onclick="setProjSub('today')">Today's slate</button>
+      <button class="proj-sub-btn ${PROJ_SUB === 'clv' ? 'active' : ''}" onclick="setProjSub('clv')">CLV / Archive</button>
       <button class="proj-sub-btn ${PROJ_SUB === 'backtest' ? 'active' : ''}" onclick="setProjSub('backtest')">Backtest</button>
     </div>
     ${PROJ_SUB === 'backtest' ? renderPregameBacktestHTML() : ''}
@@ -7720,6 +7759,88 @@ let PROJ_SUB = 'today';
 function setProjSub(s) {
   PROJ_SUB = s;
   renderProjectionsTab();
+}
+
+// CLV / Archive sub-view — open->close line movement vs our Action PRO number.
+// Reads data/clv_summary.json (rolling) + data/clv_archive/{date}.json (per-day,
+// pre-sorted biggest edge first). Lets the user browse graded dates.
+let CLV_DATE = null;
+let CLV_SUMMARY = null;
+async function renderClvView(root) {
+  root.innerHTML = '<div class="loading">Loading CLV archive…</div>';
+  const subtoggle = `<div class="proj-subtoggle">
+      <button class="proj-sub-btn" onclick="setProjSub('today')">Today's slate</button>
+      <button class="proj-sub-btn active" onclick="setProjSub('clv')">CLV / Archive</button>
+      <button class="proj-sub-btn" onclick="setProjSub('backtest')">Backtest</button>
+    </div>`;
+  try {
+    if (!CLV_SUMMARY) {
+      const r = await fetch('data/clv_summary.json?t=' + Date.now());
+      CLV_SUMMARY = r.ok ? await r.json() : null;
+    }
+  } catch (e) { CLV_SUMMARY = null; }
+  const dates = (CLV_SUMMARY && CLV_SUMMARY.dates_graded) ? [...CLV_SUMMARY.dates_graded].sort().reverse() : [];
+  if (!dates.length) {
+    root.innerHTML = subtoggle + `<div class="wp-empty">No graded CLV days yet. The pipeline snapshots our Action PRO projection + opening line each morning and grades it against the closing line once games finalize, so the archive starts filling in over the next day or two.</div>`;
+    return;
+  }
+  if (!CLV_DATE || !dates.includes(CLV_DATE)) CLV_DATE = dates[0];
+
+  const sm = CLV_SUMMARY || {};
+  const sumCard = (lbl, a) => {
+    if (!a) return '';
+    const dir = a.directional_pct != null ? a.directional_pct.toFixed(0) + '%' : '—';
+    const clv = a.avg_clv != null ? (a.avg_clv >= 0 ? '+' : '') + a.avg_clv : '—';
+    const clvCls = a.avg_clv == null ? '' : (a.avg_clv > 0 ? 'clv-pos' : a.avg_clv < 0 ? 'clv-neg' : '');
+    return `<div class="clv-sumcard">
+      <div class="clv-sum-lbl">${lbl}</div>
+      <div class="clv-sum-row"><span>Line moved our way</span><b>${dir}</b><span class="clv-sub">(${a.dir_correct}/${a.dir_total})</span></div>
+      <div class="clv-sum-row"><span>Avg CLV</span><b class="${clvCls}">${clv}</b></div>
+      <div class="clv-sum-row"><span>Record vs close</span><b>${a.record}</b></div>
+    </div>`;
+  };
+  const summaryHTML = `<div class="clv-summary">${sumCard('Moneyline', sm.ml)}${sumCard('Totals', sm.total)}</div>`;
+  const dateSel = `<div class="clv-datebar">Date <select id="clv-date" onchange="CLV_DATE=this.value;renderProjectionsTab();">
+      ${dates.map(d => `<option value="${d}" ${d === CLV_DATE ? 'selected' : ''}>${d}</option>`).join('')}
+    </select></div>`;
+  root.innerHTML = subtoggle + summaryHTML + dateSel + '<div id="clv-day"><div class="loading">Loading day…</div></div>';
+
+  let day = null;
+  try { const r = await fetch(`data/clv_archive/${CLV_DATE}.json?t=${Date.now()}`); day = r.ok ? await r.json() : null; } catch (e) {}
+  const host = document.getElementById('clv-day');
+  if (!host) return;
+  if (!day || !day.games || !day.games.length) { host.innerHTML = '<div class="wp-empty">No graded games for ' + CLV_DATE + '.</div>'; return; }
+
+  const dirIcon = d => d === 'correct' ? '<span class="clv-ok">✓</span>' : d === 'wrong' ? '<span class="clv-no">✗</span>' : '<span class="clv-na">–</span>';
+  const resCell = r => r == null ? '<span class="clv-na">—</span>' : r === 'win' ? '<span class="clv-ok">W</span>' : r === 'loss' ? '<span class="clv-no">L</span>' : '<span class="clv-na">P</span>';
+  const edgeTag = e => e == null ? '' : `<span class="clv-edge ${e >= 0 ? 'pos' : 'neg'}">${e >= 0 ? '+' : ''}${e.toFixed(1)}%</span>`;
+  const clvTag = (v, unit) => v == null ? '<span class="clv-na">—</span>' : `<span class="${v > 0 ? 'clv-pos' : v < 0 ? 'clv-neg' : ''}">${v >= 0 ? '+' : ''}${v}${unit}</span>`;
+
+  const rows = day.games.map(g => {
+    const t = g.total, m = g.ml;
+    const tRow = t ? `<tr>
+      <td class="clv-match">${g.away} @ ${g.home}${g.final ? ' <span class="clv-final">'+g.final+'</span>' : ''}</td>
+      <td>Total</td>
+      <td><b>${t.lean} ${t.open_line}</b> ${edgeTag(t.edge_pct)}</td>
+      <td class="proj-mono">${t.open_line} → ${t.close_line}</td>
+      <td>${dirIcon(t.direction)}</td>
+      <td class="proj-mono">${clvTag(t.clv_pts, '')}</td>
+      <td>${resCell(t.result)}</td></tr>` : '';
+    const mRow = m ? `<tr>
+      <td class="clv-match">${t ? '' : g.away + ' @ ' + g.home + (g.final ? ' <span class="clv-final">'+g.final+'</span>' : '')}</td>
+      <td>ML</td>
+      <td><b>${m.lean === 'away' ? g.away : g.home} ${m.open_odds > 0 ? '+' + m.open_odds : m.open_odds}</b> ${edgeTag(m.edge_pct)}</td>
+      <td class="proj-mono">${m.open_odds} → ${m.close_odds}</td>
+      <td>${dirIcon(m.direction)}</td>
+      <td class="proj-mono">${clvTag(m.clv_pct, '%')}</td>
+      <td>${resCell(m.result)}</td></tr>` : '';
+    return tRow + mRow;
+  }).join('');
+
+  host.innerHTML = `<div class="wp-intro" style="margin:0.6rem 0;">Each game graded open → close against our Action PRO number, biggest edge first. <b>Dir</b> = did the market move toward our projection. <b>CLV</b> = did our (opening) number beat the close — totals in runs, ML in implied-% points. <b>Res</b> = result vs the closing line.</div>
+    <div style="overflow-x:auto;"><table class="proj-table clv-table">
+      <thead><tr><th>Matchup</th><th>Mkt</th><th>Our lean (edge)</th><th>Open → Close</th><th>Dir</th><th>CLV</th><th>Res</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
 }
 
 function renderPregameBacktestHTML() {
