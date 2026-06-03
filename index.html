@@ -1360,6 +1360,7 @@
   .apx-side-k{color:var(--muted);font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;}
   .apx-info2 .apx-gp{display:inline-flex;align-items:center;gap:2px;margin:0 4px 0 0;font-size:0.58rem;color:var(--muted);}
   .apx-info2 .grade{font-size:0.6rem;padding:0 3px;border-radius:4px;font-weight:700;}
+  .apx-side-a .grade,.apx-side-h .grade{margin:0 1px;}
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
   .apx-info-row{display:flex;gap:8px;font-size:0.72rem;line-height:1.6;}
@@ -2502,12 +2503,13 @@ function mlEdgeInfo(awp,hwp,aO,hO){
 function _apxHand(name){ try{ let h=null; if(typeof lookupSplits==='function'){const x=lookupSplits(name); if(x&&x.hand)h=x.hand;} if(!h&&typeof lookupPitcherStats==='function'){const y=lookupPitcherStats(name); if(y&&y.hand)h=y.hand;} return h?' ('+h+')':''; }catch(e){ return ''; } }
 function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRank(name); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'sp'); } }catch(e){} return ''; }
 function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=getBullpenRank(id); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'bp'); } }catch(e){} return ''; }
-function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; const rows=fd.teams[team]; if(!rows) return ''; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
+function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; if(!fd.teams[team]) return ''; const rows=(typeof _penRelievers==='function')?_penRelievers(fd.teams[team]):fd.teams[team]; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
 function _apxTeamGrades(game,side){
   try{
     if(typeof teamRankGradeLetter!=='function') return null;
     const t=game.teams[side].team; const abbr=t.abbreviation||teamAbbr(t.name);
-    return {off:teamRankGradeLetter(abbr,'off'), def:teamRankGradeLetter(abbr,'def'), bsr:teamRankGradeLetter(abbr,'bsr')};
+    return {off:teamRankGradeLetter(abbr,'off'), def:teamRankGradeLetter(abbr,'def'), bsr:teamRankGradeLetter(abbr,'bsr'),
+            con:teamRankGradeLetter(abbr,'con'), pow:teamRankGradeLetter(abbr,'pwr'), eye:teamRankGradeLetter(abbr,'eye')};
   }catch(e){ return null; }
 }
 
@@ -2586,17 +2588,18 @@ function apxCardHTML(g){
   const edge=(!isFinal&&sp)?_apxEdgeBar(g):'';
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
-  const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+_apxRank(aSPn)):'TBD';
-  const hSP=hSPn?(shortName(hSPn)+_apxHand(hSPn)+_apxRank(hSPn)):'TBD';
+  const aRk=aSPn?_apxRank(aSPn):'', hRk=hSPn?_apxRank(hSPn):'';
+  const aSP=aSPn?((aRk?aRk+' ':'')+shortName(aSPn)+_apxHand(aSPn)):'TBD';
+  const hSP=hSPn?((hRk?hRk+' ':'')+shortName(hSPn)+_apxHand(hSPn)):'TBD';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
-  const gpair=(l1,v1,l2,v2)=>'<span class="apx-gp">'+l1+gcell(v1)+'</span><span class="apx-gp">'+l2+gcell(v2)+'</span>';
+  const gset=(...vs)=>vs.map(v=>gcell(v)).join('');
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenTag(home)+' '+_apxPenRank(hId))+
-    sideRow('OFF', gcell(ga&&ga.off), gcell(gh&&gh.off))+
-    sideRow('BSR/DEF', gpair('BSR',ga&&ga.bsr,'DEF',ga&&ga.def), gpair('BSR',gh&&gh.bsr,'DEF',gh&&gh.def))+
+    sideRow('PEN', _apxPenRank(aId)+' '+_apxPenTag(away), _apxPenRank(hId)+' '+_apxPenTag(home))+
+    sideRow('CON·POW·EYE', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye))+
+    sideRow('BSR·DEF', gset(ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.bsr,gh&&gh.def))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -2610,10 +2613,10 @@ async function exportScoreboardPNG(){
   const nG=(typeof CURRENT_GAMES!=='undefined'&&CURRENT_GAMES)?CURRENT_GAMES.length:0;
   const stage=document.createElement('div');
   stage.id='apx-export-stage';
-  stage.style.cssText='position:fixed;left:-99999px;top:0;width:920px;background:#0d1117;padding:24px 22px;box-sizing:border-box;';
+  stage.style.cssText='position:fixed;left:-99999px;top:0;width:1340px;background:#0d1117;padding:24px 22px;box-sizing:border-box;';
   const gridClone=grid.cloneNode(true);
   gridClone.classList.add('apx-detailed');
-  gridClone.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+  gridClone.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
   stage.innerHTML='<div style="text-align:center;margin-bottom:14px;">'+
     '<div style="font-family:Inter,sans-serif;font-weight:800;font-style:italic;font-size:30px;color:#ffffff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
     '<div style="font-family:Inter,sans-serif;font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+(nG?(' · '+nG+' games'):'')+'</div>'+
@@ -2627,7 +2630,7 @@ async function exportScoreboardPNG(){
     '</div>');
   document.body.appendChild(stage);
   try{
-    const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:980});
+    const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:1380});
     const url=canvas.toDataURL('image/png');
     const a=document.createElement('a'); a.href=url; a.download='mlb-scoreboard-'+((typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today')+'.png'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){ alert('PNG export failed (often a cross-origin logo). Error: '+e.message); }
@@ -3454,12 +3457,14 @@ async function loadForDate(date) {
 // ============================================================================
 // SCOREBOARD
 // ============================================================================
+function _penIsStart(r){ const ds=(r&&r.days)||[]; return ds.length ? Math.max.apply(null,ds)>=50 : false; }
+function _penRelievers(rows){ return (rows||[]).filter(r=>!_penIsStart(r)); }
 function penSummaryChip(teamName) {
   const fd = activeFatigue();
   if (!fd || !fd.teams) return "";
-  const rows = fd.teams[teamName];
-  const out = rows?.filter(r => r.tier === "LIKELY OUT").length || 0;
-  const ftg = rows?.filter(r => r.tier === "FATIGUED").length || 0;
+  const rows = _penRelievers(fd.teams[teamName]);
+  const out = rows.filter(r => r.tier === "LIKELY OUT").length || 0;
+  const ftg = rows.filter(r => r.tier === "FATIGUED").length || 0;
   const parts = [];
   if (out) parts.push(`<span class="sb-pen-out">${out} OUT</span>`);
   if (ftg) parts.push(`<span class="sb-pen-ftg">${ftg} FTG</span>`);
@@ -4043,15 +4048,17 @@ function handOfPitcher(name) {
 // Reconcile lineups-page DEF/BSR team chip with the Team Ranks tab. Team Ranks
 // uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
 // the SAME map. Lazily compute, cache on HITTERS identity.
-let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null;
+let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null,
+    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null;
 function _ensureTeamRankGrades() {
-  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF) return;
+  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
   if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
       typeof gradeByRank !== 'function' ||
       !HITTERS || !Array.isArray(ALL_TEAMS_CACHE) || !ALL_TEAMS_CACHE.length) return;
+  const HP = (typeof HITTER_PCT !== 'undefined' && HITTER_PCT && HITTER_PCT.hitters) ? HITTER_PCT.hitters : null;
   const byTeam = _allTeamsLineupHittersByTeam(HITTERS.hitters || {}, ALL_TEAMS_CACHE || []);
   const rows = Object.values(byTeam).map(tb => {
-    let dS=0,dN=0,bS=0,bN=0,oS=0,oN=0;
+    let dS=0,dN=0,bS=0,bN=0,oS=0,oN=0,pS=0,pN=0,eS=0,eN=0,cS=0,cN=0;
     for (const x of tb.list) {
       const h=x.hitter||{};
       if (typeof h.fld === 'number') { dS+=h.fld; dN++; }
@@ -4062,17 +4069,20 @@ function _ensureTeamRankGrades() {
       else if (typeof h.wrc_vs_r==='number') w=h.wrc_vs_r;
       else if (typeof h.wrc_vs_l==='number') w=h.wrc_vs_l;
       if (w!=null) { oS+=w; oN++; }
+      const pc = HP ? HP[normName(x.name||'')] : null;
+      if (pc) {
+        const pw=(typeof powerPct==='function')?powerPct(pc,x.name):null; if(pw!=null){pS+=pw;pN++;}
+        const ey=(typeof eyePct==='function')?eyePct(pc,x.name):null; if(ey!=null){eS+=ey;eN++;}
+        if(typeof pc.k_pct==='number'){cS+=pc.k_pct;cN++;}
+      }
     }
-    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null, off: oN?oS/oN:null };
+    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null, off: oN?oS/oN:null,
+             pwr: pN?pS/pN:null, eye: eN?eS/eN:null, con: cN?cS/cN:null };
   }).filter(r => r.abbr);
   const total = rows.length || 30;
-  const sD = rows.filter(r=>r.def!=null).sort((a,b)=>b.def-a.def);
-  const sB = rows.filter(r=>r.bsr!=null).sort((a,b)=>b.bsr-a.bsr);
-  const sO = rows.filter(r=>r.off!=null).sort((a,b)=>b.off-a.off);
-  _TEAM_RANK_DEF = {}; _TEAM_RANK_BSR = {}; _TEAM_RANK_OFF = {};
-  sD.forEach((r,i)=>{ _TEAM_RANK_DEF[r.abbr] = gradeByRank(i+1, total); });
-  sB.forEach((r,i)=>{ _TEAM_RANK_BSR[r.abbr] = gradeByRank(i+1, total); });
-  sO.forEach((r,i)=>{ _TEAM_RANK_OFF[r.abbr] = gradeByRank(i+1, total); });
+  const rankInto = (key) => { const tgt={}; rows.filter(r=>r[key]!=null).sort((a,b)=>b[key]-a[key]).forEach((r,i)=>{ tgt[r.abbr]=gradeByRank(i+1,total); }); return tgt; };
+  _TEAM_RANK_DEF = rankInto('def'); _TEAM_RANK_BSR = rankInto('bsr'); _TEAM_RANK_OFF = rankInto('off');
+  _TEAM_RANK_PWR = rankInto('pwr'); _TEAM_RANK_EYE = rankInto('eye'); _TEAM_RANK_CON = rankInto('con');
   _TEAM_RANK_SRC = HITTERS;
 }
 function teamRankGradeLetter(abbr, cat) {
@@ -4080,6 +4090,9 @@ function teamRankGradeLetter(abbr, cat) {
   if (cat === 'def') return _TEAM_RANK_DEF?.[abbr] || null;
   if (cat === 'bsr') return _TEAM_RANK_BSR?.[abbr] || null;
   if (cat === 'off') return _TEAM_RANK_OFF?.[abbr] || null;
+  if (cat === 'pwr') return _TEAM_RANK_PWR?.[abbr] || null;
+  if (cat === 'eye') return _TEAM_RANK_EYE?.[abbr] || null;
+  if (cat === 'con') return _TEAM_RANK_CON?.[abbr] || null;
   return null;
 }
 
