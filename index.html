@@ -1358,6 +1358,8 @@
   .apx-side-a{text-align:left;color:var(--text);}
   .apx-side-h{text-align:right;color:var(--text);}
   .apx-side-k{color:var(--muted);font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;}
+  .apx-info2 .apx-gp{display:inline-flex;align-items:center;gap:2px;margin:0 4px 0 0;font-size:0.58rem;color:var(--muted);}
+  .apx-info2 .grade{font-size:0.6rem;padding:0 3px;border-radius:4px;font-weight:700;}
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
   .apx-info-row{display:flex;gap:8px;font-size:0.72rem;line-height:1.6;}
@@ -2588,13 +2590,13 @@ function apxCardHTML(g){
   const hSP=hSPn?(shortName(hSPn)+_apxHand(hSPn)+_apxRank(hSPn)):'TBD';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
+  const gpair=(l1,v1,l2,v2)=>'<span class="apx-gp">'+l1+gcell(v1)+'</span><span class="apx-gp">'+l2+gcell(v2)+'</span>';
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('PEN', _apxPenRank(aId)+' '+_apxPenTag(away), _apxPenRank(hId)+' '+_apxPenTag(home))+
+    sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenTag(home)+' '+_apxPenRank(hId))+
     sideRow('OFF', gcell(ga&&ga.off), gcell(gh&&gh.off))+
-    sideRow('DEF', gcell(ga&&ga.def), gcell(gh&&gh.def))+
-    sideRow('BSR', gcell(ga&&ga.bsr), gcell(gh&&gh.bsr))+
+    sideRow('BSR/DEF', gpair('BSR',ga&&ga.bsr,'DEF',ga&&ga.def), gpair('BSR',gh&&gh.bsr,'DEF',gh&&gh.def))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -3596,34 +3598,54 @@ function renderStatcastTeamAvgTable(games) {
   // pwr as the default if no metric-specific stat is published.
   const tgStats = (TEAM_GRADES && TEAM_GRADES.stats) || {};
   const _SC_SPREAD = 18;
-  const makeCells = (avgs) => metrics.map(([lbl, key]) => {
-    const v = avgs[key];
-    if (v == null) return `<td class="grade-cell"><span class="gr-na">—</span></td>`;
-    const cs = tgStats[key] || { mean: HARDCODED_TG_MEAN, sd: HARDCODED_TG_SD[key] || 6 };
-    const disp = Math.max(1, Math.min(99, 50 + ((v - cs.mean) / cs.sd) * _SC_SPREAD));
-    const l = gradeLetter(disp);
-    const ref = `vs league (μ=${cs.mean.toFixed ? cs.mean.toFixed(1) : cs.mean}, σ=${cs.sd.toFixed ? cs.sd.toFixed(1) : cs.sd})`;
-    return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} — ${ref} · raw avg ${Math.round(v)}th pct">${l}</span></td>`;
-  }).join("");
-  let rowsHTML = "";
-  let n_games_with_data = 0;
+  // Grade each team against the LIVE distribution of team-average percentiles
+  // across every team on the slate (self-calibrating "vs other teams"). This
+  // replaces the old hardcoded per-metric SD (σ as small as 4) that exaggerated
+  // tiny gaps into A+/F. Falls back to published/hardcoded SD only when the
+  // slate is too small to estimate a spread.
+  const _entries = [];
   for (const g of sorted) {
     const lg = lineupsForGame(g);
     const awayP = lg?.lineups?.away?.players || [];
     const homeP = lg?.lineups?.home?.players || [];
-    if (!awayP.length && !homeP.length) continue;  // skip un-posted games
+    if (!awayP.length && !homeP.length) continue;
+    _entries.push({ g, awayP, homeP, awayAvg: teamAvg(awayP), homeAvg: teamAvg(homeP) });
+  }
+  const _leagueStats = {};
+  for (const [, key] of metrics) {
+    const vals = [];
+    for (const e of _entries) {
+      if (e.awayAvg[key] != null) vals.push(e.awayAvg[key]);
+      if (e.homeAvg[key] != null) vals.push(e.homeAvg[key]);
+    }
+    if (vals.length >= 6) {
+      const m = vals.reduce((a,b)=>a+b,0)/vals.length;
+      const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-m)*(b-m),0)/vals.length) || 1;
+      _leagueStats[key] = { mean: m, sd: Math.max(sd, 1) };
+    }
+  }
+  const makeCells = (avgs) => metrics.map(([lbl, key]) => {
+    const v = avgs[key];
+    if (v == null) return `<td class="grade-cell"><span class="gr-na">&mdash;</span></td>`;
+    const cs = _leagueStats[key] || tgStats[key] || { mean: HARDCODED_TG_MEAN, sd: HARDCODED_TG_SD[key] || 6 };
+    const disp = Math.max(1, Math.min(99, 50 + ((v - cs.mean) / cs.sd) * _SC_SPREAD));
+    const l = gradeLetter(disp);
+    const ref = `vs slate (μ=${cs.mean.toFixed ? cs.mean.toFixed(1) : cs.mean}, σ=${cs.sd.toFixed ? cs.sd.toFixed(1) : cs.sd})`;
+    return `<td class="grade-cell"><span class="grade ${gradeCls(l)}" title="${lbl}: ${l} — ${ref} · raw avg ${Math.round(v)}th pct">${l}</span></td>`;
+  }).join("");
+  let rowsHTML = "";
+  let n_games_with_data = 0;
+  for (const e of _entries) {
+    const g = e.g; const awayP = e.awayP; const homeP = e.homeP;
+    const awayAvg = e.awayAvg; const homeAvg = e.homeAvg;
     n_games_with_data++;
-    const awayAvg = teamAvg(awayP);
-    const homeAvg = teamAvg(homeP);
     const gt = fmtTime(g.gameDate);
-    // Game header row
     rowsHTML += `<tr class="sc-game-hdr">
       <td colspan="${metrics.length + 2}" style="padding:0.4rem 0.3rem 0.15rem;
           font-size:0.72rem;color:var(--muted);letter-spacing:0.04em;">
         ${teamAbbr(g.teams.away.team.name)} @ ${teamAbbr(g.teams.home.team.name)} · ${gt}
       </td>
     </tr>`;
-    // Two team rows
     rowsHTML += `<tr>
       <td class="team" style="padding-left:1.2rem;">${teamLogo(g.teams.away.team.id, 16)} ${g.teams.away.team.abbreviation || teamAbbr(g.teams.away.team.name)}</td>
       <td style="color:var(--muted);font-size:0.68rem;text-align:right;padding-right:0.3rem;">${awayP.length ? awayP.length + ' bat' : '—'}</td>
