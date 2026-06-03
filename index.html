@@ -1314,6 +1314,10 @@
   .apx-toggle{background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:5px 11px;border-radius:6px;cursor:pointer;}
   .apx-toggle:hover{border-color:var(--accent);color:var(--accent);}
   .apx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+  .apx-card,.apx-toolbar,.se-table,.se-score,.apx-park,.apx-info2,#apx-export-stage{font-family:'Inter',var(--sans),system-ui,-apple-system,sans-serif;}
+  .apx-abbr{font-weight:800;letter-spacing:-0.01em;}
+  .apx-runs{font-weight:800;letter-spacing:-0.01em;}
+  .se-score-n{font-weight:800;}
   @media (max-width:1000px){ .apx-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
   @media (max-width:560px){ .apx-grid{grid-template-columns:1fr;} }
   .apx-sp{text-align:center;font-size:0.74rem;color:var(--muted);margin-bottom:6px;}
@@ -1370,6 +1374,8 @@
   .se-c-mkt{color:var(--muted);}
   .se-c-edge{text-align:right;font-weight:600;color:var(--muted);}
   .se-c-edge.pos{color:var(--tier-good);}
+  .se-c-edge.neg{color:#e2706a;}
+  .se-tt{font-size:0.78rem;color:var(--muted);text-align:center;margin-top:8px;border-top:1px solid var(--border);padding-top:6px;}
   .apx-gp{display:inline-flex;align-items:center;gap:3px;margin-right:6px;color:var(--muted);font-size:0.68rem;}
   .apx-info .grade{font-size:0.64rem;padding:0 4px;border-radius:4px;line-height:1.5;font-weight:600;}
   .apx-info .sb-pct-chip,.apx-info .ump-pct{font-size:0.64rem;margin-left:2px;}
@@ -1747,6 +1753,8 @@
     body.embed-mode.embed-scoreboard .modal-nav.next { right: 0 !important; }
   }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -2427,6 +2435,8 @@ async function loadSheetProjections(){
     }catch(e){}
   }
   SHEET_PROJ={byEid,byPk};
+  // Re-render whatever's on screen now that projections are in.
+  try{ if(typeof CURRENT_GAMES!=='undefined' && CURRENT_GAMES && CURRENT_GAMES.length){ if(typeof renderScoreboard==='function') renderScoreboard(); if(typeof PROJ_SUB!=='undefined' && typeof renderProjectionsTab==='function'){ const pt=document.getElementById('tab-proj'); if(pt && !pt.hidden) renderProjectionsTab(); } } }catch(e){}
 }
 function devigTwoWay(aO,hO){
   if(aO==null||hO==null) return [null,null];
@@ -2447,37 +2457,37 @@ function _apxFair(v){return v==null?'—':(v>0?'+'+v:''+v);}
 function renderSheetEdgesHTML(game){
   const sp=sheetProjForGame(game.gamePk);
   if(!sp) return '<div class="coming-soon">No projection uploaded for this game yet.</div>';
-  const awayAbbr=teamAbbr(game.teams.away.team.name);
-  const homeAbbr=teamAbbr(game.teams.home.team.name);
+  const aAb=teamAbbr(game.teams.away.team.name), hAb=teamAbbr(game.teams.home.team.name);
   const o=oddsForGame(game.gamePk);
   const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
   const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
+  const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
+  const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   const f=v=>v==null?'—':(v>0?'+'+v:''+v);
-  const ovL=o&&o.total&&o.total.over?o.total.over.line:null;
-  const ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
-  const unL=o&&o.total&&o.total.under?o.total.under.line:null;
-  const unO=o&&o.total&&o.total.under?o.total.under.odds:null;
-  const mktLine=ovL!=null?ovL:unL;
-  const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO);
-  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
+  const ip=x=>x==null?null:(x<0?(-x)/((-x)+100):100/(x+100));
+  const pc=v=>v==null?'—':Math.round(v*100)+'%';
   let score='';
   if(sp.away_runs!=null&&sp.home_runs!=null){
-    score='<div class="se-score"><span class="se-score-ab">'+awayAbbr+'</span><span class="se-score-n">'+sp.away_runs.toFixed(2)+'</span><span class="se-score-lbl">EXP<br>RUNS</span><span class="se-score-n">'+sp.home_runs.toFixed(2)+'</span><span class="se-score-ab">'+homeAbbr+'</span></div>'+
+    score='<div class="se-score"><span class="se-score-ab">'+aAb+'</span><span class="se-score-n">'+sp.away_runs.toFixed(2)+'</span><span class="se-score-lbl">EXP<br>RUNS</span><span class="se-score-n">'+sp.home_runs.toFixed(2)+'</span><span class="se-score-ab">'+hAb+'</span></div>'+
       '<div class="se-score-tot">Projected total '+(sp.total!=null?sp.total.toFixed(2):'—')+'</div>';
   }
-  const mlBet=(sp.away_wp!=null&&sp.home_wp!=null)?(awayAbbr+' '+Math.round(sp.away_wp*100)+'% · '+homeAbbr+' '+Math.round(sp.home_wp*100)+'%'):'—';
-  let mlEdgeTxt='market pending', mlPos=false;
-  if(mi){ if(mi.edge>0){ mlEdgeTxt='+'+mi.edge.toFixed(1)+'% '+(mi.side==='away'?awayAbbr:homeAbbr); mlPos=true; } else mlEdgeTxt='no edge'; }
-  const totBet=ti?(ti.lean+' '+ti.line):'—';
-  let totEdgeTxt='market pending', totPos=false;
-  if(ti){ if(ti.edge>0){ totEdgeTxt='+'+ti.edge.toFixed(1)+'%'; totPos=true; } else totEdgeTxt='no edge'; }
-  const ttBet=(sp.away_runs!=null&&sp.home_runs!=null)?(awayAbbr+' '+sp.away_runs.toFixed(2)+' · '+homeAbbr+' '+sp.home_runs.toFixed(2)):'—';
-  const rowHTML=(mkt,bet,edge,pos)=>'<tr><td class="se-c-mkt">'+mkt+'</td><td class="se-c-bet">'+bet+'</td><td class="se-c-edge'+(pos?' pos':'')+'">'+edge+'</td></tr>';
-  const table='<table class="se-table"><thead><tr><td>Market</td><td>Our call</td><td style="text-align:right;">Edge</td></tr></thead><tbody>'+
-    rowHTML('Moneyline '+f(aO)+' / '+f(hO), mlBet, mlEdgeTxt, mlPos)+
-    rowHTML('Total O/U '+(mktLine!=null?mktLine:'—'), totBet, totEdgeTxt, totPos)+
-    rowHTML('Team totals', ttBet, '—', false)+
-  '</tbody></table>';
+  const iA=ip(aO), iH=ip(hO);
+  const eA=(sp.away_wp!=null&&iA!=null)?(sp.away_wp-iA)*100:null;
+  const eH=(sp.home_wp!=null&&iH!=null)?(sp.home_wp-iH)*100:null;
+  const pOv=(sp.total!=null&&ovL!=null)?_pOverAt(sp.total,ovL):null;
+  const pUn=(sp.total!=null&&unL!=null)?(1-_pOverAt(sp.total,unL)):null;
+  const iOv=ip(ovO), iUn=ip(unO);
+  const eOv=(pOv!=null&&iOv!=null)?(pOv-iOv)*100:null;
+  const eUn=(pUn!=null&&iUn!=null)?(pUn-iUn)*100:null;
+  const edgeCell=e=> e==null?'<td class="se-c-edge">—</td>':'<td class="se-c-edge '+(e>0?'pos':'neg')+'">'+(e>=0?'+':'')+e.toFixed(1)+'%</td>';
+  const row=(bet,projP,mktOdds,impl,edge)=>'<tr><td class="se-c-bet">'+bet+'</td><td>'+pc(projP)+'</td><td class="se-c-mkt">'+f(mktOdds)+' ('+pc(impl)+')</td>'+edgeCell(edge)+'</tr>';
+  const table='<table class="se-table"><thead><tr><td>Bet</td><td>Proj</td><td>Market (impl)</td><td style="text-align:right;">Edge</td></tr></thead><tbody>'+
+    row(aAb+' ML', sp.away_wp, aO, iA, eA)+
+    row(hAb+' ML', sp.home_wp, hO, iH, eH)+
+    row('Over '+(ovL!=null?ovL:'—'), pOv, ovO, iOv, eOv)+
+    row('Under '+(unL!=null?unL:'—'), pUn, unO, iUn, eUn)+
+  '</tbody></table>'+
+  '<div class="se-tt">Team totals: '+aAb+' '+(sp.away_runs!=null?sp.away_runs.toFixed(2):'—')+' · '+hAb+' '+(sp.home_runs!=null?sp.home_runs.toFixed(2):'—')+'</div>';
   return score+table;
 }
 
@@ -2493,14 +2503,9 @@ function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=g
 function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; const rows=fd.teams[team]; if(!rows) return ''; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
 function _apxTeamGrades(game,side){
   try{
-    if(typeof lineupsForGame!=='function'||typeof teamGradePct!=='function'||typeof gradeLetter!=='function') return null;
-    const lg=lineupsForGame(game); const players=lg&&lg.lineups&&lg.lineups[side]?lg.lineups[side].players:null;
-    if(!players||!players.length) return null;
-    const pwr=teamGradePct(players,'pwr'), eye=teamGradePct(players,'eye');
-    const off=(pwr!=null&&eye!=null)?(pwr+eye)/2:(pwr!=null?pwr:eye);
-    const bsr=teamGradePct(players,'bsr'), def=teamGradePct(players,'def');
-    const L=v=>v==null?null:gradeLetter(v);
-    return {off:L(off),bsr:L(bsr),def:L(def)};
+    if(typeof teamRankGradeLetter!=='function') return null;
+    const t=game.teams[side].team; const abbr=t.abbreviation||teamAbbr(t.name);
+    return {off:teamRankGradeLetter(abbr,'off'), def:teamRankGradeLetter(abbr,'def'), bsr:teamRankGradeLetter(abbr,'bsr')};
   }catch(e){ return null; }
 }
 
@@ -2527,10 +2532,8 @@ function _apxEdgeBar(g){
   let ml='<span class="apx-pill">ML —</span>';
   const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO);
   if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">'+ab+' ML +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No ML edge</span>'; } }
-  const ovL=o&&o.total&&o.total.over?o.total.over.line:null;
-  const ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
-  const unL=o&&o.total&&o.total.under?o.total.under.line:null;
-  const unO=o&&o.total&&o.total.under?o.total.under.odds:null;
+  const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
+  const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   let tot='<span class="apx-pill">Total —</span>';
   const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
@@ -2551,7 +2554,6 @@ function apxCardHTML(g){
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
   const wpChip=isFinal?' <span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
   const head='<div class="apx-head2">'+aAb+' @ '+hAb+' · '+(isFinal?status:fmtTime(g.gameDate))+wpChip+'</div>';
-  // game-level env line: park · PF · Wx · HP ump
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
@@ -2561,7 +2563,6 @@ function apxCardHTML(g){
   let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
   const umpHtml=umpName?(' <span class="apx-ump">HP '+umpName+' '+umpFac+'</span>'):'';
   const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span> ':'')+pfChip+' '+wxChip+umpHtml+'</div>';
-  // center: logos + market odds in parens + win% flanking the projected runs
   let center;
   if(isFinal && g._finalScore){
     const fs=g._finalScore;
@@ -2571,7 +2572,7 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp){
     const aFav=sp.away_wp>=sp.home_wp;
-    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+_apxFair(mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'% win':'—')+'</span></div>';
+    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'% win':'—')+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.away_wp,aFav)+
       '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+sp.total.toFixed(2)+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
@@ -2581,32 +2582,65 @@ function apxCardHTML(g){
     center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   }
   const edge=(!isFinal&&sp)?_apxEdgeBar(g):'';
-  // per-team info: away on the left, home on the right, label centered
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
   const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+_apxRank(aSPn)):'TBD';
   const hSP=hSPn?(shortName(hSPn)+_apxHand(hSPn)+_apxRank(hSPn)):'TBD';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
-  const gp=(lab,l)=>'<span class="apx-gp">'+lab+(l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>')+'</span>';
-  const grades=gr=>gr?(gp('O',gr.off)+gp('D',gr.def)+gp('B',gr.bsr)):'<span class="gr-na">—</span>';
-  const penA=_apxPenRank(aId)+' '+_apxPenTag(away), penH=_apxPenRank(hId)+' '+_apxPenTag(home);
+  const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('Pen', penA, penH)+
-    sideRow('Bats', grades(ga), grades(gh))+
+    sideRow('PEN', _apxPenRank(aId)+' '+_apxPenTag(away), _apxPenRank(hId)+' '+_apxPenTag(home))+
+    sideRow('OFF', gcell(ga&&ga.off), gcell(gh&&gh.off))+
+    sideRow('DEF', gcell(ga&&ga.def), gcell(gh&&gh.def))+
+    sideRow('BSR', gcell(ga&&ga.bsr), gcell(gh&&gh.bsr))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
+}
+
+
+async function exportScoreboardPNG(){
+  if(typeof html2canvas==='undefined'){ alert('Image library still loading — try again in a moment.'); return; }
+  const grid=document.getElementById('apx-grid'); if(!grid) return;
+  const btn=document.getElementById('apx-png'); const oldT=btn?btn.textContent:''; if(btn){btn.textContent='Rendering…';btn.disabled=true;}
+  let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
+  const nG=(typeof CURRENT_GAMES!=='undefined'&&CURRENT_GAMES)?CURRENT_GAMES.length:0;
+  const stage=document.createElement('div');
+  stage.id='apx-export-stage';
+  stage.style.cssText='position:fixed;left:-99999px;top:0;width:920px;background:#0d1117;padding:24px 22px;box-sizing:border-box;';
+  const gridClone=grid.cloneNode(true);
+  gridClone.classList.add('apx-detailed');
+  gridClone.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+  stage.innerHTML='<div style="text-align:center;margin-bottom:14px;">'+
+    '<div style="font-family:Inter,sans-serif;font-weight:800;font-style:italic;font-size:30px;color:#ffffff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
+    '<div style="font-family:Inter,sans-serif;font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+(nG?(' · '+nG+' games'):'')+'</div>'+
+  '</div>';
+  stage.appendChild(gridClone);
+  stage.insertAdjacentHTML('beforeend',
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-family:Inter,sans-serif;font-size:13px;color:#9aa4b2;">'+
+      '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
+      '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
+      '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
+    '</div>');
+  document.body.appendChild(stage);
+  try{
+    const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:980});
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a'); a.href=url; a.download='mlb-scoreboard-'+((typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today')+'.png'; document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ alert('PNG export failed (often a cross-origin logo). Error: '+e.message); }
+  finally{ stage.remove(); if(btn){btn.textContent=oldT;btn.disabled=false;} }
 }
 
 
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
-  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
+  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-png">Save PNG</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
   el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(apxCardHTML).join("")+'</div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
+  const pngBtn=document.getElementById('apx-png'); if(pngBtn) pngBtn.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
   el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
   el.querySelectorAll(".sb-wp-chip").forEach(chip=>{ const jump=(e)=>{ e.preventDefault(); e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; chip.onclick=jump; chip.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" ")jump(e); }; });
 }
@@ -3239,6 +3273,9 @@ async function loadForDate(date) {
   // Load Action PRO sheet projections in the BACKGROUND so a slow/blocked live
   // CSV fetch can never hold up the scoreboard render. Re-render when it lands.
   loadSheetProjections().then(() => { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
+  // Load the team list up front so team-rank grades (OFF/DEF/BSR) match the
+  // Rankings tab and populate on the scoreboard; re-render when ready.
+  if (typeof fetchAllTeams === 'function') { fetchAllTeams().then(() => { try { if (typeof _ensureTeamRankGrades === 'function') _ensureTeamRankGrades(); if (typeof CURRENT_GAMES !== 'undefined' && CURRENT_GAMES && CURRENT_GAMES.length && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {}); }
 
   // 3 forward + today for the schedule proper.
   // 10 days backward of probables to build a thorough known-starters set
@@ -3984,33 +4021,43 @@ function handOfPitcher(name) {
 // Reconcile lineups-page DEF/BSR team chip with the Team Ranks tab. Team Ranks
 // uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
 // the SAME map. Lazily compute, cache on HITTERS identity.
-let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null;
+let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null;
 function _ensureTeamRankGrades() {
-  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR) return;
+  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF) return;
   if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
       typeof gradeByRank !== 'function' ||
       !HITTERS || !Array.isArray(ALL_TEAMS_CACHE) || !ALL_TEAMS_CACHE.length) return;
   const byTeam = _allTeamsLineupHittersByTeam(HITTERS.hitters || {}, ALL_TEAMS_CACHE || []);
   const rows = Object.values(byTeam).map(tb => {
-    let dS=0,dN=0,bS=0,bN=0;
+    let dS=0,dN=0,bS=0,bN=0,oS=0,oN=0;
     for (const x of tb.list) {
-      if (typeof x.hitter?.fld === 'number') { dS+=x.hitter.fld; dN++; }
-      if (typeof x.hitter?.bsr === 'number') { bS+=x.hitter.bsr; bN++; }
+      const h=x.hitter||{};
+      if (typeof h.fld === 'number') { dS+=h.fld; dN++; }
+      if (typeof h.bsr === 'number') { bS+=h.bsr; bN++; }
+      let w=null;
+      if (typeof h.wrc_vs_l==='number' && typeof h.wrc_vs_r==='number') w=(h.wrc_vs_l+h.wrc_vs_r)/2;
+      else if (typeof h.wrc==='number') w=h.wrc;
+      else if (typeof h.wrc_vs_r==='number') w=h.wrc_vs_r;
+      else if (typeof h.wrc_vs_l==='number') w=h.wrc_vs_l;
+      if (w!=null) { oS+=w; oN++; }
     }
-    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null };
+    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null, off: oN?oS/oN:null };
   }).filter(r => r.abbr);
   const total = rows.length || 30;
   const sD = rows.filter(r=>r.def!=null).sort((a,b)=>b.def-a.def);
   const sB = rows.filter(r=>r.bsr!=null).sort((a,b)=>b.bsr-a.bsr);
-  _TEAM_RANK_DEF = {}; _TEAM_RANK_BSR = {};
+  const sO = rows.filter(r=>r.off!=null).sort((a,b)=>b.off-a.off);
+  _TEAM_RANK_DEF = {}; _TEAM_RANK_BSR = {}; _TEAM_RANK_OFF = {};
   sD.forEach((r,i)=>{ _TEAM_RANK_DEF[r.abbr] = gradeByRank(i+1, total); });
   sB.forEach((r,i)=>{ _TEAM_RANK_BSR[r.abbr] = gradeByRank(i+1, total); });
+  sO.forEach((r,i)=>{ _TEAM_RANK_OFF[r.abbr] = gradeByRank(i+1, total); });
   _TEAM_RANK_SRC = HITTERS;
 }
 function teamRankGradeLetter(abbr, cat) {
   _ensureTeamRankGrades();
   if (cat === 'def') return _TEAM_RANK_DEF?.[abbr] || null;
   if (cat === 'bsr') return _TEAM_RANK_BSR?.[abbr] || null;
+  if (cat === 'off') return _TEAM_RANK_OFF?.[abbr] || null;
   return null;
 }
 
