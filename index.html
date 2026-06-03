@@ -8136,12 +8136,23 @@ function renderFuturesContent(root) {
   // side instead of inferring from sign. Magnitude is always abs(edge).
   const binaryEdgeCell = (signedEdge, star, sideOverride) => {
     if (signedEdge == null) return '—';
-    const cls = edgeCls(Math.abs(signedEdge));
-    const sideLabel = sideOverride || (signedEdge >= 0 ? 'Y' : 'N');
-    const mag = Math.abs(signedEdge).toFixed(1);
-    const starHtml = star ? ` <span class="ft-stars">${star}</span>` : '';
-    return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied %. Side label = the bettable direction (Y / N). Real NO odds from the Rotowire snapshot when present; otherwise mirror of YES.">
-      <span><span class="ft-side">${sideLabel}</span>+${mag}%${starHtml}</span>
+    // Only a POSITIVE edge is bettable. signedEdge is the best bettable edge
+    // chosen server-side (YES, or real NO when Rotowire odds show NO value).
+    // If it's > 0 we show "<side> +X%" in green with a star; if it's ≤ 0 there
+    // is no bettable edge — render the honest negative value (red/neutral, no
+    // star) so a model-below-market price never masquerades as a YES edge.
+    if (signedEdge > 0) {
+      const cls = edgeCls(signedEdge);
+      const sideLabel = sideOverride || 'Y';
+      const mag = signedEdge.toFixed(1);
+      const starHtml = star ? ` <span class="ft-stars">${star}</span>` : '';
+      return `<div class="ft-edge-stack ${cls}" title="Composite playoff % minus market implied % on the bettable side (Y / N). Real NO odds from the Rotowire snapshot when present.">
+        <span><span class="ft-side">${sideLabel}</span>+${mag}%${starHtml}</span>
+      </div>`;
+    }
+    const cls = edgeCls(signedEdge);
+    return `<div class="ft-edge-stack ${cls}" title="No bettable edge — model sits below the market YES price and there's no positive NO edge.">
+      <span>${signedEdge.toFixed(1)}%</span>
     </div>`;
   };
   const starChip = (s) => s ? ` <span class="ft-stars">${s}</span>` : '';
