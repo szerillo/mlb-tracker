@@ -281,6 +281,23 @@ jobs:
         run: python scripts/refresh_luck_ratings.py
         continue-on-error: true
 
+      - name: Refresh Power+Eye sources (Savant EV + Swing/Take, FG cache)
+        # Pulls fresh Savant Exit Velocity + Swing/Take per-hitter values and
+        # writes data/power_eye_2026.csv. FanGraphs plate discipline is
+        # Cloudflare-protected — falls back to the existing data/fg_plate_disc_2026.csv
+        # cache for the O-Swing/Z-Swing/SwStr/Zone inputs (refresh that file
+        # manually via the admin browser bookmarklet when needed).
+        run: python scripts/refresh_power_eye.py
+        continue-on-error: true
+
+      - name: Rebuild grades_v2.json (PWR/EYE/DEF/BSR letter grades)
+        # Reads data/power_eye_2026.csv + data/def_bsr_2026.csv, applies the
+        # user's Orr-equivalent Power+Eye formulas + the FLD/BSR model output,
+        # rank-percentiles each metric, then maps through the A+→D- ladder.
+        # Writes data/grades_v2.json — single source the frontend reads.
+        run: python scripts/build_grades_v2.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
