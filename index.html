@@ -2315,7 +2315,15 @@ function _parseDateCell(v){
   m=v.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?m[0]:null;
 }
 async function loadSheetProjections(){
-  const byEid={}, byPk={};
+  const byEid={}, byPk={}, eid2pk={};
+  // 1) committed snapshot -> valid gamePk mapping (works even before odds.json
+  //    carries an_event_id) plus an_event_id<->gamePk.
+  try{
+    const j=await fetchJSON('data/sheet_projections.json?t='+Date.now());
+    if(j&&j.games){ for(const pk in j.games){const g=j.games[pk]; byPk[pk]=g;
+      if(g.an_event_id!=null){ byEid[g.an_event_id]=g; eid2pk[g.an_event_id]=pk; } } }
+  }catch(e){}
+  // 2) live published CSV -> fresh values, overlaid onto known gamePks by event id.
   if(SHEET_CSV_URL){
     try{
       const r=await fetch(SHEET_CSV_URL+(SHEET_CSV_URL.includes('?')?'&':'?')+'t='+Date.now());
@@ -2335,18 +2343,14 @@ async function loadSheetProjections(){
             const gid=num(row[iGid]); const aw=num(row[ix('away_score')]);
             if(gid==null||aw==null) continue;
             if(iDate>=0){const di=_parseDateCell(row[iDate]); if(di&&di!==today) continue;}
-            byEid[gid]={an_event_id:gid,away_runs:aw,home_runs:num(row[ix('home_score')]),
+            const obj={an_event_id:gid,away_runs:aw,home_runs:num(row[ix('home_score')]),
               total:num(row[ix('total')]),away_wp:num(row[ix('away_win_p')]),home_wp:num(row[ix('home_win_p')]),
               ml_away:num(row[ix('ml_away')]),ml_home:num(row[ix('ml_home')])};
+            byEid[gid]=obj;
+            const pk=eid2pk[gid]; if(pk) byPk[pk]=obj;
           }
         }
       }
-    }catch(e){}
-  }
-  if(Object.keys(byEid).length===0){
-    try{
-      const j=await fetchJSON('data/sheet_projections.json?t='+Date.now());
-      if(j&&j.games){ for(const pk in j.games){const g=j.games[pk]; byPk[pk]=g; if(g.an_event_id!=null) byEid[g.an_event_id]=g;} }
     }catch(e){}
   }
   SHEET_PROJ={byEid,byPk};
