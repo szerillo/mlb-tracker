@@ -1348,8 +1348,8 @@
   .apx-extra-row{display:flex;justify-content:space-between;gap:8px;margin:2px 0;}
   .apx-extra-row span:last-child{color:var(--text);}
   .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
-  .apx-head2{position:relative;text-align:center;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
-  .apx-luwrap{position:absolute;right:0;top:0;}
+  .apx-head2{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
+  .apx-luwrap{justify-self:end;}
   .apx-lu{font-size:0.64rem;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;}
   .apx-lu.conf{background:rgba(78,195,124,0.16);color:var(--confirmed);}
   .apx-lu.proj{background:rgba(229,164,73,0.16);color:var(--projected);}
@@ -2577,16 +2577,17 @@ function apxCardHTML(g){
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
-  const head='<div class="apx-head2"><span class="apx-time2">'+(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''))+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
+  let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
+  const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
+  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2">'+(_park?(_park+' · '):'')+_timeTxt+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
   const hpFull=hp||(g._projectedHP&&g._projectedHP.name)||'';
   let umpHtml='';
-  if(hpFull){ const _pp=hpFull.split(' '); const _last=_pp.slice(-1)[0]; const _init=_pp[0]?(_pp[0][0]+'. '):''; const _up=_umpPct(hpFull); const _uc=_up==null?'':(_up>0.5?'over':(_up<-0.5?'under':'')); const _uv=_init+_last+(_up!=null?(' '+(_up>=0?'+':'')+_up.toFixed(1)+'%'):''); umpHtml='<span class="sb-pct-chip '+_uc+'"><span class="pct-label">Ump</span>'+_uv+'</span>'; }
-  let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
-  const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span>':'')+pfChip+wxChip+umpHtml+'</div>';
+  if(hpFull){ const _pp=hpFull.split(' '); const _last=_pp.slice(-1)[0]; const _up=_umpPct(hpFull); const _uc=_up==null?'':(_up>0.5?'over':(_up<-0.5?'under':'')); const _uv=_last+(_up!=null?(' '+(_up>=0?'+':'')+_up.toFixed(1)+'%'):''); umpHtml='<span class="sb-pct-chip '+_uc+'"><span class="pct-label">Ump</span>'+_uv+'</span>'; }
+  const parkLine='<div class="apx-park">'+pfChip+wxChip+umpHtml+'</div>';
   let center;
   if(isFinal && g._finalScore){
     const fs=g._finalScore;
@@ -2612,6 +2613,7 @@ function apxCardHTML(g){
   const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+(aRk?' '+aRk:'')):'TBD';
   const hSP=hSPn?((hRk?hRk+' ':'')+shortName(hSPn)+_apxHand(hSPn)):'TBD';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
+  const aOR=(typeof teamOffenseRank==='function')?teamOffenseRank(aAb):null, hOR=(typeof teamOffenseRank==='function')?teamOffenseRank(hAb):null;
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
   const gset=(...vs)=>vs.map(v=>gcell(v)).join('');
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
@@ -2619,6 +2621,7 @@ function apxCardHTML(g){
     sideRow('SP', aSP, hSP)+
     sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenRank(hId)+' '+_apxPenTag(home))+
     sideRow('CON·POW·EYE·BSR·DEF', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
+    sideRow('OFF RANK', aOR?('#'+aOR.rank):'—', hOR?('#'+hOR.rank):'—')+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
@@ -2678,10 +2681,11 @@ function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
   const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-png">Save PNG</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
-  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>';
+  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
   const pngBtn=document.getElementById('apx-png'); if(pngBtn) pngBtn.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
+  const pngBtn2=document.getElementById('apx-png-bottom'); if(pngBtn2) pngBtn2.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
   el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
   el.querySelectorAll(".sb-wp-chip").forEach(chip=>{ const jump=(e)=>{ e.preventDefault(); e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; chip.onclick=jump; chip.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" ")jump(e); }; });
 }
@@ -4085,7 +4089,7 @@ function handOfPitcher(name) {
 // uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
 // the SAME map. Lazily compute, cache on HITTERS identity.
 let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null,
-    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null;
+    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null, _TEAM_RANK_OFF_N = null, _TEAM_RANK_N_TOTAL = 0;
 function _ensureTeamRankGrades() {
   if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
   if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
@@ -4119,6 +4123,8 @@ function _ensureTeamRankGrades() {
   const rankInto = (key) => { const tgt={}; rows.filter(r=>r[key]!=null).sort((a,b)=>b[key]-a[key]).forEach((r,i)=>{ tgt[r.abbr]=gradeByRank(i+1,total); }); return tgt; };
   _TEAM_RANK_DEF = rankInto('def'); _TEAM_RANK_BSR = rankInto('bsr'); _TEAM_RANK_OFF = rankInto('off');
   _TEAM_RANK_PWR = rankInto('pwr'); _TEAM_RANK_EYE = rankInto('eye'); _TEAM_RANK_CON = rankInto('con');
+  _TEAM_RANK_OFF_N = {}; _TEAM_RANK_N_TOTAL = total;
+  rows.filter(r=>r.off!=null).sort((a,b)=>b.off-a.off).forEach((r,i)=>{ _TEAM_RANK_OFF_N[r.abbr]=i+1; });
   _TEAM_RANK_SRC = HITTERS;
 }
 function teamRankGradeLetter(abbr, cat) {
@@ -4131,6 +4137,7 @@ function teamRankGradeLetter(abbr, cat) {
   if (cat === 'con') return _TEAM_RANK_CON?.[abbr] || null;
   return null;
 }
+function teamOffenseRank(abbr){ _ensureTeamRankGrades(); const r=_TEAM_RANK_OFF_N?_TEAM_RANK_OFF_N[abbr]:null; return r?{rank:r,total:_TEAM_RANK_N_TOTAL}:null; }
 
 // PA-weighted team-average percentile for one category over a lineup side.
 // cat: 'pwr' | 'eye' | 'bsr' | 'def'
