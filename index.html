@@ -1348,8 +1348,12 @@
   .apx-extra-row{display:flex;justify-content:space-between;gap:8px;margin:2px 0;}
   .apx-extra-row span:last-child{color:var(--text);}
   .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
-  .apx-head2{text-align:center;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
-  .apx-park{text-align:center;font-size:0.7rem;color:var(--muted);margin:-3px 0 8px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;}
+  .apx-head2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
+  .apx-lu{font-size:0.64rem;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;}
+  .apx-lu.conf{background:rgba(78,195,124,0.16);color:var(--confirmed);}
+  .apx-lu.proj{background:rgba(229,164,73,0.16);color:var(--projected);}
+  .apx-park{font-size:0.7rem;color:var(--muted);margin:0 0 9px;display:flex;align-items:center;justify-content:center;gap:5px 9px;flex-wrap:wrap;line-height:1.5;}
+  .apx-ump{color:var(--muted);}
   .apx-parkname{color:var(--text);}
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
@@ -2557,8 +2561,11 @@ function apxCardHTML(g){
   const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
   const hML=o&&o.moneyline&&o.moneyline.home?o.moneyline.home:null;
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
-  const wpChip=isFinal?' <span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
-  const head='<div class="apx-head2">'+aAb+' @ '+hAb+' · '+(isFinal?status:fmtTime(g.gameDate))+wpChip+'</div>';
+  const wpChip=isFinal?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
+  let luStatus='proj';
+  try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
+  const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
+  const head='<div class="apx-head2"><span class="apx-time2">'+(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''))+'</span>'+luChip+'</div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
@@ -2566,8 +2573,8 @@ function apxCardHTML(g){
   let umpName='', umpFac='';
   try{ if(hp){ umpName=hp.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(hp):''; } else if(g._projectedHP){ umpName=g._projectedHP.name.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(g._projectedHP.name):''; } }catch(e){}
   let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
-  const umpHtml=umpName?(' <span class="apx-ump">HP '+umpName+' '+umpFac+'</span>'):'';
-  const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span> ':'')+pfChip+' '+wxChip+umpHtml+'</div>';
+  const umpHtml=umpName?('<span class="apx-ump">Ump '+umpName+' '+umpFac+'</span>'):'';
+  const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span>':'')+pfChip+wxChip+umpHtml+'</div>';
   let center;
   if(isFinal && g._finalScore){
     const fs=g._finalScore;
@@ -5383,11 +5390,14 @@ function renderSPTrendsHTML(gl) {
       <td class="${s.xfip != null ? tier(s.xfip, xfipB, false) : ''}">${s.xfip != null ? s.xfip.toFixed(2) : '—'}</td>
     </tr>`).join("");
 
+  const _kS = rollingSeries(starts, 'k_pct'), _bbS = rollingSeries(starts, 'bb_pct');
+  const _kbbS = _kS.map((v, i) => (v != null && _bbS[i] != null) ? (v - _bbS[i]) : null);
+  const _kbbL5 = (l5.k_pct != null && l5.bb_pct != null) ? (l5.k_pct - l5.bb_pct)
+               : (l5.k_bb_pct != null ? l5.k_bb_pct : null);
   const metrics = [
     { key: 'velo', label: 'Velo',   series: starts.map(s => s.velo),       l5: l5.velo,  fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' },
     { key: 'stuff', label: 'Stuff+', series: starts.map(s => s.stuff),     l5: l5.stuff, fmt: v => v != null ? Math.round(v) : '—', mode: 'by start' },
-    { key: 'k',    label: 'K%',     series: rollingSeries(starts, 'k_pct'), l5: l5.k_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
-    { key: 'bb',   label: 'BB%',    series: rollingSeries(starts, 'bb_pct'), l5: l5.bb_pct, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
+    { key: 'kbb',  label: 'K-BB%',  series: _kbbS, l5: _kbbL5, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
   // CSW% (Statcast, fraction 0–1 → shown as %). Rolling 3-start window like the
