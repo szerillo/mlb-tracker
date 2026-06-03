@@ -1346,6 +1346,14 @@
   .apx-wpchip{margin-left:6px;color:var(--accent);cursor:pointer;}
   .apx-head2{text-align:center;font-size:0.72rem;color:var(--muted);margin-bottom:7px;}
   .apx-park{text-align:center;font-size:0.7rem;color:var(--muted);margin:-3px 0 8px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;}
+  .apx-parkname{color:var(--text);}
+  .apx-ump{color:var(--muted);}
+  .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
+  .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:flex;flex-direction:column;gap:5px;}
+  .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
+  .apx-side-a{text-align:left;color:var(--text);}
+  .apx-side-h{text-align:right;color:var(--text);}
+  .apx-side-k{color:var(--muted);font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;}
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
   .apx-info-row{display:flex;gap:8px;font-size:0.72rem;line-height:1.6;}
@@ -2537,8 +2545,20 @@ function apxCardHTML(g){
   const o=oddsForGame(g.gamePk);
   const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
   const hML=o&&o.moneyline&&o.moneyline.home?o.moneyline.home:null;
+  const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
   const wpChip=isFinal?' <span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
   const head='<div class="apx-head2">'+aAb+' @ '+hAb+' · '+(isFinal?status:fmtTime(g.gameDate))+wpChip+'</div>';
+  // game-level env line: park · PF · Wx · HP ump
+  let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
+  let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
+  let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
+  const hp=umpByType(g._officials,"Home Plate");
+  let umpName='', umpFac='';
+  try{ if(hp){ umpName=hp.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(hp):''; } else if(g._projectedHP){ umpName=g._projectedHP.name.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(g._projectedHP.name):''; } }catch(e){}
+  let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
+  const umpHtml=umpName?(' <span class="apx-ump">HP '+umpName+' '+umpFac+'</span>'):'';
+  const parkLine='<div class="apx-park">'+(_park?'<span class="apx-parkname">'+_park+'</span> ':'')+pfChip+' '+wxChip+umpHtml+'</div>';
+  // center: logos + market odds in parens + win% flanking the projected runs
   let center;
   if(isFinal && g._finalScore){
     const fs=g._finalScore;
@@ -2548,41 +2568,30 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp){
     const aFav=sp.away_wp>=sp.home_wp;
-    const team=(logo,ab,fr,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'%':'—')+'</span><span class="apx-fair">fair '+_apxFair(fr)+'</span><span class="apx-mkt">mkt '+_apxFair(mk)+'</span></div>';
+    const team=(logo,ab,mk,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+_apxFair(mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?Math.round(wp*100)+'% win':'—')+'</span></div>';
     center='<div class="apx-center">'+
-      team(teamLogo(aId,38),aAb,sp.ml_away,aML?aML.odds:null,sp.away_wp,aFav)+
-      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+sp.total.toFixed(2)+'</div></div>'+
-      team(teamLogo(hId,38),hAb,sp.ml_home,hML?hML.odds:null,sp.home_wp,!aFav)+
+      team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.away_wp,aFav)+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+sp.away_runs.toFixed(2)+'</span><span class="apx-runs-lbl">EXP<br>RUNS</span><span>'+sp.home_runs.toFixed(2)+'</span></div><div class="apx-total">Total '+sp.total.toFixed(2)+(mktLine!=null?' <span class="apx-mkt">(mkt '+mktLine+')</span>':'')+'</div></div>'+
+      team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.home_wp,!aFav)+
     '</div>';
   } else {
     center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   }
   const edge=(!isFinal&&sp)?_apxEdgeBar(g):'';
+  // per-team info: away on the left, home on the right, label centered
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
   const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+_apxRank(aSPn)):'TBD';
   const hSP=hSPn?(shortName(hSPn)+_apxHand(hSPn)+_apxRank(hSPn)):'TBD';
-  const mlMkt=(aML&&hML)?(_apxFair(aML.odds)+' / '+_apxFair(hML.odds)):'—';
-  const line=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:'—');
-  let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
-  let wxChip; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){ wxChip=''; }
-  let pfChip; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){ pfChip=''; }
-  let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
-  const parkLine=_park?('<div class="apx-park">'+_park+' '+pfChip+' '+wxChip+'</div>'):'';
-  const hp=umpByType(g._officials,"Home Plate");
-  let umpName='TBD', umpFac='';
-  try{ if(hp){ umpName=hp.split(' ').slice(-1)[0]; umpFac=(typeof umpBadge==='function')?umpBadge(hp):''; } else if(g._projectedHP){ umpName=g._projectedHP.name.split(' ').slice(-1)[0]+' (proj)'; umpFac=(typeof umpBadge==='function')?umpBadge(g._projectedHP.name):''; } }catch(e){}
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
   const gp=(lab,l)=>'<span class="apx-gp">'+lab+(l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>')+'</span>';
   const grades=gr=>gr?(gp('O',gr.off)+gp('D',gr.def)+gp('B',gr.bsr)):'<span class="gr-na">—</span>';
-  const penLine=aAb+' '+_apxPenRank(aId)+' '+_apxPenTag(away)+' · '+hAb+' '+_apxPenRank(hId)+' '+_apxPenTag(home);
-  const irow=(k,v)=>'<div class="apx-info-row"><span class="apx-info-k">'+k+'</span><span class="apx-info-v">'+v+'</span></div>';
-  const info='<div class="apx-info">'+
-    irow('SP', aSP+' · '+hSP)+
-    irow('Pen', penLine)+
-    irow('Bats', aAb+' '+grades(ga)+' &nbsp; '+hAb+' '+grades(gh))+
-    irow('Mkt', 'ML '+mlMkt+' · O/U '+line)+
-    irow('Ump', umpName+' '+umpFac)+
+  const penA=_apxPenRank(aId)+' '+_apxPenTag(away), penH=_apxPenRank(hId)+' '+_apxPenTag(home);
+  const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
+  const info='<div class="apx-info2">'+
+    sideRow('SP', aSP, hSP)+
+    sideRow('Pen', penA, penH)+
+    sideRow('Bats', grades(ga), grades(gh))+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
