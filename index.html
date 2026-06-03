@@ -1581,6 +1581,9 @@
   .pf-table tbody td.lhs { text-align: left; }
   .pf-table tbody tr:last-child td { border-bottom: none; }
   .pf-table .pf-team { color: var(--muted); font-size: 0.74rem; margin-left: 4px; }
+  .pf-table .pf-logo { display:inline-flex; vertical-align:middle; margin-right:7px; }
+  .pf-table .pf-logo img { vertical-align:middle; }
+  .pf-table .pf-pname { vertical-align:middle; font-weight:600; }
   .pf-edge-pos { color: var(--tier-good); font-weight: 600; }
   .pf-edge-neg { color: var(--tier-worst); }
   .pf-edge-zero { color: var(--muted); }
@@ -7935,7 +7938,7 @@ function _pfMktCell(p) {
 const PF_COLS = {
   MVP: [
     {key:"name",  label:"Player",   lhs:true,
-      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
+      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span>`},
     {key:"pwar",  label:"pWAR",     fmt:p => p.p_war  != null ? p.p_war.toFixed(1) : "—"},
     {key:"pops",  label:"pOPS",     fmt:p => p.p_ops  != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—"},
     {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
@@ -7944,7 +7947,7 @@ const PF_COLS = {
   ],
   CY: [
     {key:"name",  label:"Pitcher",  lhs:true,
-      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""}</span>`},
+      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span>`},
     {key:"pfip",  label:"wFIP",     fmt:p => p.p_fip != null ? p.p_fip.toFixed(2) : "—"},
     {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
     {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
@@ -7953,7 +7956,7 @@ const PF_COLS = {
   ],
   ROY: [
     {key:"name",  label:"Rookie",   lhs:true,
-      fmt:p => `${p.name}<span class="pf-team"> ${p.team_abbr||""} · ${p.pos||""}</span>`},
+      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span><span class="pf-team">${p.pos?(" · "+p.pos):""}</span>`},
     {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
     {key:"stat2", label:"pOPS / wFIP",
       fmt:p => (p.pos === "SP" || p.pos === "RP")
@@ -7996,8 +7999,7 @@ async function renderPlayerFuturesTab() {
       if (!tbl) continue;
       const cols = PF_COLS[_pfMarketKey(mkt)];
       const sub  = document.getElementById("pf-" + mkt + "-sub");
-      if (sub) sub.textContent = (payload.n_pool || 0) + " candidates · temp " + payload.temperature
-        + " · calibrated vs " + (payload.calibrated_against_n_books || 0) + " priced names";
+      if (sub) sub.textContent = "";
       const thead = '<thead><tr>' + cols.map(c => '<th class="' + (c.lhs ? 'lhs' : '') + '">' + c.label + '</th>').join('') + '</tr></thead>';
       const body  = (payload.candidates || []).map(p =>
         '<tr>' + cols.map(c => '<td class="' + (c.lhs ? 'lhs' : '') + '">' + c.fmt(p) + '</td>').join('') + '</tr>'
