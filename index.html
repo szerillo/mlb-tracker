@@ -510,7 +510,7 @@
   .wx-alt-delta { opacity: 0.7; font-size: 0.72rem; }
 
   .env-pf-venue { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem;
-    letter-spacing: 0.02em; }
+    letter-spacing: 0.02em; text-align: center; }
   .env-pf-grid { display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 0.4rem 0.55rem; }
   .env-pf-stat { text-align: center; }
@@ -5097,14 +5097,14 @@ function renderEnvTab() {
         <div class="env-pf-val ${cls}">${sign}${pct}%</div></div>`;
     };
     const parkHTML = pf ? `
-      <div class="env-pf-venue">${pf.venue}</div>
+      <div class="env-pf-venue">${pf.venue} · Savant 3-yr rolling</div>
       <div class="env-pf-grid">
-        ${pfStat("Runs", pf.park_factor)}
         ${pfStat("wOBA", pf.woba)}
-        ${pfStat("HR",   pf.hr)}
         ${pfStat("Hit",  pf.bacon)}
+        ${pfStat("HR",   pf.hr)}
         ${pfStat("BB",   pf.bb)}
         ${pfStat("K",    pf.so)}
+        ${pfStat("Runs", pf.park_factor)}
       </div>` : `<div class="coming-soon">No park factor</div>`;
 
     // --- Ump column ---
@@ -5948,14 +5948,14 @@ async function openModal(game) {
             return `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
               <div class="sp-stat-val ${cls}" style="font-size:1rem;">${sign}${pct}%</div></div>`;
           };
-          return `<div class="pf-venue">${pf.venue} · Savant 3-yr rolling</div>
-            <div class="sp-stat-group" style="flex-wrap:wrap;">
-              ${pfStat("Runs", pf.park_factor)}
+          return `<div class="pf-venue" style="text-align:center;">${pf.venue} · Savant 3-yr rolling</div>
+            <div class="sp-stat-group" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem 0.55rem;">
               ${pfStat("wOBA", pf.woba)}
-              ${pfStat("HR", pf.hr)}
               ${pfStat("Hit", pf.bacon)}
+              ${pfStat("HR", pf.hr)}
               ${pfStat("BB", pf.bb)}
               ${pfStat("K", pf.so)}
+              ${pfStat("Runs", pf.park_factor)}
             </div>`;
         })()}
       </div>
