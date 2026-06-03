@@ -146,6 +146,7 @@ def main():
 
         games_out.append({
             "game_pk": pk,
+            "an_event_id": g.get("id"),
             "matchup": f"{away_nm} @ {home_nm}",
             "start_time": g.get("start_time"),
             "status": g.get("status_display") or g.get("status"),

@@ -1297,6 +1297,13 @@
     border: 1px solid rgba(110, 255, 148, 0.3); }
   .wp-edge-pill.total { background: rgba(91, 184, 245, 0.12); color: var(--tier-bad);
     border: 1px solid rgba(91, 184, 245, 0.3); }
+  .sheet-edges { display: flex; flex-direction: column; gap: 0.32rem; margin: 0.45rem 0; }
+  .se-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+  .se-k { min-width: 100px; color: var(--muted); }
+  .se-v { flex: 1; }
+  .se-edge { font-weight: 600; }
+  .se-edge.pos { color: var(--tier-good); }
+  .se-edge.neg { color: var(--tier-bad); }
 
   /* Action Network PRO projections banner above scoreboard */
   .an-proj-banner { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
@@ -2285,6 +2292,119 @@ function pgPOver(line, projTotal, k=1.50) {
 // staff (SP·0.555 + BP·0.445·bp_factor) blended by pw, park, HFA, BSR/DEF, +
 // totals probability vs the market line. Closes #205 (deep pre-game detail in
 // the modal) and follows the recipe in PREGAME_MODEL_SPEC.md.
+// ===== Action PRO sheet projections (Sean's GAME UPLOADER upload) ============
+let SHEET_PROJ = null;            // { byEid:{}, byPk:{} }
+// GAME UPLOADER tab published to web as CSV (File > Share > Publish to web > CSV).
+// Leave "" to use the committed data/sheet_projections.json snapshot instead.
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P/pub?gid=580753288&single=true&output=csv";
+
+function _parseCsv(text){
+  const rows=[]; let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false;} else cur+=c; }
+    else { if(c==='"')q=true; else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c==='\r'){} else cur+=c; } }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);} return rows;
+}
+function _todayISO_ET(){ return new Date(Date.now()-4*3600*1000).toISOString().slice(0,10); }
+function _parseDateCell(v){
+  v=(v||'').trim(); if(!v) return null;
+  let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return m[3]+'-'+String(m[1]).padStart(2,'0')+'-'+String(m[2]).padStart(2,'0');
+  m=v.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?m[0]:null;
+}
+async function loadSheetProjections(){
+  const byEid={}, byPk={};
+  if(SHEET_CSV_URL){
+    try{
+      const r=await fetch(SHEET_CSV_URL+(SHEET_CSV_URL.includes('?')?'&':'?')+'t='+Date.now());
+      if(r.ok){
+        const rows=_parseCsv(await r.text());
+        if(rows.length){
+          const hdr=rows[0].map(h=>h.trim().toLowerCase());
+          const ix=n=>hdr.indexOf(n);
+          const iGid=ix('game_id');
+          let iDate=-1; const start=Math.max(ix('total')+1,12);
+          for(let c=start;c<rows[0].length;c++){let hits=0;
+            for(let r2=1;r2<Math.min(rows.length,25);r2++){if(rows[r2][c]&&_parseDateCell(rows[r2][c]))hits++;}
+            if(hits>=3){iDate=c;break;}}
+          const today=_todayISO_ET();
+          const num=v=>{v=(v==null?'':v).toString().trim().replace(/,/g,'');return v===''||isNaN(+v)?null:+v;};
+          for(let r2=1;r2<rows.length;r2++){const row=rows[r2];
+            const gid=num(row[iGid]); const aw=num(row[ix('away_score')]);
+            if(gid==null||aw==null) continue;
+            if(iDate>=0){const di=_parseDateCell(row[iDate]); if(di&&di!==today) continue;}
+            byEid[gid]={an_event_id:gid,away_runs:aw,home_runs:num(row[ix('home_score')]),
+              total:num(row[ix('total')]),away_wp:num(row[ix('away_win_p')]),home_wp:num(row[ix('home_win_p')]),
+              ml_away:num(row[ix('ml_away')]),ml_home:num(row[ix('ml_home')])};
+          }
+        }
+      }
+    }catch(e){}
+  }
+  if(Object.keys(byEid).length===0){
+    try{
+      const j=await fetchJSON('data/sheet_projections.json?t='+Date.now());
+      if(j&&j.games){ for(const pk in j.games){const g=j.games[pk]; byPk[pk]=g; if(g.an_event_id!=null) byEid[g.an_event_id]=g;} }
+    }catch(e){}
+  }
+  SHEET_PROJ={byEid,byPk};
+}
+function devigTwoWay(aO,hO){
+  if(aO==null||hO==null) return [null,null];
+  const am=aO<0?(-aO)/((-aO)+100):100/(aO+100);
+  const hm=hO<0?(-hO)/((-hO)+100):100/(hO+100);
+  const s=am+hm; return s>0?[am/s,hm/s]:[null,null];
+}
+function sheetProjForGame(game_pk){
+  if(!SHEET_PROJ) return null;
+  if(SHEET_PROJ.byPk && SHEET_PROJ.byPk[game_pk]) return SHEET_PROJ.byPk[game_pk];
+  const o=oddsForGame(game_pk); const eid=o&&o.an_event_id;
+  if(eid!=null && SHEET_PROJ.byEid && SHEET_PROJ.byEid[eid]) return SHEET_PROJ.byEid[eid];
+  return null;
+}
+function renderSheetEdgesHTML(game){
+  const sp=sheetProjForGame(game.gamePk);
+  if(!sp) return '<div class="coming-soon">No projection uploaded for this game yet.</div>';
+  const awayAbbr=teamAbbr(game.teams.away.team.name);
+  const homeAbbr=teamAbbr(game.teams.home.team.name);
+  const o=oddsForGame(game.gamePk);
+  const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
+  const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
+  const dv=devigTwoWay(aO,hO); const mA=dv[0],mH=dv[1];
+  let mlPills='';
+  if(sp.away_wp!=null && sp.home_wp!=null){
+    const favAway=sp.away_wp>=sp.home_wp;
+    const ab=favAway?awayAbbr:homeAbbr;
+    const projWP=favAway?sp.away_wp:sp.home_wp;
+    const mktWP=favAway?mA:mH;
+    const edge=(mktWP!=null)?(projWP-mktWP)*100:null;
+    const fair=favAway?sp.ml_away:sp.ml_home;
+    const cls=edge!=null&&edge>=0?'pos':'neg';
+    mlPills='<div class="se-row"><span class="se-k">Moneyline</span>'+
+      '<span class="se-v">'+ab+' '+Math.round(projWP*100)+'%'+(fair!=null?' (fair '+(fair>0?'+':'')+fair+')':'')+'</span>'+
+      '<span class="se-edge '+cls+'">'+(edge==null?'—':(edge>=0?'+':'')+edge.toFixed(1)+'% vs mkt')+'</span></div>';
+  }
+  const line=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:(o&&o.total&&o.total.under?o.total.under.line:null);
+  let totPill='';
+  if(sp.total!=null){
+    const pOver=(typeof pgPOver==='function')?pgPOver(line,sp.total,1.50):null;
+    const lean=pOver==null?null:(pOver>=0.5?('Over '+line):('Under '+line));
+    const cls=pOver==null?'':(Math.abs(pOver-0.5)>=0.03?'pos':'');
+    totPill='<div class="se-row"><span class="se-k">Game Total</span>'+
+      '<span class="se-v">proj '+sp.total.toFixed(2)+(line!=null?' · mkt '+line:'')+'</span>'+
+      '<span class="se-edge '+cls+'">'+(lean==null?'—':lean+(pOver!=null?' ('+Math.round(pOver*100)+'%)':''))+'</span></div>';
+  }
+  let ttPill='';
+  if(sp.away_runs!=null && sp.home_runs!=null){
+    ttPill='<div class="se-row"><span class="se-k">Team Totals</span>'+
+      '<span class="se-v">'+awayAbbr+' '+sp.away_runs.toFixed(2)+' · '+homeAbbr+' '+sp.home_runs.toFixed(2)+'</span>'+
+      '<span class="se-edge"></span></div>';
+  }
+  return '<div class="sheet-edges">'+mlPills+totPill+ttPill+'</div>';
+}
+
 function renderPregameDetailHTML(game, pg) {
   if (!pg) return '<div class="coming-soon">Pre-game model not ready (lineups + probable SPs needed)</div>';
   const cs = pg.components || {};
@@ -2909,6 +3029,7 @@ async function loadToday() { return loadForDate(today()); }
 async function loadForDate(date) {
   VIEW_DATE = date;
   await loadStaticData();
+  await loadSheetProjections();
 
   // 3 forward + today for the schedule proper.
   // 10 days backward of probables to build a thorough known-starters set
@@ -5692,6 +5813,10 @@ async function openModal(game) {
         try { pg = computePregame(game); } catch (e) {}
         return renderPregameDetailHTML(game, pg);
     })()}
+
+    <div class="m-section-header"><span>Your Action PRO Projection</span>
+      <span class="right-note">ML &amp; totals edges vs market</span></div>
+    ${renderSheetEdgesHTML(game)}
 
     <div class="m-section-header"><span>Best Odds</span>
       <span class="right-note">best price across 7 NJ books</span></div>
