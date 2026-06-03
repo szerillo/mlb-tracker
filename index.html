@@ -1814,6 +1814,12 @@ let BP_WEATHER = null;
 let PITCHER_SPLITS = null;
 let PITCHER_ARSENAL = null;
 let HITTER_PCT = null;
+// data/grades_v2.json — user-supplied Power/Eye (Orr-equivalent formulas) +
+// FLD/BSR (from user's external model). Keyed by normName(player). When
+// present, the per-player PWR/EYE/FLD/BSR percentile helpers return the rank
+// directly from this file; missing players fall back to the legacy Savant /
+// HITTERS-derived logic so the chips still render for call-ups not yet in V2.
+let GRADES_V2 = null;
 let HITTER_SPLITS = null;  // data/hitter_splits.json — 3-yr weighted wRC+ splits (empirical Bayes k=100)
 let PITCHER_ROLES = null;  // data/pitcher_roles.json — Steamer-projected SP/RP classifier
 
@@ -1861,7 +1867,7 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, hsplits, proles, glogs, hglogs, pgbt, tg] = await Promise.all([
+  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, gv2, hsplits, proles, glogs, hglogs, pgbt, tg] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
@@ -1875,6 +1881,7 @@ async function loadStaticData() {
     fetchJSON(`data/pitcher_splits.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_arsenal.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitter_percentiles.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/grades_v2.json?t=${Date.now()}`).catch(() => null),
     // NB: the canonical path for ingest_hitter_splits.py's output is
     // data/hitter_splits.json, but the file currently lives at repo root
     // (data/ copy is a 0-byte placeholder). Fetch the root file until the
@@ -1909,7 +1916,7 @@ async function loadStaticData() {
   }
   // Rank caches depend on PITCHER_STATS — invalidate on every refresh.
   if (typeof invalidateRankCaches === 'function') invalidateRankCaches();
-  PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct;
+  PITCHER_SPLITS = splits; PITCHER_ARSENAL = arsenal; HITTER_PCT = hpct; GRADES_V2 = gv2;
   const _dataAgeEl = document.getElementById("data_age");
   if (_dataAgeEl) _dataAgeEl.textContent = UMP_STATS.generated_at || "—";
 }
@@ -2011,8 +2018,8 @@ function _pgTeamOffense(players, oppHand) {
     const split = oppHand === 'L' ? h.wrc_vs_l : h.wrc_vs_r;
     if (split != null) rv *= Math.sqrt(_pgClamp(split / 100, 0.5, 1.8));
     const hp = (typeof lookupHitterPct === 'function') ? lookupHitterPct(nm) : null;
-    const pPow = (typeof powerPct === 'function') ? powerPct(hp) : null;
-    const pEye = (typeof eyePct === 'function') ? eyePct(hp) : null;
+    const pPow = (typeof powerPct === 'function') ? powerPct(hp, nm) : null;
+    const pEye = (typeof eyePct === 'function') ? eyePct(hp, nm) : null;
     if (pPow != null) rv *= (1 + ((22 + (pPow - 50) / 50 * 8.4) - 22) / 22 * 0.12);
     if (pEye != null) rv *= (1 + ((10 + (pEye - 50) / 50 * 5.14) - 10) / 10 * 0.12);
     rv *= (PG_SPOT_WT[i] || 1);
@@ -3666,9 +3673,20 @@ function _avgPct(vals) {
   const vs = vals.filter(v => typeof v === 'number' && !isNaN(v));
   return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
 }
-// Power = barrel / hard-hit / xSLG / xISO / bat-speed percentiles (need ≥2);
-// sparse fallback to max-EV alone for backfilled rookies.
-function powerPct(pc) {
+// Power+Eye lookup helper — checks grades_v2.json (user's Orr-equivalent
+// Power+Eye proxies) for the hitter named `lookupName`. Returns null when
+// V2 isn't loaded yet or the hitter isn't in the dataset; callers fall back
+// to the legacy Savant-percentile averaging when null.
+function _gradesV2Lookup(lookupName) {
+  if (!GRADES_V2 || !lookupName) return null;
+  return GRADES_V2.by_name?.[normName(lookupName)] || null;
+}
+// Power = grades_v2 power_pct when present; otherwise legacy Savant average
+// (barrel / hard-hit / xSLG / xISO / bat-speed percentiles, ≥2 required,
+// max-EV fallback for rookies).
+function powerPct(pc, lookupName) {
+  const v2 = _gradesV2Lookup(lookupName);
+  if (v2 && typeof v2.power_pct === 'number') return v2.power_pct;
   if (!pc) return null;
   const core = [pc.barrel, pc.hard_hit, pc.xslg, pc.xiso, pc.bat_speed]
     .filter(v => typeof v === 'number');
@@ -3676,8 +3694,12 @@ function powerPct(pc) {
   if (typeof pc.max_ev === 'number') return pc.max_ev;
   return _avgPct(core);
 }
-// Eye / patience = BB% + Chase percentiles (plate discipline; high pct = good).
-function eyePct(pc) { return pc ? _avgPct([pc.bb_pct, pc.chase]) : null; }
+// Eye = grades_v2 eye_pct when present; otherwise legacy BB% + Chase avg.
+function eyePct(pc, lookupName) {
+  const v2 = _gradesV2Lookup(lookupName);
+  if (v2 && typeof v2.eye_pct === 'number') return v2.eye_pct;
+  return pc ? _avgPct([pc.bb_pct, pc.chase]) : null;
+}
 
 // DEF / BSR percentile = projected runs (hitters.json) ranked vs MLB regulars
 // (pa ≥ 300). Memoized; recomputed only when the HITTERS object is replaced.
@@ -3699,8 +3721,21 @@ function _pctileOf(v, pop) {
   while (lo < hi) { const mid = (lo + hi) >> 1; if (pop[mid] <= v) lo = mid + 1; else hi = mid; }
   return Math.round(100 * lo / pop.length);
 }
-function fldPct(h) { _ensureRunPops(); return (h && typeof h.fld === 'number') ? _pctileOf(h.fld, _FLD_POP) : null; }
-function bsrPct(h) { _ensureRunPops(); return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null; }
+// FLD/BSR percentile = grades_v2 fld_pct/bsr_pct when present (sources the
+// user's external model). Falls back to ranking hitters.json fld/bsr against
+// the MLB regulars pool (≥300 PA).
+function fldPct(h, lookupName) {
+  const v2 = _gradesV2Lookup(lookupName);
+  if (v2 && typeof v2.fld_pct === 'number') return v2.fld_pct;
+  _ensureRunPops();
+  return (h && typeof h.fld === 'number') ? _pctileOf(h.fld, _FLD_POP) : null;
+}
+function bsrPct(h, lookupName) {
+  const v2 = _gradesV2Lookup(lookupName);
+  if (v2 && typeof v2.bsr_pct === 'number') return v2.bsr_pct;
+  _ensureRunPops();
+  return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null;
+}
 // Contact = K% mapped against the individual MLB-hitter K% distribution. Linear
 // floor 10% K% → 99th pct (best contact), ceiling 35% K% → 1st pct (worst).
 // MLB avg ~22% K% → ~52nd pct (C+). Uses season actual K% (k_pct_actual) with
@@ -3763,10 +3798,10 @@ function teamGradePct(players, cat) {
     let pct = null;
     if (cat === 'pwr' || cat === 'eye') {
       const pc = HITTER_PCT?.hitters?.[nm];
-      pct = cat === 'pwr' ? powerPct(pc) : eyePct(pc);
+      pct = cat === 'pwr' ? powerPct(pc, nm) : eyePct(pc, nm);
     } else {
       const h = HITTERS?.hitters?.[nm];
-      pct = cat === 'bsr' ? bsrPct(h) : fldPct(h);
+      pct = cat === 'bsr' ? bsrPct(h, nm) : fldPct(h, nm);
     }
     if (pct == null) continue;
     const slot = (p.order || 0) - 1;
@@ -3942,11 +3977,11 @@ function renderLineupTable(side, opts={}) {
       const barrelCell = `<td class="split split-chip ${barrelCls}" title="${barrelTitle}">${barrelStr}</td>`;
       // Letter grades vs MLB avg (50th pct ≈ C). Power/Eye from Savant percentiles;
       // BsR/Def from projected runs ranked vs MLB regulars.
-      const pwrCell = gradeCellHTML(powerPct(hpct), "Power", "barrel/HH/xSLG/xISO/bat-speed pctiles");
-      const eyeCell = gradeCellHTML(eyePct(hpct), "Eye", "BB% + chase pctiles");
+      const pwrCell = gradeCellHTML(powerPct(hpct, nm), "Power", "Orr-equivalent Power (Barrel% + EV95%) when grades_v2 has the hitter; else legacy Savant pctiles");
+      const eyeCell = gradeCellHTML(eyePct(hpct, nm), "Eye", "Orr-equivalent SEAGER (plate disc + zone run values) when grades_v2 has the hitter; else BB%+Chase pctiles");
       const conCell = gradeCellHTML(conPct(h), "Contact", "K% vs MLB hitter distribution (lower K% = better)");
-      const bsrGradeCell = gradeCellHTML(bsrPct(h), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
-      const defGradeCell = gradeCellHTML(fldPct(h), "Def");
+      const bsrGradeCell = gradeCellHTML(bsrPct(h, nm), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
+      const defGradeCell = gradeCellHTML(fldPct(h, nm), "Def");
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
       // modal renders a slimmer table. Order: BB% first, then K%.
       let kbbCells = "";
@@ -6486,10 +6521,11 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
       const vR = splitEntry?.wrc_vs_r ?? h.wrc_vs_r;
       const vL = splitEntry?.wrc_vs_l ?? h.wrc_vs_l;
       const wrc = (vR != null && vL != null) ? (vR + vL) / 2 : (vR != null ? vR : vL);
-      const pc  = HITTER_PCT?.hitters?.[normName(x.name || h.name || "")];
-      const pwr = powerPct(pc);
+      const _hnm = normName(x.name || h.name || "");
+      const pc  = HITTER_PCT?.hitters?.[_hnm];
+      const pwr = powerPct(pc, _hnm);
       const con = conPct(h);
-      const eye = eyePct(pc);
+      const eye = eyePct(pc, _hnm);
       const slot = i;
       const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
       const w = SLOT_BASE_PA + delta;
