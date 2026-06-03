@@ -2396,7 +2396,10 @@ async function loadSheetProjections(){
   // 2) live published CSV -> fresh values, overlaid onto known gamePks by event id.
   if(SHEET_CSV_URL){
     try{
-      const r=await fetch(SHEET_CSV_URL+(SHEET_CSV_URL.includes('?')?'&':'?')+'t='+Date.now());
+      const _ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+      const _to=_ctl?setTimeout(()=>_ctl.abort(),8000):null;
+      const r=await fetch(SHEET_CSV_URL+(SHEET_CSV_URL.includes('?')?'&':'?')+'t='+Date.now(), _ctl?{signal:_ctl.signal}:undefined);
+      if(_to)clearTimeout(_to);
       if(r.ok){
         const rows=_parseCsv(await r.text());
         if(rows.length){
@@ -3233,7 +3236,9 @@ async function loadToday() { return loadForDate(today()); }
 async function loadForDate(date) {
   VIEW_DATE = date;
   await loadStaticData();
-  await loadSheetProjections();
+  // Load Action PRO sheet projections in the BACKGROUND so a slow/blocked live
+  // CSV fetch can never hold up the scoreboard render. Re-render when it lands.
+  loadSheetProjections().then(() => { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
 
   // 3 forward + today for the schedule proper.
   // 10 days backward of probables to build a thorough known-starters set
