@@ -2772,50 +2772,57 @@ async function exportScoreboardPNG(){
   if(!games.length){ alert('No games to export yet.'); return; }
   const btn=document.getElementById('apx-png'); const oldT=btn?btn.textContent:''; if(btn){btn.textContent='Rendering…';btn.disabled=true;}
   let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
-  const CHUNK=8; const chunks=[]; for(let i=0;i<games.length;i+=CHUNK) chunks.push(games.slice(i,i+CHUNK));
+  // 3-wide layout: 9-game slates render as a clean 3x3. Split only for very
+  // large slates so a single image stays legible.
+  const CHUNK=18; const chunks=[]; for(let i=0;i<games.length;i+=CHUNK) chunks.push(games.slice(i,i+CHUNK));
   const logoCache={};
   async function logoData(url){ if(logoCache[url])return logoCache[url]; try{
       const r=await fetch(url,{mode:'cors'}); const svg=await r.text();
       const svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
       const img=new Image(); img.decoding='sync';
       await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=svgUrl; });
-      const sz=96, c=document.createElement('canvas'); c.width=sz; c.height=sz;
-      c.getContext('2d').drawImage(img,0,0,sz,sz);
+      // Rasterize preserving the SVG's aspect ratio (CONTAIN + center) so
+      // non-square team logos don't get stretched in the export.
+      const sz=120, c=document.createElement('canvas'); c.width=sz; c.height=sz;
+      const ctx=c.getContext('2d');
+      let iw=img.naturalWidth||img.width||sz, ih=img.naturalHeight||img.height||sz;
+      const k=Math.min(sz/iw, sz/ih); const dw=iw*k, dh=ih*k;
+      ctx.clearRect(0,0,sz,sz); ctx.drawImage(img,(sz-dw)/2,(sz-dh)/2,dw,dh);
       const png=c.toDataURL('image/png'); logoCache[url]=png; return png;
     }catch(e){ return url; } }
+  const brandHTML = document.querySelector('.brand') ? document.querySelector('.brand').outerHTML : '<h1>B.A.R.T.O.L.O.</h1>';
   const dl=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?VIEW_DATE:'today';
   try{
     for(let ci=0; ci<chunks.length; ci++){
       const chunk=chunks[ci];
       const part=chunks.length>1?(' · part '+(ci+1)+' of '+chunks.length):'';
       const stage=document.createElement('div'); stage.id='apx-export-stage';
-      stage.style.cssText='position:fixed;left:-99999px;top:0;width:920px;background:#0d1117;padding:24px 22px;box-sizing:border-box;font-family:Inter,sans-serif;';
-      stage.innerHTML='<div style="text-align:center;margin-bottom:14px;">'+
-        '<div style="font-weight:800;font-style:italic;font-size:30px;color:#fff;letter-spacing:-0.01em;">MLB Game Sim Projections</div>'+
-        '<div style="font-size:14px;color:#9aa4b2;margin-top:3px;">'+dateStr+part+'</div>'+
-      '</div>'+
-      '<div class="apx-grid apx-detailed" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">'+chunk.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:#9aa4b2;">'+
-        '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
-        '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
-        '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
-      '</div>';
-      if(chunk.length%2===1){ const grid=stage.querySelector('.apx-grid'); const last=grid&&grid.lastElementChild; if(last){ last.style.gridColumn='1 / -1'; last.style.maxWidth='calc(50% - 6px)'; last.style.margin='0 auto'; } }
+      stage.style.cssText='position:fixed;left:-99999px;top:0;width:1380px;background:#0d1117;padding:26px 24px;box-sizing:border-box;font-family:Inter,sans-serif;';
+      stage.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">'+
+          '<div class="apx-brandwrap" style="display:flex;align-items:center;gap:14px;">'+brandHTML+'</div>'+
+          '<div style="font-size:15px;color:#9aa4b2;margin-top:8px;font-weight:600;">'+dateStr+part+'</div>'+
+        '</div>'+
+        '<div class="apx-grid apx-detailed" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;">'+chunk.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:13px;color:#9aa4b2;">'+
+          '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
+          '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
+          '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
+        '</div>';
       const imgs=stage.querySelectorAll('img');
       await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&im.src.indexOf('mlbstatic')>=0){ im.src=await logoData(im.src); } }catch(e){} }));
       document.body.appendChild(stage);
       try{
-        const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:960});
-        const url=canvas.toDataURL('image/png');
-        const a=document.createElement('a'); a.href=url; a.download='mlb-scoreboard-'+dl+(chunks.length>1?('-'+(ci+1)):'')+'.png'; document.body.appendChild(a); a.click(); a.remove();
+        const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:1420});
+        const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download='bartolo-scoreboard-'+dl+(chunks.length>1?('-'+(ci+1)):'')+'.png'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),6000);
       } finally { stage.remove(); }
-      if(ci<chunks.length-1) await new Promise(r=>setTimeout(r,500));
+      if(ci<chunks.length-1) await new Promise(r=>setTimeout(r,700));
     }
   }catch(e){ alert('PNG export failed: '+e.message); }
   finally{ if(btn){btn.textContent=oldT;btn.disabled=false;} }
 }
-
-
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
