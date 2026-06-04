@@ -1591,8 +1591,11 @@
   .pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
   @media (max-width: 1000px) { .pf-grid { grid-template-columns: 1fr; } }
   .pf-section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-  .pf-section h3 { margin: 0 0 6px; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--text); }
-  .pf-section .pf-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
+  .pf-section h3 { margin: 0 0 6px; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--text); text-align: center; }
+  .pf-section .pf-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; text-align: center; }
+  .pf-filter-note { font-size: 0.74rem; color: var(--muted); margin-top: 4px; text-align: center;
+    line-height: 1.4; }
+  .pf-filter-note b { color: var(--accent); font-weight: 600; }
   .pf-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
   /* Removed text-transform uppercase so lowercase prefixes (pWAR, pOPS,
      pFIP, wFIP, xFIP) render correctly. */
@@ -1994,7 +1997,10 @@
   </section>
 
   <section id="tab-player-futures" class="tab-content" hidden>
-    <div class="pf-toolbar"><span class="muted" id="pf-updated">Loading…</span></div>
+    <div class="pf-toolbar">
+      <span class="muted" id="pf-updated">Loading…</span>
+      <div class="pf-filter-note">Showing candidates with a <b>&ge;1% model chance</b> to win, plus longshots with a <b>positive EV edge</b> vs. the market.</div>
+    </div>
     <div class="pf-grid">
       <div class="pf-section" id="pf-AL_MVP">
         <h3>AL MVP</h3>
