@@ -786,8 +786,8 @@
   .lineup-table td.order  { color: var(--muted); font-size: 0.78rem; text-align: center; width: 22px; }
   .lineup-table td.pos    { color: var(--muted); font-weight: 600; text-align: center; width: 30px; font-size: 0.78rem; }
   .lineup-table td.bats   { font-weight: 700; text-align: center; width: 18px; }
-  .lineup-table td.player { font-weight: 600; padding-left: 0.3rem; white-space: nowrap; }
-  .m-lineup-box .lineup-table { width: auto; }
+  .lineup-table td.player { font-weight: 600; padding-left: 0.3rem; padding-right: 0.7rem; white-space: nowrap; }
+  .m-lineup-box .lineup-table { width: auto; margin: 0 auto; }
   .lineup-table td.chip   { text-align: center; width: 42px; font-family: var(--mono);
     font-size: 0.78rem; }
   .lineup-table td.split  { text-align: right; font-family: var(--mono); font-size: 0.82rem; }
@@ -1091,6 +1091,7 @@
     background: var(--panel); border-radius: 8px; padding: 0.7rem 0.85rem;
     text-align: left;
   }
+  .lu-team-wrc { color: var(--accent); font-weight: 700; font-size: 0.8rem; margin-left: 0.35rem; }
   .m-bp-box h4, .m-lineup-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem;
     display: flex; align-items: center; gap: 0.4rem; }
   .m-ump-box { text-align: center; }
@@ -1759,7 +1760,6 @@
   body.embed-mode .footer-detail { display: none !important; }
   /* Embed modal: always stack the two-team sections (lineups, SPs, bullpens,
      weather/park/ump, odds) on top of each other — no side-by-side at any width. */
-  body.embed-mode .m-lineup-grid { grid-template-columns: 1fr !important; }
   body.embed-mode .footer-byline a { color: var(--accent); text-decoration: none; font-weight: 700; }
   /* Mobile / narrow embeds: one card per row + force the COMPACT card (drop the
      dense SP / bullpen / grade detail that needs ~470px). Tapping a game still
@@ -1816,9 +1816,9 @@
   /* In embed=game: no navigation between games — locked to the URL slug */
   body.embed-mode.embed-game .modal-nav,
   body.embed-mode.embed-game .modal-close,
-  body.embed-mode.embed-game .modal-counter {
-    display: none !important;
-  }
+  body.embed-mode.embed-game .modal-counter { display: none !important; }
+  body.embed-mode .modal-counter { position: static !important; transform: none !important;
+    text-align: center; margin: 0.2rem 0 0.4rem; left: auto; }
   /* Mobile polish for embed mode — iOS Safari touch targets + tighter padding
      on small screens. The base site already has @media queries down to 600px
      for the modal interior; these just clean up the outer embed shell. */
@@ -3927,7 +3927,7 @@ function renderLineupsTab() {
         </h3>
         <div class="m-lineup-grid">
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}</h4>
+            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}${teamWrcChip(lg.lineups?.away, handOfPitcher(awaySPName))}</h4>
             ${teamGradeBar(g, 'away')}
             ${renderLineupSPHeader(awaySPName, "vs")}
             ${LU_VIEW === "stat"
@@ -3935,7 +3935,7 @@ function renderLineupsTab() {
               : renderLineupTable(lg.lineups?.away, { expanded: true, oppHand: handOfPitcher(awaySPName) })}
           </div>
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}</h4>
+            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}${teamWrcChip(lg.lineups?.home, handOfPitcher(homeSPName))}</h4>
             ${teamGradeBar(g, 'home')}
             ${renderLineupSPHeader(homeSPName, "vs")}
             ${LU_VIEW === "stat"
@@ -4346,6 +4346,27 @@ function teamGradeBar(game, side) {
 
 // opts: { expanded: true } → include Brl%/BB%/K% cols (Lineups tab; skipped in modal)
 //       { oppHand: 'L'|'R' } → which wRC+ split to surface as the matchup column
+function teamLineupWrc(side, oppHand){
+  try{
+    if(!side || !side.players) return null;
+    const oh=(oppHand||'').toUpperCase();
+    let sum=0,n=0;
+    for(const p of side.players){
+      const nm=(p&&p.name)||'';
+      const se=HITTER_SPLITS&&HITTER_SPLITS.hitters?HITTER_SPLITS.hitters[normName(nm)]:null;
+      const h=HITTERS&&HITTERS.hitters?HITTERS.hitters[normName(nm)]:null;
+      const vR=(se&&se.wrc_vs_r!=null)?se.wrc_vs_r:(h&&h.wrc_vs_r);
+      const vL=(se&&se.wrc_vs_l!=null)?se.wrc_vs_l:(h&&h.wrc_vs_l);
+      let v = oh==='L'?vL : oh==='R'?vR : (vR!=null&&vL!=null?(vR+vL)/2 : (vR!=null?vR:vL));
+      if(v!=null){sum+=v;n++;}
+    }
+    return n?Math.round(sum/n):null;
+  }catch(e){return null;}
+}
+function teamWrcChip(side, oppHand){
+  const v=teamLineupWrc(side, oppHand);
+  return v!=null?` <span class="lu-team-wrc" title="Projected team wRC+ vs the opposing starter's hand">${v} wRC+</span>`:'';
+}
 function renderLineupTable(side, opts={}) {
   const expanded = !!opts.expanded;
   if (!side) return `<div class="coming-soon">${opts.noDataMsg || "No lineup yet"}</div>`;
@@ -4508,9 +4529,7 @@ function renderLineupTable(side, opts={}) {
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
         <td class="${playerCellCls}"${playerCellAttr}>${fiLast(nm)}${danFlag}</td>
-        ${wrcCell}
         ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
-        ${expanded ? kbbCells : ""}
       </tr>`;
     } catch (err) {
       console.warn("Lineup row render failed", p, err);
@@ -4543,13 +4562,11 @@ function renderLineupTable(side, opts={}) {
     <th class="center" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
-    <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
-    <th class="center" style="width:34px;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → D−). Lower K% = better contact.">CON</th>
+    <th class="center" style="width:34px;padding-left:0.7rem;" title="Contact grade vs MLB — K% vs the MLB-hitter distribution (10% → A+, 22% → C+, 35% → D−). Lower K% = better contact.">CON</th>
     <th class="center" style="width:34px;" title="Power grade vs MLB — barrel / hard-hit / xSLG / xISO / bat-speed percentiles. C ≈ avg.">PWR</th>
     <th class="center" style="width:34px;" title="Eye / patience grade vs MLB — BB% + chase percentiles. C ≈ avg.">EYE</th>
     <th class="center" style="width:34px;" title="Baserunning grade vs MLB — projected BsR runs ranked vs regulars. C ≈ avg.">BSR</th>
     <th class="center" style="width:34px;" title="Defense grade vs MLB — projected fielding runs ranked vs regulars. C ≈ avg.">DEF</th>
-    ${expanded ? kbbHeaders : ""}
   </tr></thead><tbody>${rowsHTML}</tbody></table>`;
   if (side.dan_note) {
     html += `<div style="color:var(--projected);font-size:0.78rem;margin-top:0.3rem;">⚠ ${side.dan_note}</div>`;
@@ -4703,7 +4720,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     // Modal (compact) uses slash format; full Bullpen tab uses day abbrev.
     const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days", fLabels) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
-    const nameShown = compact ? shortName(p.name) : p.name;
+    const nameShown = p.name;
     const fipSrc = useW ? 'w' : (useXfip ? 'x' : 'p');
     const fipLbl = useW ? "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)"
                  : (useXfip ? "xFIP — season actual (≥10 IP)" : "pFIP — projection (no qualified xFIP yet)");
@@ -4711,15 +4728,13 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
-      <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
-      <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
 
   // Section header row — spans all 6 cols with a label + count
   const sectionRow = (label, count, tierCls) =>
-    `<tr class="bpt-section-row ${tierCls}"><td colspan="6">
+    `<tr class="bpt-section-row ${tierCls}"><td colspan="4">
        <span class="bpt-section-label">${label}</span>
        <span class="bpt-count">${count}</span>
      </td></tr>`;
@@ -4767,8 +4782,6 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <thead><tr>
         <th>B</th><th>Pitcher</th>
         <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
-        <th class="r" title="K% minus BB%">K-BB%</th>
-        <th class="r" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
       </tr></thead>
       <tbody>${tableBody}</tbody>
