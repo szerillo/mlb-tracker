@@ -208,11 +208,14 @@ def get_today_schedule():
     games = []
     for day in d.get("dates", []):
         for g in day.get("games", []):
+            st = g.get("status", {}) or {}
             games.append({
                 "game_pk": g["gamePk"],
                 "away": g["teams"]["away"]["team"]["name"],
                 "home": g["teams"]["home"]["team"]["name"],
                 "time": g["gameDate"],
+                "abstract_state": st.get("abstractGameState"),
+                "detailed_state": st.get("detailedState"),
             })
     # Yesterday for catcher-DAN logic
     y_url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={yesterday}"
@@ -223,6 +226,18 @@ def get_today_schedule():
     except Exception:
         y_games = []
     return games, y_games
+
+
+# MLB pre-populates a full projected batting order in the boxscore for games
+# that are still "Preview / Scheduled" (e.g. tomorrow's slate). That order is
+# NOT an official confirmed lineup. A lineup is only truly confirmed once the
+# game enters Pre-Game / Warmup / Live / Final.
+_OFFICIAL_DETAILED = {"Pre-Game", "Warmup", "In Progress", "Manager Challenge",
+                      "Final", "Game Over", "Completed Early"}
+def _is_official(game):
+    if (game.get("abstract_state") or "") in ("Live", "Final"):
+        return True
+    return (game.get("detailed_state") or "") in _OFFICIAL_DETAILED
 
 
 def get_confirmed_lineup(game_pk):
@@ -407,13 +422,30 @@ def main():
                     rw = pg
                     break
 
-        # Preference: confirmed MLB lineup first, then Rotowire
+        # Preference: confirmed MLB lineup first, then Rotowire.
+        # The MLB boxscore battingOrder is only a CONFIRMED lineup once the game
+        # is official (Pre-Game / Warmup / Live / Final). Before that (Preview /
+        # Scheduled, incl. tomorrow's slate) MLB pre-fills a PROJECTED order, so
+        # label it "projected" rather than falsely "confirmed".
         c = confirmed_by_pk.get(pk)
+        # A lineup may only be "confirmed" if the game is actually official
+        # (Pre-Game / Warmup / Live / Final) OR first pitch is imminent (lineups
+        # post a few hours out). Otherwise — tomorrow's slate, or a game many
+        # hours away — any "confirmed" from MLB's pre-filled order OR a stale
+        # Rotowire scrape is downgraded to "projected". This is source-agnostic.
+        try:
+            _gt = datetime.datetime.fromisoformat(g["time"].replace("Z", "+00:00"))
+            _hrs = (_gt - datetime.datetime.now(datetime.timezone.utc)).total_seconds() / 3600.0
+        except Exception:
+            _hrs = 99.0
+        confirm_ok = _is_official(g) or (_hrs <= 5.0)
+        mlb_status = "confirmed" if confirm_ok else "projected"
         lineups = {"away": None, "home": None}
         for side in ("away","home"):
             team = g["away"] if side == "away" else g["home"]
             if c and c.get(side):
-                lineups[side] = {"status": "confirmed", "players": c[side],
+                players = [{**p, "status": mlb_status} for p in c[side]]
+                lineups[side] = {"status": mlb_status, "players": players,
                                  "source": "MLB Stats API"}
             elif rw and rw.get("lineups",{}).get(side):
                 # Remap handedness / positions into our format
@@ -429,6 +461,14 @@ def main():
                                  "source": "Rotowire"}
             else:
                 lineups[side] = None
+
+            # Source-agnostic cap: never show "confirmed" for a game that isn't
+            # official/imminent (handles stale Rotowire + MLB pre-fill alike).
+            if lineups[side] and not confirm_ok and lineups[side].get("status") == "confirmed":
+                lineups[side]["status"] = "projected"
+                for _p in lineups[side].get("players", []):
+                    if _p.get("status") == "confirmed":
+                        _p["status"] = "projected"
 
             # Apply catcher-DAN flag — but ONLY when today's projected catcher
             # is the SAME person who caught yesterday's night game. If the team
