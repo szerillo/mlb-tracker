@@ -473,13 +473,12 @@ def _proj_ip(player):
 
 
 # ── Pool filtering + score computation ─────────────────────────────────────
-# MVP weights — V5.1 RTF baseline lifts WAR from .791 → 1.10 (24% → 31% share).
-# Rationale: voters under-credit defensive + baserunning value, which WAR
-# captures and HR/RBI/R/OPS don't. Baseline weights made Witt #4 (behind Rice)
-# despite a +3.4 WAR lead; bumped weights put him #2 (+0.15) and lift Ohtani's
-# combined-WAR composite ~+0.09 → ~+4% model_p. Counting-stat weights kept
-# intact to preserve voter-narrative signal (HR/RBI still drive MVP voting).
-MVP_WEIGHTS = {"war": 1.10, "ops": .714, "r": .587, "hr": .561, "rbi": .450, "sb": .187}
+# MVP weights — V5.1 RTF baseline (WAR .791 ≈ 24% share). Reverted from the
+# briefly-tried aggressive bump (1.10) per user: keep WAR meaningful but let
+# counting stats + the market carry their share rather than letting the WAR
+# leader run away with it. WAR backbone in _score_mvp still anchors the cross-
+# pool comparison; the ATC variance modifiers are faded by % season remaining.
+MVP_WEIGHTS = {"war": .791, "ops": .714, "r": .587, "hr": .561, "rbi": .450, "sb": .187}
 CY_WEIGHTS  = {"war": .705, "era_inv": .409, "k_bb_pct": .350, "k": .368,
                "w": .300, "whip_inv": .243, "ip": .174}
 ROY_HIT_WEIGHTS = {"war": .731, "r": .615, "rbi": .459, "h": .455, "hr": .419, "ops": .400}
@@ -751,7 +750,7 @@ def _score_roy(pool_h, pool_p):
 # Sharpen factor applied to the MVP softmax temperature (<1 = more decisive).
 # Keeps a dominant WAR leader (e.g. Ohtani) reading as a clear favorite
 # instead of being flattened across the contender field.
-MVP_SHARPEN = 0.75
+MVP_SHARPEN = 1.0   # reverted from 0.75 — no extra favorite-sharpening (RTF baseline)
 
 
 def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
