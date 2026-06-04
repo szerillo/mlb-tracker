@@ -764,11 +764,44 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
     user might actually bet — model_p ≥ 1%, market_p ≥ 1%, or positive edge ≥
     1%. CY/ROY skip the filter since those pools are already short enough.
     """
-    odds_idx = {}
+    # The VegasInsider scrape can emit TWO rows for one player: a clean
+    # multi-book row AND a stale single-book outlier (e.g. Judge -125 alone vs a
+    # 5-book row that tops out at +180). Picking whichever matched first stuck a
+    # player on the stale line. Instead, MERGE every row per player — keeping the
+    # better-payout price when a book repeats — then take the best (longest)
+    # available price across all books for line-shopping + edge.
+    def _payout(o):
+        try:    o = float(o)
+        except (TypeError, ValueError): return -1.0
+        if o == 0: return -1.0
+        return (o / 100.0) if o > 0 else (100.0 / abs(o))
+    merged = {}
     for p in market_meta.get("players", []):
-        for v in _name_variants(p["name"]):
+        key = _norm_name(p.get("name") or "")
+        if not key: continue
+        rec = merged.get(key)
+        if rec is None:
+            rec = {"name": p.get("name"), "all_book_odds": {},
+                   "mlbam_id": p.get("mlbam_id"), "team_abbr": p.get("team_abbr"),
+                   "league": p.get("league")}
+            merged[key] = rec
+        books = dict(p.get("all_book_odds") or {})
+        if not books and p.get("best_odds") is not None:
+            books[p.get("best_book") or "?"] = p["best_odds"]
+        for bk, o in books.items():
+            if bk not in rec["all_book_odds"] or _payout(o) > _payout(rec["all_book_odds"][bk]):
+                rec["all_book_odds"][bk] = o
+    for rec in merged.values():
+        best = best_bk = None
+        for bk, o in rec["all_book_odds"].items():
+            if best is None or _payout(o) > _payout(best):
+                best, best_bk = o, bk
+        rec["best_odds"], rec["best_book"] = best, best_bk
+    odds_idx = {}
+    for rec in merged.values():
+        for v in _name_variants(rec["name"]):
             if v not in odds_idx:
-                odds_idx[v] = p
+                odds_idx[v] = rec
     enriched = []
     for x in scored:
         nm = (x["player"].get("name") or "")
