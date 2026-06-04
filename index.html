@@ -2482,6 +2482,36 @@ async function loadSheetProjections(){
     if(j&&j.games){ for(const pk in j.games){const g=j.games[pk]; byPk[pk]=g;
       if(g.an_event_id!=null){ byEid[g.an_event_id]=g; eid2pk[g.an_event_id]=pk; } } }
   }catch(e){}
+  // 1.5) LIVE bridge from the Action Network API (CORS-open) so freshly-uploaded
+  //      sheet rows map to today's games even before the daily snapshot/odds
+  //      refresh has run. Maps an_event_id -> gamePk by matching AN team names
+  //      against the loaded MLB schedule (CURRENT_GAMES). Best-effort + timeout.
+  try{
+    if(typeof CURRENT_GAMES!=='undefined' && CURRENT_GAMES && CURRENT_GAMES.length){
+      const _vd=(typeof VIEW_DATE!=='undefined' && VIEW_DATE)?VIEW_DATE:_todayISO_ET();
+      const _ymd=_vd.replace(/-/g,'');
+      const _norm=x=>(x||'').toString().toLowerCase().replace(/[^a-z]/g,'');
+      const pkByName={};
+      for(const g of CURRENT_GAMES){
+        const a=_norm(g.teams&&g.teams.away&&g.teams.away.team&&g.teams.away.team.name);
+        const h=_norm(g.teams&&g.teams.home&&g.teams.home.team&&g.teams.home.team.name);
+        if(a&&h) pkByName[a+'@'+h]=g.gamePk;
+      }
+      const _c2=(typeof AbortController!=='undefined')?new AbortController():null;
+      const _t2=_c2?setTimeout(()=>_c2.abort(),7000):null;
+      const _anr=await fetch('https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15&date='+_ymd+'&periods=event', _c2?{signal:_c2.signal}:undefined);
+      if(_t2)clearTimeout(_t2);
+      if(_anr.ok){
+        const _aj=await _anr.json();
+        for(const g of (_aj.games||[])){
+          const tm={}; for(const t of (g.teams||[])) tm[t.id]=t.full_name;
+          const a=_norm(tm[g.away_team_id]), h=_norm(tm[g.home_team_id]);
+          const pk=pkByName[a+'@'+h];
+          if(pk && g.id!=null && eid2pk[g.id]==null) eid2pk[g.id]=pk;
+        }
+      }
+    }
+  }catch(e){}
   // 2) live published CSV -> fresh values, overlaid onto known gamePks by event id.
   if(SHEET_CSV_URL){
     try{
