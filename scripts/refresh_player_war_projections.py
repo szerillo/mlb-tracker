@@ -55,9 +55,9 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 SEASON = datetime.date.today().year
 
 # 5-system ROS blend.  ATC is special — it also carries Vol/Skew/Dim modifiers.
-ROS_SYSTEMS = ["ratcdc", "rthebatx", "roopsydc", "rzipsdc", "rsteamer"]
+ROS_SYSTEMS = ["ratcdc", "rthebatx", "roopsydc", "rzipsdc", "steamerr"]
 ROS_SHORT   = {"ratcdc": "atc", "rthebatx": "batx", "roopsydc": "oopsy",
-               "rzipsdc": "zips", "rsteamer": "steamer"}
+               "rzipsdc": "zips", "steamerr": "steamer"}
 
 # FG team-name → our internal abbr (matches refresh_team_projections.py + the
 # team_futures keyspace).
@@ -204,6 +204,20 @@ def _load_ytd_dump(side):
         return []
 
 
+def _load_ros_dump(side, short):
+    """FanGraphs now 403-blocks the live /api/projections endpoint server-side
+    too. Fall back to a committed browser dump: data/_fg_ros.json with shape
+    {"bat": {"atc":[...], "batx":[...], ...}, "pit": {...}} (raw FG projection
+    rows, parsed by _player_meta / _pull just like the live endpoint)."""
+    try:
+        d = json.loads((REPO_ROOT / "data" / "_fg_ros.json").read_text())
+        rows = (d.get(side) or {}).get(short) or []
+        return rows if isinstance(rows, list) else []
+    except Exception as e:
+        print(f"  [_load_ros_dump] none ({e})", file=sys.stderr)
+        return []
+
+
 def _pull(row, keymap):
     """Walk a FG row dict pulling stat keys. FG keys are inconsistent across
     endpoints (sometimes 'WAR', sometimes 'war', sometimes 'projWAR'), so try
@@ -280,8 +294,11 @@ def main():
         ros_by_key = {}   # key -> {system_short -> stats}
         for proj in ROS_SYSTEMS:
             print(f"[player-war] fetch ROS {proj} ({side})…", file=sys.stderr)
-            rows = fetch_projection(proj, side)
             short = ROS_SHORT[proj]
+            rows = fetch_projection(proj, side)
+            if not rows:
+                rows = _load_ros_dump(side, short)
+                print(f"  ROS live blocked — using committed _fg_ros.json[{side}][{short}] ({len(rows)} rows)", file=sys.stderr)
             n_added = 0
             for row in rows:
                 name, team, league, mlbam, fg_id, pos = _player_meta(row)
