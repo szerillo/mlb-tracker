@@ -157,7 +157,8 @@ def main():
         e = enrichment.get(key)
         if e:
             for fld in ("xfip", "stuff_plus", "location_plus",
-                        "pitching_plus", "ip"):
+                        "pitching_plus", "ip",
+                        "bot_era", "siera", "xera"):
                 if fld in e:
                     entry[fld] = e[fld]
             matched += 1
