@@ -750,7 +750,8 @@ def _score_roy(pool_h, pool_p):
 # Sharpen factor applied to the MVP softmax temperature (<1 = more decisive).
 # Keeps a dominant WAR leader (e.g. Ohtani) reading as a clear favorite
 # instead of being flattened across the contender field.
-MVP_SHARPEN = 1.0   # reverted from 0.75 — no extra favorite-sharpening (RTF baseline)
+MVP_SHARPEN = 0.78  # baseline WAR weight (.791) + mild favorite-sharpening so a
+                    # dominant WAR leader (Ohtani ~80%) reads as a clear favorite
 
 
 def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
