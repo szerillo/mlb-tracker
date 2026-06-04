@@ -799,7 +799,31 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
         temp = 1.0
 
     all_scores = [x["score"] for x in pool]
-    model_p    = _softmax(all_scores, temp * sharpen)
+    # Baseline (original-methodology) probabilities — every player calibrated to
+    # the market with NO extra sharpening.
+    base_p  = _softmax(all_scores, temp)
+    model_p = base_p
+    # Targeted runaway-leader bump (MVP only; sharpen < 1 enables it). Instead of
+    # sharpening the whole field (which inflated every favorite, e.g. Witt), we
+    # bump ONLY a *dominant* WAR leader and leave everyone else at their original
+    # relative probabilities. A leader qualifies as a runaway when their WAR
+    # exceeds the next-best in the pool by >= RUNAWAY_WAR_GAP. Ohtani (+3 WAR)
+    # qualifies and rises to ~80%; Witt (+1.5 over Judge) does not, so the AL
+    # field stays on the original methodology.
+    RUNAWAY_WAR_GAP = 2.0
+    if sharpen != 1.0 and len(pool) >= 2:
+        lead_idx = max(range(len(pool)), key=lambda i: base_p[i])
+        wars     = [(x.get("combined_war") if x.get("combined_war") is not None else 0.0)
+                    for x in pool]
+        lead_war = wars[lead_idx]
+        rest_war = max([w for i, w in enumerate(wars) if i != lead_idx] or [0.0])
+        if (lead_war - rest_war) >= RUNAWAY_WAR_GAP:
+            sharp_p   = _softmax(all_scores, temp * sharpen)
+            lead_p    = sharp_p[lead_idx]
+            base_lead = base_p[lead_idx]
+            scale     = (1.0 - lead_p) / ((1.0 - base_lead) or 1e-9)
+            model_p   = [lead_p if i == lead_idx else base_p[i] * scale
+                         for i in range(len(pool))]
 
     results = []
     for x, p_mod in zip(pool, model_p):
