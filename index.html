@@ -1746,6 +1746,11 @@
     display: block !important;
     padding: 0.5rem !important;
   }
+  /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
+  body.embed-mode .an-proj-banner,
+  body.embed-mode #apx-png,
+  body.embed-mode #apx-png-bottom,
+  body.embed-mode .apx-toolbar:has(#apx-png-bottom) { display: none !important; }
   /* embed=game: scoreboard hidden, modal is the only content */
   body.embed-mode.embed-game #tab-scoreboard {
     display: none !important;

@@ -51,7 +51,7 @@
 
   <div id="games"><div class="empty">Loading games…</div></div>
 
-  <div class="note">Add this once per WordPress page (enables auto-grow; not needed for Fixed height)</div>
+  <div class="note">Optional — each copied snippet already auto-sizes itself. Only needed if you prefer one shared listener.</div>
   <pre id="listener"></pre>
   <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
 
@@ -76,14 +76,19 @@ $("#listener").textContent = LISTENER;
 function iframeFor(kind, g){
   const mode = $("#mode").value;
   const date = $("#date").value;
-  let src, title;
-  if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; }
-  else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; }
+  let src, title, id;
+  if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
+  else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
+
   if(mode==='fixed'){
-    const h = kind==='slate' ? '85vh' : '80vh';
-    return `<iframe src="${src}" style="width:100%;height:${h};border:0" scrolling="yes" title="${title}"></iframe>`;
+    const h = kind==='slate' ? 1500 : 1000;
+    return `<iframe src="${src}" style="width:100%;height:${h}px;border:0;display:block" scrolling="yes" title="${title}"></iframe>`;
   }
-  return `<iframe src="${src}" style="width:100%;border:0;display:block" scrolling="no" title="${title}"></iframe>`;
+  // Auto-grow: self-contained — each snippet carries its own scoped resize
+  // listener so it fits its content exactly with no separate setup and never
+  // collapses to the default ~150px. min-height keeps it from flashing tiny.
+  return `<iframe id="${id}" src="${src}" style="width:100%;min-height:600px;border:0;display:block" scrolling="no" title="${title}"></iframe>
+<script>(function(){var f=document.getElementById("${id}");if(!f)return;window.addEventListener("message",function(e){if(e.data&&e.data.type==="mlb-tracker-resize"&&e.source===f.contentWindow){f.style.height=e.data.height+"px";f.style.minHeight="0";}});})();<\/script>`;
 }
 
 async function copyText(txt, btn){
