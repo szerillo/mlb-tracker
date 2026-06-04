@@ -41,7 +41,7 @@ BOOK_NAMES = {
 }
 
 sys.path.insert(0, os.path.dirname(__file__))
-from _common import skip_if_not_in_window
+from _common import skip_if_not_in_window, within_game_window
 
 
 def _et_today() -> datetime.date:
@@ -94,8 +94,30 @@ def best_market(game: dict, market_type: str, side: str | None = None) -> dict |
     return best
 
 
+def _odds_should_run():
+    """Odds refresh schedule. Runs at three fixed ET anchors — 8:00 PM,
+    11:30 PM, 8:00 AM — to capture opening / late / morning line snapshots
+    (feeds CLV open->close tracking), PLUS any time a game is within the
+    approach window so live odds stay fresh as first pitch nears. FORCE_RUN
+    (manual dispatch) always runs."""
+    if os.environ.get("FORCE_RUN"):
+        return True
+    now = datetime.datetime.now(datetime.timezone.utc)
+    et = now - datetime.timedelta(hours=4)          # EDT (baseball season)
+    mins = et.hour * 60 + et.minute
+    for tgt in (20 * 60, 23 * 60 + 30, 8 * 60):     # 8PM, 11:30PM, 8AM ET
+        if abs(mins - tgt) <= 20:
+            return True
+    try:
+        return bool(within_game_window())
+    except Exception:
+        return False
+
+
 def main():
-    if skip_if_not_in_window("refresh_odds"):
+    if not _odds_should_run():
+        print("[refresh_odds] skip: not a scheduled anchor (8PM/11:30PM/8AM ET) "
+              "and no game within the approach window.")
         return
     date = _et_today()
     yyyymmdd = date.strftime("%Y%m%d")
