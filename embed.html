@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B.A.R.T.O.L.O. — Embed Builder</title>
+<style>
+  :root{ --bg:#0a0e13; --panel:#141a22; --panel2:#1b232d; --border:#243240; --text:#e6edf3; --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;padding:18px;max-width:860px;margin:0 auto;}
+  h1{font-size:1.25rem;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:.85rem;margin-bottom:16px}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  input[type=date]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:1rem}
+  button{cursor:pointer;font-family:inherit}
+  .copy{background:var(--accent);color:#06302b;border:0;border-radius:7px;padding:7px 12px;font-weight:700;font-size:.82rem}
+  .copy:active{transform:translateY(1px)}
+  .copy.done{background:var(--good)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .card .m{font-weight:600}
+  .card .meta{color:var(--muted);font-size:.78rem;margin-top:2px}
+  .slate{border-color:var(--accent)}
+  .opts{display:flex;gap:8px;align-items:center}
+  select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:.78rem}
+  .note{color:var(--muted);font-size:.8rem;margin:18px 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  pre{background:#0c1218;border:1px solid var(--border);border-radius:8px;padding:12px;overflow:auto;font-size:.74rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word}
+  .row{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .empty{color:var(--muted);padding:20px;text-align:center}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+  <h1>B.A.R.T.O.L.O. — Embed Builder</h1>
+  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste the code into a WordPress <b>Custom HTML</b> block.</div>
+
+  <div class="bar">
+    <label>Date <input type="date" id="date"></label>
+    <div class="opts">Layout
+      <select id="mode">
+        <option value="grow">Auto-grow (page scrolls)</option>
+        <option value="fixed">Fixed height (scroll box)</option>
+      </select>
+    </div>
+    <button class="copy" id="reload" style="background:var(--panel2);color:var(--text)">Reload</button>
+  </div>
+
+  <div class="card slate" id="slateCard">
+    <div><div class="m">📋 Full slate scoreboard</div><div class="meta" id="slateMeta">all games for the selected date</div></div>
+    <button class="copy" data-kind="slate">Copy</button>
+  </div>
+
+  <div id="games"><div class="empty">Loading games…</div></div>
+
+  <div class="note">Add this once per WordPress page (enables auto-grow; not needed for Fixed height)</div>
+  <pre id="listener"></pre>
+  <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
+
+<script>
+const BASE = "https://mlb-tracker-256.pages.dev/";
+const API  = "https://statsapi.mlb.com/api/v1";
+const $ = s => document.querySelector(s);
+function todayISO(){ // US Eastern date
+  const f=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+  return f.format(new Date());
+}
+const LISTENER = `<script>
+window.addEventListener('message', function(e){
+  if(!e.data || e.data.type!=='mlb-tracker-resize') return;
+  document.querySelectorAll('iframe').forEach(function(f){
+    if(f.contentWindow===e.source) f.style.height = e.data.height+'px';
+  });
+});
+<\/script>`;
+$("#listener").textContent = LISTENER;
+
+function iframeFor(kind, g){
+  const mode = $("#mode").value;
+  const date = $("#date").value;
+  let src, title;
+  if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; }
+  else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; }
+  if(mode==='fixed'){
+    const h = kind==='slate' ? '85vh' : '80vh';
+    return `<iframe src="${src}" style="width:100%;height:${h};border:0" scrolling="yes" title="${title}"></iframe>`;
+  }
+  return `<iframe src="${src}" style="width:100%;border:0;display:block" scrolling="no" title="${title}"></iframe>`;
+}
+
+async function copyText(txt, btn){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const old=btn.textContent; btn.textContent='Copied ✓'; btn.classList.add('done');
+  setTimeout(()=>{btn.textContent=old; btn.classList.remove('done');},1400);
+}
+
+let GAMES=[];
+function abbr(t){ return t.abbreviation || (t.name||'').split(' ').slice(-1)[0]; }
+async function load(){
+  const date=$("#date").value;
+  $("#games").innerHTML='<div class="empty">Loading games…</div>';
+  $("#slateMeta").textContent='all games for '+date;
+  try{
+    const r=await fetch(`${API}/schedule?sportId=1&date=${date}`);
+    const d=await r.json();
+    const games=[]; (d.dates||[]).forEach(day=>(day.games||[]).forEach(g=>games.push(g)));
+    GAMES=games.map(g=>({gamePk:g.gamePk, label:`${abbr(g.teams.away.team)} @ ${abbr(g.teams.home.team)}`,
+       away:g.teams.away.team.name, home:g.teams.home.team.name,
+       time:new Date(g.gameDate).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})+' ET'}));
+    render();
+  }catch(e){ $("#games").innerHTML='<div class="empty">Could not load schedule. Try Reload.</div>'; }
+}
+function render(){
+  if(!GAMES.length){ $("#games").innerHTML='<div class="empty">No games scheduled this date.</div>'; return; }
+  $("#games").innerHTML = GAMES.map((g,i)=>`<div class="card">
+    <div><div class="m">${g.away} @ ${g.home}</div><div class="meta">${g.time} · game id ${g.gamePk}</div></div>
+    <button class="copy" data-kind="game" data-i="${i}">Copy</button>
+  </div>`).join('');
+}
+document.addEventListener('click', e=>{
+  const b=e.target.closest('.copy'); if(!b) return;
+  if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
+  const kind=b.dataset.kind; if(!kind) return;
+  const g = kind==='game' ? GAMES[+b.dataset.i] : null;
+  copyText(iframeFor(kind,g), b);
+});
+$("#date").value=todayISO();
+$("#date").addEventListener('change',load);
+$("#mode").addEventListener('change',()=>{}); // affects next copy
+$("#reload").addEventListener('click',load);
+load();
+</script>
+</body>
+</html>
