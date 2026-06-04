@@ -1754,6 +1754,17 @@
   body.embed-mode > footer { display: block !important; border-top: 1px solid var(--border); margin-top: 0.6rem !important; padding: 0.6rem 0.7rem !important; font-size: 0.8rem !important; text-align: center; }
   body.embed-mode .footer-detail { display: none !important; }
   body.embed-mode .footer-byline a { color: var(--accent); text-decoration: none; font-weight: 700; }
+  /* Mobile / narrow embeds: one card per row + force the COMPACT card (drop the
+     dense SP / bullpen / grade detail that needs ~470px). Tapping a game still
+     opens the full modal inline. Keeps the slate readable on an iPhone. */
+  body.embed-mode { overflow-x: hidden !important; }
+  @media (max-width: 700px) {
+    body.embed-mode .apx-grid,
+    body.embed-mode .apx-grid.apx-detailed { grid-template-columns: 1fr !important; }
+    body.embed-mode .apx-grid.apx-detailed .apx-info2,
+    body.embed-mode .apx-grid.apx-detailed .apx-park,
+    body.embed-mode .apx-grid.apx-detailed .apx-extra { display: none !important; }
+  }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
