@@ -1704,7 +1704,12 @@
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
+  html:has(body.embed-mode) { height: auto !important; overflow-y: auto !important; }
   body.embed-mode > header,
   body.embed-mode > footer,
   body.embed-mode .tabs,
@@ -5906,7 +5911,7 @@ async function openModal(game) {
   // Show modal immediately with a loading shim, then fill in once rosters are ready
   body.innerHTML = `<div class="loading">Loading game detail…</div>`;
   bg.classList.add("active");
-  document.body.style.overflow = "hidden";
+  if (!document.body.classList.contains("embed-mode")) document.body.style.overflow = "hidden";
   updateModalCounter();
   // Prefetch both team rosters for the Bullpens section
   await Promise.all([
