@@ -786,7 +786,8 @@
   .lineup-table td.order  { color: var(--muted); font-size: 0.78rem; text-align: center; width: 22px; }
   .lineup-table td.pos    { color: var(--muted); font-weight: 600; text-align: center; width: 30px; font-size: 0.78rem; }
   .lineup-table td.bats   { font-weight: 700; text-align: center; width: 18px; }
-  .lineup-table td.player { font-weight: 600; padding-left: 0.3rem; }
+  .lineup-table td.player { font-weight: 600; padding-left: 0.3rem; white-space: nowrap; }
+  .m-lineup-box .lineup-table { width: auto; }
   .lineup-table td.chip   { text-align: center; width: 42px; font-family: var(--mono);
     font-size: 0.78rem; }
   .lineup-table td.split  { text-align: right; font-family: var(--mono); font-size: 0.82rem; }
@@ -1758,11 +1759,7 @@
   body.embed-mode .footer-detail { display: none !important; }
   /* Embed modal: always stack the two-team sections (lineups, SPs, bullpens,
      weather/park/ump, odds) on top of each other — no side-by-side at any width. */
-  body.embed-mode .m-lineup-grid,
-  body.embed-mode .m-sp-grid,
-  body.embed-mode .m-split,
-  body.embed-mode .m-odds-grid,
-  body.embed-mode .m-env-row { grid-template-columns: 1fr !important; }
+  body.embed-mode .m-lineup-grid { grid-template-columns: 1fr !important; }
   body.embed-mode .footer-byline a { color: var(--accent); text-decoration: none; font-weight: 700; }
   /* Mobile / narrow embeds: one card per row + force the COMPACT card (drop the
      dense SP / bullpen / grade detail that needs ~470px). Tapping a game still
@@ -1772,11 +1769,9 @@
      never overflows on web preview or phones, and always use the COMPACT card
      (the dense SP / bullpen / grade detail needs ~470px and overflows narrow
      embeds). Tap a game to open the full modal inline. */
-  body.embed-mode .apx-grid,
-  body.embed-mode .apx-grid.apx-detailed {
-    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)) !important;
-    gap: 8px !important;
-  }
+  /* Embeds use the COMPACT card (drop the dense SP/bullpen/grade detail) but
+     keep the site's responsive 3/2/1 grid so cards EXPAND across a wide iframe
+     and collapse to fewer columns as it narrows. */
   body.embed-mode .apx-grid.apx-detailed .apx-info2,
   body.embed-mode .apx-grid.apx-detailed .apx-park,
   body.embed-mode .apx-grid.apx-detailed .apx-extra { display: none !important; }
@@ -3048,6 +3043,14 @@ function shortName(name) {
 // Auto-shrink when a name would wrap: anything > 17 chars or with hyphen
 // in the last name becomes "F. Lastname" (e.g. "Pete Crow-Armstrong",
 // "Moises Ballesteros"). Everything else renders full.
+function fiLast(name){
+  const p=String(name||'').trim().split(/\s+/);
+  if(p.length<2) return name||'';
+  const suf=/^(jr\.?|sr\.?|ii|iii|iv|v)$/i;
+  let last=p.slice(1);
+  // keep a trailing suffix attached (e.g. "V. Guerrero Jr.")
+  return p[0][0]+'. '+last.join(' ');
+}
 function autoName(name) {
   if (!name) return "";
   const parts = String(name).trim().split(/\s+/);
@@ -4504,7 +4507,7 @@ function renderLineupTable(side, opts={}) {
         <td class="order">${p.order || ""}</td>
         <td class="pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
+        <td class="${playerCellCls}"${playerCellAttr}>${fiLast(nm)}${danFlag}</td>
         ${wrcCell}
         ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         ${expanded ? kbbCells : ""}
