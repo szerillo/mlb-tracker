@@ -2772,9 +2772,17 @@ async function exportScoreboardPNG(){
   if(!games.length){ alert('No games to export yet.'); return; }
   const btn=document.getElementById('apx-png'); const oldT=btn?btn.textContent:''; if(btn){btn.textContent='Rendering…';btn.disabled=true;}
   let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
-  // 3-wide layout: 9-game slates render as a clean 3x3. Split only for very
-  // large slates so a single image stays legible.
-  const CHUNK=18; const chunks=[]; for(let i=0;i<games.length;i+=CHUNK) chunks.push(games.slice(i,i+CHUNK));
+  // ≤10 games → one 3-wide image (9 → clean 3x3). 11+ games → two images,
+  // balanced split (e.g. 15 → 8 / 7), 2-wide grid, trailing odd card centered.
+  let chunks, cols, stageW, winW;
+  if (games.length >= 11) {
+    const half = Math.ceil(games.length / 2);
+    chunks = [games.slice(0, half), games.slice(half)];
+    cols = 2; stageW = 960; winW = 1000;
+  } else {
+    chunks = [games];
+    cols = 3; stageW = 1380; winW = 1420;
+  }
   const logoCache={};
   async function logoData(url){ if(logoCache[url])return logoCache[url]; try{
       const r=await fetch(url,{mode:'cors'}); const svg=await r.text();
@@ -2797,22 +2805,30 @@ async function exportScoreboardPNG(){
       const chunk=chunks[ci];
       const part=chunks.length>1?(' · part '+(ci+1)+' of '+chunks.length):'';
       const stage=document.createElement('div'); stage.id='apx-export-stage';
-      stage.style.cssText='position:fixed;left:-99999px;top:0;width:1380px;background:#0d1117;padding:26px 24px;box-sizing:border-box;font-family:Inter,sans-serif;';
+      stage.style.cssText='position:fixed;left:-99999px;top:0;width:'+stageW+'px;background:#0d1117;padding:26px 24px;box-sizing:border-box;font-family:Inter,sans-serif;';
       stage.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">'+
           '<div class="apx-brandwrap" style="display:flex;align-items:center;gap:14px;">'+brandHTML+'</div>'+
           '<div style="font-size:15px;color:#9aa4b2;margin-top:8px;font-weight:600;">'+dateStr+part+'</div>'+
         '</div>'+
-        '<div class="apx-grid apx-detailed" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;">'+chunk.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>'+
+        '<div class="apx-grid apx-detailed" style="display:grid;grid-template-columns:repeat('+cols+',minmax(0,1fr));gap:13px;">'+chunk.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:13px;color:#9aa4b2;">'+
           '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
           '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
           '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
         '</div>';
+      // Center a single trailing card (e.g. 7 games in a 2-wide grid).
+      if (chunk.length % cols === 1) {
+        const grid = stage.querySelector('.apx-grid');
+        const last = grid && grid.lastElementChild;
+        if (last) { last.style.gridColumn = '1 / -1';
+          last.style.maxWidth = 'calc((100% - ' + ((cols-1)*13) + 'px) / ' + cols + ')';
+          last.style.margin = '0 auto'; }
+      }
       const imgs=stage.querySelectorAll('img');
       await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&im.src.indexOf('mlbstatic')>=0){ im.src=await logoData(im.src); } }catch(e){} }));
       document.body.appendChild(stage);
       try{
-        const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:1420});
+        const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:winW});
         const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
         const url=URL.createObjectURL(blob);
         const a=document.createElement('a'); a.href=url; a.download='bartolo-scoreboard-'+dl+(chunks.length>1?('-'+(ci+1)):'')+'.png'; document.body.appendChild(a); a.click(); a.remove();
