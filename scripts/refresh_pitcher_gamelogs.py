@@ -346,10 +346,24 @@ def statcast_discipline(mlbam_id, season):
             if not n:
                 continue
             desc = g["description"].astype(str)
+            ev = g["events"].astype(str) if "events" in g.columns else desc.iloc[0:0]
+            bbt = g["bb_type"].astype(str) if "bb_type" in g.columns else desc.iloc[0:0]
             rec = {
                 "csw": round(int(desc.isin(_SC_CSW).sum()) / n, 3),
                 "whiff": round(int(desc.isin(_SC_WHIFF).sum()) / n, 3),
                 "ball_pct": round(int(desc.isin(_SC_BALL).sum()) / n, 3),
+                # raw component counts for self-computed xFIP / SIERA
+                "comp": {
+                    "K":   int((ev == "strikeout").sum() + (ev == "strikeout_double_play").sum()),
+                    "BB":  int((ev == "walk").sum()),
+                    "HBP": int((ev == "hit_by_pitch").sum()),
+                    "HR":  int((ev == "home_run").sum()),
+                    "FB":  int((bbt == "fly_ball").sum()),
+                    "GB":  int((bbt == "ground_ball").sum()),
+                    "LD":  int((bbt == "line_drive").sum()),
+                    "PU":  int((bbt == "popup").sum()),
+                    "PA":  int((ev != "").sum() - (ev == "nan").sum()),
+                },
             }
             if "pitch_type" in g.columns:
                 vc = g["pitch_type"].astype(str).value_counts(normalize=True)
@@ -372,8 +386,75 @@ def merge_discipline(starts, disc):
         s["csw"] = d["csw"] if d else None
         s["whiff"] = d["whiff"] if d else None
         s["ball_pct"] = d["ball_pct"] if d else None
+        s["_comp"] = d.get("comp") if d else None
         if d and d.get("mix"):
             s["mix"] = d["mix"]
+
+
+# ── self-computed xFIP / SIERA (FanGraphs formulas, anchored to FG season) ──
+# FanGraphs blocks its per-start game-log xFIP/SIERA server-side, but the inputs
+# (K, BB, HBP, fly balls, batted-ball mix, PA) come from Statcast + MLB logs,
+# which are NOT blocked. We compute each start's xFIP/SIERA with the published
+# formulas, then ANCHOR each pitcher so their season aggregate matches FG's
+# season value (from data/_fg_pitch_model.json). The league constants below get
+# absorbed by that per-pitcher offset, so their exact values don't matter — the
+# anchor fixes the level while our per-start math supplies the recent-form shape.
+LG_HR_PER_FB = 0.116   # league HR/FB (absorbed by anchor)
+FIP_CONSTANT = 3.17    # FIP constant   (absorbed by anchor)
+
+
+def _raw_xfip(c, outs):
+    if not c or not outs:
+        return None
+    ip = outs / 3.0
+    if ip <= 0:
+        return None
+    return (13.0 * (c["FB"] * LG_HR_PER_FB) + 3.0 * (c["BB"] + c["HBP"])
+            - 2.0 * c["K"]) / ip + FIP_CONSTANT
+
+
+def _raw_siera(c):
+    if not c or not c.get("PA"):
+        return None
+    PA = c["PA"]
+    so, bb = c["K"] / PA, c["BB"] / PA
+    ng = (c["GB"] - c["FB"] - c["PU"]) / PA
+    ng_sq = (-6.664 * ng * ng) if ng > 0 else (6.664 * ng * ng)
+    return (6.145 - 16.986 * so + 11.434 * bb - 1.858 * ng
+            + 7.653 * so * so + ng_sq + 10.130 * so * ng - 5.195 * bb * ng)
+
+
+def apply_self_metrics(starts, fg_season):
+    """Fill each start's xfip/siera from Statcast components, anchored so the
+    season aggregate matches FG's committed season xFIP/SIERA (fg_season may be
+    None — then we ship the raw self-computed values uncalibrated)."""
+    comps = [(s, s.get("_comp")) for s in starts]
+    usable = [(s, c) for s, c in comps if c and s.get("outs")]
+    if not usable:
+        return
+    # Per-start raw values, then anchor offset = FG season minus the IP-weighted
+    # season aggregate of those raw values. Because the offset is additive and the
+    # aggregate is IP-weighted-linear, shifting every start by the offset makes the
+    # season aggregate equal FG exactly (for both xFIP and the non-linear SIERA).
+    raws = []
+    for s_, c in usable:
+        raws.append((s_, _raw_xfip(c, s_.get("outs")), _raw_siera(c)))
+    def _ipw(idx):
+        num = sum((v[idx] or 0) * (v[0].get("outs") or 0) for v in raws if v[idx] is not None)
+        den = sum((v[0].get("outs") or 0) for v in raws if v[idx] is not None)
+        return (num / den) if den else None
+    season_raw_x, season_raw_s = _ipw(1), _ipw(2)
+    off_x = off_s = 0.0
+    if fg_season:
+        if fg_season.get("xfip") is not None and season_raw_x is not None:
+            off_x = fg_season["xfip"] - season_raw_x
+        if fg_season.get("siera") is not None and season_raw_s is not None:
+            off_s = fg_season["siera"] - season_raw_s
+    for s_, rx, rs in raws:
+        if rx is not None:
+            s_["xfip"] = round(rx + off_x, 2)
+        if rs is not None:
+            s_["siera"] = round(rs + off_s, 2)
 
 
 # ── aggregation ───────────────────────────────────────────────────────────
@@ -538,6 +619,14 @@ def main():
     fg_map = build_fg_map([mid for mid, _ in universe])
     print(f"[gamelogs] resolved {len(fg_map)} FanGraphs ids", file=sys.stderr)
 
+    # FG season anchors for self-computed xFIP/SIERA
+    _pm_path = os.path.join(DATA, "_fg_pitch_model.json")
+    try:
+        _pm_anchor = (json.load(open(_pm_path)) or {}).get("pitchers") or {} \
+            if os.path.exists(_pm_path) else {}
+    except Exception:
+        _pm_anchor = {}
+
     pitchers = {}
     fg_ok = fg_fail = mlb_fb = 0
     for i, (mlbam_id, full_name) in enumerate(universe):
@@ -578,6 +667,11 @@ def main():
         merge_discipline(starts, statcast_discipline(mlbam_id, season))
         time.sleep(THROTTLE_S)
         key = norm_name(full_name)
+        # Self-compute xFIP/SIERA per start (FG game-log endpoint is blocked),
+        # anchored to FG's season value for this pitcher.
+        apply_self_metrics(starts, _pm_anchor.get(key))
+        for _s in starts:
+            _s.pop("_comp", None)
         rolling_window = _select_rolling_window(starts)
         pitchers[key] = {
             "name": full_name,
