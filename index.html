@@ -5590,7 +5590,6 @@ function renderSPTrendsHTML(gl) {
                : (l5.k_bb_pct != null ? l5.k_bb_pct : null);
   const metrics = [
     { key: 'velo', label: 'Velo',   series: starts.map(s => s.velo),       l5: l5.velo,  fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' },
-    { key: 'stuff', label: 'Stuff+', series: starts.map(s => s.stuff),     l5: l5.stuff, fmt: v => v != null ? Math.round(v) : '—', mode: 'by start' },
     { key: 'kbb',  label: 'K-BB%',  series: _kbbS, l5: _kbbL5, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
