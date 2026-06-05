@@ -323,6 +323,7 @@ def mlb_starts_fallback(mlbam_id, season):
 _SC_CSW = {"called_strike", "swinging_strike", "swinging_strike_blocked"}
 _SC_WHIFF = {"swinging_strike", "swinging_strike_blocked", "missed_bunt"}
 _SC_BALL = {"ball", "blocked_ball", "pitchout", "hit_by_pitch"}
+_FB_TYPES = {"FF", "SI", "FT", "FC"}   # fastball family for per-start velo
 
 
 def statcast_discipline(mlbam_id, season):
@@ -352,6 +353,11 @@ def statcast_discipline(mlbam_id, season):
                 "csw": round(int(desc.isin(_SC_CSW).sum()) / n, 3),
                 "whiff": round(int(desc.isin(_SC_WHIFF).sum()) / n, 3),
                 "ball_pct": round(int(desc.isin(_SC_BALL).sum()) / n, 3),
+                "velo": (lambda fb: round(float(fb.mean()), 1)
+                         if len(fb) and fb.mean() == fb.mean() else None)(
+                    g.loc[g["pitch_type"].astype(str).isin(_FB_TYPES), "release_speed"]
+                    if ("pitch_type" in g.columns and "release_speed" in g.columns)
+                    else g["description"].iloc[0:0]),
                 # raw component counts for self-computed xFIP / SIERA
                 "comp": {
                     "K":   int((ev == "strikeout").sum() + (ev == "strikeout_double_play").sum()),
@@ -386,6 +392,8 @@ def merge_discipline(starts, disc):
         s["csw"] = d["csw"] if d else None
         s["whiff"] = d["whiff"] if d else None
         s["ball_pct"] = d["ball_pct"] if d else None
+        if d and d.get("velo") is not None:
+            s["velo"] = d["velo"]   # Statcast FB velo (ground truth; overrides FG FBv)
         s["_comp"] = d.get("comp") if d else None
         if d and d.get("mix"):
             s["mix"] = d["mix"]
