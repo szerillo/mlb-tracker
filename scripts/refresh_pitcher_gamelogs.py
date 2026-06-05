@@ -475,6 +475,52 @@ def backfill_pitcher_stats(pitchers):
           f"with fresh FG xFIP/Stuff+/SIERA (override stale dump)", file=sys.stderr)
 
 
+
+def _backfill_fg_l5(pitchers):
+    """FanGraphs' per-start game-log endpoint is 403 server-side, which leaves
+    l5.xfip / l5.siera / l5.stuff null (per-start sparkline source is gone).
+    Fill the *rolling headline* values from the committed browser dumps:
+    data/_fg_roll.json (last-30-day xFIP/SIERA recent form) and
+    data/_fg_pitch_model.json (season Stuff+). Per-start bars stay empty, but the
+    SP rolling values (and l5 SIERA) display again and feed the unified score."""
+    def _load(name):
+        path = os.path.join(DATA, name)
+        if not os.path.exists(path):
+            return {}
+        try:
+            return (json.load(open(path)) or {}).get("pitchers") or {}
+        except Exception as e:
+            print(f"[gamelogs] backfill load {name} failed: {e}", file=sys.stderr)
+            return {}
+    roll = _load("_fg_roll.json")
+    pm = _load("_fg_pitch_model.json")
+    if not roll and not pm:
+        return 0
+    n = 0
+    for key, v in pitchers.items():
+        if not isinstance(v, dict):
+            continue
+        nk = norm_name(v.get("name") or "") or key
+        l5 = v.get("l5") or {}
+        r = roll.get(key) or roll.get(nk)
+        m = pm.get(key) or pm.get(nk)
+        touched = False
+        if r:
+            if l5.get("xfip") is None and r.get("xfip") is not None:
+                l5["xfip"] = r["xfip"]; touched = True
+            if l5.get("siera") is None and r.get("siera") is not None:
+                l5["siera"] = r["siera"]; touched = True
+        if m and l5.get("stuff") is None and m.get("stuff_plus") is not None:
+            l5["stuff"] = m["stuff_plus"]; touched = True
+        if touched:
+            v["l5"] = l5
+            v["l5_fg_backfilled"] = True
+            n += 1
+    print(f"[gamelogs] FG l5 backfill: filled {n} pitchers from dumps",
+          file=sys.stderr)
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0, help="cap pitchers (dev)")
@@ -552,6 +598,7 @@ def main():
             print(f"[gamelogs]   {i+1}/{len(universe)} processed "
                   f"(fg={fg_ok}, mlb_fb={mlb_fb}, fail={fg_fail})", file=sys.stderr)
 
+    _backfill_fg_l5(pitchers)
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "season": season,
