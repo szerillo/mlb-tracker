@@ -123,10 +123,32 @@ def load_gamelogs():
     return out
 
 
-def stabilized_roll(stat_key, p, g):
-    """Stabilized rolling value = 0.6·L5 + 0.4·season-to-date (from gamelogs).
-    Falls back to L5-only, then gamelogs-season, then the pitcher_stats season
-    value so relievers / sparse arms still get a sane component."""
+ROLL_DUMP = os.path.join(HERE, "..", "data", "_fg_roll.json")
+ROLL_MIN_IP = 5.0   # need a usable recent sample before trusting a window value
+
+
+def load_roll():
+    """Recent-window (last ~30d) xFIP/SIERA from a committed browser dump. Used
+    as the rolling source when FanGraphs' per-start game-log endpoint is 403
+    server-side (which nulls l5.xfip/siera). Keyed by normalized name."""
+    if not os.path.exists(ROLL_DUMP):
+        return {}
+    try:
+        d = json.load(open(ROLL_DUMP))
+        return d.get("pitchers") or {}
+    except Exception as e:
+        print(f"[score] roll dump unreadable ({e})", file=sys.stderr)
+        return {}
+
+
+def stabilized_roll(stat_key, p, g, r=None):
+    """Stabilized rolling value = 0.6·recent + 0.4·season-to-date.
+    Source priority for the recent term: (1) gamelog L5 (per-start, preferred),
+    (2) the committed recent-window dump _fg_roll.json (used when FG's game-log
+    endpoint is blocked and l5 is null), then plain season fallbacks so sparse
+    arms still get a sane component."""
+    se_stats = _f(p.get(stat_key))  # pitcher_stats season xfip/siera
+    # 1. gamelog L5 (per-start)
     if g:
         l5 = _f((g.get("l5") or {}).get(stat_key))
         se = _f((g.get("season") or {}).get(stat_key))
@@ -134,9 +156,19 @@ def stabilized_roll(stat_key, p, g):
             return ROLL_L5_WEIGHT * l5 + ROLL_SEASON_WEIGHT * se
         if l5 is not None:
             return l5
+    # 2. recent-window dump (FG game-log blocked) blended with season
+    if r is not None and (_f(r.get("ip")) or 0) >= ROLL_MIN_IP:
+        rv = _f(r.get(stat_key))
+        if rv is not None and se_stats is not None:
+            return ROLL_L5_WEIGHT * rv + ROLL_SEASON_WEIGHT * se_stats
+        if rv is not None:
+            return rv
+    # 3. season fallbacks
+    if g:
+        se = _f((g.get("season") or {}).get(stat_key))
         if se is not None:
             return se
-    return _f(p.get(stat_key))  # pitcher_stats season xfip/siera
+    return se_stats
 
 
 def main() -> int:
@@ -152,8 +184,9 @@ def main() -> int:
         return 0
 
     glby = load_gamelogs()
-    print(f"[score] loaded {len(pitchers)} pitchers, {len(glby)} gamelog arms",
-          file=sys.stderr)
+    rollby = load_roll()
+    print(f"[score] loaded {len(pitchers)} pitchers, {len(glby)} gamelog arms, "
+          f"{len(rollby)} recent-window arms", file=sys.stderr)
 
     n_scored = n_sparse = n_rolling = 0
     tier_counts = {label: 0 for _, label in TIERS}
@@ -161,9 +194,10 @@ def main() -> int:
         if not isinstance(p, dict):
             continue
         g = glby.get(k) or glby.get(_norm(p.get("name", "")))
+        r = rollby.get(k) or rollby.get(_norm(p.get("name", "")))
         vals = {
-            "roll_xfip":  stabilized_roll("xfip", p, g),
-            "roll_siera": stabilized_roll("siera", p, g),
+            "roll_xfip":  stabilized_roll("xfip", p, g, r),
+            "roll_siera": stabilized_roll("siera", p, g, r),
             "xera":       _f(p.get("xera")),
             "bot_era":    _f(p.get("bot_era")),
             "fip_proj":   _f(p.get("fip_proj")),
@@ -197,7 +231,9 @@ def main() -> int:
 
         # True only when the rolling xFIP/SIERA actually came from L5 game logs
         # (so the frontend can mark the score as form-weighted).
-        rolling = bool(g and (g.get("l5") or {}).get("xfip") is not None)
+        rolling = bool((g and (g.get("l5") or {}).get("xfip") is not None)
+                       or (r and (_f(r.get("ip")) or 0) >= ROLL_MIN_IP
+                           and r.get("xfip") is not None))
         if rolling:
             n_rolling += 1
 
