@@ -4,8 +4,8 @@
     "Baseball Savant (xERA, xwOBA, ERA, wOBA \u2014 season to date)",
     "MLB Stats API (K%, BB% from season stats)",
     "ATC (projected FIP from user's Excel upload)",
-    "Fangraphs ROS DC projections \u2014 ATC DC / The BAT X / OOPSY DC / ZiPS DC (FIP)",
-    "Fangraphs Pitcher Bot \u2014 pb_ERA"
+    "Fangraphs Pitcher Bot \u2014 pb_ERA",
+    "Fangraphs ROS DC projections \u2014 ATC DC / The BAT X / OOPSY DC / ZiPS DC (FIP)"
   ],
   "thresholds": {
     "fip": {
@@ -16182,7 +16182,7 @@
       "fip_proj_n_sources": 0
     },
     "beck way": {
-      "fip_proj": 4.88,
+      "fip_proj": null,
       "era": null,
       "xera": null,
       "woba": null,
@@ -16192,11 +16192,11 @@
       "k_bb_pct": null,
       "hand": null,
       "mlbam_id": null,
-      "fip_atc": 4.21,
-      "fip_batx": 4.74,
-      "fip_oopsy": 5.09,
-      "fip_zips": 5.47,
-      "fip_proj_n_sources": 4
+      "fip_atc": null,
+      "fip_batx": null,
+      "fip_oopsy": null,
+      "fip_zips": null,
+      "fip_proj_n_sources": 0
     },
     "jordan valenzuela": {
       "fip_proj": 6.02,
@@ -66643,10 +66643,10 @@
       "hand": null,
       "mlbam_id": null,
       "fip_atc": 4.01,
-      "fip_batx": 4.41,
+      "fip_batx": null,
       "fip_oopsy": 4.56,
       "fip_zips": 4.59,
-      "fip_proj_n_sources": 4
+      "fip_proj_n_sources": 3
     },
     "trent turzenski": {
       "fip_proj": null,
@@ -101698,16 +101698,23 @@
       "f_strike_pct": 57.7,
       "edge_pct": 35.9,
       "meatball_pct": 6.0,
-      "unified_score": 5.31,
+      "unified_score": 5.26,
       "unified_tier": "Worst",
       "unified_components": {
-        "roll_xfip": 5.8,
+        "roll_xfip": 5.419,
         "roll_siera": 5.607,
+        "xera": 5.635,
         "bot_era": 5.04,
         "fip_proj": 4.27
       },
-      "unified_weight_covered": 82.0,
-      "unified_rolling": true
+      "unified_weight_covered": 100.0,
+      "unified_rolling": true,
+      "xfip": 4.846679671922729,
+      "stuff_plus": 106.2009708737864,
+      "location_plus": 90.34789644012947,
+      "pitching_plus": 94.4561165048544,
+      "ip": 15,
+      "xera": 5.635108741161059
     },
     "brooks kriske": {
       "fip_atc": 4.35,
@@ -101726,7 +101733,26 @@
       "xba_savant": 0.249,
       "f_strike_pct": 60.0,
       "edge_pct": 34.2,
-      "meatball_pct": 0.0
+      "meatball_pct": 0.0,
+      "xfip": 4.872185041800868,
+      "stuff_plus": 97.86105263157896,
+      "location_plus": 100.33631578947367,
+      "pitching_plus": 96.29736842105264,
+      "ip": 2.2,
+      "bot_era": 4.4190115789473685,
+      "siera": 4.605965166828552,
+      "xera": 2.3450545676168604,
+      "unified_score": 4.22,
+      "unified_tier": "Avg",
+      "unified_components": {
+        "roll_xfip": 4.872,
+        "roll_siera": 4.606,
+        "xera": 2.345,
+        "bot_era": 4.419,
+        "fip_proj": 4.43
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "josh walker": {
       "fip_atc": 4.21,
@@ -101745,7 +101771,26 @@
       "xba_savant": 0.175,
       "f_strike_pct": 68.8,
       "edge_pct": 31.9,
-      "meatball_pct": 11.6
+      "meatball_pct": 11.6,
+      "xfip": 4.247184620052576,
+      "stuff_plus": 94.7327536231884,
+      "location_plus": 85.84463768115943,
+      "pitching_plus": 80.28115942028985,
+      "ip": 4,
+      "bot_era": 6.289673913043478,
+      "siera": 3.4190868434906005,
+      "xera": 3.3334006611347338,
+      "unified_score": 4.28,
+      "unified_tier": "Bad",
+      "unified_components": {
+        "roll_xfip": 4.247,
+        "roll_siera": 3.419,
+        "xera": 3.333,
+        "bot_era": 6.29,
+        "fip_proj": 4.46
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "carlos carrasco": {
       "fip_atc": 4.59,
@@ -101765,15 +101810,25 @@
       "f_strike_pct": 51.7,
       "edge_pct": 51.7,
       "meatball_pct": 4.6,
-      "unified_score": 4.58,
+      "unified_score": 4.5,
       "unified_tier": "Bad",
       "unified_components": {
-        "roll_xfip": 4.618,
-        "roll_siera": 4.37,
+        "roll_xfip": 4.285,
+        "roll_siera": 4.093,
+        "xera": 5.275,
+        "bot_era": 4.29,
         "fip_proj": 4.82
       },
-      "unified_weight_covered": 65.0,
-      "unified_rolling": true
+      "unified_weight_covered": 100.0,
+      "unified_rolling": true,
+      "xfip": 3.7857518770345724,
+      "stuff_plus": 82.45862068965516,
+      "location_plus": 110.0710344827586,
+      "pitching_plus": 94.84114942528736,
+      "ip": 7.1,
+      "bot_era": 4.2896352873563215,
+      "siera": 3.678601078676981,
+      "xera": 5.274611545668376
     },
     "daniel espino": {
       "fip_atc": 4.51,
@@ -101800,15 +101855,25 @@
       "f_strike_pct": 70.8,
       "edge_pct": 37.5,
       "meatball_pct": 7.3,
-      "unified_score": 2.01,
+      "unified_score": 2.38,
       "unified_tier": "Elite",
       "unified_components": {
         "roll_xfip": 1.095,
         "roll_siera": 1.504,
+        "xera": 3.173,
+        "bot_era": 2.966,
         "fip_proj": 4.46
       },
-      "unified_weight_covered": 65.0,
-      "unified_rolling": true
+      "unified_weight_covered": 100.0,
+      "unified_rolling": true,
+      "xfip": 1.0947212041183985,
+      "stuff_plus": 107.338125,
+      "location_plus": 97.21624999999999,
+      "pitching_plus": 104.00437499999998,
+      "ip": 5.1,
+      "bot_era": 2.9657139583333336,
+      "siera": 1.5039752928965733,
+      "xera": 3.17316334530332
     },
     "cam booser": {
       "fip_atc": 5.27,
@@ -101827,7 +101892,26 @@
       "xba_savant": 0.097,
       "f_strike_pct": 71.4,
       "edge_pct": 44.4,
-      "meatball_pct": 11.1
+      "meatball_pct": 11.1,
+      "xfip": 5.676478036493063,
+      "stuff_plus": 111.9237037037037,
+      "location_plus": 128.8251851851852,
+      "pitching_plus": 136.49037037037039,
+      "ip": 2,
+      "bot_era": 1.531,
+      "siera": 6.330486008972254,
+      "xera": 0.4382321813511312,
+      "unified_score": 4.0,
+      "unified_tier": "Avg",
+      "unified_components": {
+        "roll_xfip": 5.676,
+        "roll_siera": 6.33,
+        "xera": 0.438,
+        "bot_era": 1.531,
+        "fip_proj": 4.55
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "kade anderson": {
       "fip_oopsy": 3.06,
@@ -104117,7 +104201,26 @@
     "austin hedges": {
       "fip_oopsy": 5.36,
       "fip_proj": 5.36,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 3.1032444953918463,
+      "stuff_plus": 60.46,
+      "location_plus": 114.65,
+      "pitching_plus": 68.785,
+      "ip": 0.1,
+      "bot_era": 6.61455,
+      "siera": 5.8618329372406,
+      "xera": 11.47960082310392,
+      "unified_score": 6.15,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 3.103,
+        "roll_siera": 5.862,
+        "xera": 11.48,
+        "bot_era": 6.615,
+        "fip_proj": 5.36
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "owen puk": {
       "fip_oopsy": 5.63,
@@ -104167,7 +104270,26 @@
     "jake rogers": {
       "fip_oopsy": 6.01,
       "fip_proj": 6.01,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 2.675214455671897,
+      "stuff_plus": 35.391999999999996,
+      "location_plus": 105.61999999999998,
+      "pitching_plus": 60.883,
+      "ip": 1.1,
+      "bot_era": 7.004703000000001,
+      "siera": 3.1530829470332673,
+      "xera": 4.883565977076888,
+      "unified_score": 4.41,
+      "unified_tier": "Bad",
+      "unified_components": {
+        "roll_xfip": 2.675,
+        "roll_siera": 3.153,
+        "xera": 4.884,
+        "bot_era": 7.005,
+        "fip_proj": 6.01
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "carson myers": {
       "fip_oopsy": 5.33,
@@ -104198,7 +104320,26 @@
       "xba_savant": 0.23,
       "f_strike_pct": 80.0,
       "edge_pct": 33.3,
-      "meatball_pct": 11.1
+      "meatball_pct": 11.1,
+      "xfip": 8.961831328272819,
+      "stuff_plus": 57.96888888888889,
+      "location_plus": 91.06777777777778,
+      "pitching_plus": 59.46,
+      "ip": 1,
+      "bot_era": 9.57796,
+      "siera": 8.602312937240601,
+      "xera": 4.289255268727778,
+      "unified_score": 7.62,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 8.962,
+        "roll_siera": 8.602,
+        "xera": 4.289,
+        "bot_era": 9.578,
+        "fip_proj": 5.43
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "yeraldo salcedo": {
       "fip_oopsy": 5.25,
@@ -104759,7 +104900,26 @@
       "xba_savant": 0.412,
       "f_strike_pct": 62.5,
       "edge_pct": 44.4,
-      "meatball_pct": 11.1
+      "meatball_pct": 11.1,
+      "xfip": 6.747184620052576,
+      "stuff_plus": 39.407777777777774,
+      "location_plus": 102.64555555555556,
+      "pitching_plus": 54.656666666666666,
+      "ip": 2,
+      "bot_era": 8.690842777777778,
+      "siera": 7.337707937240601,
+      "xera": 17.810830679946264,
+      "unified_score": 9.11,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 6.747,
+        "roll_siera": 7.338,
+        "xera": 17.811,
+        "bot_era": 8.691,
+        "fip_proj": 6.13
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "dylan carter": {
       "fip_oopsy": 5.67,
@@ -104870,7 +105030,26 @@
       "xba_savant": 0.333,
       "f_strike_pct": 52.6,
       "edge_pct": 42.4,
-      "meatball_pct": 5.1
+      "meatball_pct": 5.1,
+      "xfip": 4.983198575351171,
+      "stuff_plus": 17.998983050847457,
+      "location_plus": 104.13220338983051,
+      "pitching_plus": 38.333559322033906,
+      "ip": 4.1,
+      "bot_era": 9.891166101694916,
+      "siera": 5.1795310030235076,
+      "xera": 5.9315814530163005,
+      "unified_score": 6.26,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 4.983,
+        "roll_siera": 5.18,
+        "xera": 5.932,
+        "bot_era": 9.891,
+        "fip_proj": 6.52
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "angelo ladera": {
       "fip_oopsy": 6.26,
@@ -105120,7 +105299,24 @@
     "reese mcguire": {
       "fip_oopsy": 6.49,
       "fip_proj": 6.49,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.391124744713307,
+      "stuff_plus": 13.059999999999988,
+      "location_plus": 82.1,
+      "pitching_plus": -10.799999999999997,
+      "ip": 1,
+      "siera": 13.0798329372406,
+      "xera": 0.06024815503348913,
+      "unified_score": 7.15,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.391,
+        "roll_siera": 13.08,
+        "xera": 0.06,
+        "fip_proj": 6.49
+      },
+      "unified_weight_covered": 83.0,
+      "unified_rolling": false
     },
     "clarence martina": {
       "fip_oopsy": 6.47,
@@ -105151,7 +105347,26 @@
       "xba_savant": 0.419,
       "f_strike_pct": 57.1,
       "edge_pct": 35.6,
-      "meatball_pct": 6.7
+      "meatball_pct": 6.7,
+      "xfip": 8.961834471065389,
+      "stuff_plus": 36.33822222222222,
+      "location_plus": 93.18933333333334,
+      "pitching_plus": 35.26444444444444,
+      "ip": 2,
+      "bot_era": 9.426938444444444,
+      "siera": 7.613016597108356,
+      "xera": 10.370472705260566,
+      "unified_score": 8.72,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 8.962,
+        "roll_siera": 7.613,
+        "xera": 10.37,
+        "bot_era": 9.427,
+        "fip_proj": 7.09
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "santiago gomez": {
       "fip_oopsy": 7.75,
@@ -105222,7 +105437,26 @@
       "xba_savant": 0.03,
       "f_strike_pct": 66.7,
       "edge_pct": 40.0,
-      "meatball_pct": 0.0
+      "meatball_pct": 0.0,
+      "xfip": 3.9618313282728197,
+      "stuff_plus": 23.687999999999995,
+      "location_plus": 110.50399999999999,
+      "pitching_plus": 41.902,
+      "ip": 1,
+      "bot_era": 9.23019,
+      "siera": 4.278499603433268,
+      "xera": 0.08445075950425227,
+      "unified_score": 4.61,
+      "unified_tier": "Bad",
+      "unified_components": {
+        "roll_xfip": 3.962,
+        "roll_siera": 4.278,
+        "xera": 0.084,
+        "bot_era": 9.23,
+        "fip_proj": 6.49
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "tyler mcloughlin": {
       "fip_oopsy": 6.42,
@@ -105297,7 +105531,24 @@
     "christian koss": {
       "fip_oopsy": 6.51,
       "fip_proj": 6.51,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 5.247184620052576,
+      "stuff_plus": 16.579999999999995,
+      "location_plus": 120.15571428571427,
+      "pitching_plus": 46.896428571428565,
+      "ip": 2,
+      "siera": 5.5828329372406005,
+      "xera": 7.340182611027591,
+      "unified_score": 6.02,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 5.247,
+        "roll_siera": 5.583,
+        "xera": 7.34,
+        "fip_proj": 6.51
+      },
+      "unified_weight_covered": 83.0,
+      "unified_rolling": false
     },
     "diego godoy": {
       "fip_oopsy": 6.33,
@@ -105392,7 +105643,24 @@
     "garrett stubbs": {
       "fip_oopsy": 6.93,
       "fip_proj": 6.93,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 5.96183132827282,
+      "stuff_plus": 40.96,
+      "location_plus": 97.08,
+      "pitching_plus": 56.279999999999994,
+      "ip": 1,
+      "siera": 9.580499598001934,
+      "xera": 5.843259192810902,
+      "unified_score": 7.07,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 5.962,
+        "roll_siera": 9.58,
+        "xera": 5.843,
+        "fip_proj": 6.93
+      },
+      "unified_weight_covered": 83.0,
+      "unified_rolling": false
     },
     "chris lopez": {
       "fip_oopsy": 6.35,
@@ -105428,7 +105696,26 @@
       "xba_savant": 0.234,
       "f_strike_pct": 60.0,
       "edge_pct": 42.9,
-      "meatball_pct": 7.1
+      "meatball_pct": 7.1,
+      "xfip": 10.532537911832332,
+      "stuff_plus": 40.42285714285715,
+      "location_plus": 98.36285714285715,
+      "pitching_plus": 53.15999999999999,
+      "ip": 1,
+      "bot_era": 12.43623,
+      "siera": 13.071832937240602,
+      "xera": 7.5346871182685735,
+      "unified_score": 10.26,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 10.533,
+        "roll_siera": 13.072,
+        "xera": 7.535,
+        "bot_era": 12.436,
+        "fip_proj": 6.45
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "fidel montero": {
       "fip_oopsy": 6.72,
@@ -105453,12 +105740,48 @@
     "dylan moore": {
       "fip_oopsy": 7.29,
       "fip_proj": 7.29,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.5608222456871035,
+      "stuff_plus": 13.029999999999998,
+      "location_plus": 77.103,
+      "pitching_plus": 5.668999999999998,
+      "ip": 1.2,
+      "bot_era": 7.860110476190476,
+      "siera": 5.997176687240601,
+      "xera": 6.131431216565984,
+      "unified_score": 6.97,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.561,
+        "roll_siera": 5.997,
+        "xera": 6.131,
+        "bot_era": 7.86,
+        "fip_proj": 7.29
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "cesar salazar": {
       "fip_oopsy": 6.9,
       "fip_proj": 6.9,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.391124744713307,
+      "stuff_plus": 24.78,
+      "location_plus": 104.04,
+      "pitching_plus": 45.12,
+      "ip": 1,
+      "siera": 8.2408329372406,
+      "xera": 0.8038154619337129,
+      "unified_score": 6.1,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.391,
+        "roll_siera": 8.241,
+        "xera": 0.804,
+        "fip_proj": 6.9
+      },
+      "unified_weight_covered": 83.0,
+      "unified_rolling": false
     },
     "julio gonzalez": {
       "fip_oopsy": 6.21,
@@ -105473,7 +105796,26 @@
     "tyler tolbert": {
       "fip_oopsy": 7.23,
       "fip_proj": 7.23,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 6.618397936045052,
+      "stuff_plus": 37.47538461538462,
+      "location_plus": 110.8193846153846,
+      "pitching_plus": 51.07753846153847,
+      "ip": 1.2,
+      "bot_era": 14.33152,
+      "siera": 6.874771207525217,
+      "xera": 10.851683852402209,
+      "unified_score": 8.84,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 6.618,
+        "roll_siera": 6.875,
+        "xera": 10.852,
+        "bot_era": 14.332,
+        "fip_proj": 7.23
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "jd hennen": {
       "fip_oopsy": 7.21,
@@ -105538,7 +105880,26 @@
     "javier sanoja": {
       "fip_oopsy": 7.16,
       "fip_proj": 7.16,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 5.676478036493063,
+      "stuff_plus": 51.040909090909096,
+      "location_plus": 109.0690909090909,
+      "pitching_plus": 57.691818181818185,
+      "ip": 2,
+      "bot_era": 8.088862272727273,
+      "siera": 7.457241112269009,
+      "xera": 6.924471693804196,
+      "unified_score": 6.93,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 5.676,
+        "roll_siera": 7.457,
+        "xera": 6.924,
+        "bot_era": 8.089,
+        "fip_proj": 7.16
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "kaden echeman": {
       "fip_oopsy": 5.92,
@@ -105558,7 +105919,26 @@
     "weston wilson": {
       "fip_oopsy": 7.06,
       "fip_proj": 7.06,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.39112532889071,
+      "stuff_plus": 32.324,
+      "location_plus": 97.007,
+      "pitching_plus": 31.771000000000008,
+      "ip": 2.1,
+      "bot_era": 5.988501951219512,
+      "siera": 7.034708673198553,
+      "xera": 13.586655490068756,
+      "unified_score": 8.14,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.391,
+        "roll_siera": 7.035,
+        "xera": 13.587,
+        "bot_era": 5.989,
+        "fip_proj": 7.06
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "sandro pereira": {
       "fip_oopsy": 6.56,
@@ -105688,7 +106068,26 @@
     "james mccann": {
       "fip_oopsy": 7.56,
       "fip_proj": 7.56,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.497184620052576,
+      "stuff_plus": 45.17818181818182,
+      "location_plus": 81.48597402597404,
+      "pitching_plus": 31.110909090909097,
+      "ip": 4,
+      "bot_era": 8.419422727272728,
+      "siera": 6.816615537394862,
+      "xera": 27.884689245321184,
+      "unified_score": 11.18,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.497,
+        "roll_siera": 6.817,
+        "xera": 27.885,
+        "bot_era": 8.419,
+        "fip_proj": 7.56
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "brian arias": {
       "fip_oopsy": 7.75,
@@ -105708,7 +106107,26 @@
     "jorbit vivas": {
       "fip_oopsy": 6.5,
       "fip_proj": 6.5,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 11.679013939259367,
+      "stuff_plus": 18.91333333333333,
+      "location_plus": 102.67000000000002,
+      "pitching_plus": 38.49,
+      "ip": 0.2,
+      "bot_era": 13.47736,
+      "siera": 9.580499598001934,
+      "xera": 35.5299072349476,
+      "unified_score": 15.04,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 11.679,
+        "roll_siera": 9.58,
+        "xera": 35.53,
+        "bot_era": 13.477,
+        "fip_proj": 6.5
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "zack short": {
       "fip_oopsy": 7.71,
@@ -105723,7 +106141,26 @@
     "jorge mateo": {
       "fip_oopsy": 7.43,
       "fip_proj": 7.43,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 7.391124744713307,
+      "stuff_plus": 33.93090909090909,
+      "location_plus": 78.13818181818182,
+      "pitching_plus": 52.459999999999994,
+      "ip": 1,
+      "bot_era": 6.74596,
+      "siera": 10.352832937240601,
+      "xera": 2.237080252505364,
+      "unified_score": 7.01,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 7.391,
+        "roll_siera": 10.353,
+        "xera": 2.237,
+        "bot_era": 6.746,
+        "fip_proj": 7.43
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "mikey cascino": {
       "fip_oopsy": 6.78,
@@ -105733,7 +106170,26 @@
     "sam haggerty": {
       "fip_oopsy": 7.28,
       "fip_proj": 7.28,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 6.103244495391846,
+      "stuff_plus": -16.25999999999999,
+      "location_plus": 72.06,
+      "pitching_plus": -48.19999999999999,
+      "ip": 1,
+      "bot_era": 14.148850000000001,
+      "siera": 2.1431662764792674,
+      "xera": 3.0423873442443106,
+      "unified_score": 6.23,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 6.103,
+        "roll_siera": 2.143,
+        "xera": 3.042,
+        "bot_era": 14.149,
+        "fip_proj": 7.28
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "kailen hamson": {
       "fip_oopsy": 6.61,
@@ -105759,7 +106215,26 @@
       "xba_savant": 0.423,
       "f_strike_pct": 56.3,
       "edge_pct": 20.9,
-      "meatball_pct": 2.3
+      "meatball_pct": 2.3,
+      "xfip": 12.60577145293355,
+      "stuff_plus": 35.94232558139535,
+      "location_plus": 62.67209302325582,
+      "pitching_plus": 7.645581395348832,
+      "ip": 2,
+      "bot_era": 12.411309333333334,
+      "siera": 8.3587235622406,
+      "xera": 10.94404083987506,
+      "unified_score": 10.63,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 12.606,
+        "roll_siera": 8.359,
+        "xera": 10.944,
+        "bot_era": 12.411,
+        "fip_proj": 7.85
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "jc hechavarria": {
       "fip_oopsy": 7.05,
@@ -105815,7 +106290,26 @@
       "xba_savant": 0.396,
       "f_strike_pct": 48.3,
       "edge_pct": 38.9,
-      "meatball_pct": 5.6
+      "meatball_pct": 5.6,
+      "xfip": 5.61839659512043,
+      "stuff_plus": 46.27205479452056,
+      "location_plus": 92.12547945205478,
+      "pitching_plus": 41.29287671232876,
+      "ip": 5,
+      "bot_era": 7.301230338983051,
+      "siera": 5.405291919559339,
+      "xera": 8.694758777347136,
+      "unified_score": 6.83,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 5.618,
+        "roll_siera": 5.405,
+        "xera": 8.695,
+        "bot_era": 7.301,
+        "fip_proj": 8.4
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "dariel jaquez": {
       "fip_oopsy": 7.45,
@@ -105835,7 +106329,26 @@
     "buddy kennedy": {
       "fip_oopsy": 7.36,
       "fip_proj": 7.36,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 13.391124744713306,
+      "stuff_plus": 11.596666666666664,
+      "location_plus": 81.87435897435898,
+      "pitching_plus": 1.0766666666666713,
+      "ip": 1,
+      "bot_era": 12.84055,
+      "siera": 9.0316107106006,
+      "xera": 14.03723559195051,
+      "unified_score": 11.55,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 13.391,
+        "roll_siera": 9.032,
+        "xera": 14.037,
+        "bot_era": 12.841,
+        "fip_proj": 7.36
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "dillon stiltner": {
       "fip_oopsy": 7.16,
@@ -105850,7 +106363,26 @@
     "miguel rojas": {
       "fip_oopsy": 8.89,
       "fip_proj": 8.89,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 9.676478036493062,
+      "stuff_plus": 36.014146341463416,
+      "location_plus": 102.81365853658536,
+      "pitching_plus": 53.265853658536585,
+      "ip": 2,
+      "bot_era": 6.957667073170732,
+      "siera": 6.321514594319417,
+      "xera": 11.758925715207416,
+      "unified_score": 8.73,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 9.676,
+        "roll_siera": 6.322,
+        "xera": 11.759,
+        "bot_era": 6.958,
+        "fip_proj": 8.89
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "kaemyn franklin": {
       "fip_oopsy": 7.3,
@@ -105880,7 +106412,26 @@
     "tyler heineman": {
       "fip_oopsy": 8.71,
       "fip_proj": 8.71,
-      "fip_proj_n_sources": 1
+      "fip_proj_n_sources": 1,
+      "xfip": 6.961831328272821,
+      "stuff_plus": 6.779473684210531,
+      "location_plus": 95.10894736842106,
+      "pitching_plus": 12.355789473684217,
+      "ip": 3,
+      "bot_era": 5.787534999999999,
+      "siera": 6.96954227445993,
+      "xera": 13.5124618778045,
+      "unified_score": 8.21,
+      "unified_tier": "Worst",
+      "unified_components": {
+        "roll_xfip": 6.962,
+        "roll_siera": 6.97,
+        "xera": 13.512,
+        "bot_era": 5.788,
+        "fip_proj": 8.71
+      },
+      "unified_weight_covered": 100.0,
+      "unified_rolling": false
     },
     "bryan regalado": {
       "fip_oopsy": 7.65,
@@ -105913,23 +106464,23 @@
       "fip_proj_n_sources": 1
     }
   },
-  "enriched_at": "2026-06-06T07:12:03.917661+00:00",
-  "enriched_count": 633,
+  "enriched_at": "2026-06-06T09:22:51.138692+00:00",
+  "enriched_count": 664,
   "enriched_source": "browser-dump",
-  "projections_enriched_at": "2026-06-06T07:12:04.530894Z",
+  "projections_enriched_at": "2026-06-06T09:22:51.716337Z",
   "projections_counts": {
-    "fip_atc": 759,
-    "fip_batx": 734,
-    "fip_oopsy": 2568,
-    "fip_zips": 766
+    "fip_atc": 765,
+    "fip_batx": 732,
+    "fip_oopsy": 3366,
+    "fip_zips": 765
   },
-  "bot_era_enriched_at": "2026-06-06T07:12:05.651400Z",
+  "bot_era_enriched_at": "2026-06-06T09:22:52.073130Z",
   "bot_era_count": 457,
-  "savant_enriched_at": "2026-06-06T07:12:05.862387+00:00",
+  "savant_enriched_at": "2026-06-06T09:22:52.394156+00:00",
   "savant_enriched_count": 639,
   "scoring": {
     "unified_score": {
-      "computed_at": "2026-06-06T07:12:19.800898Z",
+      "computed_at": "2026-06-06T09:23:08.303734Z",
       "scale": "FIP (weighted average \u2014 lower = better)",
       "method": "rolling-led: rolling xFIP/SIERA are stabilized 0.6\u00b7L5 + 0.4\u00b7season; projection downweighted",
       "weights": {
@@ -105961,15 +106512,15 @@
           "label": "Bad"
         }
       ],
-      "n_scored": 636,
+      "n_scored": 664,
       "n_rolling": 471,
-      "n_too_sparse": 6214,
+      "n_too_sparse": 6186,
       "tier_counts": {
         "Elite": 81,
         "Good": 97,
-        "Avg": 150,
-        "Bad": 118,
-        "Worst": 190
+        "Avg": 152,
+        "Bad": 121,
+        "Worst": 213
       }
     }
   }
