@@ -229,6 +229,17 @@ def main():
         "n_games": len(games_out),
         "games": games_out,
     }
+    # Guard: never clobber a populated odds.json with an empty fetch (a
+    # transient AN API blip at 09:58Z on 6/7 wiped the file for a whole day).
+    if not games_out and os.path.exists(OUTPUT):
+        try:
+            _prev = json.load(open(OUTPUT))
+            if (_prev.get("games") or []):
+                print("  API returned 0 games but existing odds.json has "
+                      f"{len(_prev['games'])} — keeping existing file (no overwrite)")
+                return 0
+        except Exception:
+            pass
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
