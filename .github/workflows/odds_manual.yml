@@ -1,0 +1,46 @@
+name: Refresh odds (manual)
+
+# One-click odds refresh: Actions tab → "Refresh odds (manual)" → Run workflow.
+# Forces a fresh Action Network pull regardless of the time-window schedule,
+# commits data/odds.json, and Cloudflare redeploys (~1 min total to live).
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: odds-manual
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-odds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh odds (forced)
+        run: python scripts/refresh_odds.py
+        env:
+          FORCE_RUN: "1"
+
+      - name: Commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/odds.json || true
+          [ -d data/odds_archive ] && git add data/odds_archive || true
+          if git diff --cached --quiet; then
+            echo "No odds changes to commit."
+          else
+            git commit -m "Manual odds refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            for i in 1 2 3; do
+              git push && break || git pull --rebase
+            done
+          fi
