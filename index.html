@@ -842,18 +842,22 @@
   .m-sp-arsenal-hdr { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.1em;
     text-transform: uppercase; margin-top: 0.75rem; font-weight: 600; }
   /* Modal arrow navigation — scrolls between today's games in chronological order */
-  .modal-nav { position: absolute; top: 50%; transform: translateY(-50%);
-    background: rgba(36,46,58,0.6); color: var(--text); border: 1px solid var(--border);
+  /* FIXED to the viewport so the arrows stay vertically centered and visible
+     while you scroll a long modal. Hug the centered 1080px modal on wide
+     screens; clamp to the screen edges on narrow ones. */
+  .modal-nav { position: fixed; top: 50%; transform: translateY(-50%);
+    background: rgba(36,46,58,0.85); color: var(--text); border: 1px solid var(--border);
     width: 40px; height: 80px; font-size: 1.8rem; line-height: 1; cursor: pointer;
     border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, border-color 0.15s; z-index: 2; font-family: var(--body); }
-  .modal-nav:hover { background: rgba(94,234,212,0.15); border-color: var(--accent); color: var(--accent); }
-  .modal-nav.prev { left: -52px; }
-  .modal-nav.next { right: -52px; }
+    transition: background 0.15s, border-color 0.15s; z-index: 105; font-family: var(--body);
+    backdrop-filter: blur(2px); }
+  .modal-nav:hover { background: rgba(94,234,212,0.2); border-color: var(--accent); color: var(--accent); }
+  .modal-nav.prev { left: max(8px, calc(50% - 592px)); }
+  .modal-nav.next { right: max(8px, calc(50% - 592px)); }
   @media (max-width: 900px) {
-    .modal-nav { width: 34px; height: 60px; font-size: 1.4rem; }
-    .modal-nav.prev { left: 0.25rem; }
-    .modal-nav.next { right: 0.25rem; }
+    .modal-nav { width: 30px; height: 56px; font-size: 1.3rem; }
+    .modal-nav.prev { left: 4px; }
+    .modal-nav.next { right: 4px; }
   }
   .modal-counter { position: absolute; top: 0.85rem; left: 1.1rem;
     font-size: 0.72rem; color: var(--muted); font-family: var(--mono); letter-spacing: 0.04em;
@@ -1868,16 +1872,14 @@
   body.embed-mode .apx-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)) !important;
   }
-  /* Phones can't fit the detailed card (~440px content). Fall back to the compact
-     card only at mobile width / when ?mobile=1 is forced — detailed stays on web. */
+  /* Detailed card on phones: keep ALL sections visible, just shrink the dense
+     SP/bullpen/grades block (.apx-info2) so it fits ~360px without overflow. */
   @media (max-width: 560px) {
-    body.embed-mode .apx-grid.apx-detailed .apx-info2,
-    body.embed-mode .apx-grid.apx-detailed .apx-park,
-    body.embed-mode .apx-grid.apx-detailed .apx-extra { display: none !important; }
+    body.embed-mode .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
+    body.embed-mode .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
   }
-  body.force-mobile .apx-grid.apx-detailed .apx-info2,
-  body.force-mobile .apx-grid.apx-detailed .apx-park,
-  body.force-mobile .apx-grid.apx-detailed .apx-extra { display: none !important; }
+  body.force-mobile .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
+  body.force-mobile .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
