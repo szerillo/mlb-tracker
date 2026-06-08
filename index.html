@@ -6282,13 +6282,13 @@ async function openModal(game) {
     <details open class="m-sec"><summary class="m-section-header"><span>Lineups</span></summary>
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}</h4>
-        ${teamGradeBar(game, 'away')}
+        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}${teamSplitLine(lineupsForGame(game)?.lineups?.away, handOfPitcher(probHome?.fullName))}</h4>
+        ${teamGradeBar(game, 'away', {noWrc:true})}
         ${renderLineupForTeam(game, 'away')}
       </div>
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}</h4>
-        ${teamGradeBar(game, 'home')}
+        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}${teamSplitLine(lineupsForGame(game)?.lineups?.home, handOfPitcher(probAway?.fullName))}</h4>
+        ${teamGradeBar(game, 'home', {noWrc:true})}
         ${renderLineupForTeam(game, 'home')}
       </div>
     </div>
