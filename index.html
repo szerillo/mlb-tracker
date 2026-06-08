@@ -1764,6 +1764,33 @@
   /* Embeds: force LINEUPS and BULLPENS to stack (full info needs full width). */
   body.embed-mode .m-lineup-grid,
   body.embed-mode .m-split { grid-template-columns: 1fr !important; }
+  /* Web vs mobile: by default show full names; abbreviated name hidden. */
+  .nm-abbr { display: none; }
+  /* ---- Mobile embeds (≤560px iframe, e.g. phones/app webviews) ----
+     Lineup/bullpen tables have too many columns for a phone width, so on small
+     screens we drop the lowest-value columns and abbreviate names so the core
+     info is actually readable. Web/desktop keeps the full layout. */
+  @media (max-width: 560px) {
+    /* Bullpen: drop K-BB% and shrink the L5-days column so full pitcher names fit. */
+    body.embed-mode .bpt-kbb { display: none !important; }
+    body.embed-mode .bpt-table { table-layout: auto !important; }
+    body.embed-mode .bpt-table col:last-child { width: 56px !important; }
+    body.embed-mode .bpt-table th,
+    body.embed-mode .bpt-table td { padding-left: 0.28rem !important; padding-right: 0.28rem !important; }
+    body.embed-mode .bpt-name { font-size: 0.74rem !important; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    body.embed-mode .bpt-recent { font-size: 0.66rem !important; }
+    /* Lineups: drop #, Pos, and the expanded BB%/K% cols; abbreviate to "J. Duran". */
+    body.embed-mode .lineup-table .lu-order,
+    body.embed-mode .lineup-table .lu-pos,
+    body.embed-mode .lineup-table .lu-kbb { display: none !important; }
+    body.embed-mode .lineup-table .nm-full { display: none !important; }
+    body.embed-mode .lineup-table .nm-abbr { display: inline !important; }
+    body.embed-mode .lineup-table { font-size: 0.8rem !important; }
+    body.embed-mode .lineup-table th,
+    body.embed-mode .lineup-table td { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+    body.embed-mode .lineup-table td.player { white-space: nowrap; }
+  }
   /* Embed modal: always stack the two-team sections (lineups, SPs, bullpens,
      weather/park/ump, odds) on top of each other — no side-by-side at any width. */
   body.embed-mode .footer-byline a { color: var(--accent); text-decoration: none; font-weight: 700; }
@@ -4541,8 +4568,8 @@ function renderLineupTable(side, opts={}) {
         const bbLbl = h?.bb_pct_actual != null ? "Season" : "Projected";
         const kLbl  = h?.k_pct_actual  != null ? "Season" : "Projected";
         kbbCells = `
-        <td class="split split-chip ${bbCls}" title="${bbVal!=null?`${bbLbl} BB% ${bbVal}%`:"no data"}">${pct(bbVal)}</td>
-        <td class="split split-chip ${kCls}"  title="${kVal !=null?`${kLbl} K% ${kVal}%`:"no data"}">${pct(kVal)}</td>`;
+        <td class="split split-chip lu-kbb ${bbCls}" title="${bbVal!=null?`${bbLbl} BB% ${bbVal}%`:"no data"}">${pct(bbVal)}</td>
+        <td class="split split-chip lu-kbb ${kCls}"  title="${kVal !=null?`${kLbl} K% ${kVal}%`:"no data"}">${pct(kVal)}</td>`;
       }
       const wobaCell = expanded
         ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
@@ -4557,10 +4584,10 @@ function renderLineupTable(side, opts={}) {
         ? ` data-hitkey="${normName(nm)}" title="Tap for rolling K%/BB%/Whiff%/Brl% + vs pitch-type"`
         : ` title="${nm.replace(/"/g,'&quot;')}"`;
       rowsHTML += `<tr>
-        <td class="order">${p.order || ""}</td>
-        <td class="pos">${pos}</td>
+        <td class="order lu-order">${p.order || ""}</td>
+        <td class="pos lu-pos">${pos}</td>
         <td class="bats ${batsCls}">${bats}</td>
-        <td class="${playerCellCls}"${playerCellAttr}>${autoName(nm)}${danFlag}</td>
+        <td class="${playerCellCls}"${playerCellAttr}><span class="nm-full">${autoName(nm)}</span><span class="nm-abbr">${shortName(nm)}</span>${danFlag}</td>
         ${wrcCell}
         ${conCell}${pwrCell}${eyeCell}${bsrGradeCell}${defGradeCell}
         ${expanded ? kbbCells : ""}
@@ -4585,15 +4612,15 @@ function renderLineupTable(side, opts={}) {
                 : effStatus === "PROJECTED" ? "lu-projected" : "tbd";
 
   const kbbHeaders = expanded ? `
-    <th class="right" style="width:46px;" title="Season BB% — actual (projection fallback); higher = better">BB%</th>
-    <th class="right" style="width:46px;" title="Season K% — actual (projection fallback); lower = better">K%</th>` : "";
+    <th class="right lu-kbb" style="width:46px;" title="Season BB% — actual (projection fallback); higher = better">BB%</th>
+    <th class="right lu-kbb" style="width:46px;" title="Season K% — actual (projection fallback); lower = better">K%</th>` : "";
   const wobaHeader = expanded
     ? `<th class="right" style="width:50px;" title="Actual current-season wOBA (Savant) — falls back to projection if no PAs yet">wOBA</th>` : "";
   const oppHandHdr = (opts.oppHand || "").toUpperCase();
   const wrcHdr = `wRC+${oppHandHdr ? ` v${oppHandHdr}` : ''}`;
   let html = `<table class="lineup-table"><thead><tr>
-    <th class="center" style="width:22px;">#</th>
-    <th class="center" style="width:30px;">Pos</th>
+    <th class="center lu-order" style="width:22px;">#</th>
+    <th class="center lu-pos" style="width:30px;">Pos</th>
     <th class="center" style="width:18px;">B</th>
     <th class="left">Player</th>
     <th class="right" style="width:52px;" title="Projected wRC+ vs the opposing starter's hand (Steamer 3-yr splits). 100 = league avg.">${wrcHdr}</th>
@@ -4764,7 +4791,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
-      <td class="bpt-stat"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
+      <td class="bpt-stat bpt-kbb"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
@@ -4820,7 +4847,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <thead><tr>
         <th>B</th><th>Pitcher</th>
         <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
-        <th class="r" title="K% minus BB%">K-BB%</th>
+        <th class="r bpt-kbb" title="K% minus BB%">K-BB%</th>
         <th class="r" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
       </tr></thead>
