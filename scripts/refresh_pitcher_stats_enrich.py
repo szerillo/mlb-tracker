@@ -158,7 +158,7 @@ def main():
         if e:
             for fld in ("xfip", "stuff_plus", "location_plus",
                         "pitching_plus", "ip",
-                        "bot_era", "siera", "xera"):
+                        "bot_era", "siera", "xera", "k_bb_pct"):
                 if fld in e:
                     entry[fld] = e[fld]
             matched += 1
