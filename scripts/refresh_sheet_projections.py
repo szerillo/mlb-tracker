@@ -140,13 +140,20 @@ def main():
     if not SHEET_CSV_URL:
         print("ERR: SHEET_CSV_URL not set; nothing to do.", file=sys.stderr)
         return 1
-    iso = _et_today().isoformat()
     try:
         text = _http_get_text(SHEET_CSV_URL)
     except Exception as e:
         print(f"ERR: could not fetch sheet CSV: {e}", file=sys.stderr)
         return 1
-    rows = parse_sheet_csv(text, iso)
+    # Auto-detect the slate date from the sheet itself (the user uploads the
+    # NEXT slate the night before — e.g. Monday's games on Sunday evening).
+    # Use the latest dated projection rows; fall back to ET-today when the
+    # sheet has no parseable dates.
+    all_rows = parse_sheet_csv(text, None)
+    dates = sorted({r.get("date") for r in all_rows if r.get("date")})
+    iso = dates[-1] if dates else _et_today().isoformat()
+    rows = [r for r in all_rows if (r.get("date") or iso) == iso]
+    print(f"[sheet_projections] slate date {iso} ({len(rows)} projection rows)")
     an_teams, pk_map = build_id_maps(iso)
 
     games = {}

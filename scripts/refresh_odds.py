@@ -114,21 +114,14 @@ def _odds_should_run():
         return False
 
 
-def main():
-    if not _odds_should_run():
-        print("[refresh_odds] skip: not a scheduled anchor (8PM/11:30PM/8AM ET) "
-              "and no game within the approach window.")
-        return
-    date = _et_today()
+def _pull_slate(date):
+    """Pull one date's AN slate joined to MLB gamePks. Returns a list
+    (possibly empty) or None when the API fetch itself failed."""
     yyyymmdd = date.strftime("%Y%m%d")
-    print(f"[refresh_odds] fetching API for date={date.isoformat()}")
-
     data = _http_get(AN_API.format(yyyymmdd=yyyymmdd))
     if not data:
-        print("  ERR: API fetch failed; leaving data/odds.json unchanged")
-        return
+        return None
     games = data.get("games", []) or []
-    print(f"  API returned {len(games)} games")
 
     # Today's MLB games for gamePk join
     sched = _http_get(MLB_API.format(iso=date.isoformat())) or {}
@@ -176,6 +169,29 @@ def main():
             "run_line":  {"away": _fmt(sp_away), "home": _fmt(sp_home)},
             "total":     {"over": _fmt(tot_over), "under": _fmt(tot_under)},
         })
+    return games_out
+
+
+def main():
+    if not _odds_should_run():
+        print("[refresh_odds] skip: not a scheduled anchor (8PM/11:30PM/8AM ET) "
+              "and no game within the approach window.")
+        return
+    date = _et_today()
+    print(f"[refresh_odds] fetching API for date={date.isoformat()}")
+
+    games_out = _pull_slate(date)
+    if games_out is None:
+        print("  ERR: API fetch failed; leaving data/odds.json unchanged")
+        return
+    print(f"  API returned {len(games_out)} games")
+    # Also pull TOMORROW's slate so next-day lines (e.g. Monday's, posted
+    # Sunday evening) flow into the tool as soon as books hang them.
+    _tom = date + datetime.timedelta(days=1)
+    _tom_games = _pull_slate(_tom) or []
+    if _tom_games:
+        print(f"  +{len(_tom_games)} next-day games for {_tom.isoformat()}")
+        games_out += _tom_games
 
     # --- Freeze odds at first pitch -------------------------------------------
     # Once a game starts, lock its market to the last pre-start snapshot so the
@@ -224,7 +240,7 @@ def main():
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "source": "Action Network gameprojections API (v2) · best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
-        "source_url": AN_API.format(yyyymmdd=yyyymmdd),
+        "source_url": AN_API.format(yyyymmdd=date.strftime("%Y%m%d")),
         "date": date.isoformat(),
         "n_games": len(games_out),
         "games": games_out,
