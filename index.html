@@ -1687,6 +1687,34 @@
   .ft-stack-row.ft-line { font-size: 0.92em; color: var(--muted); font-weight: 500; }
   .ft-table td, .ft-table th { white-space: nowrap; }
   .ft-stars { white-space: nowrap; }
+  /* ── Playoff Picture tab ── */
+  .po-note{color:var(--muted);font-size:0.78rem;margin:0.2rem 0 0.9rem;line-height:1.45;}
+  .po-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:760px){.po-grid{grid-template-columns:1fr;}}
+  .po-col{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .po-lg{margin:0 0 12px;font-size:1rem;text-align:center;letter-spacing:0.02em;}
+  .po-byes{display:flex;gap:10px;}
+  .po-byewrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,217,90,0.07);border:1px solid rgba(255,217,90,0.28);border-radius:8px;padding:9px 6px;}
+  .po-tag{font-size:0.58rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+  .po-round{font-size:0.66rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px;text-align:center;border-top:1px solid var(--border);padding-top:9px;}
+  .po-match{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .po-match .po-team{flex:1;}
+  .po-vs{color:var(--muted);font-size:0.68rem;font-weight:700;flex:0 0 auto;}
+  .po-team{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:8px;padding:6px 9px;}
+  .po-team.bye{background:transparent;border:0;padding:2px;gap:9px;}
+  .po-seed{font-size:0.72rem;font-weight:800;color:var(--muted);min-width:14px;text-align:center;}
+  .po-logo{display:inline-flex;align-items:center;}
+  .po-logo img{vertical-align:middle;}
+  .po-meta{display:flex;flex-direction:column;line-height:1.15;}
+  .po-ab{font-weight:700;font-size:0.84rem;color:var(--text);}
+  .po-pct{font-size:0.72rem;color:var(--muted);font-family:var(--mono,monospace);}
+  .po-edge{font-size:0.68rem;font-family:var(--mono,monospace);font-weight:600;}
+  .po-edge.pos{color:#6fdc7e;} .po-edge.neg{color:#c8a8ff;} .po-edge.neu{color:var(--muted);}
+  .po-hunt{display:flex;flex-direction:column;gap:5px;}
+  .po-hunt-row{display:flex;align-items:center;gap:7px;font-size:0.8rem;}
+  .po-hunt-row .po-ab{min-width:36px;}
+  .po-hunt-row .po-pct{margin-left:auto;}
+  .po-empty{color:var(--muted);}
   .ft-edge { font-family: var(--mono, monospace); font-weight: 600; }
   .ft-edge.pos { color: #6fdc7e; }
   .ft-edge.neg { color: #ff7a7a; }
@@ -1772,6 +1800,7 @@
   body.embed-mode #tab-rankings,
   body.embed-mode #tab-team-rankings,
   body.embed-mode #tab-proj,
+  body.embed-mode #tab-playoffs,
   body.embed-mode #tab-futures,
   body.embed-mode #tab-player-futures,
   body.embed-mode #tab-winprob,
@@ -2043,6 +2072,7 @@
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="futures" role="tab">Team Futures</button>
     <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
+    <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -2105,6 +2135,10 @@
 
   <section id="tab-futures" class="tab-content" hidden>
     <div id="futures-root" class="loading">Loading team futures…</div>
+  </section>
+
+  <section id="tab-playoffs" class="tab-content" hidden>
+    <div id="playoffs-root" class="loading">Loading projected bracket…</div>
   </section>
 
   <section id="tab-player-futures" class="tab-content" hidden>
@@ -3778,6 +3812,7 @@ async function loadForDate(date) {
     else if (id === 'proj' && typeof renderProjectionsTab === 'function') renderProjectionsTab();
     else if (id === 'futures' && typeof renderFuturesTab === 'function') renderFuturesTab();
     else if (id === 'player-futures' && typeof renderPlayerFuturesTab === 'function') renderPlayerFuturesTab();
+    else if (id === 'playoffs' && typeof renderPlayoffsTab === 'function') renderPlayoffsTab();
   }
 }
 
@@ -8403,6 +8438,68 @@ async function renderPlayerFuturesTab() {
   }
 }
 
+async function renderPlayoffsTab(){
+  const root=document.getElementById('playoffs-root'); if(!root) return;
+  if(!TEAM_FUTURES){
+    try{ const r=await fetch(`./data/team_futures.json?cb=${Date.now()}`); TEAM_FUTURES=await r.json(); }
+    catch(e){ root.innerHTML='<div class="empty">Could not load team futures.</div>'; return; }
+  }
+  const teams=Object.values((TEAM_FUTURES&&TEAM_FUTURES.teams)||{});
+  if(!teams.length){ root.innerHTML='<div class="empty">No data.</div>'; return; }
+  const lgOf=d=>((d||'').slice(0,2)==='AL')?'AL':'NL';
+  const W=t=>(t.composite&&t.composite.wins!=null)?t.composite.wins:-1;
+  const PF=t=>(t.composite&&t.composite.playoff_pct!=null)?t.composite.playoff_pct:null;
+  function seedLeague(lg){
+    const lt=teams.filter(t=>lgOf(t.division)===lg);
+    const byDiv={}; lt.forEach(t=>{(byDiv[t.division]=byDiv[t.division]||[]).push(t);});
+    let winners=Object.values(byDiv).map(a=>a.slice().sort((x,y)=>W(y)-W(x))[0]).filter(Boolean);
+    winners.sort((a,b)=>W(b)-W(a));
+    const wset=new Set(winners.map(t=>t.abbr));
+    const others=lt.filter(t=>!wset.has(t.abbr)).sort((a,b)=>W(b)-W(a));
+    return { seeds:[winners[0],winners[1],winners[2],others[0],others[1],others[2]],
+             hunt: others.slice(3).sort((a,b)=>(PF(b)||0)-(PF(a)||0)) };
+  }
+  const edgeCls=v=>v==null?'':(v>=3?'pos':v<=-3?'neg':'neu');
+  const fmtEdge=v=>v==null?'':((v>0?'+':'')+v.toFixed(1)+'%');
+  const pct=t=>{const p=PF(t);return p!=null?Math.round(p)+'%':'—';};
+  function tcell(t,seed,cls){
+    if(!t) return '<div class="po-team po-empty">—</div>';
+    const e=t.edges&&t.edges.playoff_pct, mk=t.market&&t.market.playoff_implied_pct;
+    const title=(t.name||t.abbr)+': our '+pct(t)+' to make playoffs'+(mk!=null?' · market '+Math.round(mk)+'%':'')+(e!=null?' · edge '+fmtEdge(e):'');
+    return '<div class="po-team '+(cls||'')+'" title="'+title.replace(/"/g,'&quot;')+'">'+
+      '<span class="po-seed">'+seed+'</span>'+
+      '<span class="po-logo">'+teamLogoByAbbr(t.abbr,40)+'</span>'+
+      '<span class="po-meta"><span class="po-ab">'+t.abbr+'</span><span class="po-pct">'+pct(t)+'</span>'+(e!=null?'<span class="po-edge '+edgeCls(e)+'">'+fmtEdge(e)+'</span>':'')+'</span>'+
+    '</div>';
+  }
+  function huntRow(t){
+    const e=t.edges&&t.edges.playoff_pct;
+    return '<div class="po-hunt-row" title="'+(t.name||t.abbr)+'">'+
+      '<span class="po-logo sm">'+teamLogoByAbbr(t.abbr,20)+'</span>'+
+      '<span class="po-ab">'+t.abbr+'</span>'+
+      '<span class="po-pct">'+pct(t)+'</span>'+
+      (e!=null?'<span class="po-edge '+edgeCls(e)+'">'+fmtEdge(e)+'</span>':'')+
+    '</div>';
+  }
+  function col(lg){
+    const {seeds,hunt}=seedLeague(lg);
+    return '<div class="po-col"><h3 class="po-lg">'+(lg==='AL'?'American League':'National League')+'</h3>'+
+      '<div class="po-byes">'+
+        '<div class="po-byewrap">'+tcell(seeds[0],1,'bye')+'<span class="po-tag">BYE → DS</span></div>'+
+        '<div class="po-byewrap">'+tcell(seeds[1],2,'bye')+'<span class="po-tag">BYE → DS</span></div>'+
+      '</div>'+
+      '<div class="po-round">Wild Card Round</div>'+
+      '<div class="po-match">'+tcell(seeds[2],3)+'<span class="po-vs">vs</span>'+tcell(seeds[5],6)+'</div>'+
+      '<div class="po-match">'+tcell(seeds[3],4)+'<span class="po-vs">vs</span>'+tcell(seeds[4],5)+'</div>'+
+      '<div class="po-round">In the Hunt</div>'+
+      '<div class="po-hunt">'+(hunt.slice(0,5).map(huntRow).join('')||'<div class="po-hunt-row">—</div>')+'</div>'+
+    '</div>';
+  }
+  const gen=(TEAM_FUTURES.generated_at||'').slice(0,16).replace('T',' ');
+  root.innerHTML='<div class="po-note">Projected seeds by composite projected wins (PECOTA + FanGraphs + ATC/BAT/OOPSY). Top 2 division winners get a bye; seeds 3–6 play the Wild Card round (3v6, 4v5). % = our playoff odds · edge = ours − market. Updated '+gen+'.</div>'+
+    '<div class="po-grid">'+col('AL')+col('NL')+'</div>';
+}
+
 async function renderFuturesTab() {
   const root = document.getElementById("futures-root");
   if (!root) return;
@@ -8629,6 +8726,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
     if (btn.dataset.tab === "futures")  renderFuturesTab();
     if (btn.dataset.tab === "player-futures") renderPlayerFuturesTab();
+    if (btn.dataset.tab === "playoffs") renderPlayoffsTab();
   };
 });
 
