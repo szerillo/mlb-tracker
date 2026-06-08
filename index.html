@@ -1763,15 +1763,15 @@
     padding: 0.5rem !important;
   }
   /* Compact header for embeds: logo + name + live/last-loaded only. */
-  body.embed-mode > header { display: block !important; text-align: center !important; padding: 0.5rem 0.7rem 0.4rem !important; }
+  body.embed-mode > header { display: block !important; text-align: left !important; padding: 0.5rem 0.7rem 0.4rem !important; }
   body.embed-mode .controls { display: none !important; }  /* its inner controls are all hidden — drop the empty bar */
   body.embed-mode .hdr-built { display: block !important; margin-top: 0.1rem; }
   body.embed-mode .hdr-built .hdr-sep { display: none !important; }
-  body.embed-mode .brand { display: flex !important; align-items: center; justify-content: center !important; gap: 0.6rem; }
+  body.embed-mode .brand { display: flex !important; align-items: center; justify-content: flex-start !important; gap: 0.6rem; }
   body.embed-mode .brand-logo { width: 62px !important; height: 62px !important; }
   body.embed-mode .brand-text h1 { font-size: 1.15rem !important; margin: 0 !important; }
   body.embed-mode .brand-tagline { display: block !important; font-size: 0.72rem !important; line-height: 1.3; }
-  body.embed-mode .sub { display: block !important; text-align: center !important; font-size: 0.78rem !important; color: var(--muted); margin: 0.25rem 0 0 !important; }
+  body.embed-mode .sub { display: block !important; text-align: left !important; font-size: 0.78rem !important; color: var(--muted); margin: 0.25rem 0 0 !important; }
   /* Footer for embeds: keep only the Built by @SeanZerillo byline. */
   body.embed-mode > footer { display: block !important; border-top: 1px solid var(--border); margin-top: 0.6rem !important; padding: 0.6rem 0.7rem !important; font-size: 0.8rem !important; text-align: center; }
   body.embed-mode .footer-detail { display: none !important; }
@@ -4417,6 +4417,8 @@ function teamGradePct(players, cat) {
       pct = cat === 'pwr' ? powerPct(pc, nm) : eyePct(pc, nm);
     } else {
       const h = HITTERS?.hitters?.[nm];
+      // DH carries no defensive value — exclude from the team DEF average.
+      if (cat === 'def' && ((p.pos || PLAYER_INFO?.[nm]?.pos || "") === 'DH')) continue;
       pct = cat === 'bsr' ? bsrPct(h, nm) : fldPct(h, nm);
     }
     if (pct == null) continue;
@@ -4625,7 +4627,11 @@ function renderLineupTable(side, opts={}) {
       const eyeCell = gradeCellHTML(eyePct(hpct, nm), "Eye", "Orr-equivalent SEAGER (plate disc + zone run values) when grades_v2 has the hitter; else BB%+Chase pctiles");
       const conCell = gradeCellHTML(conPct(h), "Contact", "K% vs MLB hitter distribution (lower K% = better)");
       const bsrGradeCell = gradeCellHTML(bsrPct(h, nm), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
-      const defGradeCell = gradeCellHTML(fldPct(h, nm), "Def");
+      // DH has no defensive position — show a dash, and they're excluded from the
+      // team DEF average (see teamGradePct).
+      const defGradeCell = (pos === "DH")
+        ? `<td class="grade-cell"><span class="gr-na" title="DH — no defensive position">—</span></td>`
+        : gradeCellHTML(fldPct(h, nm), "Def");
       // Expanded-only stats: BB% / K% (projection). Lineups tab has room;
       // modal renders a slimmer table. Order: BB% first, then K%.
       let kbbCells = "";
