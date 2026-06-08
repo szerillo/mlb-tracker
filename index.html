@@ -1716,12 +1716,17 @@
     color: var(--text) !important;
     padding: 0 !important;
     margin: 0 !important;
+    max-width: none !important;   /* fill the iframe edge-to-edge (no centered gutters) */
+    width: 100% !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 100vh !important; /* cover the full iframe height so nothing shows through */
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
   }
-  html:has(body.embed-mode) { height: auto !important; overflow-y: auto !important; }
+  /* Make the iframe document fully OPAQUE so the parent WordPress page can never
+     show through any uncovered area (html root + body both painted). */
+  html:has(body.embed-mode) { height: auto !important; overflow-y: auto !important;
+    background: var(--bg) !important; }
   body.embed-mode .tabs,
   body.embed-mode .tabs-hint,
   body.embed-mode .ctrl-date-label,
