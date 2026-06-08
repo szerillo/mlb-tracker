@@ -1420,6 +1420,16 @@
   .apx-info2 .grade{font-size:0.62rem;padding:0 2px;border-radius:3px;font-weight:700;}
   .apx-side-a,.apx-side-h{font-size:0.68rem;white-space:nowrap;}
   .apx-side-a .grade,.apx-side-h .grade{margin:0 1px;}
+  .apx-gteam{ display:none; }   /* team abbr only shown when the grades row stacks (mobile) */
+  /* Mobile: stack the grades row so it never bleeds — label line, then each
+     team\'s grades (with abbr) below. Applies to the site AND embeds. */
+  @media (max-width: 560px) {
+    .apx-grades-row{ display:flex !important; flex-direction:column; align-items:center; gap:2px; }
+    .apx-grades-row .apx-side-k{ order:-1; text-align:center; }
+    .apx-grades-row .apx-side-a{ order:0; text-align:center; white-space:nowrap; }
+    .apx-grades-row .apx-side-h{ order:1; text-align:center; white-space:nowrap; }
+    .apx-gteam{ display:inline-block; min-width:28px; color:var(--muted); font-weight:700; margin-right:5px; }
+  }
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
   .apx-info-row{display:flex;gap:8px;font-size:0.72rem;line-height:1.6;}
@@ -2861,7 +2871,11 @@ function apxCardHTML(g){
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
     sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenRank(hId)+' '+_apxPenTag(home))+
-    sideRow('CON·POW·EYE·BSR·DEF', gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def), gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def))+
+    '<div class="apx-side-row apx-grades-row">'+
+      '<span class="apx-side-a"><b class="apx-gteam">'+aAb+'</b>'+gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def)+'</span>'+
+      '<span class="apx-side-k">CON·POW·EYE·BSR·DEF</span>'+
+      '<span class="apx-side-h">'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'<b class="apx-gteam">'+hAb+'</b></span>'+
+    '</div>'+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
