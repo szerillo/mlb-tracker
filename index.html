@@ -38,7 +38,7 @@
   .brand-tagline { font-size: 0.7rem; color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
   .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
   /* Header lines: logo+name (top-left) · Built by (left) · date/loaded/live (centered). */
-  .hdr-built { display: block; }
+  .hdr-built { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; line-height: 1.2; }
   .hdr-built .hdr-sep { display: none; }
   .hdr-meta { display: block; text-align: center; margin-top: 0.15rem; }
   header { position: relative; }
@@ -1424,11 +1424,11 @@
   /* Mobile: stack the grades row so it never bleeds — label line, then each
      team\'s grades (with abbr) below. Applies to the site AND embeds. */
   @media (max-width: 560px) {
-    .apx-grades-row{ display:flex !important; flex-direction:column; align-items:center; gap:2px; }
-    .apx-grades-row .apx-side-k{ order:-1; text-align:center; }
-    .apx-grades-row .apx-side-a{ order:0; text-align:center; white-space:nowrap; }
-    .apx-grades-row .apx-side-h{ order:1; text-align:center; white-space:nowrap; }
-    .apx-gteam{ display:inline-block; min-width:28px; color:var(--muted); font-weight:700; margin-right:5px; }
+    .apx-grades-row{ display:flex !important; flex-direction:column; align-items:flex-start; gap:2px; }
+    .apx-grades-row .apx-side-k{ order:-1; text-align:left; }
+    .apx-grades-row .apx-side-a{ order:0; text-align:left; white-space:nowrap; }
+    .apx-grades-row .apx-side-h{ order:1; text-align:left; white-space:nowrap; }
+    .apx-gteam{ display:inline-block; min-width:32px; color:var(--muted); font-weight:700; margin-right:6px; }
   }
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
@@ -2019,10 +2019,10 @@
     <div class="brand-text">
       <h1>B.A.R.T.O.L.O.</h1>
       <div class="brand-tagline">Baseball Analytic Research Tool Optimized for Longterm Outcomes</div>
+      <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
     </div>
   </div>
   <div class="sub">
-    <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
     <span class="hdr-meta"><span id="embedDate" class="hdr-date"></span>Last loaded: <span id="updated">—</span> · <span id="status" class="live">● live</span></span>
     <button id="theme-toggle" class="theme-toggle" type="button"
             title="Toggle light / dark theme">🌗</button>
