@@ -4810,7 +4810,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
-      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
+      <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}</span></td>
       <td class="bpt-stat bpt-kbb"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-stat bpt-stf"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
@@ -5008,7 +5008,7 @@ function renderPitcherDeepSP(spName, teamName) {
   if (_pv.length) {
     const _lo = Math.min(..._pv), _hi = Math.max(..._pv);
     const _avg = _pv.reduce((a, b) => a + b, 0) / _pv.length;
-    const _rng = _pv.length > 1 ? ` <span style="opacity:.65;font-weight:400">${_lo.toFixed(2)}–${_hi.toFixed(2)}</span>` : '';
+    const _rng = _pv.length > 1 ? ` <span style="opacity:.65;font-weight:400">(${_lo.toFixed(2)}–${_hi.toFixed(2)})</span>` : '';
     projPillsFinal = `<span class="pt-pill" title="${_pv.length}-system ROS FIP (ATC/BatX/OOPSY/ZiPS) — avg ${_avg.toFixed(2)}, range ${_lo.toFixed(2)}–${_hi.toFixed(2)}"><span class="lbl">Proj</span><span class="val ${tierCls(_avg, thr.fip, false)}">${_avg.toFixed(2)}${_rng}</span></span>`;
   } else if (s?.fip_proj != null) {
     projPillsFinal = pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)");
@@ -5063,7 +5063,7 @@ function renderPitcherDeepSP(spName, teamName) {
       <div class="pt-pills">${expectedPills}</div>
     </div>` : '',
     projPillsFinal ? `<div class="pt-stat-group">
-      <div class="pt-group-label">Projection</div>
+      <div class="pt-group-label">Avg. Projection</div>
       <div class="pt-pills">${projPillsFinal}</div>
     </div>` : '',
     modelChips ? `<div class="pt-stat-group">
@@ -5514,7 +5514,7 @@ function renderSPStatRows(s, thr) {
     var _lo = Math.min.apply(null,_pv), _hi = Math.max.apply(null,_pv);
     var _avg = _pv.reduce(function(a,b){return a+b;},0)/_pv.length;
     projections = chip("Proj", _avg, tier(_avg, fipB, false),
-      function(v){ return v.toFixed(2) + (_pv.length>1 ? "  " + _lo.toFixed(2) + "–" + _hi.toFixed(2) : ""); },
+      function(v){ return v.toFixed(2) + (_pv.length>1 ? " (" + _lo.toFixed(2) + "–" + _hi.toFixed(2) + ")" : ""); },
       _pv.length + "-system ROS FIP (ATC/BatX/OOPSY/ZiPS) — avg " + _avg.toFixed(2) + ", range " + _lo.toFixed(2) + "–" + _hi.toFixed(2));
   } else if (s.fip_proj != null) {
     projections = chip("Proj", s.fip_proj, tier(s.fip_proj, fipB, false), n2, "Projected FIP");
@@ -5539,7 +5539,7 @@ function renderSPStatRows(s, thr) {
   // Sean's ask: don't show IP outside the per-start box-score table. The wFIP
   // row and component pills are enough headline; raw IP just clutters the card.
   return row("Actual", actual) + row("Expected", expected)
-       + row("Pitching Model", pitchingModel) + row("Projections", projections);
+       + row("Pitching Model", pitchingModel) + row("Avg. Projection", projections);
 }
 
 // ============================================================================
