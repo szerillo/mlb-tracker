@@ -688,6 +688,9 @@
   .team-grade-bar { display: flex; flex-wrap: wrap; align-items: center;
     gap: 0.4rem 0.5rem; margin: 0.1rem 0 0.5rem; }
   .team-grade-bar .m-team-wrc { margin-right: 0.1rem; }
+  .m-team-split { font-size: 0.82rem; font-weight: 600; color: var(--text); margin: 0.1rem 0 0.3rem; }
+  .m-team-split b { font-weight: 800; }
+  .m-team-split .m-proj { color: var(--muted); font-weight: 400; font-size: 0.9em; }
   .tg-chip { display: inline-flex; align-items: center; gap: 0.24rem; }
   .tg-chip .tg-lbl { color: var(--muted); font-weight: 700;
     letter-spacing: 0.07em; font-size: 0.6rem; text-transform: uppercase; }
@@ -1535,7 +1538,8 @@
   .sp-ls th:first-child, .sp-ls th:nth-child(2) { text-align:left; }
   .sp-ls td { text-align:right; padding:1px 4px; }
   .sp-ls td:first-child, .sp-ls td:nth-child(2) { text-align:left; color:var(--muted); }
-  .sp-sparks { display:flex; gap:6px; flex-wrap:wrap; }
+  .sp-sparks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  @media (max-width: 560px) { .sp-sparks { grid-template-columns:1fr 1fr; } }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -3986,16 +3990,18 @@ function renderLineupsTab() {
         </h3>
         <div class="m-lineup-grid">
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}${teamWrcChip(lg.lineups?.away, handOfPitcher(awaySPName))}</h4>
-            ${teamGradeBar(g, 'away')}
+            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}</h4>
+            ${teamSplitLine(lg.lineups?.away, handOfPitcher(awaySPName))}
+            ${teamGradeBar(g, 'away', {noWrc:true})}
             ${renderLineupSPHeader(awaySPName, "vs")}
             ${LU_VIEW === "stat"
               ? renderLineupStatcastTable(lg.lineups?.away)
               : renderLineupTable(lg.lineups?.away, { expanded: true, oppHand: handOfPitcher(awaySPName) })}
           </div>
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}${teamWrcChip(lg.lineups?.home, handOfPitcher(homeSPName))}</h4>
-            ${teamGradeBar(g, 'home')}
+            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}</h4>
+            ${teamSplitLine(lg.lineups?.home, handOfPitcher(homeSPName))}
+            ${teamGradeBar(g, 'home', {noWrc:true})}
             ${renderLineupSPHeader(homeSPName, "vs")}
             ${LU_VIEW === "stat"
               ? renderLineupStatcastTable(lg.lineups?.home)
@@ -4375,11 +4381,11 @@ function teamGradeLetter(rawPct, cat) {
 }
 
 // Team-grade bar: wRC+ (vs opp hand) + team contact (K%) + PWR/EYE/BSR/DEF letter chips.
-function teamGradeBar(game, side) {
+function teamGradeBar(game, side, opts) {
   const lg = lineupsForGame(game);
   const players = lg?.lineups?.[side]?.players || [];
   if (!HITTERS || !players.length) return "";
-  const wrc = teamWrcSpan(game, side);
+  const wrc = (opts && opts.noWrc) ? "" : teamWrcSpan(game, side);
   const con = teamContactSpan(players);
   // DEF + BSR routed through the same rank-curved grader the Team Ranks tab
   // uses — letters match across both pages. PWR + EYE keep SD-stretched MLB-
@@ -4425,6 +4431,13 @@ function teamLineupWrc(side, oppHand){
 function teamWrcChip(side, oppHand){
   const v=teamLineupWrc(side, oppHand);
   return v!=null?` <span class="lu-team-wrc" title="Projected team wRC+ vs the opposing starter's hand">${v} wRC+</span>`:'';
+}
+// Dedicated team-split line for the lineup box header: "vs LHP: 95 wRC+ (proj)".
+function teamSplitLine(side, oppHand){
+  const v=teamLineupWrc(side, oppHand);
+  if(v==null) return '';
+  const lbl = oppHand==='L'?'LHP':oppHand==='R'?'RHP':'MLB';
+  return `<div class="m-team-split">vs ${lbl}: <b>${v}</b> wRC+ <span class="m-proj">(proj)</span></div>`;
 }
 function renderLineupTable(side, opts={}) {
   const expanded = !!opts.expanded;
@@ -4982,17 +4995,17 @@ function renderPitcherDeepSP(spName, teamName) {
     s?.siera != null ? pill("SIERA", s.siera, thr.xfip || thr.fip, false, "", "SIERA — Skill-Interactive ERA (lower=better)") : '',
   ].filter(Boolean).join('');
   // Projection: FIP from each major system (ATC / BatX / OOPSY / ZiPS)
-  const projPills = [
-    s?.fip_atc   != null ? pill("ATC",   s.fip_atc,   thr.fip, false, "", "ATC projected FIP (composite; lower=better)") : '',
-    s?.fip_batx  != null ? pill("BatX",  s.fip_batx,  thr.fip, false, "", "The BAT X projected FIP (Derek Carty; lower=better)") : '',
-    s?.fip_oopsy != null ? pill("OOPSY", s.fip_oopsy, thr.fip, false, "", "OOPSY projected FIP (Sean Dolinar; lower=better)") : '',
-    s?.fip_zips  != null ? pill("ZiPS",  s.fip_zips,  thr.fip, false, "", "ZiPS projected FIP (Dan Szymborski; lower=better)") : '',
-  ].filter(Boolean).join('');
-  // Back-compat: if none of the per-system projections are present, fall back
-  // to the legacy fip_proj field so caches still render something useful.
-  const projPillsFinal = projPills || (s?.fip_proj != null
-    ? pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)")
-    : '');
+  // Projection RANGE across the 4 ROS systems — avg with low–high spread.
+  const _pv = [s?.fip_atc, s?.fip_batx, s?.fip_oopsy, s?.fip_zips].filter(v => v != null);
+  let projPillsFinal = '';
+  if (_pv.length) {
+    const _lo = Math.min(..._pv), _hi = Math.max(..._pv);
+    const _avg = _pv.reduce((a, b) => a + b, 0) / _pv.length;
+    const _rng = _pv.length > 1 ? ` <span style="opacity:.65;font-weight:400">${_lo.toFixed(2)}–${_hi.toFixed(2)}</span>` : '';
+    projPillsFinal = `<span class="pt-pill" title="${_pv.length}-system ROS FIP (ATC/BatX/OOPSY/ZiPS) — avg ${_avg.toFixed(2)}, range ${_lo.toFixed(2)}–${_hi.toFixed(2)}"><span class="lbl">Proj</span><span class="val ${tierCls(_avg, thr.fip, false)}">${_avg.toFixed(2)}${_rng}</span></span>`;
+  } else if (s?.fip_proj != null) {
+    projPillsFinal = pill("pFIP", s.fip_proj, thr.fip, false, "", "Projected FIP (legacy ATC dump; lower=better)");
+  }
   // Pitch Models — STF+ / LOC+ / PIT+ (100 = avg), then botERA.
   const modelChips = [
     s?.stuff_plus    != null ? plusChip("STF+", s.stuff_plus,    true) : '',
@@ -5465,7 +5478,6 @@ function renderSPStatRows(s, thr) {
   var actual = [
     chip("ERA",   s.era,       tier(s.era, eraB, false),        n2,     "Season ERA (lower=better)"),
     chip("K-BB%", s.k_bb_pct,  tier(s.k_bb_pct, kbbBnds, true), pctFmt, "K% minus BB% (higher=better)"),
-    chip("xwOBA", s.xwoba,     tier(s.xwoba, xwB, false),       woFmt,  "Expected wOBA allowed (lower=better)"),
     chip("HR/9",  s.hr_per_9,  tier(s.hr_per_9, hr9B, false),   n2,     "HR per 9 IP (lower=better)"),
   ].filter(Boolean).join("");
   var expected = [
@@ -5487,12 +5499,19 @@ function renderSPStatRows(s, thr) {
     modelChip("PIT+", s.pitching_plus, true, function(v){return Math.round(v);}, "Pitching+ (100=avg, higher=better)"),
     chip("botERA", s.bot_era, tier(s.bot_era, eraB, false), n2, "FG Pitcher Bot ERA (lower=better)"),
   ].filter(Boolean).join("");
-  var projections = [
-    chip("ATC",   s.fip_atc,   tier(s.fip_atc, fipB, false),   n2, "ATC projected FIP"),
-    chip("BatX",  s.fip_batx,  tier(s.fip_batx, fipB, false),  n2, "The BAT X projected FIP"),
-    chip("OOPSY", s.fip_oopsy, tier(s.fip_oopsy, fipB, false), n2, "OOPSY projected FIP"),
-    chip("ZiPS",  s.fip_zips,  tier(s.fip_zips, fipB, false),  n2, "ZiPS projected FIP"),
-  ].filter(Boolean).join("");
+  // Projection RANGE across the 4 ROS systems (ATC / BatX / OOPSY / ZiPS) — one
+  // chip showing avg with the low–high spread, instead of four separate pills.
+  var _pv = [s.fip_atc, s.fip_batx, s.fip_oopsy, s.fip_zips].filter(function(v){return v!=null;});
+  var projections = "";
+  if (_pv.length) {
+    var _lo = Math.min.apply(null,_pv), _hi = Math.max.apply(null,_pv);
+    var _avg = _pv.reduce(function(a,b){return a+b;},0)/_pv.length;
+    projections = chip("Proj", _avg, tier(_avg, fipB, false),
+      function(v){ return v.toFixed(2) + (_pv.length>1 ? "  " + _lo.toFixed(2) + "–" + _hi.toFixed(2) : ""); },
+      _pv.length + "-system ROS FIP (ATC/BatX/OOPSY/ZiPS) — avg " + _avg.toFixed(2) + ", range " + _lo.toFixed(2) + "–" + _hi.toFixed(2));
+  } else if (s.fip_proj != null) {
+    projections = chip("Proj", s.fip_proj, tier(s.fip_proj, fipB, false), n2, "Projected FIP");
+  }
   function row(label, pills) {
     if (!pills) return "";
     return '<div class="m-sp-row"><div class="m-sp-row-label">' + label + '</div><div class="m-sp-row-pills">' + pills + '</div></div>';
