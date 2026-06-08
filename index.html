@@ -1700,15 +1700,15 @@
   .po-match{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
   .po-match .po-team{flex:1;}
   .po-vs{color:var(--muted);font-size:0.68rem;font-weight:700;flex:0 0 auto;}
-  .po-team{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:9px;padding:8px 11px;}
+  .po-team{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:9px;padding:9px 12px;}
   .po-team.bye{background:transparent;border:0;padding:2px;gap:9px;}
   .po-seed{font-size:0.72rem;font-weight:800;color:var(--muted);min-width:14px;text-align:center;}
   .po-logo{display:inline-flex;align-items:center;}
   .po-logo img{vertical-align:middle;}
-  .po-meta{display:flex;flex-direction:column;line-height:1.15;}
-  .po-ab{font-weight:800;font-size:0.92rem;color:var(--text);letter-spacing:0.01em;}
-  .po-pct{font-size:0.78rem;color:var(--text);font-family:var(--mono,monospace);font-weight:600;}
-  .po-pcttag{font-size:0.58rem;color:var(--muted);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-family:var(--sans);}
+  .po-meta{display:flex;flex-direction:column;line-height:1.2;gap:1px;}
+  .po-ab{font-weight:800;font-size:1.02rem;color:var(--text);letter-spacing:0.01em;}
+  .po-pct{font-size:1.02rem;color:var(--accent);font-family:var(--mono,monospace);font-weight:800;}
+  .po-pcttag{font-size:0.56rem;color:var(--muted);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--sans);vertical-align:middle;}
   .po-edge{font-size:0.68rem;font-family:var(--mono,monospace);font-weight:600;}
   .po-edge.pos{color:#6fdc7e;} .po-edge.neg{color:#c8a8ff;} .po-edge.neu{color:var(--muted);}
   .po-hunt{display:flex;flex-direction:column;gap:5px;}
@@ -1716,7 +1716,7 @@
   .po-hunt-row .po-ab{min-width:36px;}
   .po-hunt-row .po-pct{margin-left:auto;}
   .po-empty{color:var(--muted);}
-  .po-rec2{font-weight:400;color:var(--muted);font-size:0.72rem;font-family:var(--mono,monospace);}
+  .po-rec2{font-weight:500;color:var(--muted);font-size:0.74rem;font-family:var(--mono,monospace);}
   .po-table{width:100%;border-collapse:collapse;margin-top:4px;font-size:0.8rem;}
   .po-table th{font-size:0.62rem;font-weight:700;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;text-align:right;padding:3px 5px;border-bottom:1px solid var(--border);}
   .po-table th.l{text-align:left;}
@@ -1726,7 +1726,7 @@
   .po-tm{text-align:left !important;font-weight:700;}
   .po-tm img{vertical-align:middle;margin-right:5px;}
   .po-rec{font-family:var(--mono,monospace);color:var(--muted);}
-  .po-our{font-family:var(--mono,monospace);font-weight:700;color:var(--text);}
+  .po-our{font-family:var(--mono,monospace);font-weight:800;color:var(--accent);font-size:0.9rem;}
   .po-mktc{font-family:var(--mono,monospace);color:var(--muted);}
   .po-listed{font-family:var(--mono,monospace);color:var(--muted);}
   .po-fair{font-family:var(--mono,monospace);color:var(--text);}
@@ -8492,12 +8492,15 @@ async function renderPlayoffsTab(){
   }
   function tcell(t,seed,cls){
     if(!t) return '<div class="po-team po-empty">—</div>';
-    const title=(t.name||t.abbr)+': '+fmtPct(PF(t))+' to make the playoffs (full-season) · market '+fmtPct(MK(t))+(E(t)!=null?' · edge '+fmtEdge(E(t)):'');
+    const title=(t.name||t.abbr)+': '+fmtPct(PF(t))+' to make the playoffs (full-season) · proj '+rec(t)+' · market '+fmtPct(MK(t));
     return '<div class="po-team '+(cls||'')+'" title="'+title.replace(/"/g,'&quot;')+'">'+
       '<span class="po-seed">'+seed+'</span>'+
-      '<span class="po-logo">'+teamLogoByAbbr(t.abbr,38)+'</span>'+
-      '<span class="po-meta"><span class="po-ab">'+t.abbr+' <span class="po-rec2">'+rec(t)+'</span></span>'+
-        '<span class="po-pct">'+fmtPct(PF(t))+' <span class="po-pcttag">proj PO</span>'+(E(t)!=null?' <span class="po-edge '+edgeCls(E(t))+'">'+fmtEdge(E(t))+'</span>':'')+'</span></span>'+
+      '<span class="po-logo">'+teamLogoByAbbr(t.abbr,46)+'</span>'+
+      '<span class="po-meta">'+
+        '<span class="po-ab">'+t.abbr+'</span>'+
+        '<span class="po-rec2">'+rec(t)+' proj</span>'+
+        '<span class="po-pct">'+fmtPct(PF(t))+' <span class="po-pcttag">PO</span></span>'+
+      '</span>'+
     '</div>';
   }
   function tableRows(all){
