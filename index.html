@@ -1424,11 +1424,11 @@
   /* Mobile: stack the grades row so it never bleeds — label line, then each
      team\'s grades (with abbr) below. Applies to the site AND embeds. */
   @media (max-width: 560px) {
-    .apx-grades-row{ display:flex !important; flex-direction:column; align-items:flex-start; gap:2px; }
-    .apx-grades-row .apx-side-k{ order:-1; text-align:left; }
-    .apx-grades-row .apx-side-a{ order:0; text-align:left; white-space:nowrap; }
-    .apx-grades-row .apx-side-h{ order:1; text-align:left; white-space:nowrap; }
-    .apx-gteam{ display:inline-block; min-width:32px; color:var(--muted); font-weight:700; margin-right:6px; }
+    .apx-grades-row{ display:flex !important; flex-direction:column; align-items:center; gap:2px; }
+    .apx-grades-row .apx-side-k{ order:-1; text-align:center; }
+    .apx-grades-row .apx-side-a{ order:0; text-align:center; white-space:nowrap; }
+    .apx-grades-row .apx-side-h{ order:1; text-align:center; white-space:nowrap; }
+    .apx-gteam{ display:inline-block; min-width:32px; color:var(--muted); font-weight:700; margin-right:6px; text-align:left; }
   }
   .apx-mkt{font-size:0.72rem;color:var(--muted);}
   .apx-info{border-top:1px solid var(--border);padding-top:7px;margin-top:9px;}
@@ -2874,7 +2874,7 @@ function apxCardHTML(g){
     '<div class="apx-side-row apx-grades-row">'+
       '<span class="apx-side-a"><b class="apx-gteam">'+aAb+'</b>'+gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def)+'</span>'+
       '<span class="apx-side-k">CON·POW·EYE·BSR·DEF</span>'+
-      '<span class="apx-side-h">'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'<b class="apx-gteam">'+hAb+'</b></span>'+
+      '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
