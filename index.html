@@ -1763,12 +1763,15 @@
     padding: 0.5rem !important;
   }
   /* Compact header for embeds: logo + name + live/last-loaded only. */
-  body.embed-mode > header { display: block !important; padding: 0.55rem 0.7rem 0.2rem !important; }
-  body.embed-mode .brand { display: flex !important; align-items: center; gap: 0.6rem; }
+  body.embed-mode > header { display: block !important; text-align: center !important; padding: 0.5rem 0.7rem 0.4rem !important; }
+  body.embed-mode .controls { display: none !important; }  /* its inner controls are all hidden — drop the empty bar */
+  body.embed-mode .hdr-built { display: block !important; margin-top: 0.1rem; }
+  body.embed-mode .hdr-built .hdr-sep { display: none !important; }
+  body.embed-mode .brand { display: flex !important; align-items: center; justify-content: center !important; gap: 0.6rem; }
   body.embed-mode .brand-logo { width: 62px !important; height: 62px !important; }
   body.embed-mode .brand-text h1 { font-size: 1.15rem !important; margin: 0 !important; }
   body.embed-mode .brand-tagline { display: block !important; font-size: 0.72rem !important; line-height: 1.3; }
-  body.embed-mode .sub { display: block !important; font-size: 0.78rem !important; color: var(--muted); margin: 0.15rem 0 0.4rem !important; }
+  body.embed-mode .sub { display: block !important; text-align: center !important; font-size: 0.78rem !important; color: var(--muted); margin: 0.25rem 0 0 !important; }
   /* Footer for embeds: keep only the Built by @SeanZerillo byline. */
   body.embed-mode > footer { display: block !important; border-top: 1px solid var(--border); margin-top: 0.6rem !important; padding: 0.6rem 0.7rem !important; font-size: 0.8rem !important; text-align: center; }
   body.embed-mode .footer-detail { display: none !important; }
@@ -2001,9 +2004,8 @@
     </div>
   </div>
   <div class="sub">
-    <span id="embedDate" class="hdr-date"></span>Last loaded: <span id="updated">—</span>
-    · <span id="status" class="live">● live</span>
-    · Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a>
+    <span class="hdr-meta"><span id="embedDate" class="hdr-date"></span>Last loaded: <span id="updated">—</span> · <span id="status" class="live">● live</span></span>
+    <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
     <button id="theme-toggle" class="theme-toggle" type="button"
             title="Toggle light / dark theme">🌗</button>
   </div>
