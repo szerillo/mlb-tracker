@@ -1802,6 +1802,38 @@
     body.embed-mode .lineup-table .split { padding-left: 0.1rem !important; padding-right: 0.1rem !important; }
     body.embed-mode .lineup-table .grade { min-width: 20px !important; font-size: 0.7rem !important; }
   }
+  /* ?mobile=1 forces the same mobile layout at ANY width (preview on desktop
+     / force in an app webview). Mirrors the @media(max-width:560px) block. */
+
+    /* Bullpen: drop K-BB% and shrink the L5-days column so full pitcher names fit. */
+    body.force-mobile .bpt-stf { display: none !important; }  /* mobile: keep K-BB%, drop Stuff+ */
+    body.force-mobile .bpt-table { table-layout: auto !important; }
+    body.force-mobile .bpt-table col:last-child { width: 56px !important; }
+    body.force-mobile .bpt-table th,
+    body.force-mobile .bpt-table td { padding-left: 0.28rem !important; padding-right: 0.28rem !important; }
+    body.force-mobile .bpt-name { font-size: 0.74rem !important; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    body.force-mobile .bpt-recent { font-size: 0.66rem !important; }
+    /* Lineups: drop #, Pos, and the expanded BB%/K% cols; abbreviate to "J. Duran". */
+    /* Keep #, Pos, B and grades; only drop the expanded BB%/K% pair. Abbreviate
+       names ("J. Crawford") and tighten padding so it all fits ~390px. */
+    body.force-mobile .lineup-table .lu-kbb { display: none !important; }
+    body.force-mobile .lineup-table .nm-full { display: none !important; }
+    body.force-mobile .lineup-table .nm-abbr { display: inline !important; }
+    body.force-mobile .lineup-table { font-size: 0.78rem !important; }
+    body.force-mobile .lineup-table th,
+    body.force-mobile .lineup-table td { padding-left: 0.15rem !important; padding-right: 0.15rem !important; }
+    body.force-mobile .lineup-table td.player { white-space: nowrap; }
+    body.force-mobile .lineup-table td.order { width: 14px !important; font-size: 0.7rem !important; }
+    body.force-mobile .lineup-table td.pos   { width: 22px !important; font-size: 0.7rem !important; }
+    body.force-mobile .lineup-table td.bats  { width: 14px !important; }
+    /* grade chips a touch tighter so the 5 grades + wRC+ + name + #/Pos all fit */
+    body.force-mobile .lineup-table .grade-cell,
+    body.force-mobile .lineup-table .split { padding-left: 0.1rem !important; padding-right: 0.1rem !important; }
+    body.force-mobile .lineup-table .grade { min-width: 20px !important; font-size: 0.7rem !important; }
+  
+  body.force-mobile .sp-sparks { grid-template-columns: 1fr 1fr !important; }
+
   /* Embed modal: always stack the two-team sections (lineups, SPs, bullpens,
      weather/park/ump, odds) on top of each other — no side-by-side at any width. */
   body.embed-mode .footer-byline a { color: var(--accent); text-decoration: none; font-weight: 700; }
@@ -1816,9 +1848,7 @@
   /* Embeds use the COMPACT card (drop the dense SP/bullpen/grade detail) but
      keep the site's responsive 3/2/1 grid so cards EXPAND across a wide iframe
      and collapse to fewer columns as it narrows. */
-  body.embed-mode .apx-grid.apx-detailed .apx-info2,
-  body.embed-mode .apx-grid.apx-detailed .apx-park,
-  body.embed-mode .apx-grid.apx-detailed .apx-extra { display: none !important; }
+  /* (embed now shows the full DETAILED card; toggle still flips to compact) */
   body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
@@ -8602,6 +8632,7 @@ document.addEventListener("click", hitTrendDelegate);
 
   // --- Embed mode ---
   document.body.classList.add('embed-mode', 'embed-' + embed);
+  if (params.get('mobile') === '1' || params.get('m') === '1') document.body.classList.add('force-mobile');
 
   // postMessage auto-resize. ResizeObserver covers most cases; the burst poll
   // + slow poll cover async data renders the observer misses (charts, etc).
