@@ -94,6 +94,46 @@ def pull_savant_st():
     print(f"[power_eye] Savant ST: {len(out)} hitters")
     return out
 
+# ---- 3a. Savant plate discipline (preferred — pure Statcast, never blocked) ----
+def pull_savant_pd():
+    """Chase/zone/whiff from Savant's custom leaderboard, mapped onto the FG-style
+    inputs the Eye formula was fit on:
+      osw   = oz_swing_percent                        (chase)
+      zone  = in_zone_percent                         (Zone%)
+      swstr = whiff_percent * swing_percent / 100     (whiffs per pitch)
+      zsw   = (swing% - osw*(1-zone)) / zone          (in-zone swing, derived)
+    Keyed by Savant player_id so it joins the EV/swing-take pulls exactly."""
+    sel = ("pa%2Coz_swing_percent%2Cwhiff_percent%2Cswing_percent%2Cin_zone_percent")
+    url = (f"https://baseballsavant.mlb.com/leaderboard/custom?year={YEAR}"
+           f"&type=batter&filter=&min=10&selections={sel}"
+           "&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&csv=true")
+    try:
+        txt = _fetch(url)
+    except Exception as e:
+        print(f"[power_eye] Savant PD fetch failed: {e}", file=sys.stderr)
+        return {}
+    out = {}
+    rdr = csv.DictReader(txt.splitlines())
+    for row in rdr:
+        pid = (row.get("player_id") or "").strip()
+        if not pid: continue
+        try:
+            osw   = float(row.get("oz_swing_percent") or "")
+            sw    = float(row.get("swing_percent") or "")
+            whiff = float(row.get("whiff_percent") or "")
+            zone  = float(row.get("in_zone_percent") or "")
+            if not zone: continue
+            zfrac = zone / 100.0
+            zsw   = (sw - osw * (1.0 - zfrac)) / zfrac
+            swstr = whiff * sw / 100.0
+            out[pid] = {"osw": round(osw, 1), "zsw": round(zsw, 1),
+                        "swstr": round(swstr, 1), "zone": round(zone, 1)}
+        except (ValueError, ZeroDivisionError):
+            pass
+    print(f"[power_eye] Savant plate disc: {len(out)} hitters")
+    return out
+
+
 # ---- 3. FanGraphs Plate Discipline (Cloudflare-protected) ----
 def pull_fg_pd():
     # FG is behind CF — accept either a pre-cached CSV in data/ OR an empty
@@ -122,6 +162,7 @@ def pull_fg_pd():
 def main():
     ev = pull_savant_ev()
     st = pull_savant_st()
+    sv_pd = pull_savant_pd()
     fg = pull_fg_pd()
     rows = []
     all_pids = set(ev) | set(st)
@@ -130,7 +171,7 @@ def main():
         s = st.get(pid, {})
         name = e.get("name") or ""
         if not name: continue
-        f = fg.get(_norm(name))
+        f = sv_pd.get(pid) or fg.get(_norm(name))
         power = round(-4.78 + 1.18 * e["barrel"] + 0.39 * e["hh"], 2) if (e and "barrel" in e) else None
         eye = None
         if f and s:
