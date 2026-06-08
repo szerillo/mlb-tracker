@@ -688,8 +688,8 @@
   .team-grade-bar { display: flex; flex-wrap: wrap; align-items: center;
     gap: 0.4rem 0.5rem; margin: 0.1rem 0 0.5rem; }
   .team-grade-bar .m-team-wrc { margin-right: 0.1rem; }
-  .m-team-split { font-size: 0.82rem; font-weight: 600; color: var(--text); margin: 0.1rem 0 0.3rem; }
-  .m-team-split b { font-weight: 800; }
+  .m-team-split { font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-left: 0.35rem; white-space: nowrap; }
+  .m-team-split b { font-weight: 800; color: var(--text); }
   .m-team-split .m-proj { color: var(--muted); font-weight: 400; font-size: 0.9em; }
   .tg-chip { display: inline-flex; align-items: center; gap: 0.24rem; }
   .tg-chip .tg-lbl { color: var(--muted); font-weight: 700;
@@ -1968,8 +1968,8 @@
       <circle cx="31.5" cy="29" r="2" fill="#1d1d1d"/>
       <circle cx="32.4" cy="28.1" r="0.75" fill="#fff"/>
       <!-- ball cap -->
-      <path d="M 17 23 Q 22 11 35 15 Q 39 17 39 23 Q 28 20 17 23 Z" fill="#1f2127" stroke="#0a0c10" stroke-width="0.8"/>
-      <path d="M 17 23 Q 6 23 3 28 Q 11 26 19 25 Z" fill="#101216" stroke="#0a0c10" stroke-width="0.7"/>
+      <path d="M 17 23 Q 22 11 35 15 Q 39 17 39 23 Q 28 20 17 23 Z" fill="#002D72" stroke="#001a45" stroke-width="0.8"/>
+      <path d="M 17 23 Q 6 23 3 28 Q 11 26 19 25 Z" fill="#001f54" stroke="#001a45" stroke-width="0.7"/>
       <circle cx="27.5" cy="14.5" r="1.6" fill="#13b06b"/>
     </svg>
     <div class="brand-text">
@@ -4027,8 +4027,7 @@ function renderLineupsTab() {
         </h3>
         <div class="m-lineup-grid">
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}</h4>
-            ${teamSplitLine(lg.lineups?.away, handOfPitcher(awaySPName))}
+            <h4>${teamLogo(g.teams.away.team.id, 18)} ${g.teams.away.team.name}${teamSplitLine(lg.lineups?.away, handOfPitcher(awaySPName))}</h4>
             ${teamGradeBar(g, 'away', {noWrc:true})}
             ${renderLineupSPHeader(awaySPName, "vs")}
             ${LU_VIEW === "stat"
@@ -4036,8 +4035,7 @@ function renderLineupsTab() {
               : renderLineupTable(lg.lineups?.away, { expanded: true, oppHand: handOfPitcher(awaySPName) })}
           </div>
           <div class="m-lineup-box">
-            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}</h4>
-            ${teamSplitLine(lg.lineups?.home, handOfPitcher(homeSPName))}
+            <h4>${teamLogo(g.teams.home.team.id, 18)} ${g.teams.home.team.name}${teamSplitLine(lg.lineups?.home, handOfPitcher(homeSPName))}</h4>
             ${teamGradeBar(g, 'home', {noWrc:true})}
             ${renderLineupSPHeader(homeSPName, "vs")}
             ${LU_VIEW === "stat"
@@ -4474,7 +4472,7 @@ function teamSplitLine(side, oppHand){
   const v=teamLineupWrc(side, oppHand);
   if(v==null) return '';
   const lbl = oppHand==='L'?'LHP':oppHand==='R'?'RHP':'MLB';
-  return `<div class="m-team-split">vs ${lbl}: <b>${v}</b> wRC+ <span class="m-proj">(proj)</span></div>`;
+  return ` <span class="m-team-split">vs ${lbl}: <b>${v}</b> wRC+ <span class="m-proj">(proj)</span></span>`;
 }
 function renderLineupTable(side, opts={}) {
   const expanded = !!opts.expanded;
