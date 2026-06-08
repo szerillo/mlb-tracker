@@ -1729,6 +1729,7 @@
   .po-our{font-family:var(--mono,monospace);font-weight:700;color:var(--text);}
   .po-mktc{font-family:var(--mono,monospace);color:var(--muted);}
   .po-listed{font-family:var(--mono,monospace);color:var(--muted);}
+  .po-fair{font-family:var(--mono,monospace);color:var(--text);}
   .po-edgec{font-family:var(--mono,monospace);font-weight:600;}
   .po-edgec.pos{color:#6fdc7e;} .po-edgec.neg{color:#c8a8ff;} .po-edgec.neu{color:var(--muted);}
   .po-out{opacity:0.45;}
@@ -8472,6 +8473,7 @@ async function renderPlayoffsTab(){
   const AM=t=>(t.market&&t.market.playoff_odds!=null)?t.market.playoff_odds:null;
   const AB=t=>(t.market&&t.market.playoff_book)?t.market.playoff_book:'';
   const fmtAm=o=>o==null?'—':(o>0?'+'+o:''+o);
+  const fairAm=p=>{ if(p==null) return null; const q=Math.max(0.2,Math.min(99.8,p)); return q>50?Math.round(-(q/(100-q))*100):Math.round(((100-q)/q)*100); };
   const E=t=>(t.edges&&t.edges.playoff_pct!=null)?t.edges.playoff_pct:null;
   const elim=t=>{const p=PF(t);return p!=null&&p<=0.05;};
   const rec=t=>{const w=W(t),l=L(t);return (w>=0&&l!=null)?Math.round(w)+'-'+Math.round(l):'';};
@@ -8506,6 +8508,7 @@ async function renderPlayoffsTab(){
         '<td class="po-tm">'+teamLogoByAbbr(t.abbr,18)+' '+t.abbr+'</td>'+
         '<td class="po-rec">'+rec(t)+'</td>'+
         '<td class="po-our">'+fmtPct(PF(t))+'</td>'+
+        '<td class="po-fair">'+fmtAm(fairAm(PF(t)))+'</td>'+
         '<td class="po-mktc">'+fmtPct(MK(t))+'</td>'+
         '<td class="po-listed" title="'+(AB(t)||'')+'">'+fmtAm(AM(t))+'</td>'+
         '<td class="po-edgec '+edgeCls(E(t))+'">'+(out?'':fmtEdge(E(t)))+'</td>'+
@@ -8527,6 +8530,7 @@ async function renderPlayoffsTab(){
         '<th></th><th class="l">Team</th>'+
         '<th title="Composite projected final record">Proj</th>'+
         '<th title="OUR projected chance to finish in a playoff spot (full season)">Proj PO%</th>'+
+        '<th title="Fair American odds implied by OUR Proj PO%">Proj Odds</th>'+
         '<th title="Sportsbook implied odds to make the playoffs (from the listed price)">Mkt%</th>'+
         '<th title="Sportsbook listed American odds to make the playoffs">Listed</th>'+
         '<th title="Our Proj PO% minus the market implied %">Edge</th>'+
