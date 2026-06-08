@@ -112,8 +112,12 @@ if DEF_BSR_CSV.exists():
             except ValueError:
                 fld = bsr = None
             entry = players.setdefault(n, {"name": row["name"], "norm": n})
-            entry["fld"] = fld
-            entry["bsr"] = bsr
+            # Duplicate names (e.g. the two Max Muncys): FIRST row wins — the
+            # user lists the primary player (LAD Muncy) first in the CSV.
+            if entry.get("fld") is None:
+                entry["fld"] = fld
+            if entry.get("bsr") is None:
+                entry["bsr"] = bsr
 
 # Rank-percentile each metric *within its own population* (so a Power-only
 # player still gets a Power grade even if FLD is missing).
