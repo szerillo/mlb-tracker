@@ -1850,6 +1850,12 @@
      and collapse to fewer columns as it narrows. */
   /* (embed now shows the full DETAILED card; toggle still flips to compact) */
   body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; }
+  /* Detailed cards need ~440px; use a width-driven grid so they wrap to fit the
+     iframe at ANY width and never bleed off the right edge. min(440px,100%) keeps
+     a single full-width column on phones instead of overflowing. */
+  body.embed-mode .apx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)) !important;
+  }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
