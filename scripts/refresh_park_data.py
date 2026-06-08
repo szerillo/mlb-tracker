@@ -83,6 +83,15 @@ def build_park_factors():
             "year": row.get("key_year") or row.get("year_range"),
         }
 
+    # Manual override — Savant has no 3-year park factor for the Athletics' new
+    # home, so it would default to neutral. User-set Las Vegas run factor = +25%.
+    out["ATH"] = {
+        "venue": "Las Vegas (Athletics)",
+        "park_factor": 125, "woba": 125, "wobacon": 125, "xwobacon": 125,
+        "bacon": 125, "xbacon": 125, "hardhit": 100, "hr": 125, "bb": 100,
+        "so": 100, "year": "manual override (+25%)",
+    }
+
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "source": "Baseball Savant (statcast-park-factors, 3-year rolling)",
