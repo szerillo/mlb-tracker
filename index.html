@@ -1785,15 +1785,22 @@
       overflow: hidden; text-overflow: ellipsis; }
     body.embed-mode .bpt-recent { font-size: 0.66rem !important; }
     /* Lineups: drop #, Pos, and the expanded BB%/K% cols; abbreviate to "J. Duran". */
-    body.embed-mode .lineup-table .lu-order,
-    body.embed-mode .lineup-table .lu-pos,
+    /* Keep #, Pos, B and grades; only drop the expanded BB%/K% pair. Abbreviate
+       names ("J. Crawford") and tighten padding so it all fits ~390px. */
     body.embed-mode .lineup-table .lu-kbb { display: none !important; }
     body.embed-mode .lineup-table .nm-full { display: none !important; }
     body.embed-mode .lineup-table .nm-abbr { display: inline !important; }
-    body.embed-mode .lineup-table { font-size: 0.8rem !important; }
+    body.embed-mode .lineup-table { font-size: 0.78rem !important; }
     body.embed-mode .lineup-table th,
-    body.embed-mode .lineup-table td { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+    body.embed-mode .lineup-table td { padding-left: 0.15rem !important; padding-right: 0.15rem !important; }
     body.embed-mode .lineup-table td.player { white-space: nowrap; }
+    body.embed-mode .lineup-table td.order { width: 14px !important; font-size: 0.7rem !important; }
+    body.embed-mode .lineup-table td.pos   { width: 22px !important; font-size: 0.7rem !important; }
+    body.embed-mode .lineup-table td.bats  { width: 14px !important; }
+    /* grade chips a touch tighter so the 5 grades + wRC+ + name + #/Pos all fit */
+    body.embed-mode .lineup-table .grade-cell,
+    body.embed-mode .lineup-table .split { padding-left: 0.1rem !important; padding-right: 0.1rem !important; }
+    body.embed-mode .lineup-table .grade { min-width: 20px !important; font-size: 0.7rem !important; }
   }
   /* Embed modal: always stack the two-team sections (lineups, SPs, bullpens,
      weather/park/ump, odds) on top of each other — no side-by-side at any width. */
