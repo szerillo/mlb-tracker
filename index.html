@@ -1776,7 +1776,7 @@
      info is actually readable. Web/desktop keeps the full layout. */
   @media (max-width: 560px) {
     /* Bullpen: drop K-BB% and shrink the L5-days column so full pitcher names fit. */
-    body.embed-mode .bpt-kbb { display: none !important; }
+    body.embed-mode .bpt-stf { display: none !important; }  /* mobile: keep K-BB%, drop Stuff+ */
     body.embed-mode .bpt-table { table-layout: auto !important; }
     body.embed-mode .bpt-table col:last-child { width: 56px !important; }
     body.embed-mode .bpt-table th,
@@ -4812,7 +4812,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}<sup class="fip-src ${(useW || useXfip) ? 'act' : 'proj'}">${fipSrc}</sup></span></td>
       <td class="bpt-stat bpt-kbb"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
-      <td class="bpt-stat"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
+      <td class="bpt-stat bpt-stf"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
       <td class="bpt-recent">${daysTxt || '<span class="bpt-muted">—</span>'}</td>
     </tr>`;
   };
@@ -4868,7 +4868,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
         <th>B</th><th>Pitcher</th>
         <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
         <th class="r bpt-kbb" title="K% minus BB%">K-BB%</th>
-        <th class="r" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
+        <th class="r bpt-stf" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
       </tr></thead>
       <tbody>${tableBody}</tbody>
