@@ -1856,6 +1856,16 @@
   body.embed-mode .apx-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)) !important;
   }
+  /* Phones can't fit the detailed card (~440px content). Fall back to the compact
+     card only at mobile width / when ?mobile=1 is forced — detailed stays on web. */
+  @media (max-width: 560px) {
+    body.embed-mode .apx-grid.apx-detailed .apx-info2,
+    body.embed-mode .apx-grid.apx-detailed .apx-park,
+    body.embed-mode .apx-grid.apx-detailed .apx-extra { display: none !important; }
+  }
+  body.force-mobile .apx-grid.apx-detailed .apx-info2,
+  body.force-mobile .apx-grid.apx-detailed .apx-park,
+  body.force-mobile .apx-grid.apx-detailed .apx-extra { display: none !important; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
