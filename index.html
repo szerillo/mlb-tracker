@@ -37,6 +37,8 @@
   .brand-text { display: flex; flex-direction: column; gap: 0.1rem; }
   .brand-tagline { font-size: 0.7rem; color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
   .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .hdr-built { display: block; margin-top: 0.1rem; }   /* "Built by @SeanZerillo" on its own line (site + embed) */
+  .hdr-built .hdr-sep { display: none; }
   .sub span.live { color: var(--confirmed); }
 
   /* Light / dark theme toggle button — sits inline at the right end of the sub-line */
@@ -2005,9 +2007,9 @@
   </div>
   <div class="sub">
     <span class="hdr-meta"><span id="embedDate" class="hdr-date"></span>Last loaded: <span id="updated">—</span> · <span id="status" class="live">● live</span></span>
-    <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
     <button id="theme-toggle" class="theme-toggle" type="button"
             title="Toggle light / dark theme">🌗</button>
+    <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
   </div>
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
