@@ -1715,6 +1715,22 @@
   .po-hunt-row .po-ab{min-width:36px;}
   .po-hunt-row .po-pct{margin-left:auto;}
   .po-empty{color:var(--muted);}
+  .po-rec2{font-weight:400;color:var(--muted);font-size:0.72rem;font-family:var(--mono,monospace);}
+  .po-table{width:100%;border-collapse:collapse;margin-top:4px;font-size:0.8rem;}
+  .po-table th{font-size:0.62rem;font-weight:700;letter-spacing:0.04em;color:var(--muted);text-transform:uppercase;text-align:right;padding:3px 5px;border-bottom:1px solid var(--border);}
+  .po-table th.l{text-align:left;}
+  .po-table td{padding:4px 5px;text-align:right;border-bottom:1px dashed var(--border);}
+  .po-table tbody tr:last-child td{border-bottom:none;}
+  .po-rk{color:var(--muted);font-size:0.7rem;width:18px;text-align:center !important;}
+  .po-tm{text-align:left !important;font-weight:700;}
+  .po-tm img{vertical-align:middle;margin-right:5px;}
+  .po-rec{font-family:var(--mono,monospace);color:var(--muted);}
+  .po-our{font-family:var(--mono,monospace);font-weight:700;color:var(--text);}
+  .po-mktc{font-family:var(--mono,monospace);color:var(--muted);}
+  .po-edgec{font-family:var(--mono,monospace);font-weight:600;}
+  .po-edgec.pos{color:#6fdc7e;} .po-edgec.neg{color:#c8a8ff;} .po-edgec.neu{color:var(--muted);}
+  .po-out{opacity:0.45;}
+  .po-out .po-tm{text-decoration:line-through;}
   .ft-edge { font-family: var(--mono, monospace); font-weight: 600; }
   .ft-edge.pos { color: #6fdc7e; }
   .ft-edge.neg { color: #ff7a7a; }
@@ -8448,7 +8464,15 @@ async function renderPlayoffsTab(){
   if(!teams.length){ root.innerHTML='<div class="empty">No data.</div>'; return; }
   const lgOf=d=>((d||'').slice(0,2)==='AL')?'AL':'NL';
   const W=t=>(t.composite&&t.composite.wins!=null)?t.composite.wins:-1;
+  const L=t=>(t.composite&&t.composite.losses!=null)?t.composite.losses:null;
   const PF=t=>(t.composite&&t.composite.playoff_pct!=null)?t.composite.playoff_pct:null;
+  const MK=t=>(t.market&&t.market.playoff_implied_pct!=null)?t.market.playoff_implied_pct:null;
+  const E=t=>(t.edges&&t.edges.playoff_pct!=null)?t.edges.playoff_pct:null;
+  const elim=t=>{const p=PF(t);return p!=null&&p<=0.05;};
+  const rec=t=>{const w=W(t),l=L(t);return (w>=0&&l!=null)?Math.round(w)+'-'+Math.round(l):'';};
+  const fmtPct=p=> p==null?'—' : (p<=0.05?'0%' : (p<1?'<1%':Math.round(p)+'%'));
+  const edgeCls=v=>v==null?'':(v>=3?'pos':v<=-3?'neg':'neu');
+  const fmtEdge=v=>v==null?'':((v>0?'+':'')+v.toFixed(1)+'%');
   function seedLeague(lg){
     const lt=teams.filter(t=>lgOf(t.division)===lg);
     const byDiv={}; lt.forEach(t=>{(byDiv[t.division]=byDiv[t.division]||[]).push(t);});
@@ -8456,47 +8480,57 @@ async function renderPlayoffsTab(){
     winners.sort((a,b)=>W(b)-W(a));
     const wset=new Set(winners.map(t=>t.abbr));
     const others=lt.filter(t=>!wset.has(t.abbr)).sort((a,b)=>W(b)-W(a));
-    return { seeds:[winners[0],winners[1],winners[2],others[0],others[1],others[2]],
-             hunt: others.slice(3).sort((a,b)=>(PF(b)||0)-(PF(a)||0)) };
+    const all=lt.slice().sort((a,b)=>{const pa=PF(a),pb=PF(b);return (pb==null?-1:pb)-(pa==null?-1:pa) || W(b)-W(a);});
+    return { seeds:[winners[0],winners[1],winners[2],others[0],others[1],others[2]], all };
   }
-  const edgeCls=v=>v==null?'':(v>=3?'pos':v<=-3?'neg':'neu');
-  const fmtEdge=v=>v==null?'':((v>0?'+':'')+v.toFixed(1)+'%');
-  const pct=t=>{const p=PF(t);return p!=null?Math.round(p)+'%':'—';};
   function tcell(t,seed,cls){
     if(!t) return '<div class="po-team po-empty">—</div>';
-    const e=t.edges&&t.edges.playoff_pct, mk=t.market&&t.market.playoff_implied_pct;
-    const title=(t.name||t.abbr)+': our '+pct(t)+' to make playoffs'+(mk!=null?' · market '+Math.round(mk)+'%':'')+(e!=null?' · edge '+fmtEdge(e):'');
+    const title=(t.name||t.abbr)+': '+fmtPct(PF(t))+' to make the playoffs (full-season) · market '+fmtPct(MK(t))+(E(t)!=null?' · edge '+fmtEdge(E(t)):'');
     return '<div class="po-team '+(cls||'')+'" title="'+title.replace(/"/g,'&quot;')+'">'+
       '<span class="po-seed">'+seed+'</span>'+
-      '<span class="po-logo">'+teamLogoByAbbr(t.abbr,40)+'</span>'+
-      '<span class="po-meta"><span class="po-ab">'+t.abbr+'</span><span class="po-pct">'+pct(t)+'</span>'+(e!=null?'<span class="po-edge '+edgeCls(e)+'">'+fmtEdge(e)+'</span>':'')+'</span>'+
+      '<span class="po-logo">'+teamLogoByAbbr(t.abbr,38)+'</span>'+
+      '<span class="po-meta"><span class="po-ab">'+t.abbr+' <span class="po-rec2">'+rec(t)+'</span></span>'+
+        '<span class="po-pct">'+fmtPct(PF(t))+' PO'+(E(t)!=null?' <span class="po-edge '+edgeCls(E(t))+'">'+fmtEdge(E(t))+'</span>':'')+'</span></span>'+
     '</div>';
   }
-  function huntRow(t){
-    const e=t.edges&&t.edges.playoff_pct;
-    return '<div class="po-hunt-row" title="'+(t.name||t.abbr)+'">'+
-      '<span class="po-logo sm">'+teamLogoByAbbr(t.abbr,20)+'</span>'+
-      '<span class="po-ab">'+t.abbr+'</span>'+
-      '<span class="po-pct">'+pct(t)+'</span>'+
-      (e!=null?'<span class="po-edge '+edgeCls(e)+'">'+fmtEdge(e)+'</span>':'')+
-    '</div>';
+  function tableRows(all){
+    return all.map((t,i)=>{
+      const out=elim(t);
+      return '<tr class="'+(out?'po-out':'')+'" title="'+( (t.name||t.abbr)+(out?' — eliminated':'') ).replace(/"/g,'&quot;')+'">'+
+        '<td class="po-rk">'+(i+1)+'</td>'+
+        '<td class="po-tm">'+teamLogoByAbbr(t.abbr,18)+' '+t.abbr+'</td>'+
+        '<td class="po-rec">'+rec(t)+'</td>'+
+        '<td class="po-our">'+fmtPct(PF(t))+'</td>'+
+        '<td class="po-mktc">'+fmtPct(MK(t))+'</td>'+
+        '<td class="po-edgec '+edgeCls(E(t))+'">'+(out?'':fmtEdge(E(t)))+'</td>'+
+      '</tr>';
+    }).join('');
   }
   function col(lg){
-    const {seeds,hunt}=seedLeague(lg);
+    const {seeds,all}=seedLeague(lg);
     return '<div class="po-col"><h3 class="po-lg">'+(lg==='AL'?'American League':'National League')+'</h3>'+
       '<div class="po-byes">'+
-        '<div class="po-byewrap">'+tcell(seeds[0],1,'bye')+'<span class="po-tag">BYE → DS</span></div>'+
-        '<div class="po-byewrap">'+tcell(seeds[1],2,'bye')+'<span class="po-tag">BYE → DS</span></div>'+
+        '<div class="po-byewrap">'+tcell(seeds[0],1,'bye')+'<span class="po-tag">#1 SEED · BYE</span></div>'+
+        '<div class="po-byewrap">'+tcell(seeds[1],2,'bye')+'<span class="po-tag">#2 SEED · BYE</span></div>'+
       '</div>'+
       '<div class="po-round">Wild Card Round</div>'+
       '<div class="po-match">'+tcell(seeds[2],3)+'<span class="po-vs">vs</span>'+tcell(seeds[5],6)+'</div>'+
       '<div class="po-match">'+tcell(seeds[3],4)+'<span class="po-vs">vs</span>'+tcell(seeds[4],5)+'</div>'+
-      '<div class="po-round">In the Hunt</div>'+
-      '<div class="po-hunt">'+(hunt.slice(0,5).map(huntRow).join('')||'<div class="po-hunt-row">—</div>')+'</div>'+
+      '<div class="po-round">Full League — Playoff Odds</div>'+
+      '<table class="po-table"><thead><tr>'+
+        '<th></th><th class="l">Team</th>'+
+        '<th title="Composite projected final record">Proj</th>'+
+        '<th title="OUR projected chance to finish in a playoff spot (full season)">Make PO%</th>'+
+        '<th title="Sportsbook implied odds to make the playoffs">Mkt</th>'+
+        '<th title="Our % minus the market implied %">Edge</th>'+
+      '</tr></thead><tbody>'+tableRows(all)+'</tbody></table>'+
     '</div>';
   }
   const gen=(TEAM_FUTURES.generated_at||'').slice(0,16).replace('T',' ');
-  root.innerHTML='<div class="po-note">Projected seeds by composite projected wins (PECOTA + FanGraphs + ATC/BAT/OOPSY). Top 2 division winners get a bye; seeds 3–6 play the Wild Card round (3v6, 4v5). % = our playoff odds · edge = ours − market. Updated '+gen+'.</div>'+
+  root.innerHTML=
+    '<div class="po-note"><b>Make PO%</b> = our projected chance each team finishes the season <b>in a playoff spot</b> (full-season odds — <i>not</i> a day-over-day change). '+
+    '<b>Proj</b> = composite projected final record. <b>Mkt</b> = sportsbook implied odds. <b>Edge</b> = ours − market (green = value on the team, purple = value on the field). '+
+    'Seeds set by projected wins: top 2 division winners get a bye; seeds 3–6 play the Wild Card round (3v6, 4v5). Eliminated teams are struck through. Updated '+gen+'.</div>'+
     '<div class="po-grid">'+col('AL')+col('NL')+'</div>';
 }
 
