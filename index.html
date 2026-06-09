@@ -1951,7 +1951,10 @@
     body.embed-mode:not(.force-mobile) .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     body.embed-mode:not(.force-mobile) .apx-card { container-type: inline-size; }
     body.embed-mode:not(.force-mobile) .apx-grid > .apx-card:last-child:nth-child(odd) {
-      grid-column: 1 / -1; max-width: calc(50% - 7px); margin-inline: auto; }
+      grid-column: 1 / -1;
+      width: calc(50% - 6px) !important;       /* definite width: container-type won't collapse it */
+      max-width: calc(50% - 6px) !important;   /* beat the base .apx-card max-width:100% !important */
+      justify-self: center; margin-inline: 0 !important; }
   }
   /* Compaction for a tight 2-up column (container-driven). */
   @container (max-width: 430px) {
