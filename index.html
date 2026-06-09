@@ -870,6 +870,27 @@
     color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
   .modal-close:hover { color: var(--text); }
 
+  /* Clickable game rail at the top of the modal (jump to any game). On the main
+     site the counter is absolute top-left, so push the rail down to clear it +
+     the close button; in embed mode the counter is in-flow so no offset needed. */
+  .modal-gamestrip { margin: 2.4rem 0 0.7rem; }
+  body.embed-mode .modal-gamestrip { margin: 0.2rem 0 0.7rem; }
+  .modal-gamestrip .mgs-hint { font-size: 0.7rem; color: var(--muted); text-align: center; margin-bottom: 0.4rem; }
+  .modal-gamestrip .mgs-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: thin; }
+  .modal-gamestrip .mgs-chip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer;
+    color: var(--text); font-size: 0.72rem; transition: border-color .12s, background .12s; }
+  .modal-gamestrip .mgs-chip:hover { border-color: var(--accent); background: var(--panel-hover); }
+  .modal-gamestrip .mgs-chip.mgs-cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .modal-gamestrip .mgs-teams { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .modal-gamestrip .mgs-teams img { width: 15px; height: 15px; vertical-align: middle; }
+  .modal-gamestrip .mgs-teams b { font-weight: 700; }
+  .modal-gamestrip .mgs-at { color: var(--muted); margin: 0 1px; }
+  .modal-gamestrip .mgs-proj { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); }
+  .modal-gamestrip .mgs-proj.mgs-na { opacity: 0.45; }
+  /* embed=game is locked to a single game — no rail. */
+  body.embed-mode.embed-game .modal-gamestrip { display: none !important; }
+
   .m-matchup-bar {
     display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem;
     align-items: center; background: var(--panel);
@@ -2322,6 +2343,7 @@
     <button class="modal-nav next" id="modal-next" aria-label="Next game (→)" title="Next game (→)">›</button>
     <button class="modal-close" id="modal-close" aria-label="Close">×</button>
     <div id="modal-counter" class="modal-counter"></div>
+    <div id="modal-gamestrip" class="modal-gamestrip" aria-label="Jump to another game"></div>
     <div id="modal-body"></div>
   </div>
 </div>
@@ -6315,6 +6337,38 @@ function updateModalCounter() {
   const idx = games.findIndex(g => g.gamePk === MODAL_GAME_PK);
   if (idx === -1 || !games.length) { counter.textContent = ""; return; }
   counter.textContent = `Game ${idx + 1} of ${games.length}`;
+  renderModalGameStrip();
+}
+
+// Clickable game strip at the top of the modal (like MLB's scoreboard rail) so
+// you can jump straight to any game, not just step with the arrows. Scores shown
+// are projected.
+function renderModalGameStrip() {
+  const strip = document.getElementById("modal-gamestrip");
+  if (!strip) return;
+  const games = modalGamesInOrder();
+  if (games.length < 2) { strip.innerHTML = ""; strip.style.display = "none"; return; }
+  strip.style.display = "";
+  const chips = games.map(g => {
+    const aId = g.teams.away.team.id, hId = g.teams.home.team.id;
+    const aAb = g.teams.away.team.abbreviation || teamAbbr(g.teams.away.team.name);
+    const hAb = g.teams.home.team.abbreviation || teamAbbr(g.teams.home.team.name);
+    const cur = g.gamePk === MODAL_GAME_PK;
+    const sp = (typeof sheetProjForGame === "function") ? sheetProjForGame(g.gamePk) : null;
+    const proj = (sp && sp.away_runs != null && sp.home_runs != null)
+      ? '<span class="mgs-proj">' + sp.away_runs.toFixed(1) + '\u2013' + sp.home_runs.toFixed(1) + '</span>'
+      : '<span class="mgs-proj mgs-na">\u2013</span>';
+    return '<button class="mgs-chip' + (cur ? ' mgs-cur' : '') + '" data-pk="' + g.gamePk + '" title="' + aAb + ' @ ' + hAb + '">'
+      + '<span class="mgs-teams">' + teamLogo(aId, 15) + '<b>' + aAb + '</b><span class="mgs-at">@</span>' + teamLogo(hId, 15) + '<b>' + hAb + '</b></span>'
+      + proj + '</button>';
+  }).join("");
+  strip.innerHTML = '<div class="mgs-hint">Tap a game \u2014 or use \u2039 \u203a / arrow keys \u2014 to switch \u00b7 scores are projected</div>'
+    + '<div class="mgs-row">' + chips + '</div>';
+  strip.querySelectorAll(".mgs-chip").forEach(ch => {
+    ch.onclick = (e) => { e.stopPropagation(); const pk = parseInt(ch.dataset.pk, 10); const g = modalGamesInOrder().find(x => x.gamePk === pk); if (g) openModal(g); };
+  });
+  const cur = strip.querySelector(".mgs-cur");
+  if (cur && cur.scrollIntoView) { try { cur.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {} }
 }
 
 async function openModal(game) {
