@@ -64,11 +64,19 @@
     --tier-elite: #166534; --tier-good: #15803d; --tier-bad: #b91c1c; --tier-worst: #7f1d1d;
     --fatigue-out: #b91c1c; --fatigue-fat: #166534;
   }
-  body.light-theme .grade.gr-a { background: rgba(22, 101, 52, 0.13);  }
-  body.light-theme .grade.gr-b { background: rgba(21, 128, 61, 0.10);  }
-  body.light-theme .grade.gr-c { background: rgba(100, 116, 139, 0.10); color: #475569; }
-  body.light-theme .grade.gr-d { background: rgba(185, 28, 28, 0.12);  }
-  body.light-theme .grade.gr-f { background: rgba(127, 29, 29, 0.14); }
+  body.light-theme .grade.gr-ap { background: rgba(21,128,61,0.13); color: rgb(21,128,61); }
+  body.light-theme .grade.gr-a { background: rgba(29,121,68,0.13); color: rgb(29,121,68); }
+  body.light-theme .grade.gr-am { background: rgba(38,114,76,0.13); color: rgb(38,114,76); }
+  body.light-theme .grade.gr-bp { background: rgba(46,106,83,0.13); color: rgb(46,106,83); }
+  body.light-theme .grade.gr-b { background: rgba(54,99,90,0.13); color: rgb(54,99,90); }
+  body.light-theme .grade.gr-bm { background: rgba(63,92,98,0.13); color: rgb(63,92,98); }
+  body.light-theme .grade.gr-cp { background: rgba(71,85,105,0.13); color: rgb(71,85,105); }
+  body.light-theme .grade.gr-c { background: rgba(90,76,92,0.13); color: rgb(90,76,92); }
+  body.light-theme .grade.gr-cm { background: rgba(109,66,79,0.13); color: rgb(109,66,79); }
+  body.light-theme .grade.gr-dp { background: rgba(128,56,66,0.13); color: rgb(128,56,66); }
+  body.light-theme .grade.gr-d { background: rgba(147,47,54,0.13); color: rgb(147,47,54); }
+  body.light-theme .grade.gr-dm { background: rgba(166,38,41,0.13); color: rgb(166,38,41); }
+  body.light-theme .grade.gr-f { background: rgba(185,28,28,0.13); color: rgb(185,28,28); }
 
   /* Tabs */
   .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.2rem;
@@ -682,11 +690,20 @@
   /* Colorblind-safe ladder: yellow → green → gray → blue → purple. Matches
      --tier-elite / --tier-good / --tier-bad / --tier-worst on rank chips so a
      single shape language reads across letter grades and rank pills. */
-  .grade.gr-a { background: rgba(47, 191, 106, 0.18); color: var(--tier-elite); }   /* A grades — yellow */
-  .grade.gr-b { background: rgba(116, 217, 142, 0.14); color: var(--tier-good); }   /* B grades — green */
-  .grade.gr-c { background: rgba(148, 163, 184, 0.13); color: #aab3bf; }            /* C grades — neutral gray */
-  .grade.gr-d { background: rgba(239, 143, 132, 0.16);  color: var(--tier-bad); }    /* D grades — blue */
-  .grade.gr-f { background: rgba(232, 93, 82, 0.18); color: var(--tier-worst); }  /* legacy F shim */
+  /* DataGolf-style 13-step grade scale: green (good) -> grey (neutral) -> red (bad) */
+  .grade.gr-ap { background: rgba(34,185,95,0.17); color: rgb(34,185,95); }
+  .grade.gr-a { background: rgba(53,181,108,0.17); color: rgb(53,181,108); }
+  .grade.gr-am { background: rgba(73,177,122,0.17); color: rgb(73,177,122); }
+  .grade.gr-bp { background: rgba(92,172,136,0.17); color: rgb(92,172,136); }
+  .grade.gr-b { background: rgba(111,168,149,0.17); color: rgb(111,168,149); }
+  .grade.gr-bm { background: rgba(131,164,162,0.17); color: rgb(131,164,162); }
+  .grade.gr-cp { background: rgba(150,160,176,0.17); color: rgb(150,160,176); }
+  .grade.gr-c { background: rgba(163,147,159,0.17); color: rgb(163,147,159); }
+  .grade.gr-cm { background: rgba(176,135,143,0.17); color: rgb(176,135,143); }
+  .grade.gr-dp { background: rgba(189,122,126,0.17); color: rgb(189,122,126); }
+  .grade.gr-d { background: rgba(202,109,109,0.17); color: rgb(202,109,109); }
+  .grade.gr-dm { background: rgba(215,97,93,0.17); color: rgb(215,97,93); }
+  .grade.gr-f { background: rgba(228,84,76,0.17); color: rgb(228,84,76); }
   .grade-cell { text-align: center; }
   .grade-cell .gr-na { color: var(--muted); opacity: 0.5; }
 
@@ -1795,11 +1812,19 @@
 
   /* Colorblind-friendly grade palette (yellow=elite, white=avg, purple=bad).
      Applied after the original gr-* declarations so this wins specificity. */
-  .grade.gr-a { color: #2fbf6a; background: rgba(47, 191, 106, 0.16); border: 1px solid rgba(47, 191, 106, 0.35); }
-  .grade.gr-b { color: #f5e29c; background: rgba(245, 226, 156, 0.12); border: 1px solid rgba(245, 226, 156, 0.28); }
-  .grade.gr-c { color: var(--text); background: rgba(139, 149, 161, 0.10); border: 1px solid rgba(139, 149, 161, 0.20); }
-  .grade.gr-d { color: #e85d52; background: rgba(232, 93, 82, 0.12); border: 1px solid rgba(232, 93, 82, 0.30); }
-  .grade.gr-f { color: #b794f4; background: rgba(183, 148, 244, 0.14); border: 1px solid rgba(183, 148, 244, 0.32); }
+  .grade.gr-ap { color: rgb(34,185,95); background: rgba(34,185,95,0.16); border: 1px solid rgba(34,185,95,0.33); }
+  .grade.gr-a { color: rgb(53,181,108); background: rgba(53,181,108,0.16); border: 1px solid rgba(53,181,108,0.33); }
+  .grade.gr-am { color: rgb(73,177,122); background: rgba(73,177,122,0.16); border: 1px solid rgba(73,177,122,0.33); }
+  .grade.gr-bp { color: rgb(92,172,136); background: rgba(92,172,136,0.16); border: 1px solid rgba(92,172,136,0.33); }
+  .grade.gr-b { color: rgb(111,168,149); background: rgba(111,168,149,0.16); border: 1px solid rgba(111,168,149,0.33); }
+  .grade.gr-bm { color: rgb(131,164,162); background: rgba(131,164,162,0.16); border: 1px solid rgba(131,164,162,0.33); }
+  .grade.gr-cp { color: rgb(150,160,176); background: rgba(150,160,176,0.16); border: 1px solid rgba(150,160,176,0.33); }
+  .grade.gr-c { color: rgb(163,147,159); background: rgba(163,147,159,0.16); border: 1px solid rgba(163,147,159,0.33); }
+  .grade.gr-cm { color: rgb(176,135,143); background: rgba(176,135,143,0.16); border: 1px solid rgba(176,135,143,0.33); }
+  .grade.gr-dp { color: rgb(189,122,126); background: rgba(189,122,126,0.16); border: 1px solid rgba(189,122,126,0.33); }
+  .grade.gr-d { color: rgb(202,109,109); background: rgba(202,109,109,0.16); border: 1px solid rgba(202,109,109,0.33); }
+  .grade.gr-dm { color: rgb(215,97,93); background: rgba(215,97,93,0.16); border: 1px solid rgba(215,97,93,0.33); }
+  .grade.gr-f { color: rgb(228,84,76); background: rgba(228,84,76,0.16); border: 1px solid rgba(228,84,76,0.33); }
   /* Lineup SP card: enforce a min-height so SP cards across ALL games on the
      page line up — Sean's ask. The tallest variant (with rank chip + Stuff+/Pit+
      plus line + opener tag + handedness chip) is ~82px, so we set a min that
@@ -1971,55 +1996,55 @@
      article is narrow or because we are 2-up on a phone. (Cards never get
      margin-inline:auto — that + container-type collapses them — the lone trailing
      card is centered with a DEFINITE width instead.) */
-  /* ===== EMBED CARDS = COMPACT by default (web + mobile) =====
-     Every game shows the condensed card: matchup + ML odds, projected runs/total,
-     the Projected/Confirmed badge (moved between total and edges), edge pills,
-     SP/BP rank chips, and the CON-POW-EYE-BSR-DEF grades. No ballpark/weather/ump
-     header, no pitcher names. Full detail is one tap away in the modal. The grid
-     auto-fits as many ~180px cards per row as the width allows (2-up on a phone,
-     3-4-up on a wide article). The in-modal card (.m-apx-wrap) is excluded — it
-     stays full detail. */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) {
-    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)) !important;
-    gap: 8px !important;
+  /* ===== EMBED CARD VIEWS =====
+     Default = COMPACT: start time + Projected/Confirmed badge at top, teams +
+     projected score, and edge pills. No ballpark, no SP/BP ranks, no grades.
+     The toggle flips to DETAILED (wider cards) which adds the park row, SP names
+     + ranks, BP ranks, and the CON-POW-EYE-BSR-DEF grades. Start time shows in
+     BOTH. (.m-apx-wrap = in-modal card; excluded, stays full detail.) */
+  body.embed-mode .apx-grid:not(.apx-detailed):not(.m-apx-wrap) {
+    grid-template-columns: repeat(auto-fill, minmax(min(165px, 100%), 1fr)) !important; gap: 8px !important;
   }
-  body.force-mobile .apx-grid:not(.m-apx-wrap) { gap: 7px !important; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card {
-    max-width: 100% !important; container-type: normal !important; padding: 8px 9px !important;
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) {
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)) !important; gap: 10px !important;
   }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-info2 { display: flex !important; }
-  /* strip the bulky bits */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-head2,
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-park,
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-pname { display: none !important; }
-  /* moved Projected/Confirmed badge: between total and edges */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-projbadge { display: flex !important; justify-content: center; margin: 5px 0 2px; }
-  /* matchup + numbers */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 8px 9px !important; }
+
+  /* head: start time at top (both views); stack time then badge, centered */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-head2 { display: flex !important; flex-direction: column; align-items: center; gap: 1px; margin-bottom: 3px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-hspace { display: none; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-time2 { font-size: 0.62rem; color: var(--muted); }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-luwrap { margin: 0; }
+  /* COMPACT only: no ballpark name (detailed keeps park · time) */
+  body.embed-mode .apx-grid:not(.apx-detailed):not(.m-apx-wrap) .apx-park-nm { display: none !important; }
+
+  /* COMPACT: drop park row + the whole ranks/grades strip */
+  body.embed-mode .apx-grid:not(.apx-detailed):not(.m-apx-wrap) .apx-park,
+  body.embed-mode .apx-grid:not(.apx-detailed):not(.m-apx-wrap) .apx-info2 { display: none !important; }
+
+  /* matchup + numbers (both views) */
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center { gap: 3px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center img { width: 26px !important; height: 26px !important; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr { font-size: 0.7rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.5rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center img { width: 27px !important; height: 27px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr { font-size: 0.74rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.52rem; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total .apx-mkt,
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-mkt { display: none !important; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.56rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 0.98rem; gap: 4px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.46rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total { font-size: 0.58rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-proj-num { font-size: 0.66rem; }
-  /* info2: tight, ranks-only SP/PEN, stacked grades */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 { border-top: none; margin-top: 4px; padding-top: 4px; gap: 3px; font-size: 0.6rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.54rem; gap: 5px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .apx-side-row .rank-chip { font-size: 0.52rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .grade { font-size: 0.56rem; padding: 0 1px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-gteam { min-width: 26px !important; margin-right: 3px !important; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-k { order: -1; text-align: center; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-gteam { display: inline-block; min-width: 30px; color: var(--muted); font-weight: 700; }
-  /* edges */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 4px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.52rem !important; padding: 1px 5px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.58rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 1.02rem; gap: 5px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.47rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total { font-size: 0.6rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-proj-num { font-size: 0.68rem; }
+
+  /* edge pills (both views) */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 5px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.54rem !important; padding: 1px 6px !important; }
+
+  /* DETAILED extras: park row + full info2 (SP names + ranks + grades) */
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-park { display: flex !important; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 { display: flex !important; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 6px; gap: 4px; font-size: 0.64rem; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.62rem; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .grade { font-size: 0.6rem; padding: 0 2px; }
+
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
@@ -2993,7 +3018,7 @@ function apxCardHTML(g){
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
   let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
   const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
-  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2">'+(_park?(_park+' · '):'')+_timeTxt+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
+  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
@@ -3041,8 +3066,7 @@ function apxCardHTML(g){
       '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
-  const projBadge='<div class="apx-projbadge">'+luChip+'</div>';
-  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+projBadge+edge+info+'</div>';
+  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
 
 
@@ -4442,9 +4466,13 @@ function gradeLetter(pct) {
 // scale, whose "bad" is blue). gr-a best … gr-f worst.
 function gradeCls(letter) {
   if (!letter) return '';
-  const c = letter[0];
+  const g = ('' + letter).trim().toUpperCase();
+  const map = {'A+':'gr-ap','A':'gr-a','A-':'gr-am','B+':'gr-bp','B':'gr-b','B-':'gr-bm',
+               'C+':'gr-cp','C':'gr-c','C-':'gr-cm','D+':'gr-dp','D':'gr-d','D-':'gr-dm','F':'gr-f'};
+  if (map[g]) return map[g];
+  const c = g[0];
   return c === 'A' ? 'gr-a' : c === 'B' ? 'gr-b' : c === 'C' ? 'gr-c'
-       : c === 'D' ? 'gr-d' : 'gr-c';
+       : c === 'D' ? 'gr-d' : c === 'F' ? 'gr-f' : 'gr-c';
 }
 function gradeCellHTML(pct, label, extra="") {
   const l = gradeLetter(pct);
@@ -8973,6 +9001,7 @@ document.addEventListener("click", hitTrendDelegate);
 
   // --- Embed mode ---
   document.body.classList.add('embed-mode', 'embed-' + embed);
+  APX_DETAILED = false;   // embeds open in COMPACT view; toggle flips to detailed
   if (params.get('mobile') === '1' || params.get('m') === '1') document.body.classList.add('force-mobile');
 
   // postMessage auto-resize. ResizeObserver covers most cases; the burst poll
