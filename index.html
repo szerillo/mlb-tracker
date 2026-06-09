@@ -1460,7 +1460,7 @@
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
-  .apx-projbadge{display:flex;justify-content:center;margin:5px 0 3px;}
+  .apx-projbadge{display:flex;justify-content:center;margin:2px 0 2px;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
@@ -2008,7 +2008,7 @@
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) {
     grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)) !important; gap: 10px !important;
   }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 8px 9px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 7px 8px !important; }
 
   /* head: start time at top (both views); stack time then badge, centered */
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-head2 { display: flex !important; flex-direction: column; align-items: center; gap: 0; margin-bottom: 1px; }
@@ -2036,8 +2036,8 @@
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-proj-num { font-size: 0.68rem; }
 
   /* edge pills (both views) */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 5px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.54rem !important; padding: 1px 6px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-direction: column; gap: 3px; margin-top: 2px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.62rem !important; padding: 2px 6px !important; width: 100%; box-sizing: border-box; text-align: center; }
 
   /* DETAILED extras: park row + full info2 (SP names + ranks + grades) */
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-park { display: flex !important; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
@@ -8748,9 +8748,9 @@ async function renderPlayoffsTab(){
   const fmtAm=o=>o==null?'—':(o>0?'+'+o:''+o);
   const fairAm=p=>{ if(p==null) return null; const q=Math.max(0.2,Math.min(99.8,p)); return q>50?Math.round(-(q/(100-q))*100):Math.round(((100-q)/q)*100); };
   const E=t=>(t.edges&&t.edges.playoff_pct!=null)?t.edges.playoff_pct:null;
-  const elim=t=>{const p=PF(t);return p!=null&&p<=0.05;};
+  const elim=t=>{const m=t.market||{}; return (m.playoff_odds==null && m.playoff_implied_pct==null);};  // eliminated only when the book has pulled playoff odds (off the board) — not just a low projection
   const rec=t=>{const w=W(t),l=L(t);return (w>=0&&l!=null)?Math.round(w)+'-'+Math.round(l):'';};
-  const fmtPct=p=> p==null?'—' : (p<=0.05?'0%' : (p<1?'<1%':Math.round(p)+'%'));
+  const fmtPct=p=> p==null?'—' : (p<1?'<1%':Math.round(p)+'%');  // never show 0% for a live team
   const edgeCls=v=>v==null?'':(v>=3?'pos':v<=-3?'neg':'neu');
   const fmtEdge=v=>v==null?'':((v>0?'+':'')+v.toFixed(1)+'%');
   function seedLeague(lg){
