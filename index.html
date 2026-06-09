@@ -2092,15 +2092,15 @@
      lineup/bullpen tables that the mobile rules thinned out are restored to
      full names + columns. The modal can scroll sideways if a full table is
      wider than a phone. ---- */
+  /* Modal = FULL detailed view everywhere (site, mobile site, all embeds). The
+     top scoreboard card never compacts and shows full grades + SP/PEN; lineup /
+     bullpen tables keep full names + every column, scrolling sideways if needed. */
   .m-apx-wrap .apx-card { container-type: normal !important; }
-  body.embed-mode .modal .lineup-table .nm-full,
-  body.force-mobile .modal .lineup-table .nm-full { display: inline !important; }
-  body.embed-mode .modal .lineup-table .nm-abbr,
-  body.force-mobile .modal .lineup-table .nm-abbr { display: none !important; }
-  body.embed-mode .modal .lineup-table .lu-kbb,
-  body.force-mobile .modal .lineup-table .lu-kbb { display: table-cell !important; }
-  body.embed-mode .modal .bpt-stf,
-  body.force-mobile .modal .bpt-stf { display: table-cell !important; }
+  .m-apx-wrap .apx-side-a, .m-apx-wrap .apx-side-h { white-space: normal; }
+  .modal .lineup-table .nm-full { display: inline !important; }
+  .modal .lineup-table .nm-abbr { display: none !important; }
+  .modal .lineup-table .lu-kbb { display: table-cell !important; }
+  .modal .bpt-stf { display: table-cell !important; }
   .modal .m-lineup-box, .modal .m-bp-box { overflow-x: auto; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
@@ -6382,7 +6382,7 @@ async function openModal(game) {
   const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
-    <div class="apx-grid m-apx-wrap" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
+    <div class="apx-grid m-apx-wrap apx-detailed" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
 
     <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
     <div class="m-env-row">

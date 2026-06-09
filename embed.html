@@ -110,10 +110,33 @@ function iframeFor(kind, g){
   // vertical space and nothing below it overlaps — the script just trims it to
   // the exact height once it runs.
   const initH = kind==='slate' ? 1900 : 1150;
-  return `${open}
+  const wid = id+"-wrap";
+  return `<div class="bartolo-embed" id="${wid}" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">
   <iframe id="${id}" src="${src}" scrolling="no" title="${title}" style="${IF(initH)}"></iframe>
 </div>
-<script>(function(){var f=document.getElementById("${id}");if(!f)return;window.addEventListener("message",function(e){if(e&&e.data&&e.data.type==="mlb-tracker-resize"&&e.source===f.contentWindow){f.style.setProperty("height",(e.data.height+8)+"px","important");}});})();<\/script>`;
+<script>(function(){
+  var ID="${id}", WID="${wid}", H=${initH};
+  function fix(){
+    var f=document.getElementById(ID); if(!f) return;
+    var w=document.getElementById(WID), p=f.parentElement;
+    // Neutralize any wrapper a theme/plugin (fitVids, Jetpack, oEmbed) injected
+    // around our iframe — that aspect-ratio/absolute box is what makes it act
+    // like a fixed image and lets page content overlap it.
+    while(p && p!==w){ p.style.cssText="position:static!important;padding:0!important;margin:0!important;height:auto!important;max-width:none!important;width:auto!important;display:block!important;background:transparent!important;aspect-ratio:auto!important"; p=p.parentElement; }
+    var st=f.style;
+    st.setProperty("position","relative","important"); st.setProperty("width","100%","important");
+    st.setProperty("max-width","100%","important"); st.setProperty("height",H+"px","important");
+    st.setProperty("max-height","none","important"); st.setProperty("aspect-ratio","auto","important");
+    st.setProperty("inset","auto","important");
+    if(w){ w.style.setProperty("z-index","2147483647","important"); w.style.setProperty("position","relative","important"); w.style.setProperty("isolation","isolate","important"); w.style.setProperty("background","#0d1117","important"); }
+  }
+  window.addEventListener("message",function(e){
+    var f=document.getElementById(ID);
+    if(f && e && e.data && e.data.type==="mlb-tracker-resize" && e.source===f.contentWindow){ H=e.data.height+8; fix(); }
+  });
+  // Re-assert repeatedly so theme scripts that run after load can't re-break it.
+  [0,200,600,1500,3500].forEach(function(t){setTimeout(fix,t);});
+})();<\/script>`;
 }
 
 async function copyText(txt, btn){
