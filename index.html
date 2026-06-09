@@ -3014,8 +3014,8 @@ function apxCardHTML(g){
   const _na='<span class="apx-cr-na">\u2014</span>';
   const aBpRk=_apxPenRank(aId), hBpRk=_apxPenRank(hId);
   const cranks='<div class="apx-cranks">'+
-    '<div class="apx-cr-row"><span class="apx-cr-lbl">SP</span>'+(aRk||_na)+'<span class="apx-cr-sep">vs</span>'+(hRk||_na)+'</div>'+
-    '<div class="apx-cr-row"><span class="apx-cr-lbl">BP</span>'+(aBpRk||_na)+'<span class="apx-cr-sep">vs</span>'+(hBpRk||_na)+'</div>'+
+    '<div class="apx-cr-row">'+(aRk||('SP '+_na))+'<span class="apx-cr-sep">vs</span>'+(hRk||_na)+'</div>'+
+    '<div class="apx-cr-row">'+(aBpRk||('BP '+_na))+'<span class="apx-cr-sep">vs</span>'+(hBpRk||_na)+'</div>'+
   '</div>';
   return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+cranks+'</div>';
 }
