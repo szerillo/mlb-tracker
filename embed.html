@@ -34,7 +34,8 @@
 </head>
 <body>
   <h1>B.A.R.T.O.L.O. — Embed Builder</h1>
-  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste into a WordPress <b>Custom HTML</b> block. The copied code is overlap-proof (isolated stacking context + opaque background) and auto-sizes the post to the embed. Tap <b>📱 Mobile</b> to preview the phone layout.</div>
+  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste into a WordPress <b>Custom HTML</b> block (not the visual editor). The code is hardened so themes/plugins cannot treat it like a video (forcing a fixed aspect-ratio box) and so injected ad / email-signup overlays cannot bleed over it: it uses a max z-index isolated layer, an opaque background, !important sizing resets, and auto-sizes the post to the embed. Tap <b>📱 Mobile</b> to preview the phone layout.</div>
+  <div class="sub" style="margin-top:.4rem;font-size:.78rem;opacity:.85">Still seeing a signup form or ad on top? That element is injected by a plugin as a page-level fixed/absolute overlay and has to be turned off for the post (in-content ad slot or email capture). Also confirm you pasted into a <b>Custom HTML</b> block so the auto-size script is not stripped.</div>
 
   <div class="bar">
     <label>Date <input type="date" id="date"></label>
@@ -73,7 +74,7 @@ const LISTENER = `<script>
 window.addEventListener('message', function(e){
   if(!e.data || e.data.type!=='mlb-tracker-resize') return;
   document.querySelectorAll('iframe').forEach(function(f){
-    if(f.contentWindow===e.source) f.style.height = e.data.height+'px';
+    if(f.contentWindow===e.source){ f.style.setProperty('height',(e.data.height+8)+'px','important'); }
   });
 });
 <\/script>`;
@@ -86,23 +87,33 @@ function iframeFor(kind, g){
   if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
   else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
 
-  // Wrapper isolates the embed in its own stacking context (above the page) and
-  // paints an opaque background, so page text / floating videos can't render over
-  // or bleed through it.
-  const open = `<div class="bartolo-embed" style="position:relative;z-index:9999;isolation:isolate;background:#0d1117;">`;
+  // Wrapper: own stacking context at MAX z-index + opaque bg, so plugin-injected
+  // email forms / in-content ads / floating videos can't render over or bleed
+  // through the embed. The iframe carries !important resets so themes/plugins
+  // (Jetpack, fitVids, oEmbed) can't force it into an absolute aspect-ratio
+  // "video" box — which is what makes it behave like a fixed image and ignore
+  // the height we send.
+  const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
+  // !important resets applied inline so they beat theme/plugin stylesheets.
+  const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
 
   if(mode==='fixed'){
-    const h = kind==='slate' ? 1500 : 1000;
+    const h = kind==='slate' ? 2400 : 1200;
     return `${open}
-  <iframe src="${src}" style="width:100%;height:${h}px;border:0;display:block;background:#0d1117" scrolling="yes" title="${title}"></iframe>
+  <iframe src="${src}" scrolling="yes" title="${title}" style="${IF(h)}"></iframe>
 </div>`;
   }
   // Auto-grow: self-contained — each snippet carries its own scoped resize
   // listener so it fits its content exactly and the article grows with it.
+  // The initial height is a deliberate OVER-estimate so that even if the host
+  // strips the <script> (some WP setups do), the embed still reserves enough
+  // vertical space and nothing below it overlaps — the script just trims it to
+  // the exact height once it runs.
+  const initH = kind==='slate' ? 1900 : 1150;
   return `${open}
-  <iframe id="${id}" src="${src}" style="width:100%;min-height:600px;border:0;display:block;background:#0d1117" scrolling="no" title="${title}"></iframe>
+  <iframe id="${id}" src="${src}" scrolling="no" title="${title}" style="${IF(initH)}"></iframe>
 </div>
-<script>(function(){var f=document.getElementById("${id}");if(!f)return;window.addEventListener("message",function(e){if(e.data&&e.data.type==="mlb-tracker-resize"&&e.source===f.contentWindow){f.style.height=e.data.height+"px";f.style.minHeight="0";}});})();<\/script>`;
+<script>(function(){var f=document.getElementById("${id}");if(!f)return;window.addEventListener("message",function(e){if(e&&e.data&&e.data.type==="mlb-tracker-resize"&&e.source===f.contentWindow){f.style.setProperty("height",(e.data.height+8)+"px","important");}});})();<\/script>`;
 }
 
 async function copyText(txt, btn){
