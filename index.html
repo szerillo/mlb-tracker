@@ -2095,7 +2095,8 @@
   /* Modal = FULL detailed view everywhere (site, mobile site, all embeds). The
      top scoreboard card never compacts and shows full grades + SP/PEN; lineup /
      bullpen tables keep full names + every column, scrolling sideways if needed. */
-  .m-apx-wrap .apx-card { container-type: normal !important; }
+  .m-apx-wrap { width: 100% !important; }
+  .m-apx-wrap .apx-card { container-type: normal !important; max-width: none !important; width: 100% !important; margin: 0 !important; box-sizing: border-box; }
   .m-apx-wrap .apx-side-a, .m-apx-wrap .apx-side-h { white-space: normal; }
   .modal .lineup-table .nm-full { display: inline !important; }
   .modal .lineup-table .nm-abbr { display: none !important; }
