@@ -1460,7 +1460,7 @@
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
-  .apx-projbadge{display:none;}
+  .apx-projbadge{display:flex;justify-content:center;margin:5px 0 3px;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
@@ -2011,7 +2011,7 @@
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 8px 9px !important; }
 
   /* head: start time at top (both views); stack time then badge, centered */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-head2 { display: flex !important; flex-direction: column; align-items: center; gap: 1px; margin-bottom: 3px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-head2 { display: flex !important; flex-direction: column; align-items: center; gap: 0; margin-bottom: 1px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-hspace { display: none; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-time2 { font-size: 0.62rem; color: var(--muted); }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-luwrap { margin: 0; }
@@ -2044,6 +2044,16 @@
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 { display: flex !important; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 6px; gap: 4px; font-size: 0.64rem; }
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.62rem; }
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .grade { font-size: 0.6rem; padding: 0 2px; }
+  /* Detailed embed: STACK grade rows (away / label / home) so 5 grades per team
+     never bleed off a ~330px column; let SP/PEN name rows wrap too. */
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-grades-row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-grades-row .apx-side-k { order: -1; text-align: center; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-grades-row .apx-gteam { display: inline-block; min-width: 30px; color: var(--muted); font-weight: 700; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .grade { font-size: 0.56rem !important; padding: 0 1.5px !important; }
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .apx-side-row:not(.apx-grades-row) .apx-side-a,
+  body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-info2 .apx-side-row:not(.apx-grades-row) .apx-side-h { white-space: normal; }
 
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
@@ -3018,7 +3028,7 @@ function apxCardHTML(g){
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
   let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
   const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
-  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span><span class="apx-luwrap">'+luChip+'</span></div>';
+  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span></div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
@@ -3066,7 +3076,8 @@ function apxCardHTML(g){
       '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
-  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
+  const projBadge='<div class="apx-projbadge">'+luChip+'</div>';
+  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+projBadge+edge+info+'</div>';
 }
 
 
