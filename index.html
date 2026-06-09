@@ -1892,6 +1892,9 @@
   body.embed-mode > header { display: block !important; text-align: left !important; padding: 0.5rem 0.7rem 0 !important; }
   /* Last header line (date · loaded · live) centered + snug to the board. */
   body.embed-mode .hdr-meta { text-align: center !important; margin: 0.05rem 0 0 !important; }
+  /* shot mode (embed-tool section screenshots): the builder already shows a header — drop the in-iframe one */
+  body.shot-mode > header, body.shot-mode > footer { display: none !important; }
+  body.shot-mode #tab-scoreboard { padding-top: 0 !important; }
   body.embed-mode .controls { display: none !important; }  /* its inner controls are all hidden — drop the empty bar */
   body.embed-mode .hdr-built { display: block !important; margin-top: 0.1rem; }
   body.embed-mode .hdr-built .hdr-sep { display: none !important; }
@@ -3232,7 +3235,7 @@ function buildShotBar(game){
   document.body.insertBefore(bar, document.body.firstChild);
 }
 async function bootShotMode(params){
-  document.body.classList.add('embed-mode','embed-scoreboard');
+  document.body.classList.add('embed-mode','embed-scoreboard','shot-mode');
   if(params.get('mobile')==='1'||params.get('m')==='1') document.body.classList.add('force-mobile');
   const reqDate=params.get('date');
   try{ await loadForDate(reqDate||today()); }catch(e){ console.error('shot load failed',e); }
