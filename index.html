@@ -2097,7 +2097,7 @@
      bullpen tables keep full names + every column, scrolling sideways if needed. */
   .m-apx-wrap { width: 100% !important; }
   .m-apx-wrap .apx-card { container-type: normal !important; max-width: none !important; width: 100% !important; margin: 0 !important; box-sizing: border-box; }
-  .m-apx-wrap .apx-side-a, .m-apx-wrap .apx-side-h { white-space: normal; }
+  .m-apx-wrap .apx-side-a, .m-apx-wrap .apx-side-h { white-space: normal; text-align: center; }
   .modal .lineup-table .nm-full { display: inline !important; }
   .modal .lineup-table .nm-abbr { display: none !important; }
   .modal .lineup-table .lu-kbb { display: table-cell !important; }
@@ -8929,11 +8929,31 @@ document.addEventListener("click", hitTrendDelegate);
   // postMessage auto-resize. ResizeObserver covers most cases; the burst poll
   // + slow poll cover async data renders the observer misses (charts, etc).
   let lastH = 0;
+  // Measure the TRUE bottom of real content (the footer is the last element, or the
+  // modal when one is open) instead of scrollHeight. scrollHeight tracks the
+  // iframe's OWN height whenever something fills the viewport, which makes the
+  // embed grow without bound inside some hosts (every resize tick adds a little).
+  // Anchoring to the footer's document position is viewport-independent, so the
+  // reported height is stable no matter how tall the parent sets the iframe.
+  function measuredHeight() {
+    let bottom = 0;
+    const cands = [
+      document.querySelector('.modal-bg.active'),
+      document.querySelector('body.embed-mode > footer')
+    ];
+    for (const el of cands) {
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      const b = r.bottom + window.scrollY;
+      if (b > bottom) bottom = b;
+    }
+    if (!bottom) {
+      bottom = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    }
+    return Math.ceil(bottom);
+  }
   function sendHeight() {
-    const h = Math.max(
-      document.documentElement.scrollHeight,
-      document.body.scrollHeight
-    );
+    const h = measuredHeight();
     if (Math.abs(h - lastH) > 4) {
       try {
         window.parent.postMessage(
