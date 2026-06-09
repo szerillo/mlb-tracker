@@ -1422,7 +1422,6 @@
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
-  .apx-cranks{display:none;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
@@ -1985,6 +1984,10 @@
     .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
     .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
     .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
+    /* tight column: SP/BP rows keep their position above the grades but show
+       ranks only (drop pitcher names + bullpen fatigue tags). */
+    .apx-card .apx-pname { display: none !important; }
+    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.58rem; gap: 6px; }
   }
   /* ---- Tier 2 (<=270px column): genuine phone column, two-up. Strip to the
      essentials + grades: matchup, projected runs/total, win%, and the
@@ -1995,8 +1998,7 @@
        name rows). Keep matchup + ML odds, projected runs/total, win%, the edge
        pills, the grade rows, and a chips-only SP/BP rank line. */
     .apx-card .apx-head2,
-    .apx-card .apx-park,
-    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { display: none !important; }
+    .apx-card .apx-park { display: none !important; }
     .apx-card .apx-info2 { border-top: none; margin-top: 4px; padding-top: 4px; gap: 3px; }
     .apx-card .apx-center { gap: 3px; }
     .apx-card .apx-center img { width: 26px !important; height: 26px !important; }
@@ -2011,15 +2013,12 @@
     .apx-card .apx-proj-num { font-size: 0.66rem; }
     .apx-card .apx-info2 .grade { font-size: 0.56rem; padding: 0 1px; }
     .apx-card .apx-gteam { min-width: 26px !important; margin-right: 3px !important; }
+    /* SP/PEN rank rows: ranks only (names hidden at the <=430 tier), tightened */
+    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.54rem; gap: 5px; }
+    .apx-card .apx-info2 .apx-side-row .rank-chip { font-size: 0.52rem; }
     /* edge pills */
     .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 4px; }
     .apx-card .apx-edgebar .apx-pill { font-size: 0.52rem !important; padding: 1px 5px !important; }
-    /* compact SP/BP rank line */
-    .apx-card .apx-cranks { display: flex !important; flex-direction: column; align-items: center; gap: 1px; margin-top: 4px; font-size: 0.54rem; color: var(--muted); }
-    .apx-card .apx-cr-row { display: flex; align-items: center; gap: 4px; }
-    .apx-card .apx-cr-lbl { font-weight: 700; min-width: 18px; text-align: right; }
-    .apx-card .apx-cr-sep { opacity: 0.55; }
-    .apx-card .apx-cranks .rank-chip { font-size: 0.52rem; }
   }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
@@ -2087,6 +2086,22 @@
     body.embed-mode.embed-scoreboard .modal-nav.prev { left: 0 !important; }
     body.embed-mode.embed-scoreboard .modal-nav.next { right: 0 !important; }
   }
+
+  /* ---- Modal = FULL detailed view, even when opened from a compact mobile /
+     embed scoreboard card. The top matchup card never compacts, and the
+     lineup/bullpen tables that the mobile rules thinned out are restored to
+     full names + columns. The modal can scroll sideways if a full table is
+     wider than a phone. ---- */
+  .m-apx-wrap .apx-card { container-type: normal !important; }
+  body.embed-mode .modal .lineup-table .nm-full,
+  body.force-mobile .modal .lineup-table .nm-full { display: inline !important; }
+  body.embed-mode .modal .lineup-table .nm-abbr,
+  body.force-mobile .modal .lineup-table .nm-abbr { display: none !important; }
+  body.embed-mode .modal .lineup-table .lu-kbb,
+  body.force-mobile .modal .lineup-table .lu-kbb { display: table-cell !important; }
+  body.embed-mode .modal .bpt-stf,
+  body.force-mobile .modal .bpt-stf { display: table-cell !important; }
+  .modal .m-lineup-box, .modal .m-bp-box { overflow-x: auto; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2993,8 +3008,8 @@ function apxCardHTML(g){
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
   const aRk=aSPn?_apxRank(aSPn):'', hRk=hSPn?_apxRank(hSPn):'';
-  const aSP=aSPn?(shortName(aSPn)+_apxHand(aSPn)+(aRk?' '+aRk:'')):'TBD';
-  const hSP=hSPn?((hRk?hRk+' ':'')+shortName(hSPn)+_apxHand(hSPn)):'TBD';
+  const aSP=aSPn?('<span class="apx-pname">'+shortName(aSPn)+_apxHand(aSPn)+'</span>'+(aRk?' '+aRk:'')):'<span class="apx-pname">TBD</span>';
+  const hSP=hSPn?((hRk?hRk+' ':'')+'<span class="apx-pname">'+shortName(hSPn)+_apxHand(hSPn)+'</span>'):'<span class="apx-pname">TBD</span>';
   const ga=_apxTeamGrades(g,'away'), gh=_apxTeamGrades(g,'home');
   const aOR=(typeof teamOffenseRank==='function')?teamOffenseRank(aAb):null, hOR=(typeof teamOffenseRank==='function')?teamOffenseRank(hAb):null;
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
@@ -3002,22 +3017,14 @@ function apxCardHTML(g){
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('PEN', _apxPenTag(away)+' '+_apxPenRank(aId), _apxPenRank(hId)+' '+_apxPenTag(home))+
+    sideRow('PEN', '<span class="apx-pname">'+_apxPenTag(away)+'</span> '+_apxPenRank(aId), _apxPenRank(hId)+' <span class="apx-pname">'+_apxPenTag(home)+'</span>')+
     '<div class="apx-side-row apx-grades-row">'+
       '<span class="apx-side-a"><b class="apx-gteam">'+aAb+'</b>'+gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def)+'</span>'+
       '<span class="apx-side-k">CON·POW·EYE·BSR·DEF</span>'+
       '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
-  // Compact SP/BP rank line — hidden everywhere except the ~185px phone 2-up
-  // (Tier-2 @container), where the verbose SP/PEN name rows are dropped.
-  const _na='<span class="apx-cr-na">\u2014</span>';
-  const aBpRk=_apxPenRank(aId), hBpRk=_apxPenRank(hId);
-  const cranks='<div class="apx-cranks">'+
-    '<div class="apx-cr-row">'+(aRk||('SP '+_na))+'<span class="apx-cr-sep">vs</span>'+(hRk||_na)+'</div>'+
-    '<div class="apx-cr-row">'+(aBpRk||('BP '+_na))+'<span class="apx-cr-sep">vs</span>'+(hBpRk||_na)+'</div>'+
-  '</div>';
-  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+cranks+'</div>';
+  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
 }
 
 
