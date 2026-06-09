@@ -1931,18 +1931,18 @@
      CONTAINER, so when its column gets narrow (2-up on a mid-width article, or a
      phone) the dense SP/bullpen/grades strip compacts and the detailed card still
      fits — no horizontal bleed. */
-  body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; container-type: inline-size; }
-  body.embed-mode .apx-grid { grid-template-columns: 1fr !important; }   /* phones: 1 game per row */
+  body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; }
+  body.embed-mode .apx-grid { grid-template-columns: 1fr !important; }   /* default: 1 game per row */
+  /* Wider embeds (article ≥620px), NOT ?mobile=1: 2 games side-by-side. Each card
+     is a CONTAINER so a tight 2-up column compacts internally. container-type is
+     scoped to this case only — applying it to the 1-up layout collapses the card. */
   @media (min-width: 620px) {
-    body.embed-mode .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    /* center a lone trailing card (odd game count) under the two columns */
-    body.embed-mode .apx-grid > .apx-card:last-child:nth-child(odd) {
+    body.embed-mode:not(.force-mobile) .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    body.embed-mode:not(.force-mobile) .apx-card { container-type: inline-size; }
+    body.embed-mode:not(.force-mobile) .apx-grid > .apx-card:last-child:nth-child(odd) {
       grid-column: 1 / -1; max-width: calc(50% - 7px); margin-inline: auto; }
   }
-  /* ?mobile=1 forces the 1-up phone layout at any width */
-  body.force-mobile .apx-grid { grid-template-columns: 1fr !important; }
-  body.force-mobile .apx-card { max-width: 440px !important; margin-inline: auto; }
-  /* Card-width-driven compaction — fires for a tight 2-up column OR a phone. */
+  /* Compaction for a tight 2-up column (container-driven). */
   @container (max-width: 430px) {
     .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem; }
     .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px; padding-right: 1px; }
@@ -1952,6 +1952,21 @@
     .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
     .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
   }
+  /* Phones (≤560) + ?mobile=1: stay 1-up and compact via media rules (no
+     container-type, so the card never collapses). */
+  @media (max-width: 560px) {
+    body.embed-mode .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
+    body.embed-mode .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
+  }
+  body.force-mobile .apx-grid { grid-template-columns: 1fr !important; }
+  body.force-mobile .apx-card { max-width: 440px !important; margin-inline: auto; }
+  body.force-mobile .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
+  body.force-mobile .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
+  body.force-mobile .apx-grades-row { display: flex !important; flex-direction: column; align-items: center; gap: 2px; }
+  body.force-mobile .apx-grades-row .apx-side-k { order: -1; text-align: center; }
+  body.force-mobile .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
+  body.force-mobile .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
+  body.force-mobile .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
