@@ -2098,6 +2098,21 @@
   .m-apx-wrap { width: 100% !important; }
   .m-apx-wrap .apx-card { container-type: normal !important; max-width: none !important; width: 100% !important; margin: 0 !important; box-sizing: border-box; }
   .m-apx-wrap .apx-side-a, .m-apx-wrap .apx-side-h { white-space: normal; text-align: center; }
+  /* Mobile modal scoreboard card: keep full detail but shrink the matchup so the
+     team abbr / runs / win% never collide, pull the total up under the runs, and
+     shrink the edge pills. (apx-mid min-width:120 was forcing the overlap.) */
+  @media (max-width: 560px) {
+    .m-apx-wrap .apx-center { gap: 4px; align-items: flex-start; }
+    .m-apx-wrap .apx-center img { width: 30px !important; height: 30px !important; }
+    .m-apx-wrap .apx-abbr { font-size: 0.8rem; }
+    .m-apx-wrap .apx-mid { min-width: 0; flex: 0 1 auto; }
+    .m-apx-wrap .apx-runs { font-size: 1.15rem; gap: 6px; }
+    .m-apx-wrap .apx-runs-lbl { font-size: 0.5rem; }
+    .m-apx-wrap .apx-total { font-size: 0.66rem; margin-top: 2px; }
+    .m-apx-wrap .apx-wp { font-size: 0.6rem; }
+    .m-apx-wrap .apx-edgebar { gap: 5px; flex-wrap: wrap; justify-content: center; }
+    .m-apx-wrap .apx-edgebar .apx-pill { font-size: 0.62rem; padding: 2px 7px; }
+  }
   .modal .lineup-table .nm-full { display: inline !important; }
   .modal .lineup-table .nm-abbr { display: none !important; }
   .modal .lineup-table .lu-kbb { display: table-cell !important; }
