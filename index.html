@@ -3143,6 +3143,96 @@ async function exportScoreboardPNG(){
   }catch(e){ alert('PNG export failed: '+e.message); }
   finally{ if(btn){btn.textContent=oldT;btn.disabled=false;} }
 }
+
+// ---- Modal-section PNG export (used by ?shot= mode + embed builder) ----
+async function _pngRasterizeLogos(stage){
+  const cache={};
+  async function logoData(url){ if(cache[url])return cache[url]; try{
+    const r=await fetch(url,{mode:'cors'}); const svg=await r.text();
+    const svgUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+    const img=new Image(); img.decoding='sync';
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=svgUrl;});
+    const sz=120,c=document.createElement('canvas');c.width=sz;c.height=sz;const ctx=c.getContext('2d');
+    let iw=img.naturalWidth||sz,ih=img.naturalHeight||sz;const k=Math.min(sz/iw,sz/ih);const dw=iw*k,dh=ih*k;
+    ctx.clearRect(0,0,sz,sz);ctx.drawImage(img,(sz-dw)/2,(sz-dh)/2,dw,dh);
+    const png=c.toDataURL('image/png');cache[url]=png;return png;
+  }catch(e){return url;} }
+  const imgs=stage.querySelectorAll('img');
+  await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&(im.src.indexOf('mlbstatic')>=0||im.src.indexOf('.svg')>=0)){ im.src=await logoData(im.src); } }catch(e){} }));
+}
+async function exportModalSectionPNG(node, title, width, slug){
+  if(!node){ alert('That section is not available for this game.'); return; }
+  if(typeof html2canvas==='undefined'){ alert('Image library still loading — try again in a moment.'); return; }
+  const W=width||900;
+  const clone=node.cloneNode(true);
+  clone.querySelectorAll('details').forEach(d=>d.setAttribute('open',''));
+  clone.style.margin='0';
+  const brandHTML=document.querySelector('.brand')?document.querySelector('.brand').outerHTML:'<h1 style="margin:0;font-size:20px;color:#fff;">B.A.R.T.O.L.O.</h1>';
+  const stage=document.createElement('div');
+  stage.style.cssText='position:fixed;left:-99999px;top:0;width:'+W+'px;background:#0d1117;padding:22px 22px 16px;box-sizing:border-box;font-family:Inter,sans-serif;color:#e6e9ef;';
+  stage.innerHTML='<div style="display:flex;align-items:center;gap:12px;">'+brandHTML+'</div>'+
+    '<div style="font-size:13px;color:#9aa4b2;font-weight:700;margin:8px 0 12px;letter-spacing:.04em;text-transform:uppercase;">'+title+'</div>';
+  stage.appendChild(clone);
+  stage.insertAdjacentHTML('beforeend','<div style="margin-top:14px;font-size:12px;color:#9aa4b2;font-weight:700;text-align:right;">Built by @SeanZerillo</div>');
+  document.body.appendChild(stage);
+  try{
+    await _pngRasterizeLogos(stage);
+    const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:W+40});
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='bartolo-'+(slug||'section')+'.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),6000);
+  }catch(e){ alert('PNG failed: '+e.message); }
+  finally{ stage.remove(); }
+}
+function buildShotBar(game){
+  const aAb=game.teams.away.team.abbreviation||teamAbbr(game.teams.away.team.name);
+  const hAb=game.teams.home.team.abbreviation||teamAbbr(game.teams.home.team.name);
+  const tag=(aAb+'-'+hAb).toLowerCase();
+  const secs=[...document.querySelectorAll('#modal-body .m-sec')];
+  const byTitle=(t)=>secs.find(sx=>{const h=sx.querySelector('.m-section-header');return h&&h.textContent.toLowerCase().includes(t);});
+  const matchup=document.querySelector('#modal-body .m-apx-wrap');
+  const items=[
+    ['Matchup', matchup, 460, 'matchup'],
+    ['Weather · Park · Umpire', byTitle('weather'), 900, 'env'],
+    ['Starting Pitchers', byTitle('starting'), 940, 'sp'],
+    ['Bullpens', byTitle('bullpen'), 1000, 'bullpens'],
+    ['Lineups', byTitle('lineup'), 1040, 'lineups'],
+  ];
+  const bar=document.createElement('div');
+  bar.id='shot-bar';
+  bar.style.cssText='position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;background:#0d1117;border-bottom:1px solid #232a36;padding:10px;font-family:Inter,sans-serif;';
+  const lbl=document.createElement('span');
+  lbl.style.cssText='color:#9aa4b2;font-size:13px;font-weight:700;margin-right:4px;';
+  lbl.textContent=aAb+' @ '+hAb+' — tap to download a section PNG:';
+  bar.appendChild(lbl);
+  items.forEach(([label,node,w,slug])=>{
+    if(!node)return;
+    const b=document.createElement('button');
+    b.textContent='\uD83D\uDCF8 '+label;
+    b.style.cssText='background:#1b2230;color:#e6e9ef;border:1px solid #2c3543;border-radius:7px;padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;';
+    b.onmouseenter=()=>{b.style.borderColor='#5eead4';};
+    b.onmouseleave=()=>{b.style.borderColor='#2c3543';};
+    b.onclick=()=>exportModalSectionPNG(node,label,w,tag+'-'+slug);
+    bar.appendChild(b);
+  });
+  document.body.insertBefore(bar, document.body.firstChild);
+}
+async function bootShotMode(params){
+  document.body.classList.add('embed-mode');
+  if(params.get('mobile')==='1'||params.get('m')==='1') document.body.classList.add('force-mobile');
+  const reqDate=params.get('date');
+  try{ await loadForDate(reqDate||today()); }catch(e){ console.error('shot load failed',e); }
+  try{ await loadSheetProjections(); }catch(e){}
+  const pk=params.get('pk'); const matchup=(params.get('matchup')||'').toUpperCase();
+  let game=null;
+  if(pk) game=CURRENT_GAMES.find(x=>String(x.gamePk)===String(pk));
+  if(!game && matchup){ const [a,h]=matchup.split('-'); game=CURRENT_GAMES.find(x=>{const aa=(x.teams.away.team.abbreviation||teamAbbr(x.teams.away.team.name)).toUpperCase();const hh=(x.teams.home.team.abbreviation||teamAbbr(x.teams.home.team.name)).toUpperCase();return aa===a&&hh===h;}); }
+  if(!game){ document.body.innerHTML='<p style="color:#e0726a;font-family:sans-serif;padding:1.5rem;text-align:center;">Game not found for that date.</p>'; return; }
+  try{ await openModal(game); }catch(e){ console.error('shot openModal failed',e); }
+  buildShotBar(game);
+}
+
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
@@ -8988,6 +9078,8 @@ document.addEventListener("click", hitTrendDelegate);
 (function bootEmbedOrNormal() {
   const params = new URLSearchParams(location.search);
   const embed = params.get('embed');
+
+  if (params.get('shot')) { bootShotMode(params); return; }
 
   if (!embed) {
     // Normal site boot — unchanged behavior

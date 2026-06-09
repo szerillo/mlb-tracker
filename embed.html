@@ -169,6 +169,7 @@ function render(){
   $("#games").innerHTML = GAMES.map((g,i)=>`<div class="card">
     <div><div class="m">${g.away} @ ${g.home}</div><div class="meta">${g.time} · game id ${g.gamePk}</div></div>
     <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${BASE}?shot=1&pk=${g.gamePk}&date=${date}" title="Download PNGs of individual sections — lineups, bullpens, SP, weather/park/ump, matchup">🖼️ Sections</a>
       <a class="mview" target="_blank" rel="noopener" href="${BASE}?embed=game&pk=${g.gamePk}&date=${date}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
       <button class="copy" data-kind="game" data-i="${i}">Copy</button>
     </div>
