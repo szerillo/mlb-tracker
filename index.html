@@ -1410,13 +1410,13 @@
   .apx-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
   .apx-toggle{background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:5px 11px;border-radius:6px;cursor:pointer;}
   .apx-toggle:hover{border-color:var(--accent);color:var(--accent);}
-  .apx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+  /* Site scoreboard auto-fits: each card stays >=400px so the CON-POW-EYE-BSR-DEF
+     grade row always fits on one line; columns drop as the window narrows. */
+  .apx-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(400px,100%),1fr));gap:12px;}
   .apx-card,.apx-toolbar,.se-table,.se-score,.apx-park,.apx-info2,#apx-export-stage{font-family:'Inter',var(--sans),system-ui,-apple-system,sans-serif;}
   .apx-abbr{font-weight:800;letter-spacing:-0.01em;}
   .apx-runs{font-weight:800;letter-spacing:-0.01em;}
   .se-score-n{font-weight:800;}
-  @media (max-width:1000px){ .apx-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-  @media (max-width:560px){ .apx-grid{grid-template-columns:1fr;} }
   .apx-sp{text-align:center;font-size:0.74rem;color:var(--muted);margin-bottom:6px;}
   .apx-x-r{display:inline-flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
   .apx-g{background:var(--panel-hover);color:var(--text);border-radius:4px;padding:0 4px;font-size:0.68rem;}
@@ -1460,7 +1460,7 @@
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
-  .apx-projbadge{display:flex;justify-content:center;margin:2px 0 2px;}
+  .apx-projbadge{display:flex;justify-content:center;margin:1px 0 1px;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
@@ -2008,7 +2008,7 @@
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) {
     grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)) !important; gap: 10px !important;
   }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 7px 8px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 6px 8px !important; }
 
   /* head: start time at top (both views); stack time then badge, centered */
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-head2 { display: flex !important; flex-direction: column; align-items: center; gap: 0; margin-bottom: 1px; }
@@ -2023,7 +2023,7 @@
   body.embed-mode .apx-grid:not(.apx-detailed):not(.m-apx-wrap) .apx-info2 { display: none !important; }
 
   /* matchup + numbers (both views) */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center { gap: 3px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center { gap: 2px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center img { width: 27px !important; height: 27px !important; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr { font-size: 0.74rem; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.52rem; }
@@ -2032,12 +2032,12 @@
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.58rem; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 1.02rem; gap: 5px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.47rem; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total { font-size: 0.6rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total { font-size: 0.6rem; margin-top: 1px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-proj-num { font-size: 0.68rem; }
 
   /* edge pills (both views) */
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-direction: column; gap: 3px; margin-top: 2px; }
-  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.62rem !important; padding: 2px 6px !important; width: 100%; box-sizing: border-box; text-align: center; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-direction: row; flex-wrap: nowrap; gap: 4px; justify-content: center; margin-top: 3px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.53rem !important; padding: 1px 4px !important; flex: 1 1 0; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* DETAILED extras: park row + full info2 (SP names + ranks + grades) */
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) .apx-park { display: flex !important; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
