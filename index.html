@@ -6806,16 +6806,18 @@ function renderRankingsTab() {
         <div class="rk-grid-team">
           <div class="rk-box"><h3>Team Bullpen Rankings <span class="rk-sub">today's available relievers (active roster, likely-out excluded) · avg weighted FIP</span></h3>
             <div id="rk-bp-body"></div></div>
-          <div class="rk-box"><h3>Team Offense <span class="rk-sub">all 30 teams · PA-weighted wRC+ · splits vs RHP / LHP · today's posted lineup or earliest upcoming</span></h3>
+          <div class="rk-box"><h3>Position Players (Overall) <span class="rk-sub">all 30 teams · avg of Offense + Defense + Baserunning ranks → overall grade · sorted by OVR</span></h3>
+            <div id="rk-overall-body"></div></div>
+          <div class="rk-box rk-box-full"><h3>Team Offense (Combined) <span class="rk-sub">all 30 teams · wRC+ + PWR + CON + EYE each rank-curved to letter, averaged into the OFF column · sorted by OFF</span></h3>
+            <div id="rk-offcombined-body"></div></div>
+          <div class="rk-box rk-box-full"><h3>Team Defense + Baserunning <span class="rk-sub">all 30 teams · projected fielding + baserunning runs → letter grades · ranked by avg of DEF + BSR ranks</span></h3>
+            <div id="rk-defbsr-body"></div></div>
+          <div class="rk-box rk-box-full"><h3>Team Offense by Handedness <span class="rk-sub">PA-weighted wRC+ splits vs RHP / LHP · today's posted lineup or earliest upcoming</span></h3>
             <div class="rk-split-body">
               <div class="rk-split-col"><div class="rk-split-hdr">vs RHP</div><div id="rk-luR-body"></div></div>
               <div class="rk-split-col"><div class="rk-split-hdr">vs LHP</div><div id="rk-luL-body"></div></div>
             </div>
           </div>
-          <div class="rk-box rk-box-full"><h3>Team Offense (Combined) <span class="rk-sub">all 30 teams · wRC+ + PWR + CON + EYE each rank-curved to letter, averaged into the OFF column · sorted by OFF</span></h3>
-            <div id="rk-offcombined-body"></div></div>
-          <div class="rk-box rk-box-full"><h3>Team Defense + Baserunning <span class="rk-sub">all 30 teams · projected fielding + baserunning runs → letter grades · ranked by avg of DEF + BSR ranks</span></h3>
-            <div id="rk-defbsr-body"></div></div>
         </div>
       `;
     }
@@ -6827,6 +6829,7 @@ function renderRankingsTab() {
     renderLineupRankings(hitters, nameToTeam, teams, "wrc_vs_l", "rk-luL-body");
     renderCombinedOffenseRankings(hitters, nameToTeam, teams);
     renderDefBsrCombined(hitters, nameToTeam, teams);
+    renderTeamOverall();
 
     // Filter button handlers (legacy — the qualified/all SP filter UI was
     // removed earlier but the hooks are harmless if the elements don't exist)
@@ -7480,6 +7483,40 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
   </table>`;
 }
 
+// Shared per-team position-player ranks (offense / defense / baserunning), filled
+// by the combined renderers below and folded into one overall grade.
+let TEAM_PP = {};
+function renderTeamOverall(){
+  const body = document.getElementById("rk-overall-body");
+  if (!body) return;
+  const rows0 = Object.values(TEAM_PP).filter(t => t.off != null && t.def != null && t.bsr != null);
+  const total = rows0.length;
+  rows0.forEach(t => { t.avgRank = (t.off + t.def + t.bsr) / 3; });
+  rows0.sort((a,b) => a.avgRank - b.avgRank);
+  const gc = (g) => g === '—'
+    ? '<td class="grade-cell"><span class="grade">—</span></td>'
+    : `<td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>`;
+  const rows = rows0.map((t, i) => {
+    const rank = i + 1;
+    t.overallRank = rank; t.overallTotal = total; t.overallGrade = gradeByRank(rank, total);
+    return `<tr>
+      <td class="rank">${rank}</td>
+      <td class="team">${teamLogo(t.team.id, 16)} ${t.team.abbr}</td>
+      ${gc(gradeByRank(t.off,total))}${gc(gradeByRank(t.def,total))}${gc(gradeByRank(t.bsr,total))}${gc(t.overallGrade)}
+    </tr>`;
+  }).join("");
+  body.innerHTML = `<table class="rk-table">
+    <thead><tr><th>#</th><th class="left">Team</th>
+      <th title="Team Offense (combined wRC+/PWR/CON/EYE) rank → grade">OFF</th>
+      <th title="Team Defense (projected fielding runs) rank → grade">DEF</th>
+      <th title="Team Baserunning (projected BsR) rank → grade">BSR</th>
+      <th title="Average of OFF + DEF + BSR ranks → overall position-player grade. Sorted by this.">OVR</th>
+    </tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="rk-empty">No lineups available.</td></tr>'}</tbody>
+  </table>`;
+}
+function teamOverallPP(teamId){ const t = TEAM_PP[teamId]; return (t && t.overallGrade) ? t.overallGrade : null; }
+
 // Combined Team Offense rankings — PA-weighted team-level averages of wRC+,
 // PWR, CON, EYE → each rank-curved to a letter → average the four ranks for
 // the headline OFF column. Sorted by OFF rank. Mirrors the DEF+BSR combined
@@ -7488,6 +7525,7 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
 function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
   const body = document.getElementById("rk-offcombined-body");
   if (!body) return;
+  TEAM_PP = {};   // reset the shared per-team position-player rank store (offense runs first)
   const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
   const teamRows = Object.values(byTeam).map(tb => {
     let wrcSum=0, wrcW=0, pwrSum=0, pwrW=0, conSum=0, conW=0, eyeSum=0, eyeW=0;
@@ -7543,6 +7581,7 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
     : `<td class="grade-cell"><span class="grade ${gradeCls(g)}">${g}</span></td>`;
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
+    TEAM_PP[r.team.id] = Object.assign(TEAM_PP[r.team.id]||{}, {off: rank, team: r.team});
     const wrcG = r.wrcAvg != null ? gradeByRank(r.wrcR, total) : '—';
     const pwrG = r.pwrAvg != null ? gradeByRank(r.pwrR, total) : '—';
     const conG = r.conAvg != null ? gradeByRank(r.conR, total) : '—';
@@ -7555,7 +7594,7 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
       <td class="rank">${rank}</td>
       <td class="team">${teamLogo(r.team.id, 16)} ${r.team.abbr}${upcoming}</td>
       <td class="comp" style="color:var(--muted);font-size:0.78rem;">${wrcRaw}</td>
-      ${gc(wrcG)}${gc(pwrG)}${gc(conG)}${gc(eyeG)}${gc(avgG)}
+      ${gc(wrcG)}${gc(conG)}${gc(pwrG)}${gc(eyeG)}${gc(avgG)}
     </tr>`;
   }).join("");
   body.innerHTML = `<table class="rk-table">
@@ -7564,8 +7603,8 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
       <th class="left">Team</th>
       <th title="Raw PA-weighted team wRC+ (avg of vR + vL splits) — shown for context next to the rank-curved grade">wRC+</th>
       <th title="PA-weighted team wRC+ rank → letter grade">wRC+ Gr</th>
-      <th title="PA-weighted team PWR percentile rank → letter grade">PWR</th>
       <th title="PA-weighted team CON (K%-derived) percentile rank → letter grade">CON</th>
+      <th title="PA-weighted team PWR percentile rank → letter grade">PWR</th>
       <th title="PA-weighted team EYE (BB% + chase) percentile rank → letter grade">EYE</th>
       <th title="Average of wRC+ / PWR / CON / EYE ranks → letter. Table sorted by this column.">OFF</th>
     </tr></thead>
@@ -7607,6 +7646,7 @@ function renderDefBsrCombined(hitters, nameToTeam, teams) {
   teamRows.sort((a, b) => a.avgRank - b.avgRank);
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
+    TEAM_PP[r.team.id] = Object.assign(TEAM_PP[r.team.id]||{}, {def: r.defRank, bsr: r.bsrRank, team: r.team});
     const defG = r.def != null ? gradeByRank(r.defRank, total) : '—';
     const bsrG = r.bsr != null ? gradeByRank(r.bsrRank, total) : '—';
     const avgG = gradeByRank(rank, total);
