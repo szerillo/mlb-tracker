@@ -30,6 +30,13 @@
   .acts{display:flex;gap:8px;align-items:center}
   .mview{color:var(--accent);font-size:.78rem;text-decoration:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;white-space:nowrap}
   .mview:hover{border-color:var(--accent)}
+  .tabs{display:flex;gap:4px;margin:4px 0 16px;border-bottom:1px solid var(--border)}
+  .tabbtn{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:700;font-size:.92rem;padding:9px 14px;margin-bottom:-1px}
+  .tabbtn.active{color:var(--text);border-bottom-color:var(--accent)}
+  .shot-games{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+  .shot-chip{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.8rem;font-weight:600}
+  .shot-chip.active{border-color:var(--accent);color:var(--accent)}
+  .shot-frame{width:100%;height:1500px;border:1px solid var(--border);border-radius:10px;background:#0d1117;display:block}
 </style>
 </head>
 <body>
@@ -48,6 +55,12 @@
     <button class="copy" id="reload" style="background:var(--panel2);color:var(--text)">Reload</button>
   </div>
 
+  <div class="tabs">
+    <button class="tabbtn active" data-panel="embeds">Embed codes</button>
+    <button class="tabbtn" data-panel="shots">\uD83D\uDCF8 Screenshots</button>
+  </div>
+
+  <div id="panel-embeds">
   <div class="card slate" id="slateCard">
     <div><div class="m">📋 Full slate scoreboard</div><div class="meta" id="slateMeta">all games for the selected date</div></div>
     <div class="acts">
@@ -61,6 +74,13 @@
   <div class="note">Optional — each copied snippet already auto-sizes itself. Only needed if you prefer one shared listener.</div>
   <pre id="listener"></pre>
   <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
+  </div><!-- /panel-embeds -->
+
+  <div id="panel-shots" hidden>
+    <div class="sub">Pick a game, then tap a section button in the preview to download a PNG — matchup, lineups, bullpens, SP, or weather/park/ump. Uses the date above.</div>
+    <div class="shot-games" id="shotGames"><div class="empty">Loading games…</div></div>
+    <iframe id="shotFrame" class="shot-frame" title="Section screenshots"></iframe>
+  </div>
 
 <script>
 const BASE = "https://mlb-tracker-256.pages.dev/";
@@ -161,6 +181,7 @@ async function load(){
        away:g.teams.away.team.name, home:g.teams.home.team.name,
        time:new Date(g.gameDate).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})+' ET'}));
     render();
+    renderShotGames();
   }catch(e){ $("#games").innerHTML='<div class="empty">Could not load schedule. Try Reload.</div>'; }
 }
 function render(){
@@ -169,12 +190,39 @@ function render(){
   $("#games").innerHTML = GAMES.map((g,i)=>`<div class="card">
     <div><div class="m">${g.away} @ ${g.home}</div><div class="meta">${g.time} · game id ${g.gamePk}</div></div>
     <div class="acts">
-      <a class="mview" target="_blank" rel="noopener" href="${BASE}?shot=1&pk=${g.gamePk}&date=${date}" title="Download PNGs of individual sections — lineups, bullpens, SP, weather/park/ump, matchup">🖼️ Sections</a>
       <a class="mview" target="_blank" rel="noopener" href="${BASE}?embed=game&pk=${g.gamePk}&date=${date}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
       <button class="copy" data-kind="game" data-i="${i}">Copy</button>
     </div>
   </div>`).join('');
 }
+let SHOT_PK=null;
+function renderShotGames(){
+  const box=document.getElementById('shotGames'); if(!box) return;
+  if(!GAMES.length){ box.innerHTML='<div class="empty">No games scheduled this date.</div>'; const f=document.getElementById('shotFrame'); if(f)f.removeAttribute('src'); return; }
+  box.innerHTML = GAMES.map((g,i)=>`<button class="shot-chip" data-pk="${g.gamePk}">${g.away} @ ${g.home}</button>`).join('');
+  // keep current selection if still present, else default to first game
+  if(!GAMES.some(g=>String(g.gamePk)===String(SHOT_PK))) SHOT_PK=GAMES[0].gamePk;
+  selectShotGame(SHOT_PK);
+}
+function selectShotGame(pk){
+  SHOT_PK=pk;
+  const date=$("#date").value;
+  document.querySelectorAll('#shotGames .shot-chip').forEach(c=>c.classList.toggle('active', String(c.dataset.pk)===String(pk)));
+  const f=document.getElementById('shotFrame');
+  if(f) f.src = BASE+`?shot=1&pk=${pk}&date=${date}`;
+}
+document.getElementById('shotGames').addEventListener('click', e=>{
+  const c=e.target.closest('.shot-chip'); if(!c) return; selectShotGame(c.dataset.pk);
+});
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const panel=btn.dataset.panel;
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b===btn));
+    document.getElementById('panel-embeds').hidden = (panel!=='embeds');
+    document.getElementById('panel-shots').hidden = (panel!=='shots');
+    if(panel==='shots' && GAMES.length && !SHOT_PK) renderShotGames();
+  });
+});
 document.addEventListener('click', e=>{
   const b=e.target.closest('.copy'); if(!b) return;
   if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
