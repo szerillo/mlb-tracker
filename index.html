@@ -3186,8 +3186,10 @@ async function exportModalSectionPNG(node, title, width, slug){
   const brandHTML=document.querySelector('.brand')?document.querySelector('.brand').outerHTML:'<h1 style="margin:0;font-size:20px;color:#fff;">B.A.R.T.O.L.O.</h1>';
   const stage=document.createElement('div');
   stage.style.cssText='position:fixed;left:-99999px;top:0;width:'+W+'px;background:#0d1117;padding:22px 22px 16px;box-sizing:border-box;font-family:Inter,sans-serif;color:#e6e9ef;';
-  stage.innerHTML='<div style="display:flex;align-items:center;gap:12px;">'+brandHTML+'</div>'+
-    '<div style="font-size:13px;color:#9aa4b2;font-weight:700;margin:8px 0 12px;letter-spacing:.04em;text-transform:uppercase;">'+title+'</div>';
+  // No separate title — each captured section already includes its own header
+  // (Starting Pitchers / Bullpens / Lineups / Weather·Park·Umpire), so adding one
+  // would duplicate it.
+  stage.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'+brandHTML+'</div>';
   stage.appendChild(clone);
   stage.insertAdjacentHTML('beforeend','<div style="margin-top:14px;font-size:12px;color:#9aa4b2;font-weight:700;text-align:right;">Built by @SeanZerillo</div>');
   document.body.appendChild(stage);
