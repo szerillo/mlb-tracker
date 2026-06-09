@@ -12,12 +12,12 @@
     --bg: #0a0e13; --panel: #141a22; --panel-hover: #1c242e; --border: #242e3a;
     --text: #e6edf3; --muted: #9aa4b2; --accent: #5eead4;
     --confirmed: #4ec37c; --projected: #e5a449; --tbd: #a3adba;
-    --over: #6eff94; --under: #ff8e6e;
+    --over: #74d98e; --under: #ff8e6e;
     /* Colorblind-friendly tier palette — matches the gr-a..gr-f grade chips.
        Elite is yellow (was orange #ff9140); worst is purple (was red #f87171).
        Good stays green and bad stays blue. Cascades through every rank-chip,
        uni-chip, sb-sp-stat, plus-mini, sp-stat-val on scoreboard + modal. */
-    --tier-elite: #ffd95a; --tier-good: #6eff94; --tier-bad: #5bb8f5; --tier-worst: #c8a8ff;
+    --tier-elite: #2fbf6a; --tier-good: #74d98e; --tier-bad: #ef8f84; --tier-worst: #e85d52;
     --fatigue-out: #f87171; --fatigue-fat: #e5a449;
     --display: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -59,16 +59,16 @@
   body.light-theme {
     --bg: #f4f6fa; --panel: #ffffff; --panel-hover: #eef1f6; --border: #d2d9e4;
     --text: #1e293b; --muted: #5b6573; --accent: #0d9488;
-    --confirmed: #047857; --projected: #b45309; --tbd: #6b7280;
-    --over: #047857; --under: #b91c1c;
-    --tier-elite: #b45309; --tier-good: #047857; --tier-bad: #0369a1; --tier-worst: #6d28d9;
-    --fatigue-out: #b91c1c; --fatigue-fat: #b45309;
+    --confirmed: #15803d; --projected: #166534; --tbd: #6b7280;
+    --over: #15803d; --under: #b91c1c;
+    --tier-elite: #166534; --tier-good: #15803d; --tier-bad: #b91c1c; --tier-worst: #7f1d1d;
+    --fatigue-out: #b91c1c; --fatigue-fat: #166534;
   }
-  body.light-theme .grade.gr-a { background: rgba(180, 83, 9, 0.13);  }
-  body.light-theme .grade.gr-b { background: rgba(4, 120, 87, 0.10);  }
+  body.light-theme .grade.gr-a { background: rgba(22, 101, 52, 0.13);  }
+  body.light-theme .grade.gr-b { background: rgba(21, 128, 61, 0.10);  }
   body.light-theme .grade.gr-c { background: rgba(100, 116, 139, 0.10); color: #475569; }
-  body.light-theme .grade.gr-d { background: rgba(3, 105, 161, 0.12);  }
-  body.light-theme .grade.gr-f { background: rgba(109, 40, 217, 0.14); }
+  body.light-theme .grade.gr-d { background: rgba(185, 28, 28, 0.12);  }
+  body.light-theme .grade.gr-f { background: rgba(127, 29, 29, 0.14); }
 
   /* Tabs */
   .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.2rem;
@@ -179,16 +179,16 @@
     white-space: nowrap; margin-left: 0.35rem; }
   /* Rank-chip tiers use the same colorblind palette as --tier-* (yellow-elite,
      green-good, blue-bad, purple-worst) so they match every other stat chip. */
-  .rank-chip.sp.elite  { background: rgba(255,217,90,0.18);  color: var(--tier-elite); border-color: rgba(255,217,90,0.35); }
-  .rank-chip.sp.good   { background: rgba(110,255,148,0.14); color: var(--tier-good);  border-color: rgba(110,255,148,0.28); }
+  .rank-chip.sp.elite  { background: rgba(47,191,106,0.18);  color: var(--tier-elite); border-color: rgba(47,191,106,0.35); }
+  .rank-chip.sp.good   { background: rgba(116,217,142,0.14); color: var(--tier-good);  border-color: rgba(116,217,142,0.28); }
   .rank-chip.sp.mid    { background: rgba(139,149,161,0.12); color: var(--muted); }
-  .rank-chip.sp.bad    { background: rgba(91,184,245,0.14);  color: var(--tier-bad);   border-color: rgba(91,184,245,0.28); }
-  .rank-chip.sp.worst  { background: rgba(200,168,255,0.16); color: var(--tier-worst); border-color: rgba(200,168,255,0.32); }
-  .rank-chip.bp.elite  { background: rgba(255,217,90,0.14);  color: var(--tier-elite); border-color: rgba(255,217,90,0.28); }
-  .rank-chip.bp.good   { background: rgba(110,255,148,0.12); color: var(--tier-good);  border-color: rgba(110,255,148,0.24); }
+  .rank-chip.sp.bad    { background: rgba(239,143,132,0.14);  color: var(--tier-bad);   border-color: rgba(239,143,132,0.28); }
+  .rank-chip.sp.worst  { background: rgba(232,93,82,0.16); color: var(--tier-worst); border-color: rgba(232,93,82,0.32); }
+  .rank-chip.bp.elite  { background: rgba(47,191,106,0.14);  color: var(--tier-elite); border-color: rgba(47,191,106,0.28); }
+  .rank-chip.bp.good   { background: rgba(116,217,142,0.12); color: var(--tier-good);  border-color: rgba(116,217,142,0.24); }
   .rank-chip.bp.mid    { background: rgba(139,149,161,0.10); color: var(--muted); }
-  .rank-chip.bp.bad    { background: rgba(91,184,245,0.12);  color: var(--tier-bad);   border-color: rgba(91,184,245,0.24); }
-  .rank-chip.bp.worst  { background: rgba(200,168,255,0.13); color: var(--tier-worst); border-color: rgba(200,168,255,0.26); }
+  .rank-chip.bp.bad    { background: rgba(239,143,132,0.12);  color: var(--tier-bad);   border-color: rgba(239,143,132,0.24); }
+  .rank-chip.bp.worst  { background: rgba(232,93,82,0.13); color: var(--tier-worst); border-color: rgba(232,93,82,0.26); }
   .rank-chip.na { opacity: 0.6; font-style: italic; }
 
   /* Unified-score chip — pitcher (weighted FIP "wFIP") or hitter (wRC+ blend).
@@ -201,14 +201,14 @@
     background: rgba(36,46,58,0.45); color: var(--muted);
     border: 1px solid var(--border); cursor: help; }
   .uni-chip b { font-family: var(--mono); font-weight: 800; font-size: 0.95rem; }
-  .uni-chip.elite { background: rgba(255,217,90,0.18);  color: var(--tier-elite); border-color: rgba(255,217,90,0.4); }
+  .uni-chip.elite { background: rgba(47,191,106,0.18);  color: var(--tier-elite); border-color: rgba(47,191,106,0.4); }
   .uni-chip.elite b { color: var(--tier-elite); }
-  .uni-chip.good  { background: rgba(110,255,148,0.16); color: var(--tier-good); border-color: rgba(110,255,148,0.32); }
+  .uni-chip.good  { background: rgba(116,217,142,0.16); color: var(--tier-good); border-color: rgba(116,217,142,0.32); }
   .uni-chip.good b { color: var(--tier-good); }
   .uni-chip.avg   { background: rgba(139,149,161,0.12); color: var(--muted); }
-  .uni-chip.bad   { background: rgba(91,184,245,0.14); color: var(--tier-bad); border-color: rgba(91,184,245,0.32); }
+  .uni-chip.bad   { background: rgba(239,143,132,0.14); color: var(--tier-bad); border-color: rgba(239,143,132,0.32); }
   .uni-chip.bad b { color: var(--tier-bad); }
-  .uni-chip.worst { background: rgba(200,168,255,0.16); color: var(--tier-worst); border-color: rgba(200,168,255,0.36); }
+  .uni-chip.worst { background: rgba(232,93,82,0.16); color: var(--tier-worst); border-color: rgba(232,93,82,0.36); }
   .uni-chip.worst b { color: var(--tier-worst); }
   /* Compact variant for tables — no left margin, slightly tighter */
   .uni-chip.tight { margin-left: 0; padding: 0.12rem 0.45rem; font-size: 0.82rem; }
@@ -244,13 +244,13 @@
     background: rgba(139, 149, 161, 0.08); color: var(--muted); }
   .plus-mini b { font-family: var(--mono); font-size: 0.72rem; color: var(--text);
     font-weight: 700; }
-  .plus-mini.elite { background: rgba(255, 217, 90, 0.14); color: var(--tier-elite); }
+  .plus-mini.elite { background: rgba(47, 191, 106, 0.14); color: var(--tier-elite); }
   .plus-mini.elite b { color: var(--tier-elite); }
-  .plus-mini.good  { background: rgba(110, 255, 148, 0.1); color: var(--tier-good); }
+  .plus-mini.good  { background: rgba(116, 217, 142, 0.1); color: var(--tier-good); }
   .plus-mini.good b { color: var(--tier-good); }
-  .plus-mini.bad   { background: rgba(91, 184, 245, 0.1); color: var(--tier-bad); }
+  .plus-mini.bad   { background: rgba(239, 143, 132, 0.1); color: var(--tier-bad); }
   .plus-mini.bad b  { color: var(--tier-bad); }
-  .plus-mini.worst { background: rgba(200, 168, 255, 0.13); color: var(--tier-worst); }
+  .plus-mini.worst { background: rgba(232, 93, 82, 0.13); color: var(--tier-worst); }
   .plus-mini.worst b { color: var(--tier-worst); }
   .sb-pen-out { color: var(--fatigue-out); font-weight: 700; }
   .sb-pen-ftg { color: var(--fatigue-fat); font-weight: 700; }
@@ -292,7 +292,7 @@
   .clv-edge.neg { color:var(--muted); }
   .sb-edge { font-family: var(--mono); font-size: 0.7rem; font-weight: 700;
     padding: 0 0.25rem; border-radius: 4px; margin-left: 0.15rem; }
-  .sb-edge.edge-pos, .sb-edge.edge-over { color: var(--over); background: rgba(110,255,148,0.12); }
+  .sb-edge.edge-pos, .sb-edge.edge-over { color: var(--over); background: rgba(116,217,142,0.12); }
   .sb-edge.edge-neg, .sb-edge.edge-under { color: var(--under); background: rgba(255,142,110,0.12); }
   .sb-edge.edge-flat { color: var(--muted); }
   /* Projections vs Market tab */
@@ -319,7 +319,7 @@
     padding: 0.14rem 0.5rem; border-radius: 3px;
     min-width: 86px; justify-content: center;
     background: rgba(139, 149, 161, 0.08); color: var(--muted); }
-  .sb-pct-chip.over { color: var(--over); background: rgba(110, 255, 148, 0.1); }
+  .sb-pct-chip.over { color: var(--over); background: rgba(116, 217, 142, 0.1); }
   .sb-pct-chip.under { color: var(--under); background: rgba(255, 142, 110, 0.1); }
   .sb-pct-chip .pct-label { font-size: 0.55rem; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--muted); opacity: 0.9;
@@ -341,8 +341,8 @@
   /* Umpire pill (reused) */
   .ump-pct { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 4px;
     font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; margin-top: 0.15rem; }
-  .ump-pct.over    { background: rgba(110, 255, 148, 0.15); color: var(--over);
-    border: 1px solid rgba(110, 255, 148, 0.35); }
+  .ump-pct.over    { background: rgba(116, 217, 142, 0.15); color: var(--over);
+    border: 1px solid rgba(116, 217, 142, 0.35); }
   .ump-pct.under   { background: rgba(255, 142, 110, 0.15); color: var(--under);
     border: 1px solid rgba(255, 142, 110, 0.35); }
   .ump-pct.neutral { background: rgba(139, 149, 161, 0.12); color: var(--muted);
@@ -499,7 +499,7 @@
   .sc-cell.good  { color: var(--tier-good);
     background: rgba(74, 222, 128, 0.06); }
   .sc-cell.bad   { color: var(--tier-bad);
-    background: rgba(91, 184, 245, 0.06); }
+    background: rgba(239, 143, 132, 0.06); }
   .sc-cell.worst { color: var(--tier-worst);
     background: rgba(248, 113, 113, 0.08); }
 
@@ -589,7 +589,7 @@
   .lu-sp-hand { font-size: 0.66rem; font-weight: 700; color: var(--muted);
     padding: 0.08rem 0.4rem; border-radius: 3px; letter-spacing: 0.06em;
     background: rgba(139, 149, 161, 0.14); }
-  .lu-sp-hand.L { color: #5bb8f5; background: rgba(91, 184, 245, 0.14); }
+  .lu-sp-hand.L { color: #ef8f84; background: rgba(239, 143, 132, 0.14); }
   .lu-sp-opener { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
     padding: 0.05rem 0.4rem; border-radius: 3px;
     background: rgba(229, 164, 73, 0.2); color: var(--projected); }
@@ -639,7 +639,7 @@
   .bp-hand { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
     padding: 0.05rem 0.3rem; border-radius: 3px; }
   .bp-hand.R { color: var(--text); background: rgba(139, 149, 161, 0.08); }
-  .bp-hand.L { color: #5bb8f5; background: rgba(91, 184, 245, 0.08); }
+  .bp-hand.L { color: #ef8f84; background: rgba(239, 143, 132, 0.08); }
   .bp-fip { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
   .bp-fip.elite { color: var(--tier-elite); }
   .bp-fip.good  { color: var(--tier-good); }
@@ -668,10 +668,10 @@
     line-height: 1; letter-spacing: 0; padding: 0.08rem 0.42rem;
     border-radius: 4px; margin-left: 0.2rem; vertical-align: middle;
     min-width: 26px; text-align: center; }
-  .def-bsr-chip.elite { background: rgba(255, 217, 90, 0.20); color: var(--tier-elite); }
+  .def-bsr-chip.elite { background: rgba(47, 191, 106, 0.20); color: var(--tier-elite); }
   .def-bsr-chip.good  { background: rgba(74, 222, 128, 0.14); color: var(--tier-good); }
   .def-bsr-chip.bad   { background: rgba(229, 164, 73, 0.14); color: var(--tier-bad); }
-  .def-bsr-chip.worst { background: rgba(200, 168, 255, 0.18); color: var(--tier-worst); }
+  .def-bsr-chip.worst { background: rgba(232, 93, 82, 0.18); color: var(--tier-worst); }
   .team-none { color: var(--muted); font-style: italic; font-size: 0.82rem; }
 
   /* Hitter letter grades (vs MLB avg): A green → F red. Used in lineup rows,
@@ -682,11 +682,11 @@
   /* Colorblind-safe ladder: yellow → green → gray → blue → purple. Matches
      --tier-elite / --tier-good / --tier-bad / --tier-worst on rank chips so a
      single shape language reads across letter grades and rank pills. */
-  .grade.gr-a { background: rgba(255, 217, 90, 0.18); color: var(--tier-elite); }   /* A grades — yellow */
-  .grade.gr-b { background: rgba(110, 255, 148, 0.14); color: var(--tier-good); }   /* B grades — green */
+  .grade.gr-a { background: rgba(47, 191, 106, 0.18); color: var(--tier-elite); }   /* A grades — yellow */
+  .grade.gr-b { background: rgba(116, 217, 142, 0.14); color: var(--tier-good); }   /* B grades — green */
   .grade.gr-c { background: rgba(148, 163, 184, 0.13); color: #aab3bf; }            /* C grades — neutral gray */
-  .grade.gr-d { background: rgba(91, 184, 245, 0.16);  color: var(--tier-bad); }    /* D grades — blue */
-  .grade.gr-f { background: rgba(200, 168, 255, 0.18); color: var(--tier-worst); }  /* legacy F shim */
+  .grade.gr-d { background: rgba(239, 143, 132, 0.16);  color: var(--tier-bad); }    /* D grades — blue */
+  .grade.gr-f { background: rgba(232, 93, 82, 0.18); color: var(--tier-worst); }  /* legacy F shim */
   .grade-cell { text-align: center; }
   .grade-cell .gr-na { color: var(--muted); opacity: 0.5; }
 
@@ -706,11 +706,11 @@
 
   .bp-split-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--muted); margin: 0.6rem 0 0.25rem; }
-  .bp-split-header.L { color: #5bb8f5; }
+  .bp-split-header.L { color: #ef8f84; }
   .bp-sub-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--muted); opacity: 0.7;
     margin: 0.35rem 0 0.1rem; }
-  .bp-sub-label.L { color: #5bb8f5; opacity: 0.85; }
+  .bp-sub-label.L { color: #ef8f84; opacity: 0.85; }
 
   /* Bullpen tab freshness header */
   .bp-fresh { padding: 0.55rem 0.8rem; border-radius: 5px; margin-bottom: 0.7rem;
@@ -767,7 +767,7 @@
 
   .bpt-hand { font-family: var(--mono); font-size: 0.74rem; font-weight: 700;
     letter-spacing: 0.04em; }
-  .bpt-hand.hand-l { color: #5bb8f5; }
+  .bpt-hand.hand-l { color: #ef8f84; }
   .bpt-hand.hand-r { color: var(--text); }
   .bpt-hand.hand-s { color: #d4a83c; }
   .bpt-name { font-weight: 600; white-space: nowrap; overflow: hidden;
@@ -801,7 +801,7 @@
     font-size: 0.78rem; }
   .lineup-table td.split  { text-align: right; font-family: var(--mono); font-size: 0.82rem; }
   .hand-r { color: var(--text); }
-  .hand-l { color: #5bb8f5; }
+  .hand-l { color: #ef8f84; }
   .hand-s { color: #f5c842; }
   .split-chip.elite { color: var(--tier-elite); font-weight: 700; }
   .split-chip.good  { color: var(--tier-good); font-weight: 600; }
@@ -984,13 +984,13 @@
     background: rgba(139, 149, 161, 0.08); color: var(--muted);
     letter-spacing: 0.04em; font-weight: 600; }
   .plus-chip b { font-family: var(--mono); font-size: 0.82rem; color: var(--text); font-weight: 700; }
-  .plus-chip.elite { background: rgba(255, 217, 90, 0.14); color: var(--tier-elite); }
+  .plus-chip.elite { background: rgba(47, 191, 106, 0.14); color: var(--tier-elite); }
   .plus-chip.elite b { color: var(--tier-elite); }
-  .plus-chip.good  { background: rgba(110, 255, 148, 0.1); color: var(--tier-good); }
+  .plus-chip.good  { background: rgba(116, 217, 142, 0.1); color: var(--tier-good); }
   .plus-chip.good b { color: var(--tier-good); }
-  .plus-chip.bad   { background: rgba(91, 184, 245, 0.1); color: var(--tier-bad); }
+  .plus-chip.bad   { background: rgba(239, 143, 132, 0.1); color: var(--tier-bad); }
   .plus-chip.bad b  { color: var(--tier-bad); }
-  .plus-chip.worst { background: rgba(200, 168, 255, 0.13); color: var(--tier-worst); }
+  .plus-chip.worst { background: rgba(232, 93, 82, 0.13); color: var(--tier-worst); }
   .plus-chip.worst b { color: var(--tier-worst); }
   .m-sp-splits { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
     font-size: 0.78rem; }
@@ -1373,10 +1373,10 @@
   .wp-edges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0.8rem; }
   .wp-edge-pill { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
     font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; }
-  .wp-edge-pill.ml { background: rgba(110, 255, 148, 0.12); color: var(--tier-good);
-    border: 1px solid rgba(110, 255, 148, 0.3); }
-  .wp-edge-pill.total { background: rgba(91, 184, 245, 0.12); color: var(--tier-bad);
-    border: 1px solid rgba(91, 184, 245, 0.3); }
+  .wp-edge-pill.ml { background: rgba(116, 217, 142, 0.12); color: var(--tier-good);
+    border: 1px solid rgba(116, 217, 142, 0.3); }
+  .wp-edge-pill.total { background: rgba(239, 143, 132, 0.12); color: var(--tier-bad);
+    border: 1px solid rgba(239, 143, 132, 0.3); }
   .sheet-edges { display: flex; flex-direction: column; gap: 0.32rem; margin: 0.45rem 0; }
   .se-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
   .se-k { min-width: 100px; color: var(--muted); }
@@ -1420,7 +1420,7 @@
   .apx-noproj{font-size:0.78rem;color:var(--muted);padding:10px 0;}
   .apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
   .apx-pill{font-size:0.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-hover);color:var(--muted);}
-  .apx-edge-strong{background:rgba(110,255,148,.14);color:var(--tier-good);}
+  .apx-edge-strong{background:rgba(116,217,142,.14);color:var(--tier-good);}
   .apx-edge-mild{color:var(--text);}
   .apx-tot{font-size:0.74rem;color:var(--muted);font-weight:600;}
   .apx-tot.apx-tot-strong{color:var(--tier-bad);}
@@ -1544,7 +1544,7 @@
   .wpb-reliab .wpb-rpred { position: absolute; top: 0; left: 0; height: 100%;
     background: rgba(94, 234, 212, 0.3); }
   .wpb-reliab .wpb-ract  { position: absolute; top: 0; left: 0; height: 100%;
-    background: rgba(110, 255, 148, 0.55); mix-blend-mode: screen; }
+    background: rgba(116, 217, 142, 0.55); mix-blend-mode: screen; }
   .wpb-reliab .wpb-rtxt { color: var(--text); white-space: nowrap; }
   .wpb-reliab .wpb-rtxt .delta { color: var(--muted); margin-left: 0.25rem; font-size: 0.62rem; }
 
@@ -1556,7 +1556,7 @@
   .wpb-thpill .wpb-thlbl { color: var(--muted); font-family: var(--mono); font-weight: 600; }
   .wpb-thpill .wpb-thval { font-family: var(--mono); font-weight: 700; color: var(--text); }
   .wpb-thpill .wpb-thn   { color: var(--muted); font-size: 0.62rem; }
-  .wpb-thpill.hot  { border-color: rgba(110,255,148,0.45); }
+  .wpb-thpill.hot  { border-color: rgba(116,217,142,0.45); }
   .wpb-thpill.hot  .wpb-thval { color: var(--tier-good); }
   .wpb-thpill.warm { border-color: rgba(234,197,94,0.4); }
 
@@ -1727,7 +1727,7 @@
   .po-col{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
   .po-lg{margin:0 0 12px;font-size:1rem;text-align:center;letter-spacing:0.02em;}
   .po-byes{display:flex;gap:10px;}
-  .po-byewrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,217,90,0.07);border:1px solid rgba(255,217,90,0.28);border-radius:8px;padding:9px 6px;}
+  .po-byewrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(47,191,106,0.07);border:1px solid rgba(47,191,106,0.28);border-radius:8px;padding:9px 6px;}
   .po-tag{font-size:0.58rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
   .po-round{font-size:0.66rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px;text-align:center;border-top:1px solid var(--border);padding-top:9px;}
   .po-match{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
@@ -1743,7 +1743,7 @@
   .po-pct{font-size:1.02rem;color:var(--accent);font-family:var(--mono,monospace);font-weight:800;}
   .po-pcttag{font-size:0.56rem;color:var(--muted);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--sans);vertical-align:middle;}
   .po-edge{font-size:0.68rem;font-family:var(--mono,monospace);font-weight:600;}
-  .po-edge.pos{color:#6fdc7e;} .po-edge.neg{color:#c8a8ff;} .po-edge.neu{color:var(--muted);}
+  .po-edge.pos{color:#6fdc7e;} .po-edge.neg{color:#e85d52;} .po-edge.neu{color:var(--muted);}
   .po-hunt{display:flex;flex-direction:column;gap:5px;}
   .po-hunt-row{display:flex;align-items:center;gap:7px;font-size:0.8rem;}
   .po-hunt-row .po-ab{min-width:36px;}
@@ -1764,7 +1764,7 @@
   .po-listed{font-family:var(--mono,monospace);color:var(--muted);}
   .po-fair{font-family:var(--mono,monospace);color:var(--text);}
   .po-edgec{font-family:var(--mono,monospace);font-weight:600;}
-  .po-edgec.pos{color:#6fdc7e;} .po-edgec.neg{color:#c8a8ff;} .po-edgec.neu{color:var(--muted);}
+  .po-edgec.pos{color:#6fdc7e;} .po-edgec.neg{color:#e85d52;} .po-edgec.neu{color:var(--muted);}
   .po-out{opacity:0.45;}
   .po-out .po-tm{text-decoration:line-through;}
   .ft-edge { font-family: var(--mono, monospace); font-weight: 600; }
@@ -1795,10 +1795,10 @@
 
   /* Colorblind-friendly grade palette (yellow=elite, white=avg, purple=bad).
      Applied after the original gr-* declarations so this wins specificity. */
-  .grade.gr-a { color: #ffd95a; background: rgba(255, 217, 90, 0.16); border: 1px solid rgba(255, 217, 90, 0.35); }
+  .grade.gr-a { color: #2fbf6a; background: rgba(47, 191, 106, 0.16); border: 1px solid rgba(47, 191, 106, 0.35); }
   .grade.gr-b { color: #f5e29c; background: rgba(245, 226, 156, 0.12); border: 1px solid rgba(245, 226, 156, 0.28); }
   .grade.gr-c { color: var(--text); background: rgba(139, 149, 161, 0.10); border: 1px solid rgba(139, 149, 161, 0.20); }
-  .grade.gr-d { color: #c8a8ff; background: rgba(200, 168, 255, 0.12); border: 1px solid rgba(200, 168, 255, 0.30); }
+  .grade.gr-d { color: #e85d52; background: rgba(232, 93, 82, 0.12); border: 1px solid rgba(232, 93, 82, 0.30); }
   .grade.gr-f { color: #b794f4; background: rgba(183, 148, 244, 0.14); border: 1px solid rgba(183, 148, 244, 0.32); }
   /* Lineup SP card: enforce a min-height so SP cards across ALL games on the
      page line up — Sean's ask. The tallest variant (with rank chip + Stuff+/Pit+
