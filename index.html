@@ -1942,21 +1942,40 @@
      CONTAINER, so when its column gets narrow (2-up on a mid-width article, or a
      phone) the dense SP/bullpen/grades strip compacts and the detailed card still
      fits — no horizontal bleed. */
-  body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; }
-  body.embed-mode .apx-grid { grid-template-columns: 1fr !important; }   /* default: 1 game per row */
-  /* Wider embeds (article ≥620px), NOT ?mobile=1: 2 games side-by-side. Each card
-     is a CONTAINER so a tight 2-up column compacts internally. container-type is
-     scoped to this case only — applying it to the 1-up layout collapses the card. */
+  /* Every embed card is a CONTAINER. All compaction below is driven by the card's
+     OWN width via @container, so a card adapts whether it is narrow because the
+     article is narrow or because we are 2-up on a phone. (Cards never get
+     margin-inline:auto — that + container-type collapses them — the lone trailing
+     card is centered with a DEFINITE width instead.) */
+  body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; container-type: inline-size; }
+  body.embed-mode .apx-grid { grid-template-columns: 1fr !important; }   /* base; overridden below */
+
+  /* Desktop / tablet article (>=620px): 2 games side-by-side. */
   @media (min-width: 620px) {
     body.embed-mode:not(.force-mobile) .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    body.embed-mode:not(.force-mobile) .apx-card { container-type: inline-size; }
     body.embed-mode:not(.force-mobile) .apx-grid > .apx-card:last-child:nth-child(odd) {
       grid-column: 1 / -1;
-      width: calc(50% - 6px) !important;       /* definite width: container-type won't collapse it */
-      max-width: calc(50% - 6px) !important;   /* beat the base .apx-card max-width:100% !important */
+      width: calc(50% - 6px) !important; max-width: calc(50% - 6px) !important;
       justify-self: center; margin-inline: 0 !important; }
   }
-  /* Compaction for a tight 2-up column (container-driven). */
+  /* Phones (<=560) AND ?mobile=1: ALSO 2 games side-by-side -- each ~185px column
+     trips the hard @container tier below (matchup + win% + grades only). */
+  @media (max-width: 560px) {
+    body.embed-mode .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
+    body.embed-mode .apx-grid > .apx-card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      width: calc(50% - 4px) !important; max-width: calc(50% - 4px) !important;
+      justify-self: center; margin-inline: 0 !important; }
+  }
+  body.force-mobile .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
+  body.force-mobile .apx-card { max-width: 100% !important; }
+  body.force-mobile .apx-grid > .apx-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - 4px) !important; max-width: calc(50% - 4px) !important;
+    justify-self: center; margin-inline: 0 !important; }
+
+  /* ---- Tier 1 (<=430px column): tight 2-up column. Stack the grade rows and
+     shrink the info strip; keep all the detail. ---- */
   @container (max-width: 430px) {
     .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem; }
     .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px; padding-right: 1px; }
@@ -1966,21 +1985,28 @@
     .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
     .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
   }
-  /* Phones (≤560) + ?mobile=1: stay 1-up and compact via media rules (no
-     container-type, so the card never collapses). */
-  @media (max-width: 560px) {
-    body.embed-mode .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
-    body.embed-mode .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
+  /* ---- Tier 2 (<=270px column): genuine phone column, two-up. Strip to the
+     essentials + grades: matchup, projected runs/total, win%, and the
+     CON-POW-EYE-BSR-DEF rows. Park/wx/ump, time header, edge pills, and the
+     SP/PEN rows drop out (all still available by tapping into the modal). ---- */
+  @container (max-width: 270px) {
+    .apx-card .apx-head2,
+    .apx-card .apx-park,
+    .apx-card .apx-edgebar,
+    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { display: none !important; }
+    .apx-card .apx-info2 { border-top: none; margin-top: 4px; padding-top: 4px; gap: 3px; }
+    .apx-card .apx-center { gap: 3px; }
+    .apx-card .apx-center img { width: 26px !important; height: 26px !important; }
+    .apx-card .apx-abbr { font-size: 0.7rem; }
+    .apx-card .apx-mkt { display: none; }                 /* hide (-115) odds in parens */
+    .apx-card .apx-wp { font-size: 0.56rem; }
+    .apx-card .apx-runs { font-size: 0.95rem; gap: 4px; }
+    .apx-card .apx-runs-lbl { font-size: 0.46rem; }
+    .apx-card .apx-total { font-size: 0.58rem; }
+    .apx-card .apx-proj-num { font-size: 0.66rem; }
+    .apx-card .apx-info2 .grade { font-size: 0.56rem; padding: 0 1px; }
+    .apx-card .apx-gteam { min-width: 26px !important; margin-right: 3px !important; }
   }
-  body.force-mobile .apx-grid { grid-template-columns: 1fr !important; }
-  body.force-mobile .apx-card { max-width: 440px !important; margin-inline: auto; }
-  body.force-mobile .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem !important; }
-  body.force-mobile .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px !important; padding-right: 1px !important; }
-  body.force-mobile .apx-grades-row { display: flex !important; flex-direction: column; align-items: center; gap: 2px; }
-  body.force-mobile .apx-grades-row .apx-side-k { order: -1; text-align: center; }
-  body.force-mobile .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
-  body.force-mobile .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
-  body.force-mobile .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
