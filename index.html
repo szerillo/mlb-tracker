@@ -1799,7 +1799,7 @@
     max-width: none !important;   /* fill the iframe edge-to-edge (no centered gutters) */
     width: 100% !important;
     height: auto !important;
-    min-height: 100vh !important; /* cover the full iframe height so nothing shows through */
+    min-height: 0 !important;     /* NOT 100vh: that feeds back through the iframe own height and stops auto-resize from trimming. The html/body background still paints the full iframe viewport via CSS background propagation, so coverage is unaffected. */
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
   }
