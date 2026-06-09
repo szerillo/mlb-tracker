@@ -3230,7 +3230,7 @@ function buildShotBar(game){
   document.body.insertBefore(bar, document.body.firstChild);
 }
 async function bootShotMode(params){
-  document.body.classList.add('embed-mode');
+  document.body.classList.add('embed-mode','embed-scoreboard');
   if(params.get('mobile')==='1'||params.get('m')==='1') document.body.classList.add('force-mobile');
   const reqDate=params.get('date');
   try{ await loadForDate(reqDate||today()); }catch(e){ console.error('shot load failed',e); }
