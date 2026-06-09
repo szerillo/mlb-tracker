@@ -1443,6 +1443,7 @@
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
+  .apx-projbadge{display:none;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
   .apx-side-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:0.7rem;}
   .apx-side-a{text-align:left;color:var(--text);}
@@ -1860,10 +1861,12 @@
   }
   body.embed-mode #tab-scoreboard {
     display: block !important;
-    padding: 0.5rem !important;
+    padding: 0.1rem 0.5rem 0.5rem !important;   /* tight to the header */
   }
   /* Compact header for embeds: logo + name + live/last-loaded only. */
-  body.embed-mode > header { display: block !important; text-align: left !important; padding: 0.5rem 0.7rem 0.4rem !important; }
+  body.embed-mode > header { display: block !important; text-align: left !important; padding: 0.5rem 0.7rem 0.15rem !important; }
+  /* Last header line (date · loaded · live) centered + snug to the board. */
+  body.embed-mode .hdr-meta { text-align: center !important; margin: 0.1rem 0 0.15rem !important; }
   body.embed-mode .controls { display: none !important; }  /* its inner controls are all hidden — drop the empty bar */
   body.embed-mode .hdr-built { display: block !important; margin-top: 0.1rem; }
   body.embed-mode .hdr-built .hdr-sep { display: none !important; }
@@ -1968,79 +1971,55 @@
      article is narrow or because we are 2-up on a phone. (Cards never get
      margin-inline:auto — that + container-type collapses them — the lone trailing
      card is centered with a DEFINITE width instead.) */
-  body.embed-mode .apx-card { max-width: 100% !important; padding: 9px 11px !important; container-type: inline-size; }
-  body.embed-mode .apx-grid { grid-template-columns: 1fr !important; }   /* base; overridden below */
-
-  /* Desktop / tablet article (>=620px): 2 games side-by-side. */
-  @media (min-width: 620px) {
-    body.embed-mode:not(.force-mobile) .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    body.embed-mode:not(.force-mobile) .apx-grid > .apx-card:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-      width: calc(50% - 6px) !important; max-width: calc(50% - 6px) !important;
-      justify-self: center; margin-inline: 0 !important; }
+  /* ===== EMBED CARDS = COMPACT by default (web + mobile) =====
+     Every game shows the condensed card: matchup + ML odds, projected runs/total,
+     the Projected/Confirmed badge (moved between total and edges), edge pills,
+     SP/BP rank chips, and the CON-POW-EYE-BSR-DEF grades. No ballpark/weather/ump
+     header, no pitcher names. Full detail is one tap away in the modal. The grid
+     auto-fits as many ~180px cards per row as the width allows (2-up on a phone,
+     3-4-up on a wide article). The in-modal card (.m-apx-wrap) is excluded — it
+     stays full detail. */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) {
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)) !important;
+    gap: 8px !important;
   }
-  /* Phones (<=560) AND ?mobile=1: ALSO 2 games side-by-side -- each ~185px column
-     trips the hard @container tier below (matchup + win% + grades only). */
-  @media (max-width: 560px) {
-    body.embed-mode .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
-    body.embed-mode .apx-grid > .apx-card:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-      width: calc(50% - 4px) !important; max-width: calc(50% - 4px) !important;
-      justify-self: center; margin-inline: 0 !important; }
+  body.force-mobile .apx-grid:not(.m-apx-wrap) { gap: 7px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card {
+    max-width: 100% !important; container-type: normal !important; padding: 8px 9px !important;
   }
-  body.force-mobile .apx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 7px !important; }
-  body.force-mobile .apx-card { max-width: 100% !important; }
-  body.force-mobile .apx-grid > .apx-card:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    width: calc(50% - 4px) !important; max-width: calc(50% - 4px) !important;
-    justify-self: center; margin-inline: 0 !important; }
-
-  /* ---- Tier 1 (<=430px column): tight 2-up column. Stack the grade rows and
-     shrink the info strip; keep all the detail. ---- */
-  @container (max-width: 430px) {
-    .apx-grid.apx-detailed .apx-info2 { font-size: 0.6rem; }
-    .apx-grid.apx-detailed .apx-info2 .grade { padding-left: 1px; padding-right: 1px; }
-    .apx-grades-row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .apx-grades-row .apx-side-k { order: -1; text-align: center; }
-    .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
-    .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
-    .apx-grades-row .apx-gteam { display: inline-block; min-width: 32px; color: var(--muted); font-weight: 700; margin-right: 6px; }
-    /* tight column: SP/BP rows keep their position above the grades but show
-       ranks only (drop pitcher names + bullpen fatigue tags). */
-    .apx-card .apx-pname { display: none !important; }
-    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.58rem; gap: 6px; }
-  }
-  /* ---- Tier 2 (<=270px column): genuine phone column, two-up. Strip to the
-     essentials + grades: matchup, projected runs/total, win%, and the
-     CON-POW-EYE-BSR-DEF rows. Park/wx/ump, time header, edge pills, and the
-     SP/PEN rows drop out (all still available by tapping into the modal). ---- */
-  @container (max-width: 270px) {
-    /* Drop only the bulky pieces (time header, park/wx/ump, the verbose SP/PEN
-       name rows). Keep matchup + ML odds, projected runs/total, win%, the edge
-       pills, the grade rows, and a chips-only SP/BP rank line. */
-    .apx-card .apx-head2,
-    .apx-card .apx-park { display: none !important; }
-    .apx-card .apx-info2 { border-top: none; margin-top: 4px; padding-top: 4px; gap: 3px; }
-    .apx-card .apx-center { gap: 3px; }
-    .apx-card .apx-center img { width: 26px !important; height: 26px !important; }
-    .apx-card .apx-abbr { font-size: 0.7rem; }
-    /* show each team's ML odds; hide the long total juice + fair-odds parens */
-    .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.5rem; }
-    .apx-card .apx-total .apx-mkt, .apx-card .apx-wp .apx-mkt { display: none !important; }
-    .apx-card .apx-wp { font-size: 0.56rem; }
-    .apx-card .apx-runs { font-size: 0.95rem; gap: 4px; }
-    .apx-card .apx-runs-lbl { font-size: 0.46rem; }
-    .apx-card .apx-total { font-size: 0.58rem; }
-    .apx-card .apx-proj-num { font-size: 0.66rem; }
-    .apx-card .apx-info2 .grade { font-size: 0.56rem; padding: 0 1px; }
-    .apx-card .apx-gteam { min-width: 26px !important; margin-right: 3px !important; }
-    /* SP/PEN rank rows: ranks only (names hidden at the <=430 tier), tightened */
-    .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.54rem; gap: 5px; }
-    .apx-card .apx-info2 .apx-side-row .rank-chip { font-size: 0.52rem; }
-    /* edge pills */
-    .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 4px; }
-    .apx-card .apx-edgebar .apx-pill { font-size: 0.52rem !important; padding: 1px 5px !important; }
-  }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-info2 { display: flex !important; }
+  /* strip the bulky bits */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-head2,
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-park,
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-pname { display: none !important; }
+  /* moved Projected/Confirmed badge: between total and edges */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-projbadge { display: flex !important; justify-content: center; margin: 5px 0 2px; }
+  /* matchup + numbers */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center { gap: 3px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-center img { width: 26px !important; height: 26px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr { font-size: 0.7rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.5rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total .apx-mkt,
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-mkt { display: none !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.56rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 0.98rem; gap: 4px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.46rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total { font-size: 0.58rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-proj-num { font-size: 0.66rem; }
+  /* info2: tight, ranks-only SP/PEN, stacked grades */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 { border-top: none; margin-top: 4px; padding-top: 4px; gap: 3px; font-size: 0.6rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .apx-side-row:not(.apx-grades-row) { font-size: 0.54rem; gap: 5px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .apx-side-row .rank-chip { font-size: 0.52rem; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-info2 .grade { font-size: 0.56rem; padding: 0 1px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-gteam { min-width: 26px !important; margin-right: 3px !important; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-k { order: -1; text-align: center; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-a { order: 0; text-align: center; white-space: nowrap; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-side-h { order: 1; text-align: center; white-space: nowrap; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-grades-row .apx-gteam { display: inline-block; min-width: 30px; color: var(--muted); font-weight: 700; }
+  /* edges */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar { display: flex !important; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 4px; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-edgebar .apx-pill { font-size: 0.52rem !important; padding: 1px 5px !important; }
   /* Embeds: drop the Save PNG buttons and the Action Network PRO banner. */
   body.embed-mode .an-proj-banner,
   body.embed-mode #apx-png,
@@ -3047,7 +3026,8 @@ function apxCardHTML(g){
       '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
-  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+edge+info+'</div>';
+  const projBadge='<div class="apx-projbadge">'+luChip+'</div>';
+  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+projBadge+edge+info+'</div>';
 }
 
 
