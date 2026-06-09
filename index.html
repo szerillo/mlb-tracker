@@ -8974,6 +8974,11 @@ document.addEventListener("click", hitTrendDelegate);
       console.error('Embed boot loadForDate failed:', e);
       return;
     }
+    // Sheet projections load async (un-awaited) inside loadForDate; the scoreboard
+    // re-renders when they arrive, but a single-game embed opens its modal right
+    // away — so await them here, otherwise the game card renders "No projection
+    // yet" and never refreshes.
+    try { await loadSheetProjections(); } catch (e) { /* fall back to no-proj card */ }
 
     if (embed === 'game') {
       const matchup = (params.get('matchup') || '').toUpperCase();
