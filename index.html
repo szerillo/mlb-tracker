@@ -1128,6 +1128,17 @@
   .m-lineup-box .src-note { color: var(--muted); font-size: 0.72rem;
     margin-top: 0.3rem; letter-spacing: 0.04em; }
 
+  /* Mobile modal headers: the lineup/bullpen <h4> is a flex row (logo + team
+     name + inline "vs LHP: 105 wRC+ (proj)" split). On a phone all three squish
+     onto one line — so let the header wrap and push the wRC+ split to its own
+     line. Applies to real phones (≤560) and ?mobile=1 preview. */
+  @media (max-width: 560px) {
+    .m-lineup-box h4, .m-bp-box h4 { flex-wrap: wrap; row-gap: 0.1rem; }
+    .m-lineup-box h4 .m-team-split { flex-basis: 100%; margin-left: 0; font-size: 0.74rem; }
+  }
+  body.force-mobile .m-lineup-box h4, body.force-mobile .m-bp-box h4 { flex-wrap: wrap; row-gap: 0.1rem; }
+  body.force-mobile .m-lineup-box h4 .m-team-split { flex-basis: 100%; margin-left: 0; font-size: 0.74rem; }
+
   /* Mobile */
   @media (max-width: 760px) {
     body { font-size: 13px; }
