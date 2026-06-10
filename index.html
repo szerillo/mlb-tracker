@@ -6803,7 +6803,18 @@ function renderRankingsTab() {
           <div class="rk-sp-wrap" id="rk-rp-wrap"></div>
         </div>
       </div>
+      <div class="rk-box rk-box-full" style="margin-top:1rem;">
+        <h3>Rolling Movers
+          <span class="rk-mode-toggle" id="movers-side">
+            <button data-side="pit" class="active">Pitchers</button>
+            <button data-side="bat">Hitters</button>
+          </span>
+          <span class="rk-sub" id="movers-window">last 15 days vs season \u00b7 click any column to sort</span>
+        </h3>
+        <div id="movers-body" class="rk-sp-wrap" style="overflow-x:auto;"><div class="loading">Loading movers\u2026</div></div>
+      </div>
     `;
+    initMovers();
 
     // Team Ranks tab: Team Bullpen | Team Offense (top row) + combined DEF+BSR (full width below)
     const teamRoot = document.getElementById("team-rankings-root");
@@ -7097,6 +7108,63 @@ function rankChipHtml(rank, total, kind) {
 function gradeByRank(rank, total) {
   if (!total) return null;
   return gradeLetter(100 * (total - rank + 0.5) / total);
+}
+
+// ===== Rolling Movers (last 15d vs season) — sortable leaderboards =====
+let MOVERS=null, MOVERS_SIDE='pit';
+const MOVERS_SORT={pit:{key:'veloD',dir:-1}, bat:{key:'xwobaD',dir:-1}};
+const MOV_COLS={
+  pit:[{k:'name',l:'Pitcher',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'ipR',l:'IP·15d'},
+    {k:'velo',l:'Velo'},{k:'veloD',l:'ΔVelo',d:1,sc:2},{k:'stuff',l:'Stuff+'},{k:'stuffD',l:'ΔStuff+',d:1,sc:8},
+    {k:'k',l:'K%'},{k:'kD',l:'ΔK%',d:1,sc:6},{k:'bbD',l:'ΔBB%',d:-1,sc:4},{k:'swstr',l:'SwStr%'},{k:'swstrD',l:'ΔSwStr%',d:1,sc:4}],
+  bat:[{k:'name',l:'Hitter',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'paR',l:'PA·15d'},
+    {k:'k',l:'K%'},{k:'kD',l:'ΔK%',d:-1,sc:6},{k:'bbD',l:'ΔBB%',d:1,sc:4},{k:'swstrD',l:'ΔSwStr%',d:-1,sc:4},{k:'chaseD',l:'ΔChase%',d:-1,sc:5},
+    {k:'ev',l:'EV'},{k:'evD',l:'ΔEV',d:1,sc:3},{k:'barrelD',l:'ΔBrl%',d:1,sc:5},{k:'hardhitD',l:'ΔHard%',d:1,sc:8},{k:'xwoba',l:'xwOBA'},{k:'xwobaD',l:'ΔxwOBA',d:1,sc:0.05}]
+};
+async function loadMovers(){ try{ MOVERS=await fetchJSON('data/_fg_movers.json?t='+Date.now()); }catch(e){ MOVERS=null; } }
+function initMovers(){
+  const tog=document.getElementById('movers-side');
+  if(tog) tog.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ MOVERS_SIDE=b.dataset.side; tog.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderMovers(); }; });
+  loadMovers().then(renderMovers);
+}
+function fmtMov(key,v){
+  if(v==null||v==='') return '—';
+  const dlt=/D$/.test(key); const sign=(dlt&&v>0)?'+':'';
+  if(key==='xwoba'||key==='xwobaD') return sign+(+v).toFixed(3);
+  if(key==='stuff'||key==='stuffD') return sign+Math.round(v);
+  if(key==='ipR'||key==='paR') return Math.round(v);
+  return sign+(+v).toFixed(1);
+}
+function movCell(col,v){
+  if(!/D$/.test(col.k) || v==null){ return '<td>'+fmtMov(col.k,v)+'</td>'; }
+  const good=col.d||1; const imp=v*good; const sc=col.sc||5;
+  const a=Math.min(0.9, Math.abs(v)/sc*0.85);
+  let bg='transparent', fg='var(--text)';
+  if(Math.abs(v)>1e-9){ const c=imp>0?'74,209,122':'232,93,82'; bg='rgba('+c+','+a.toFixed(2)+')'; }
+  return '<td style="background:'+bg+';color:'+fg+';font-weight:600;">'+fmtMov(col.k,v)+'</td>';
+}
+function renderMovers(){
+  const body=document.getElementById('movers-body'); if(!body) return;
+  if(!MOVERS){ body.innerHTML='<div class="rk-empty">Movers data unavailable yet — refreshes nightly.</div>'; return; }
+  const win=document.getElementById('movers-window'); if(win&&MOVERS.window) win.textContent=MOVERS.window+' · click any column to sort';
+  const side=MOVERS_SIDE, cols=MOV_COLS[side], st=MOVERS_SORT[side];
+  const rows=(MOVERS[side]||[]).slice().sort((a,b)=>{
+    let av=a[st.key], bv=b[st.key];
+    if(av==null&&bv==null) return 0; if(av==null) return 1; if(bv==null) return -1;
+    if(typeof av==='string') return st.dir*av.localeCompare(bv);
+    return st.dir*(av-bv);
+  });
+  const head='<tr>'+cols.map(c=>{
+    const arrow=(c.k===st.key)?(st.dir<0?' ▾':' ▴'):'';
+    return '<th class="'+(c.t==='l'?'left':'')+'" data-mk="'+c.k+'" style="cursor:pointer;white-space:nowrap;">'+c.l+arrow+'</th>';
+  }).join('')+'</tr>';
+  const trs=rows.slice(0,120).map(r=>'<tr>'+cols.map(c=>{
+    if(c.k==='name') return '<td class="name">'+(r.name||'')+'</td>';
+    if(c.k==='team') return '<td class="team" style="color:var(--muted);">'+(r.team||'')+'</td>';
+    return movCell(c,r[c.k]);
+  }).join('')+'</tr>').join('');
+  body.innerHTML='<table class="rk-table rk-table-compact"><thead>'+head+'</thead><tbody>'+trs+'</tbody></table>';
+  body.querySelectorAll('th[data-mk]').forEach(th=>{ th.onclick=()=>{ const k=th.dataset.mk; if(st.key===k){ st.dir*=-1; } else { st.key=k; st.dir=(k==='name'||k==='team')?1:-1; } renderMovers(); }; });
 }
 
 function renderSPRankings(pitchers, nameToTeam) {
