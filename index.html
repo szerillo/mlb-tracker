@@ -4662,6 +4662,27 @@ function bsrPct(h, lookupName) {
   _ensureRunPops();
   return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null;
 }
+// Offensive-value percentiles: rank a hitter's season xwOBA and (3yr split-avg)
+// wRC+ against the MLB-regular pool (pa >= 300). Used as extra offensive inputs
+// in the Hitter Ranks OVR so results-based value weighs in alongside the
+// POW/CON/EYE skill grades.
+let _OFF_POP_SRC=null, _XW_POP=null, _WRC_POP=null;
+function _ensureOffPops(){
+  if(_OFF_POP_SRC===HITTERS && _XW_POP) return;
+  const xw=[], wr=[];
+  for(const h of Object.values(HITTERS?.hitters||{})){
+    if((h.pa||0)<300) continue;
+    if(typeof h.xwoba_actual==='number') xw.push(h.xwoba_actual);
+    let w=null;
+    if(typeof h.wrc_vs_r==='number'&&typeof h.wrc_vs_l==='number') w=(h.wrc_vs_r+h.wrc_vs_l)/2;
+    else if(typeof h.wrc==='number') w=h.wrc;
+    if(w!=null) wr.push(w);
+  }
+  xw.sort((a,b)=>a-b); wr.sort((a,b)=>a-b);
+  _XW_POP=xw; _WRC_POP=wr; _OFF_POP_SRC=HITTERS;
+}
+function xwobaPct(h){ _ensureOffPops(); return (h&&typeof h.xwoba_actual==='number')?_pctileOf(h.xwoba_actual,_XW_POP):null; }
+function wrcPct(h){ _ensureOffPops(); let w=null; if(typeof h.wrc_vs_r==='number'&&typeof h.wrc_vs_l==='number')w=(h.wrc_vs_r+h.wrc_vs_l)/2; else if(typeof h.wrc==='number')w=h.wrc; return w!=null?_pctileOf(w,_WRC_POP):null; }
 // Contact = K% mapped against the individual MLB-hitter K% distribution. Linear
 // floor 10% K% → 99th pct (best contact), ceiling 35% K% → 1st pct (worst).
 // MLB avg ~22% K% → ~52nd pct (C+). Uses season actual K% (k_pct_actual) with
@@ -7184,7 +7205,7 @@ function renderMovers(){
 // ===== Hitter Ranks tab: overall grade table (sortable + position filter) + hitter movers =====
 let HRANK_POS='ALL', HRANK_SORT={key:'ovr',dir:-1}, HRM_WIN='30';
 const HR_POS_GROUPS=['ALL','C','1B','2B','3B','SS','OF','DH'];
-const HR_COLS=[{k:'nm',l:'Hitter',t:'l'},{k:'pos',l:'Pos',t:'l'},{k:'pa',l:'PA'},{k:'pow',l:'POW'},{k:'con',l:'CON'},{k:'eye',l:'EYE'},{k:'bsr',l:'BSR'},{k:'fld',l:'DEF'},{k:'ovr',l:'OVR'}];
+const HR_COLS=[{k:'nm',l:'Hitter',t:'l'},{k:'pos',l:'Pos',t:'l'},{k:'pa',l:'PA'},{k:'pow',l:'POW'},{k:'con',l:'CON'},{k:'eye',l:'EYE'},{k:'xw',l:'xwOBA'},{k:'wrc',l:'wRC+'},{k:'bsr',l:'BSR'},{k:'fld',l:'DEF'},{k:'ovr',l:'OVR'}];
 function _posGroup(p){ if(!p) return '?'; p=(''+p).toUpperCase(); if(['LF','CF','RF','OF'].includes(p)) return 'OF'; if(['P','SP','RP','TWP'].includes(p)) return 'P'; return p; }
 function hitterGradeRows(){
   const out=[]; const hs=(typeof HITTERS!=='undefined'&&HITTERS&&HITTERS.hitters)||{}; const HP=(typeof HITTER_PCT!=='undefined'&&HITTER_PCT&&HITTER_PCT.hitters)||{};
@@ -7193,10 +7214,14 @@ function hitterGradeRows(){
     if(!pos||pg==='P'||pg==='?') continue;
     const pa=h.pa_actual!=null?h.pa_actual:(h.pa||0); if(pa<60) continue;
     const pc=HP[normName(nm)];
-    const pow=powerPct(pc,nm), con=conPct(h), eye=eyePct(pc,nm), bsr=bsrPct(h,nm), fld=fldPct(h,nm);
-    const parts=[pow,con,eye,bsr,fld].filter(v=>typeof v==='number');
-    if(parts.length<3) continue;
-    out.push({nm,pos,posg:pg,pa:Math.round(pa),pow,con,eye,bsr,fld,ovr:parts.reduce((a,b)=>a+b,0)/parts.length});
+    const isDH=(pg==='DH');
+    const pow=powerPct(pc,nm), con=conPct(h), eye=eyePct(pc,nm), xw=xwobaPct(h), wrc=wrcPct(h), bsr=bsrPct(h,nm), fld=isDH?null:fldPct(h,nm);
+    // OVR = simple average of every available datapoint. Offense (POW/CON/EYE/
+    // xwOBA/wRC+ = up to 5) naturally outweighs BSR + DEF (1 each). DH drops DEF.
+    const off=[pow,con,eye,xw,wrc].filter(v=>typeof v==='number');
+    if(off.length<2) continue;
+    const all=off.concat([bsr,fld].filter(v=>typeof v==='number'));
+    out.push({nm,pos,posg:pg,pa:Math.round(pa),pow,con,eye,xw,wrc,bsr,fld,isDH,ovr:all.reduce((a,b)=>a+b,0)/all.length});
   }
   return out;
 }
