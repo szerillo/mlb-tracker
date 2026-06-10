@@ -4662,27 +4662,18 @@ function bsrPct(h, lookupName) {
   _ensureRunPops();
   return (h && typeof h.bsr === 'number') ? _pctileOf(h.bsr, _BSR_POP) : null;
 }
-// Offensive-value percentiles: rank a hitter's season xwOBA and (3yr split-avg)
-// wRC+ against the MLB-regular pool (pa >= 300). Used as extra offensive inputs
-// in the Hitter Ranks OVR so results-based value weighs in alongside the
-// POW/CON/EYE skill grades.
-let _OFF_POP_SRC=null, _XW_POP=null, _WRC_POP=null;
-function _ensureOffPops(){
-  if(_OFF_POP_SRC===HITTERS && _XW_POP) return;
-  const xw=[], wr=[];
-  for(const h of Object.values(HITTERS?.hitters||{})){
-    if((h.pa||0)<300) continue;
-    if(typeof h.xwoba_actual==='number') xw.push(h.xwoba_actual);
-    let w=null;
-    if(typeof h.wrc_vs_r==='number'&&typeof h.wrc_vs_l==='number') w=(h.wrc_vs_r+h.wrc_vs_l)/2;
-    else if(typeof h.wrc==='number') w=h.wrc;
-    if(w!=null) wr.push(w);
-  }
-  xw.sort((a,b)=>a-b); wr.sort((a,b)=>a-b);
-  _XW_POP=xw; _WRC_POP=wr; _OFF_POP_SRC=HITTERS;
-}
-function xwobaPct(h){ _ensureOffPops(); return (h&&typeof h.xwoba_actual==='number')?_pctileOf(h.xwoba_actual,_XW_POP):null; }
-function wrcPct(h){ _ensureOffPops(); let w=null; if(typeof h.wrc_vs_r==='number'&&typeof h.wrc_vs_l==='number')w=(h.wrc_vs_r+h.wrc_vs_l)/2; else if(typeof h.wrc==='number')w=h.wrc; return w!=null?_pctileOf(w,_WRC_POP):null; }
+// Season offensive value, graded on an ABSOLUTE scale (not percentile) so the
+// elite tail separates: prefers FanGraphs SEASON wRC+ / xwOBA (from _fg_movers,
+// matching the FG leaderboard) and falls back to 3yr-split wRC+ / xwoba_actual.
+// Anchors: 191 wRC+ -> A+, 151 -> A, 131 -> A-, 100 -> C+ (avg).
+let SEASON_OFF={};
+function _buildSeasonOff(){ SEASON_OFF={}; try{ if(MOVERS&&MOVERS.bat){ for(const r of MOVERS.bat){ if(r.name) SEASON_OFF[normName(r.name)]={wrc:r.wrc, xwoba:r.xwoba}; } } }catch(e){} }
+function wrcToPct(w){ if(w==null) return null; let p; if(w<=100)p=50+(w-100)*0.6; else if(w<=130)p=50+(w-100)*1.0; else if(w<=150)p=80+(w-130)*0.4; else if(w<=190)p=88+(w-150)*0.2; else p=96+(w-190)*0.05; return Math.max(1,Math.min(99,p)); }
+function xwToPct(x){ if(x==null) return null; let p; if(x<=0.315)p=52-(0.315-x)*771; else if(x<=0.350)p=52+(x-0.315)*800; else if(x<=0.375)p=80+(x-0.350)*320; else if(x<=0.430)p=88+(x-0.375)*145; else p=96+(x-0.430)*50; return Math.max(1,Math.min(99,p)); }
+function _seasonWrc(h){ const so=SEASON_OFF[normName(h.name||'')]; if(so&&so.wrc!=null) return so.wrc; if(typeof h.wrc_vs_r==='number'&&typeof h.wrc_vs_l==='number') return (h.wrc_vs_r+h.wrc_vs_l)/2; return (typeof h.wrc==='number')?h.wrc:null; }
+function _seasonXw(h){ const so=SEASON_OFF[normName(h.name||'')]; if(so&&so.xwoba!=null) return so.xwoba; return (typeof h.xwoba_actual==='number')?h.xwoba_actual:null; }
+function wrcPct(h){ return wrcToPct(_seasonWrc(h)); }
+function xwobaPct(h){ return xwToPct(_seasonXw(h)); }
 // Contact = K% mapped against the individual MLB-hitter K% distribution. Linear
 // floor 10% K% → 99th pct (best contact), ceiling 35% K% → 1st pct (worst).
 // MLB avg ~22% K% → ~52nd pct (C+). Uses season actual K% (k_pct_actual) with
@@ -7154,7 +7145,7 @@ const MOV_COLS={
     {k:'k',l:'K%'},{k:'kD',l:'ΔK%',d:-1,sc:6},{k:'bbD',l:'ΔBB%',d:1,sc:4},{k:'swstrD',l:'ΔSwStr%',d:-1,sc:4},{k:'chaseD',l:'ΔChase%',d:-1,sc:5},
     {k:'ev',l:'EV'},{k:'evD',l:'ΔEV',d:1,sc:3},{k:'barrelD',l:'ΔBrl%',d:1,sc:5},{k:'hardhitD',l:'ΔHard%',d:1,sc:8},{k:'xwoba',l:'xwOBA'},{k:'xwobaD',l:'ΔxwOBA',d:1,sc:0.05}]
 };
-async function loadMovers(){ try{ MOVERS=await fetchJSON('data/_fg_movers.json?t='+Date.now()); }catch(e){ MOVERS=null; } }
+async function loadMovers(){ try{ MOVERS=await fetchJSON('data/_fg_movers.json?t='+Date.now()); }catch(e){ MOVERS=null; } _buildSeasonOff(); }
 function initMovers(){
   const tog=document.getElementById('movers-side');
   if(tog) tog.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ MOVERS_SIDE=b.dataset.side; tog.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderMovers(); }; });
@@ -7277,11 +7268,10 @@ function renderHitterRanksTab(){
         </h3>
         <div id="hrm-body" class="rk-sp-wrap" style="overflow-x:auto;"><div class="loading">Loading movers…</div></div>
       </div>`;
-    renderHitterGrades();
     document.getElementById('hr-pos').querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRANK_POS=b.dataset.pos; b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterGrades(); renderHitterMovers(); });
     document.getElementById('hr-grade-body').addEventListener('click',e=>{ const th=e.target.closest('th[data-hk]'); if(!th)return; const k=th.dataset.hk; if(HRANK_SORT.key===k)HRANK_SORT.dir*=-1; else{HRANK_SORT.key=k; HRANK_SORT.dir=(k==='nm'||k==='pos')?1:-1;} renderHitterGrades(); });
     const wt=document.getElementById('hrm-win'); wt.querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRM_WIN=b.dataset.win; wt.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterMovers(); });
-    if(typeof loadMovers==='function') loadMovers().then(renderHitterMovers); else renderHitterMovers();
+    (typeof loadMovers==='function'?loadMovers():Promise.resolve()).then(()=>{ renderHitterGrades(); renderHitterMovers(); });
   });
 }
 
