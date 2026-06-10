@@ -6809,7 +6809,12 @@ function renderRankingsTab() {
             <button data-side="pit" class="active">Pitchers</button>
             <button data-side="bat">Hitters</button>
           </span>
-          <span class="rk-sub" id="movers-window">last 15 days vs season \u00b7 click any column to sort</span>
+          <span class="rk-mode-toggle" id="movers-win" style="margin-left:6px;">
+            <button data-win="15">15d</button>
+            <button data-win="30" class="active">30d</button>
+            <button data-win="60">60d</button>
+          </span>
+          <span class="rk-sub" id="movers-window">vs season \u00b7 click any column to sort</span>
         </h3>
         <div id="movers-body" class="rk-sp-wrap" style="overflow-x:auto;"><div class="loading">Loading movers\u2026</div></div>
       </div>
@@ -7111,13 +7116,13 @@ function gradeByRank(rank, total) {
 }
 
 // ===== Rolling Movers (last 15d vs season) — sortable leaderboards =====
-let MOVERS=null, MOVERS_SIDE='pit';
+let MOVERS=null, MOVERS_SIDE='pit', MOVERS_WIN='30';
 const MOVERS_SORT={pit:{key:'veloD',dir:-1}, bat:{key:'xwobaD',dir:-1}};
 const MOV_COLS={
-  pit:[{k:'name',l:'Pitcher',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'ipR',l:'IP·15d'},
+  pit:[{k:'name',l:'Pitcher',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'ipR',l:'IP·win'},
     {k:'velo',l:'Velo'},{k:'veloD',l:'ΔVelo',d:1,sc:2},{k:'stuff',l:'Stuff+'},{k:'stuffD',l:'ΔStuff+',d:1,sc:8},
     {k:'k',l:'K%'},{k:'kD',l:'ΔK%',d:1,sc:6},{k:'bbD',l:'ΔBB%',d:-1,sc:4},{k:'swstr',l:'SwStr%'},{k:'swstrD',l:'ΔSwStr%',d:1,sc:4}],
-  bat:[{k:'name',l:'Hitter',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'paR',l:'PA·15d'},
+  bat:[{k:'name',l:'Hitter',t:'l'},{k:'team',l:'Tm',t:'l'},{k:'paR',l:'PA·win'},
     {k:'k',l:'K%'},{k:'kD',l:'ΔK%',d:-1,sc:6},{k:'bbD',l:'ΔBB%',d:1,sc:4},{k:'swstrD',l:'ΔSwStr%',d:-1,sc:4},{k:'chaseD',l:'ΔChase%',d:-1,sc:5},
     {k:'ev',l:'EV'},{k:'evD',l:'ΔEV',d:1,sc:3},{k:'barrelD',l:'ΔBrl%',d:1,sc:5},{k:'hardhitD',l:'ΔHard%',d:1,sc:8},{k:'xwoba',l:'xwOBA'},{k:'xwobaD',l:'ΔxwOBA',d:1,sc:0.05}]
 };
@@ -7125,6 +7130,8 @@ async function loadMovers(){ try{ MOVERS=await fetchJSON('data/_fg_movers.json?t
 function initMovers(){
   const tog=document.getElementById('movers-side');
   if(tog) tog.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ MOVERS_SIDE=b.dataset.side; tog.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderMovers(); }; });
+  const wtog=document.getElementById('movers-win');
+  if(wtog) wtog.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ MOVERS_WIN=b.dataset.win; wtog.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderMovers(); }; });
   loadMovers().then(renderMovers);
 }
 function fmtMov(key,v){
@@ -7146,9 +7153,9 @@ function movCell(col,v){
 function renderMovers(){
   const body=document.getElementById('movers-body'); if(!body) return;
   if(!MOVERS){ body.innerHTML='<div class="rk-empty">Movers data unavailable yet — refreshes nightly.</div>'; return; }
-  const win=document.getElementById('movers-window'); if(win&&MOVERS.window) win.textContent=MOVERS.window+' · click any column to sort';
-  const side=MOVERS_SIDE, cols=MOV_COLS[side], st=MOVERS_SORT[side];
-  const rows=(MOVERS[side]||[]).slice().sort((a,b)=>{
+  const wl=document.getElementById('movers-window'); if(wl) wl.textContent='last '+MOVERS_WIN+'d vs season (as of '+(MOVERS.asof||'')+') · click any column to sort';
+  const side=MOVERS_SIDE, cols=MOV_COLS[side], st=MOVERS_SORT[side], win=MOVERS_WIN;
+  const rows=(MOVERS[side]||[]).filter(r=>r.w&&r.w[win]).map(r=>Object.assign({}, r, r.w[win])).sort((a,b)=>{
     let av=a[st.key], bv=b[st.key];
     if(av==null&&bv==null) return 0; if(av==null) return 1; if(bv==null) return -1;
     if(typeof av==='string') return st.dir*av.localeCompare(bv);
