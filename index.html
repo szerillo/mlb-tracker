@@ -7303,7 +7303,7 @@ function renderMovers(){
 let HRANK_POS='ALL', HRANK_SORT={key:'ovr',dir:-1}, HRM_WIN='30';
 const HR_POS_GROUPS=['ALL','C','1B','2B','3B','SS','OF','DH'];
 const HR_COLS=[{k:'nm',l:'Hitter',t:'l'},{k:'pos',l:'Pos',t:'l'},{k:'pa',l:'PA'},{k:'pow',l:'POW'},{k:'con',l:'CON'},{k:'eye',l:'EYE'},{k:'xw',l:'xwOBA'},{k:'wrc',l:'wRC+'},{k:'bsr',l:'BSR'},{k:'fld',l:'DEF'},{k:'ovr',l:'OVR'}];
-function _posGroup(p){ if(!p) return '?'; p=(''+p).toUpperCase(); if(['LF','CF','RF','OF'].includes(p)) return 'OF'; if(['P','SP','RP','TWP'].includes(p)) return 'P'; return p; }
+function _posGroup(p){ if(!p) return '?'; p=(''+p).toUpperCase(); if(['LF','CF','RF','OF'].includes(p)) return 'OF'; if(p==='TWP') return 'DH'; if(['P','SP','RP'].includes(p)) return 'P'; return p; }
 function hitterGradeRows(){
   const out=[]; const hs=(typeof HITTERS!=='undefined'&&HITTERS&&HITTERS.hitters)||{}; const HP=(typeof HITTER_PCT!=='undefined'&&HITTER_PCT&&HITTER_PCT.hitters)||{};
   for(const key in hs){ const h=hs[key]; const nm=h.name; if(!nm) continue;
