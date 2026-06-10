@@ -55,6 +55,34 @@
   }
   .theme-toggle:hover { background: var(--panel-hover); border-color: var(--accent); }
 
+  /* ── Stat glossary overlay ─────────────────────────────────────────── */
+  .gloss-btn{display:inline-flex;align-items:center;gap:.25rem;background:var(--panel);
+    border:1px solid var(--border);color:var(--text);border-radius:6px;
+    padding:.22rem .5rem;font-size:.72rem;font-weight:600;cursor:pointer;line-height:1;white-space:nowrap;}
+  .gloss-btn:hover{background:var(--panel-hover);border-color:var(--accent);}
+  #gloss-bg{position:fixed;inset:0;z-index:2147483647;display:none;
+    background:rgba(0,0,0,.62);align-items:flex-start;justify-content:center;
+    overflow:auto;padding:2.5rem 1rem;}
+  #gloss-bg.open{display:flex;}
+  .gloss-modal{background:var(--bg);border:1px solid var(--border);border-radius:12px;
+    max-width:720px;width:100%;padding:1.4rem 1.5rem 1.7rem;position:relative;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:'Inter',var(--sans),system-ui,sans-serif;}
+  .gloss-modal h2{margin:0 0 .15rem;font-size:1.15rem;color:var(--text);}
+  .gloss-modal .gloss-sub{color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
+  .gloss-close{position:absolute;top:.6rem;right:.85rem;background:none;border:none;
+    color:var(--muted);font-size:1.55rem;line-height:1;cursor:pointer;}
+  .gloss-close:hover{color:var(--text);}
+  .gloss-sec{margin:0 0 1rem;}
+  .gloss-sec h3{font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 .4rem;border-bottom:1px solid var(--border);padding-bottom:.22rem;}
+  .gloss-row{display:grid;grid-template-columns:104px 1fr;gap:.6rem;padding:.2rem 0;
+    font-size:.82rem;line-height:1.42;align-items:baseline;}
+  .gloss-term{font-weight:700;color:var(--text);}
+  .gloss-def{color:var(--muted);}
+  .gloss-def b{color:var(--text);font-weight:600;}
+  @media(max-width:520px){.gloss-row{grid-template-columns:78px 1fr;gap:.45rem;font-size:.78rem;}}
+
+
   /* ── Light theme overrides ───────────────────────────────────────────── */
   body.light-theme {
     --bg: #f4f6fa; --panel: #ffffff; --panel-hover: #eef1f6; --border: #d2d9e4;
@@ -1865,6 +1893,7 @@
   body.embed-mode #nextDayBtn,
   body.embed-mode #todayBtn,
   body.embed-mode #theme-toggle,
+  body.embed-mode #gloss-header-btn,
   body.embed-mode .methodology-note,
   body.embed-mode .top-bar {
     display: none !important;
@@ -2223,6 +2252,9 @@
   </div>
   <div class="sub">
     <span class="hdr-meta"><span id="embedDate" class="hdr-date"></span>Last loaded: <span id="updated">—</span> · <span id="status" class="live">● live</span></span>
+    <button id="gloss-header-btn" type="button" class="gloss-btn gloss-trigger"
+            title="What the abbreviations mean"
+            style="position:absolute;top:0.7rem;right:3.6rem;">&#9432; Glossary</button>
     <button id="theme-toggle" class="theme-toggle" type="button"
             title="Toggle light / dark theme">🌗</button>
   </div>
@@ -2375,6 +2407,16 @@
     style="color: var(--accent); text-decoration: none;">@SeanZerillo</a> with questions.
   </footer>
 </main>
+
+<!-- Stat glossary overlay -->
+<div id="gloss-bg" role="dialog" aria-modal="true" aria-label="Glossary">
+  <div class="gloss-modal">
+    <button class="gloss-close" id="gloss-close" type="button" aria-label="Close">×</button>
+    <h2>Glossary</h2>
+    <div class="gloss-sub">What the abbreviations across B.A.R.T.O.L.O. mean.</div>
+    <div id="gloss-body"></div>
+  </div>
+</div>
 
 <!-- Game detail modal -->
 <div id="modal-bg" class="modal-bg" role="dialog" aria-modal="true">
@@ -3260,7 +3302,7 @@ async function bootShotMode(params){
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
-  const toolbar='<div class="apx-toolbar"><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
+  const toolbar='<div class="apx-toolbar"><button class="apx-toggle gloss-trigger" type="button" style="margin-right:6px;">&#9432; Glossary</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
   el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
@@ -3270,6 +3312,70 @@ function renderScoreboard(){
   el.querySelectorAll(".sb-wp-chip").forEach(chip=>{ const jump=(e)=>{ e.preventDefault(); e.stopPropagation(); const pk=parseInt(chip.dataset.wpPk,10); if(!pk)return; WINPROB_SELECTED=pk; WINPROB_RENDERED=false; const t=document.querySelector('.tab[data-tab="winprob"]'); if(t)t.click(); }; chip.onclick=jump; chip.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" ")jump(e); }; });
 }
 
+
+
+/* ── Stat glossary ─────────────────────────────────────────────────── */
+const GLOSSARY = [
+  {sec:'Projections & Edges', items:[
+    ['Proj','Our projected final score / run total for each team.'],
+    ['Total','Projected combined runs — compare against the market over/under.'],
+    ['Edge','Our number minus the market line. <b>Positive = value</b> on that side. Shown for the moneyline and the total.'],
+    ['ML','Moneyline — straight-up winner.'],
+    ['Proj / Confirmed','Whether the lineup shown is our <b>projection</b> or the team’s <b>posted</b> (confirmed) lineup.'],
+  ]},
+  {sec:'Pitching', items:[
+    ['wFIP','<b>Weighted FIP</b> — our blended run-prevention metric: rolling xFIP 28% / SIERA 22% / xERA 18% / botERA 17% / projection 15%. <b>Lower is better.</b>'],
+    ['xFIP','Expected Fielding-Independent Pitching — an ERA estimate that normalizes home-run rate. Lower is better.'],
+    ['SIERA','Skill-Interactive ERA — folds in strikeouts, walks and batted-ball type. Lower is better.'],
+    ['xERA','Statcast Expected ERA, from contact quality allowed. Lower is better.'],
+    ['botERA','FanGraphs PitchingBot ERA — a pitch-model run estimate. Lower is better.'],
+    ['Stuff+','Pitch-quality model (velocity + movement). <b>100 = league average</b>, higher is better.'],
+    ['FBv','Average fastball velocity (mph).'],
+    ['K% / BB%','Strikeout rate / walk rate.'],
+    ['SwStr%','Swinging-strike rate — whiffs per pitch.'],
+  ]},
+  {sec:'Hitting', items:[
+    ['wRC+','<b>Weighted Runs Created Plus</b> — total offensive value, park- & league-adjusted. <b>100 = league average.</b>'],
+    ['xwOBA','Expected weighted On-Base Average — from Statcast contact quality.'],
+    ['OFF','Offense grade — combined wRC+ / power / contact / eye.'],
+    ['POW','Power — barrel / hard-hit / xSLG percentiles.'],
+    ['CON','Contact — strikeout avoidance.'],
+    ['EYE','Plate discipline — walk rate + chase rate.'],
+    ['BSR','Base Running — projected BsR (base-running runs).'],
+    ['DEF','Defense — projected fielding runs. A DH shows “—”.'],
+    ['EV / maxEV','Average / max exit velocity (mph).'],
+    ['Barrel%','Rate of barreled (ideal-contact) batted balls.'],
+    ['HardHit%','Share of batted balls hit 95+ mph.'],
+    ['Chase','Out-of-zone swing rate — lower is better.'],
+  ]},
+  {sec:'Ballpark & Environment', items:[
+    ['PF','<b>Park Factor</b> — the ballpark’s run-scoring environment. <b>100 = neutral</b>; higher boosts offense.'],
+    ['WX / Wx','<b>Weather adjustment</b> — temperature, humidity, air pressure and wind converted into a run impact.'],
+    ['Ump','The home-plate umpire’s strike-zone tendency.'],
+  ]},
+  {sec:'Grades', items:[
+    ['A+ → F','Letter grades are <b>percentiles vs MLB regulars</b>; C ≈ league average. <b style="color:var(--tier-good)">Green</b> = good, grey = average, <b style="color:var(--tier-bad)">red</b> = poor.'],
+  ]},
+];
+function buildGlossaryHTML(){
+  return GLOSSARY.map(function(g){
+    return '<div class="gloss-sec"><h3>'+g.sec+'</h3>'+
+      g.items.map(function(it){
+        return '<div class="gloss-row"><div class="gloss-term">'+it[0]+'</div><div class="gloss-def">'+it[1]+'</div></div>';
+      }).join('')+'</div>';
+  }).join('');
+}
+function openGlossary(){
+  var bg=document.getElementById('gloss-bg'); if(!bg) return;
+  var b=document.getElementById('gloss-body'); if(b && !b.innerHTML) b.innerHTML=buildGlossaryHTML();
+  bg.classList.add('open');
+}
+function closeGlossary(){ var bg=document.getElementById('gloss-bg'); if(bg) bg.classList.remove('open'); }
+document.addEventListener('click',function(e){
+  if(e.target.closest && e.target.closest('.gloss-trigger')){ e.preventDefault(); e.stopPropagation(); openGlossary(); return; }
+  if(e.target.id==='gloss-bg' || e.target.id==='gloss-close'){ closeGlossary(); }
+});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeGlossary(); });
 
 function renderPregameDetailHTML(game, pg) {
   if (!pg) return '<div class="coming-soon">Pre-game model not ready (lineups + probable SPs needed)</div>';
