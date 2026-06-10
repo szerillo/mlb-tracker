@@ -184,11 +184,11 @@ WIND_SCALE = 0.95
 # this on the slates we can observe; our wind input is too coarse to trust more).
 WIND_CAP = 0.15
 DP_C = 0.0014
-PRES_C = 0.0018
+PRES_C = 0.0050   # 2026-06 recal: BallparkPal pressure slope ~-0.39 to -0.72 %runs/mb (robust across specs); was -0.18, ~2.8x too weak.
 CARRY_INT = 0.0003
 CARRY_SCALE = 0.005
-T_SENS_FLOOR_HOT = 2.8   # 2026-06 recal: warm games were under-weighted vs BallparkPal weather-only runs (hot-park games landed ~2-3x light). Doubled the hot-side temp floor so a +15F game contributes ~2x the run boost; cold side (T_SENS_FLOOR_COLD) unchanged.
-T_SENS_FLOOR_COLD = 1.4
+T_SENS_FLOOR_HOT = 3.6   # 2026-06 recal vs BallparkPal weather-only Runs (49 open-air games, last week): empirical temp slope ~0.29-0.36 %runs/F (mid 3.6 floor); warm games were landing ~3.9% vs BP ~6.7%.
+T_SENS_FLOOR_COLD = 3.6
 COLD_MULT_CAP = 0.5
 DOME_DAMP_DEFAULT = 0.15
 
