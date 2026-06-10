@@ -1875,6 +1875,7 @@
   body.embed-mode #tab-lineups,
   body.embed-mode #tab-bullpen,
   body.embed-mode #tab-rankings,
+  body.embed-mode #tab-hitter-ranks,
   body.embed-mode #tab-team-rankings,
   body.embed-mode #tab-proj,
   body.embed-mode #tab-playoffs,
@@ -2233,6 +2234,7 @@
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="rankings" role="tab">Pitcher Ranks</button>
+    <button class="tab" data-tab="hitter-ranks" role="tab">Hitter Ranks</button>
     <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
@@ -2292,6 +2294,10 @@
 
   <section id="tab-rankings" class="tab-content" hidden>
     <div id="rankings-root" class="loading">Loading pitcher rankings…</div>
+  </section>
+
+  <section id="tab-hitter-ranks" class="tab-content" hidden>
+    <div id="hitter-ranks-root" class="loading">Loading hitter rankings…</div>
   </section>
 
   <section id="tab-team-rankings" class="tab-content" hidden>
@@ -4067,6 +4073,7 @@ async function loadForDate(date) {
   if (activeTab) {
     const id = activeTab.dataset.tab;
     if (id === 'rankings' && typeof renderRankingsTab === 'function') renderRankingsTab();
+    else if (id === 'hitter-ranks' && typeof renderHitterRanksTab === 'function') renderHitterRanksTab();
     else if (id === 'team-rankings' && typeof renderTeamRankingsTab === 'function') renderTeamRankingsTab();
     else if (id === 'winprob' && typeof renderWinprobTab === 'function') renderWinprobTab();
     else if (id === 'luck' && typeof renderLuckTab === 'function') renderLuckTab();
@@ -7174,6 +7181,85 @@ function renderMovers(){
   body.querySelectorAll('th[data-mk]').forEach(th=>{ th.onclick=()=>{ const k=th.dataset.mk; if(st.key===k){ st.dir*=-1; } else { st.key=k; st.dir=(k==='name'||k==='team')?1:-1; } renderMovers(); }; });
 }
 
+// ===== Hitter Ranks tab: overall grade table (sortable + position filter) + hitter movers =====
+let HRANK_POS='ALL', HRANK_SORT={key:'ovr',dir:-1}, HRM_WIN='30';
+const HR_POS_GROUPS=['ALL','C','1B','2B','3B','SS','OF','DH'];
+const HR_COLS=[{k:'nm',l:'Hitter',t:'l'},{k:'pos',l:'Pos',t:'l'},{k:'pa',l:'PA'},{k:'pow',l:'POW'},{k:'con',l:'CON'},{k:'eye',l:'EYE'},{k:'bsr',l:'BSR'},{k:'fld',l:'DEF'},{k:'ovr',l:'OVR'}];
+function _posGroup(p){ if(!p) return '?'; p=(''+p).toUpperCase(); if(['LF','CF','RF','OF'].includes(p)) return 'OF'; if(['P','SP','RP','TWP'].includes(p)) return 'P'; return p; }
+function hitterGradeRows(){
+  const out=[]; const hs=(typeof HITTERS!=='undefined'&&HITTERS&&HITTERS.hitters)||{}; const HP=(typeof HITTER_PCT!=='undefined'&&HITTER_PCT&&HITTER_PCT.hitters)||{};
+  for(const key in hs){ const h=hs[key]; const nm=h.name; if(!nm) continue;
+    const info=PLAYER_INFO[normName(nm)]; const pos=info?info.pos:''; const pg=_posGroup(pos);
+    if(!pos||pg==='P'||pg==='?') continue;
+    const pa=h.pa_actual!=null?h.pa_actual:(h.pa||0); if(pa<60) continue;
+    const pc=HP[normName(nm)];
+    const pow=powerPct(pc,nm), con=conPct(h), eye=eyePct(pc,nm), bsr=bsrPct(h,nm), fld=fldPct(h,nm);
+    const parts=[pow,con,eye,bsr,fld].filter(v=>typeof v==='number');
+    if(parts.length<3) continue;
+    out.push({nm,pos,posg:pg,pa:Math.round(pa),pow,con,eye,bsr,fld,ovr:parts.reduce((a,b)=>a+b,0)/parts.length});
+  }
+  return out;
+}
+function renderHitterGrades(){
+  const body=document.getElementById('hr-grade-body'); if(!body) return;
+  let rows=hitterGradeRows();
+  if(HRANK_POS!=='ALL') rows=rows.filter(r=>r.posg===HRANK_POS);
+  const st=HRANK_SORT;
+  rows.sort((a,b)=>{ let av=a[st.key],bv=b[st.key]; if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; if(typeof av==='string')return st.dir*av.localeCompare(bv); return st.dir*(av-bv); });
+  if(!rows.length){ body.innerHTML='<div class="rk-empty">No hitters loaded yet — open after the slate finishes loading.</div>'; return; }
+  const head='<tr><th>#</th>'+HR_COLS.map(c=>{const ar=(c.k===st.key)?(st.dir<0?' ▾':' ▴'):''; return '<th class="'+(c.t==='l'?'left':'')+'" data-hk="'+c.k+'" style="cursor:pointer;white-space:nowrap;">'+c.l+ar+'</th>';}).join('')+'</tr>';
+  const gc=v=>{ if(v==null) return '<td class="grade-cell"><span class="gr-na">—</span></td>'; const l=gradeLetter(v); return '<td class="grade-cell"><span class="grade '+gradeCls(l)+'" title="'+Math.round(v)+'th pct">'+l+'</span></td>'; };
+  const trs=rows.slice(0,300).map((r,i)=>'<tr><td class="rank">'+(i+1)+'</td>'+HR_COLS.map(c=>{
+    if(c.k==='nm') return '<td class="name">'+r.nm+'</td>';
+    if(c.k==='pos') return '<td style="color:var(--muted);">'+r.pos+'</td>';
+    if(c.k==='pa') return '<td style="color:var(--muted);">'+r.pa+'</td>';
+    return gc(r[c.k]);
+  }).join('')+'</tr>').join('');
+  body.innerHTML='<table class="rk-table rk-table-compact"><thead>'+head+'</thead><tbody>'+trs+'</tbody></table>';
+}
+function renderHitterMovers(){
+  const body=document.getElementById('hrm-body'); if(!body) return;
+  if(!MOVERS){ body.innerHTML='<div class="rk-empty">Movers data unavailable yet — refreshes nightly.</div>'; return; }
+  const wl=document.getElementById('hrm-window'); if(wl) wl.textContent='last '+HRM_WIN+'d vs season (as of '+(MOVERS.asof||'')+') · click any column to sort';
+  const cols=MOV_COLS.bat, st=MOVERS_SORT.bat, win=HRM_WIN;
+  let rows=(MOVERS.bat||[]).filter(r=>r.w&&r.w[win]).map(r=>Object.assign({},r,r.w[win]));
+  if(HRANK_POS!=='ALL') rows=rows.filter(r=>{const info=PLAYER_INFO[normName(r.name)]; return info && _posGroup(info.pos)===HRANK_POS;});
+  rows.sort((a,b)=>{ let av=a[st.key],bv=b[st.key]; if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; if(typeof av==='string')return st.dir*av.localeCompare(bv); return st.dir*(av-bv); });
+  const head='<tr>'+cols.map(c=>{const ar=(c.k===st.key)?(st.dir<0?' ▾':' ▴'):''; return '<th class="'+(c.t==='l'?'left':'')+'" data-mk="'+c.k+'" style="cursor:pointer;white-space:nowrap;">'+c.l+ar+'</th>';}).join('')+'</tr>';
+  const trs=rows.slice(0,150).map(r=>'<tr>'+cols.map(c=>{ if(c.k==='name')return '<td class="name">'+(r.name||'')+'</td>'; if(c.k==='team')return '<td class="team" style="color:var(--muted);">'+(r.team||'')+'</td>'; return movCell(c,r[c.k]);}).join('')+'</tr>').join('');
+  body.innerHTML='<table class="rk-table rk-table-compact"><thead>'+head+'</thead><tbody>'+trs+'</tbody></table>';
+  body.querySelectorAll('th[data-mk]').forEach(th=>th.onclick=()=>{ const k=th.dataset.mk; if(st.key===k)st.dir*=-1; else{st.key=k; st.dir=(k==='name'||k==='team')?1:-1;} renderHitterMovers(); });
+}
+function renderHitterRanksTab(){
+  const root=document.getElementById('hitter-ranks-root'); if(!root) return;
+  if(root.dataset.built==='1'){ renderHitterGrades(); renderHitterMovers(); return; }
+  root.innerHTML='<div class="loading">Loading hitter rankings…</div>';
+  Promise.resolve(typeof fetchAllTeams==='function'?fetchAllTeams():null).then(async ts=>{
+    try{ if(ts) await Promise.all(ts.map(t=>getTeamRoster(t.id).catch(()=>null))); }catch(e){}
+    root.dataset.built='1'; root.classList.remove('loading');
+    root.innerHTML=`
+      <div class="rk-box rk-box-full">
+        <h3>Hitter Grades (Overall)
+          <span class="rk-mode-toggle" id="hr-pos" style="margin-left:6px;flex-wrap:wrap;">`+HR_POS_GROUPS.map(pp=>'<button data-pos="'+pp+'"'+(pp==='ALL'?' class="active"':'')+'>'+pp+'</button>').join('')+`</span>
+          <span class="rk-sub">POW/CON/EYE/BSR/DEF percentile grades averaged into OVR · click a column to sort · filter by position</span>
+        </h3>
+        <div id="hr-grade-body" class="rk-sp-wrap" style="overflow-x:auto;"></div>
+      </div>
+      <div class="rk-box rk-box-full" style="margin-top:1rem;">
+        <h3>Hitter Movers
+          <span class="rk-mode-toggle" id="hrm-win" style="margin-left:6px;"><button data-win="15">15d</button><button data-win="30" class="active">30d</button><button data-win="60">60d</button></span>
+          <span class="rk-sub" id="hrm-window">vs season · click any column to sort</span>
+        </h3>
+        <div id="hrm-body" class="rk-sp-wrap" style="overflow-x:auto;"><div class="loading">Loading movers…</div></div>
+      </div>`;
+    renderHitterGrades();
+    document.getElementById('hr-pos').querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRANK_POS=b.dataset.pos; b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterGrades(); renderHitterMovers(); });
+    document.getElementById('hr-grade-body').addEventListener('click',e=>{ const th=e.target.closest('th[data-hk]'); if(!th)return; const k=th.dataset.hk; if(HRANK_SORT.key===k)HRANK_SORT.dir*=-1; else{HRANK_SORT.key=k; HRANK_SORT.dir=(k==='nm'||k==='pos')?1:-1;} renderHitterGrades(); });
+    const wt=document.getElementById('hrm-win'); wt.querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRM_WIN=b.dataset.win; wt.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterMovers(); });
+    if(typeof loadMovers==='function') loadMovers().then(renderHitterMovers); else renderHitterMovers();
+  });
+}
+
 function renderSPRankings(pitchers, nameToTeam) {
   const wrap = document.getElementById("rk-sp-wrap");
   if (!wrap) return;
@@ -9164,6 +9250,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     if (btn.dataset.tab === "bullpen")  renderBullpenTab();
     if (btn.dataset.tab === "pitchers") renderPitchersTab();
     if (btn.dataset.tab === "rankings") renderRankingsTab();
+    if (btn.dataset.tab === "hitter-ranks") renderHitterRanksTab();
     if (btn.dataset.tab === "team-rankings") renderTeamRankingsTab();
     if (btn.dataset.tab === "proj")     renderProjectionsTab();
     if (btn.dataset.tab === "winprob")  renderWinprobTab();
