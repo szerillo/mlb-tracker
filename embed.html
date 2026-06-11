@@ -11,7 +11,7 @@
   h1{font-size:1.25rem;margin:0 0 2px}
   .sub{color:var(--muted);font-size:.85rem;margin-bottom:16px}
   .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-  input[type=date]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:1rem}
+  input[type=date],input[type=number]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:1rem}
   button{cursor:pointer;font-family:inherit}
   .copy{background:var(--accent);color:#06302b;border:0;border-radius:7px;padding:7px 12px;font-weight:700;font-size:.82rem}
   .copy:active{transform:translateY(1px)}
@@ -41,17 +41,19 @@
 </head>
 <body>
   <h1>B.A.R.T.O.L.O. — Embed Builder</h1>
-  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste into a WordPress <b>Custom HTML</b> block (not the visual editor). The code is hardened so themes/plugins cannot treat it like a video (forcing a fixed aspect-ratio box) and so injected ad / email-signup overlays cannot bleed over it: it uses a max z-index isolated layer, an opaque background, !important sizing resets, and auto-sizes the post to the embed. Tap <b>📱 Mobile</b> to preview the phone layout.</div>
-  <div class="sub" style="margin-top:.4rem;font-size:.78rem;opacity:.85">Still seeing a signup form or ad on top? That element is injected by a plugin as a page-level fixed/absolute overlay and has to be turned off for the post (in-content ad slot or email capture). Also confirm you pasted into a <b>Custom HTML</b> block so the auto-size script is not stripped.</div>
+  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste it into your post. The default <b>Compatible</b> layout is a plain, script-free iframe, so it works even in visual / rich-text editors (Action Network, WordPress visual mode, most CMSs) that strip out &lt;script&gt; tags. It carries <code>data-autoresize="true"</code> so platforms that support it grow the frame to fit; otherwise it shows at the height you set with a scrollbar, so nothing is ever cut off and nothing below it overlaps. Tap <b>📱 Mobile</b> to preview the phone layout.</div>
+  <div class="sub" style="margin-top:.4rem;font-size:.78rem;opacity:.85">Want the frame to auto-fit its content exactly (no inner scrollbar)? Switch Layout to <b>Auto-grow w/ script</b> — but that only works in a true <b>Custom HTML</b> block that preserves &lt;script&gt; tags. If a signup form or ad still shows on top, that element is a page-level plugin overlay and must be turned off for the post.</div>
 
   <div class="bar">
     <label>Date <input type="date" id="date"></label>
     <div class="opts">Layout
       <select id="mode">
-        <option value="grow">Auto-grow (page scrolls)</option>
-        <option value="fixed">Fixed height (scroll box)</option>
+        <option value="clean">Compatible — works in visual editors (recommended)</option>
+        <option value="script">Auto-grow w/ script (Custom HTML only)</option>
+        <option value="fixed">Fixed height, no scroll</option>
       </select>
     </div>
+    <label>Height <input type="number" id="height" min="300" step="50" placeholder="auto" style="width:92px"></label>
     <button class="copy" id="reload" style="background:var(--panel2);color:var(--text)">Reload</button>
   </div>
 
@@ -71,7 +73,7 @@
 
   <div id="games"><div class="empty">Loading games…</div></div>
 
-  <div class="note">Optional — each copied snippet already auto-sizes itself. Only needed if you prefer one shared listener.</div>
+  <div class="note">Optional — only needed for the <b>Auto-grow w/ script</b> layout if you prefer one shared listener instead of the per-embed one.</div>
   <pre id="listener"></pre>
   <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
   </div><!-- /panel-embeds -->
@@ -103,32 +105,33 @@ $("#listener").textContent = LISTENER;
 function iframeFor(kind, g){
   const mode = $("#mode").value;
   const date = $("#date").value;
+  const hIn = parseInt($("#height").value,10);
+  const h = (hIn && hIn>=300) ? hIn : (kind==='slate'?1200:900);
   let src, title, id;
   if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
   else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
 
-  // Wrapper: own stacking context at MAX z-index + opaque bg, so plugin-injected
-  // email forms / in-content ads / floating videos can't render over or bleed
-  // through the embed. The iframe carries !important resets so themes/plugins
-  // (Jetpack, fitVids, oEmbed) can't force it into an absolute aspect-ratio
-  // "video" box — which is what makes it behave like a fixed image and ignore
-  // the height we send.
-  const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
-  // !important resets applied inline so they beat theme/plugin stylesheets.
-  const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
-
-  if(mode==='fixed'){
-    const h = kind==='slate' ? 2400 : 1200;
-    return `${open}
-  <iframe src="${src}" scrolling="yes" title="${title}" style="${IF(h)}"></iframe>
-</div>`;
+  // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
+  // (TinyMCE, Action Network, WordPress visual mode) strip <script>, which is
+  // why the script-based auto-resize silently failed in those. data-autoresize
+  // lets hosts that support it grow the frame; scrolling="auto" + a generous
+  // height is the reliable fallback so nothing is cut off or overlapped.
+  if(mode==='clean'){
+    return `<iframe style="border:none;width:100%;min-height:400px;" src="${src}" width="100%" height="${h}" frameborder="0" scrolling="auto" data-autoresize="true" title="${title}"></iframe>`;
   }
-  // Auto-grow: self-contained — each snippet carries its own scoped resize
-  // listener so it fits its content exactly and the article grows with it.
-  // The initial height is a deliberate OVER-estimate so that even if the host
-  // strips the <script> (some WP setups do), the embed still reserves enough
-  // vertical space and nothing below it overlaps — the script just trims it to
-  // the exact height once it runs.
+  // FIXED: same plain iframe but no inner scrollbar (clips overflow at height).
+  if(mode==='fixed'){
+    return `<iframe style="border:none;width:100%;min-height:400px;" src="${src}" width="100%" height="${h}" frameborder="0" scrolling="no" data-autoresize="true" title="${title}"></iframe>`;
+  }
+
+  // SCRIPT (advanced): hardened wrapper + scoped resize listener so the frame
+  // fits its content exactly and the article grows with it. Only works in a true
+  // Custom HTML block that PRESERVES <script> tags. The wrapper sits at max
+  // z-index in its own stacking context with an opaque bg + !important sizing
+  // resets so plugin-injected ads / email forms / fitVids/oEmbed video boxes
+  // can't render over it or force it into a fixed aspect-ratio box.
+  const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
+  const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
   const initH = kind==='slate' ? 1900 : 1150;
   const wid = id+"-wrap";
   return `<div class="bartolo-embed" id="${wid}" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">
@@ -139,9 +142,6 @@ function iframeFor(kind, g){
   function fix(){
     var f=document.getElementById(ID); if(!f) return;
     var w=document.getElementById(WID), p=f.parentElement;
-    // Neutralize any wrapper a theme/plugin (fitVids, Jetpack, oEmbed) injected
-    // around our iframe — that aspect-ratio/absolute box is what makes it act
-    // like a fixed image and lets page content overlap it.
     while(p && p!==w){ p.style.cssText="position:static!important;padding:0!important;margin:0!important;height:auto!important;max-width:none!important;width:auto!important;display:block!important;background:transparent!important;aspect-ratio:auto!important"; p=p.parentElement; }
     var st=f.style;
     st.setProperty("position","relative","important"); st.setProperty("width","100%","important");
@@ -154,7 +154,6 @@ function iframeFor(kind, g){
     var f=document.getElementById(ID);
     if(f && e && e.data && e.data.type==="mlb-tracker-resize" && e.source===f.contentWindow){ H=e.data.height+8; fix(); }
   });
-  // Re-assert repeatedly so theme scripts that run after load can't re-break it.
   [0,200,600,1500,3500].forEach(function(t){setTimeout(fix,t);});
 })();<\/script>`;
 }
@@ -200,7 +199,6 @@ function renderShotGames(){
   const box=document.getElementById('shotGames'); if(!box) return;
   if(!GAMES.length){ box.innerHTML='<div class="empty">No games scheduled this date.</div>'; const f=document.getElementById('shotFrame'); if(f)f.removeAttribute('src'); return; }
   box.innerHTML = GAMES.map((g,i)=>`<button class="shot-chip" data-pk="${g.gamePk}">${g.away} @ ${g.home}</button>`).join('');
-  // keep current selection if still present, else default to first game
   if(!GAMES.some(g=>String(g.gamePk)===String(SHOT_PK))) SHOT_PK=GAMES[0].gamePk;
   selectShotGame(SHOT_PK);
 }
