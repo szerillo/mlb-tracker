@@ -283,6 +283,65 @@ def _three_hour_trend(forecast, target_iso):
     return result if len(result) >= 2 else None
 
 
+# ── Game-window temperature/humidity average ─────────────────────────────────
+# A 9-inning game lasts ~3 hours, so the temperature the ball actually flies in
+# is the AVERAGE over first pitch → ~+3h, not the single first-pitch hour. Night
+# games can cool 8-12 F across the window, so anchoring to first pitch overstates
+# the warm-weather boost. We take a weighted mean over the game window, front/
+# middle-weighted (most balls are struck in the first ~2.5h; the +3h bucket is
+# half-weighted since not every game reaches it). Humidity is averaged too so the
+# dew-point component stays consistent with the temp it pairs with. Wind/pressure
+# stay at first pitch (wind direction is what matters and circular averaging is
+# error-prone; our wind input is already coarse).
+GAME_WINDOW_WEIGHTS = [1.0, 1.0, 0.9, 0.5]   # hours [0, +1, +2, +3] from first pitch
+
+
+def _game_window_periods(forecast, target_iso, n=4):
+    """Return up to n NWS hourly periods covering first pitch .. +(n-1)h."""
+    if not forecast:
+        return None
+    periods = forecast.get("periods") or forecast.get("properties", {}).get("periods", [])
+    if not periods:
+        return None
+    try:
+        target = datetime.datetime.fromisoformat(target_iso.replace("Z", "+00:00"))
+    except Exception:
+        return None
+    parsed = []
+    for p in periods:
+        try:
+            t = datetime.datetime.fromisoformat(p["startTime"].replace("Z", "+00:00"))
+            parsed.append((t, p))
+        except Exception:
+            continue
+    parsed.sort(key=lambda x: x[0])
+    # Include the hour that CONTAINS first pitch (allow a 30-min lead) onward.
+    floor = target - datetime.timedelta(minutes=30)
+    out = [p for (t, p) in parsed if t >= floor][:n]
+    return out or None
+
+
+def game_window_avg(forecast, target_iso):
+    """Weighted-mean (temp_f, humidity_pct) over the game window. Falls back to
+    (None, None) if the window can't be built."""
+    series = _game_window_periods(forecast, target_iso, n=len(GAME_WINDOW_WEIGHTS))
+    if not series:
+        return None, None
+    tsum = tw = hsum = hw = 0.0
+    for i, p in enumerate(series):
+        w = GAME_WINDOW_WEIGHTS[i] if i < len(GAME_WINDOW_WEIGHTS) else GAME_WINDOW_WEIGHTS[-1]
+        temp = p.get("temperature")
+        hum = (p.get("relativeHumidity") or {}).get("value")
+        if temp is not None:
+            tsum += w * temp; tw += w
+        if hum is not None:
+            hsum += w * hum; hw += w
+    t = round(tsum / tw, 1) if tw else None
+    h = round(hsum / hw, 1) if hw else None
+    return t, h
+
+
+
 def compute_open_v8(home, game, fc):
     """Pure-model open-roof adjustment for a retractable park (NO BP blend).
 
@@ -296,9 +355,14 @@ def compute_open_v8(home, game, fc):
     if not (hour and park_code):
         return hour, None
     t_hours = _three_hour_trend(fc, game["game_time"])
+    win_t, win_h = game_window_avg(fc, game["game_time"])
+    if hour is not None:
+        hour["game_window_temp_f"] = win_t
+        hour["game_window_humidity_pct"] = win_h
+        hour["first_pitch_temp_f"] = hour.get("temp_f")
     wx_in = {
-        "t": hour.get("temp_f"),
-        "hum": hour.get("humidity_pct"),
+        "t": win_t if win_t is not None else hour.get("temp_f"),
+        "hum": win_h if win_h is not None else hour.get("humidity_pct"),
         "ws": hour.get("wind_speed_mph") or 0,
         "wd_compass": nws_wind_to_compass(hour.get("wind_dir")),
         "precip": hour.get("precip_pct") or 0,
@@ -433,6 +497,13 @@ def main():
         if hour and park_code:
             # Try to get a simple 3-hour trend around game time
             t_hours = _three_hour_trend(fc, g["game_time"])
+            # Game-window average temp/humidity (first pitch .. ~+3h) instead of
+            # the single first-pitch hour — see game_window_avg() above.
+            win_t, win_h = game_window_avg(fc, g["game_time"])
+            if hour is not None:
+                hour["game_window_temp_f"] = win_t
+                hour["game_window_humidity_pct"] = win_h
+                hour["first_pitch_temp_f"] = hour.get("temp_f")
             # V9 step 1 — pull BP's barometric pressure for this game (only when
             # BP's slate matches the game date) and feed it in. Keep NWS humidity.
             bp_match = bp_by_venue.get(g["venue"]) if (gd_et and gd_et == bp_date) else None
@@ -442,8 +513,8 @@ def main():
                 if isinstance(p, (int, float)) and 970 <= p <= 1050:
                     bp_pres = p
             wx_in = {
-                "t": hour.get("temp_f"),
-                "hum": hour.get("humidity_pct"),
+                "t": win_t if win_t is not None else hour.get("temp_f"),
+                "hum": win_h if win_h is not None else hour.get("humidity_pct"),
                 "ws": hour.get("wind_speed_mph") or 0,
                 "wd_compass": nws_wind_to_compass(hour.get("wind_dir")),
                 "precip": hour.get("precip_pct") or 0,
