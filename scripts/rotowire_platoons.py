@@ -33,7 +33,7 @@ MLB_API = "https://statsapi.mlb.com/api/v1"
 RW_TEAM_CODES = [
     "ARI","ATL","BAL","BOS","CHC","CWS","CIN","CLE","COL","DET",
     "HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","ATH",
-    "PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WAS",
+    "PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WSH",
 ]
 # MLB API abbreviations (differ in a few cases)
 # MLB now returns 'AZ' for Arizona (was 'ARI' historically), and 'ATH' for the
@@ -41,7 +41,7 @@ RW_TEAM_CODES = [
 # requesting the old ?team=OAK returns ZERO lineup blocks and Rotowire silently
 # serves the alphabetically-first team (Arizona) instead, which is how the A's
 # projected lineup was showing Marte/Carroll/Perdomo. Map both A's variants → ATH.
-MLB_TO_RW = {"CHW": "CWS", "WSH": "WAS", "ATH": "ATH", "OAK": "ATH", "AZ": "ARI"}
+MLB_TO_RW = {"CHW": "CWS", "ATH": "ATH", "OAK": "ATH", "AZ": "ARI"}  # WSH = WSH on Rotowire (was wrongly "WAS" → fell through to ARI default)
 
 
 def fetch(url: str) -> str:
@@ -235,16 +235,30 @@ def main():
             if existing.get("players") and \
                existing.get("status") in ("confirmed", "expected"):
                 continue
-            # Unknown opposing-SP hand → skip rather than guess
-            if opp_hand not in ("R", "L"):
-                continue
-            platoon = team_platoons.get(rw_code, {}).get(opp_hand)
+            # Pick which platoon split to use. When the opposing SP hand is KNOWN
+            # we use it. When it's UNKNOWN (next-day pitcher not yet announced /
+            # TBD) we no longer leave the lineup blank — we fall back to the
+            # team's vs-RHP default (~70% of MLB starters are RHP) so a lineup
+            # always shows, clearly labeled as a TBD-based projection. The two
+            # platoon splits usually differ by only 1-2 bats, and the side will
+            # auto-correct once the real SP (and the confirmed lineup) post.
+            opp_known = opp_hand in ("R", "L")
+            tp = team_platoons.get(rw_code, {})
+            use_hand = opp_hand if opp_known else "R"
+            platoon = tp.get(use_hand)
+            if not platoon:
+                # base-rate split missing → try the other hand before giving up
+                alt = "L" if use_hand == "R" else "R"
+                if tp.get(alt):
+                    use_hand, platoon = alt, tp.get(alt)
             if not platoon:
                 continue
             # Tag the lineup with opposing hand context
+            src = (f"Rotowire platoon vs. {use_hand}HP" if opp_known
+                   else f"Rotowire vs. {use_hand}HP (opp SP TBD)")
             entry.setdefault("lineups", {})[side] = {
                 "status": "projected",
-                "source": f"Rotowire platoon vs. {opp_hand}HP",
+                "source": src,
                 "players": platoon,
             }
             filled += 1
