@@ -1,460 +1,9 @@
 {
-  "generated_at": "2026-06-16T03:11:59.560241Z",
+  "generated_at": "2026-06-16T04:14:34.779147Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
   "games": [
-    {
-      "game_pk": 823452,
-      "matchup": "Miami Marlins @ Philadelphia Phillies",
-      "venue": "Citizens Bank Park",
-      "game_time": "2026-06-15T22:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 76,
-        "humidity_pct": 45,
-        "wind_speed_mph": 10,
-        "wind_dir": "NW",
-        "precip_pct": 0,
-        "short_forecast": "Partly Cloudy",
-        "start_time": "2026-06-15T19:00:00-04:00",
-        "game_window_temp_f": 73.5,
-        "game_window_humidity_pct": 48.9,
-        "first_pitch_temp_f": 76
-      },
-      "v8": {
-        "run_adj_pct": 0.5,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -3.5,
-          "t_adj_pct": -1.5,
-          "w_adj_pct": 0.0,
-          "dp_adj_pct": -0.9,
-          "p_adj_pct": 2.4,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 0.17,
-            "dir_rarity": 0.5,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 0.0,
-        "pressure_source": "BP",
-        "bp_pct": 1,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
-      "game_pk": 822724,
-      "matchup": "Kansas City Royals @ Washington Nationals",
-      "venue": "Nationals Park",
-      "game_time": "2026-06-15T22:45:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 77,
-        "humidity_pct": 43,
-        "wind_speed_mph": 10,
-        "wind_dir": "NW",
-        "precip_pct": 0,
-        "short_forecast": "Partly Cloudy",
-        "start_time": "2026-06-15T19:00:00-04:00",
-        "game_window_temp_f": 73.4,
-        "game_window_humidity_pct": 52.2,
-        "first_pitch_temp_f": 77
-      },
-      "v8": {
-        "run_adj_pct": -3.1,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -4.6,
-          "t_adj_pct": -2.0,
-          "w_adj_pct": -0.0,
-          "dp_adj_pct": -0.8,
-          "p_adj_pct": 1.8,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.3,
-          "wind": {
-            "out_component": -0.17,
-            "dir_rarity": 0.4,
-            "spd_rarity": 0.31
-          }
-        },
-        "model_pct": -1.2,
-        "pressure_source": "BP",
-        "bp_pct": -5,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824505,
-      "matchup": "New York Mets @ Cincinnati Reds",
-      "venue": "Great American Ball Park",
-      "game_time": "2026-06-15T23:10:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 73,
-        "humidity_pct": 46,
-        "wind_speed_mph": 3,
-        "wind_dir": "NW",
-        "precip_pct": 0,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-06-15T19:00:00-04:00",
-        "game_window_temp_f": 69.1,
-        "game_window_humidity_pct": 56.1,
-        "first_pitch_temp_f": 73
-      },
-      "v8": {
-        "run_adj_pct": -4.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -6.9,
-          "t_adj_pct": -3.2,
-          "w_adj_pct": -0.1,
-          "dp_adj_pct": -1.2,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.2,
-          "wind": {
-            "out_component": -0.21,
-            "dir_rarity": 0,
-            "spd_rarity": 0.58
-          }
-        },
-        "model_pct": -4.0,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
-    },
-    {
-      "game_pk": 823046,
-      "matchup": "San Diego Padres @ St. Louis Cardinals",
-      "venue": "Busch Stadium",
-      "game_time": "2026-06-15T23:45:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 78,
-        "humidity_pct": 38,
-        "wind_speed_mph": 3,
-        "wind_dir": "W",
-        "precip_pct": 0,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-06-15T19:00:00-05:00",
-        "game_window_temp_f": 74.2,
-        "game_window_humidity_pct": 46.5,
-        "first_pitch_temp_f": 78
-      },
-      "v8": {
-        "run_adj_pct": -2.1,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -4.8,
-          "t_adj_pct": -2.1,
-          "w_adj_pct": 1.0,
-          "dp_adj_pct": -1.5,
-          "p_adj_pct": 0.3,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.4,
-          "wind": {
-            "out_component": 2.19,
-            "dir_rarity": 0.45,
-            "spd_rarity": 0.82
-          }
-        },
-        "model_pct": -2.3,
-        "pressure_source": "BP",
-        "bp_pct": -2,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824666,
-      "matchup": "Colorado Rockies @ Chicago Cubs",
-      "venue": "Wrigley Field",
-      "game_time": "2026-06-16T00:05:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 78,
-        "humidity_pct": 38,
-        "wind_speed_mph": 10,
-        "wind_dir": "WSW",
-        "precip_pct": 0,
-        "short_forecast": "Partly Cloudy",
-        "start_time": "2026-06-15T19:00:00-05:00",
-        "game_window_temp_f": 74.5,
-        "game_window_humidity_pct": 44.7,
-        "first_pitch_temp_f": 78
-      },
-      "v8": {
-        "run_adj_pct": 7.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 4.5,
-          "t_adj_pct": 1.4,
-          "w_adj_pct": 3.4,
-          "dp_adj_pct": -0.7,
-          "p_adj_pct": 1.5,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 5.22,
-            "dir_rarity": 0.55,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 5.9,
-        "pressure_source": "BP",
-        "bp_pct": 8,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
-      "game_pk": 822887,
-      "matchup": "Minnesota Twins @ Texas Rangers",
-      "venue": "Globe Life Field",
-      "game_time": "2026-06-16T00:05:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 82,
-        "humidity_pct": 69,
-        "wind_speed_mph": 5,
-        "wind_dir": "ENE",
-        "precip_pct": 9,
-        "short_forecast": "Partly Cloudy",
-        "start_time": "2026-06-15T19:00:00-05:00",
-        "game_window_temp_f": 80.8,
-        "game_window_humidity_pct": 74.4,
-        "first_pitch_temp_f": 82
-      },
-      "open_v8": {
-        "run_adj_pct": -0.7,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": -0.2,
-          "t_adj_pct": -0.1,
-          "w_adj_pct": -0.0,
-          "dp_adj_pct": 2.3,
-          "p_adj_pct": -0.6,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -0.22,
-            "dir_rarity": 0,
-            "spd_rarity": 0.22
-          }
-        },
-        "model_pct": -0.7,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 824181,
-      "matchup": "Detroit Tigers @ Houston Astros",
-      "venue": "Daikin Park",
-      "game_time": "2026-06-16T00:10:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 82,
-        "humidity_pct": 85,
-        "wind_speed_mph": 5,
-        "wind_dir": "SE",
-        "precip_pct": 39,
-        "short_forecast": "Chance Showers And Thunderstorms",
-        "start_time": "2026-06-15T19:00:00-05:00",
-        "game_window_temp_f": 80.2,
-        "game_window_humidity_pct": 90.5,
-        "first_pitch_temp_f": 82
-      },
-      "open_v8": {
-        "run_adj_pct": -0.7,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": 0.2,
-          "t_adj_pct": 0.1,
-          "w_adj_pct": 0.1,
-          "dp_adj_pct": 2.6,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": -1.4,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 0.35,
-            "dir_rarity": 0.75,
-            "spd_rarity": 0.31
-          }
-        },
-        "model_pct": -0.7,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 825071,
-      "matchup": "Los Angeles Angels @ Arizona Diamondbacks",
-      "venue": "Chase Field",
-      "game_time": "2026-06-16T01:40:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 103,
-        "humidity_pct": 19,
-        "wind_speed_mph": 10,
-        "wind_dir": "WSW",
-        "precip_pct": 4,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-06-15T19:00:00-07:00",
-        "game_window_temp_f": 97.9,
-        "game_window_humidity_pct": 22.1,
-        "first_pitch_temp_f": 103
-      },
-      "open_v8": {
-        "run_adj_pct": -0.2,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": 9.9,
-          "t_adj_pct": 3.4,
-          "w_adj_pct": 0.3,
-          "dp_adj_pct": 2.6,
-          "p_adj_pct": -1.5,
-          "precip_adj_pct": 0,
-          "carry_pct": 0.3,
-          "wind": {
-            "out_component": 9.64,
-            "dir_rarity": 0,
-            "spd_rarity": 0.7
-          }
-        },
-        "model_pct": -0.2,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 824993,
-      "matchup": "Pittsburgh Pirates @ Athletics",
-      "venue": "Sutter Health Park",
-      "game_time": "2026-06-16T01:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 92,
-        "humidity_pct": 25,
-        "wind_speed_mph": 8,
-        "wind_dir": "N",
-        "precip_pct": 0,
-        "short_forecast": "Clear",
-        "start_time": "2026-06-15T19:00:00-07:00",
-        "game_window_temp_f": 87.2,
-        "game_window_humidity_pct": 29.2,
-        "first_pitch_temp_f": 92
-      },
-      "v8": {
-        "run_adj_pct": 1.1,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 6.2,
-          "t_adj_pct": 2.0,
-          "w_adj_pct": -2.8,
-          "dp_adj_pct": -0.4,
-          "p_adj_pct": 0.9,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.5,
-          "wind": {
-            "out_component": -5.85,
-            "dir_rarity": 1.0,
-            "spd_rarity": 0.25
-          }
-        },
-        "model_pct": -0.7,
-        "pressure_source": "BP",
-        "bp_pct": 3,
-        "bp_blended": true,
-        "blend_weight": 0.5
-      },
-      "note": null
-    },
-    {
-      "game_pk": 823938,
-      "matchup": "Tampa Bay Rays @ Los Angeles Dodgers",
-      "venue": "UNIQLO Field at Dodger Stadium",
-      "game_time": "2026-06-16T02:10:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "weather": {
-        "temp_f": 73,
-        "humidity_pct": 64,
-        "wind_speed_mph": 10,
-        "wind_dir": "SW",
-        "precip_pct": 0,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-06-15T19:00:00-07:00",
-        "game_window_temp_f": 69.9,
-        "game_window_humidity_pct": 74.8,
-        "first_pitch_temp_f": 73
-      },
-      "v8": {
-        "run_adj_pct": -2.9,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -8.1,
-          "t_adj_pct": -3.8,
-          "w_adj_pct": 0.5,
-          "dp_adj_pct": 0.8,
-          "p_adj_pct": -0.9,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 9.9,
-            "dir_rarity": 0,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": -2.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
-    },
     {
       "game_pk": 823451,
       "matchup": "Miami Marlins @ Philadelphia Phillies",
@@ -913,7 +462,7 @@
         "temp_f": 80,
         "humidity_pct": 91,
         "wind_speed_mph": 5,
-        "wind_dir": "E",
+        "wind_dir": "SE",
         "precip_pct": 18,
         "short_forecast": "Slight Chance Showers And Thunderstorms",
         "start_time": "2026-06-16T19:00:00-05:00",
@@ -922,24 +471,24 @@
         "first_pitch_temp_f": 80
       },
       "open_v8": {
-        "run_adj_pct": -0.8,
+        "run_adj_pct": -0.6,
         "capped": false,
         "is_dome": true,
         "components": {
           "temp_delta": -0.8,
           "t_adj_pct": -0.4,
-          "w_adj_pct": -1.6,
+          "w_adj_pct": 0.1,
           "dp_adj_pct": 2.5,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -3.28,
-            "dir_rarity": 0.45,
+            "out_component": 0.35,
+            "dir_rarity": 0.75,
             "spd_rarity": 0.31
           }
         },
-        "model_pct": -0.8,
+        "model_pct": -0.6,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1117,6 +666,628 @@
           }
         },
         "model_pct": -3.5,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824503,
+      "matchup": "New York Mets @ Cincinnati Reds",
+      "venue": "Great American Ball Park",
+      "game_time": "2026-06-17T16:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 79,
+        "humidity_pct": 55,
+        "wind_speed_mph": 7,
+        "wind_dir": "SW",
+        "precip_pct": 2,
+        "short_forecast": "Mostly Sunny",
+        "start_time": "2026-06-17T13:00:00-04:00",
+        "game_window_temp_f": 81.0,
+        "game_window_humidity_pct": 50.8,
+        "first_pitch_temp_f": 79
+      },
+      "v8": {
+        "run_adj_pct": 2.8,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 5.0,
+          "t_adj_pct": 2.2,
+          "w_adj_pct": 1.4,
+          "dp_adj_pct": -0.1,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.2,
+          "wind": {
+            "out_component": 6.98,
+            "dir_rarity": 0.2,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 2.8,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 822721,
+      "matchup": "Kansas City Royals @ Washington Nationals",
+      "venue": "Nationals Park",
+      "game_time": "2026-06-17T17:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 84,
+        "humidity_pct": 46,
+        "wind_speed_mph": 12,
+        "wind_dir": "SW",
+        "precip_pct": 10,
+        "short_forecast": "Mostly Sunny",
+        "start_time": "2026-06-17T13:00:00-04:00",
+        "game_window_temp_f": 85.3,
+        "game_window_humidity_pct": 42.5,
+        "first_pitch_temp_f": 84
+      },
+      "v8": {
+        "run_adj_pct": 5.7,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 7.3,
+          "t_adj_pct": 3.2,
+          "w_adj_pct": 3.8,
+          "dp_adj_pct": -0.1,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.3,
+          "wind": {
+            "out_component": 12.0,
+            "dir_rarity": 0.25,
+            "spd_rarity": 0.79
+          }
+        },
+        "model_pct": 5.7,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823450,
+      "matchup": "Miami Marlins @ Philadelphia Phillies",
+      "venue": "Citizens Bank Park",
+      "game_time": "2026-06-17T17:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 80,
+        "humidity_pct": 54,
+        "wind_speed_mph": 10,
+        "wind_dir": "S",
+        "precip_pct": 34,
+        "short_forecast": "Chance Rain Showers",
+        "start_time": "2026-06-17T13:00:00-04:00",
+        "game_window_temp_f": 81.1,
+        "game_window_humidity_pct": 51.6,
+        "first_pitch_temp_f": 80
+      },
+      "v8": {
+        "run_adj_pct": 2.1,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 4.1,
+          "t_adj_pct": 1.5,
+          "w_adj_pct": 1.3,
+          "dp_adj_pct": 0.3,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -0.9,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 6.95,
+            "dir_rarity": 0.4,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 2.1,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824178,
+      "matchup": "Detroit Tigers @ Houston Astros",
+      "venue": "Daikin Park",
+      "game_time": "2026-06-17T18:10:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 83,
+        "humidity_pct": 82,
+        "wind_speed_mph": 15,
+        "wind_dir": "SE",
+        "precip_pct": 52,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-06-17T13:00:00-05:00",
+        "game_window_temp_f": 83.9,
+        "game_window_humidity_pct": 81.1,
+        "first_pitch_temp_f": 83
+      },
+      "open_v8": {
+        "run_adj_pct": -0.6,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": 3.9,
+          "t_adj_pct": 1.5,
+          "w_adj_pct": 0.3,
+          "dp_adj_pct": 2.6,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -2.7,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 1.05,
+            "dir_rarity": 0.75,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": -0.6,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 823044,
+      "matchup": "San Diego Padres @ St. Louis Cardinals",
+      "venue": "Busch Stadium",
+      "game_time": "2026-06-17T18:15:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 87,
+        "humidity_pct": 53,
+        "wind_speed_mph": 17,
+        "wind_dir": "S",
+        "precip_pct": 12,
+        "short_forecast": "Mostly Sunny",
+        "start_time": "2026-06-17T13:00:00-05:00",
+        "game_window_temp_f": 89.2,
+        "game_window_humidity_pct": 51.1,
+        "first_pitch_temp_f": 87
+      },
+      "v8": {
+        "run_adj_pct": 8.7,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 10.2,
+          "t_adj_pct": 4.7,
+          "w_adj_pct": 5.2,
+          "dp_adj_pct": 0.8,
+          "p_adj_pct": -0.3,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.4,
+          "wind": {
+            "out_component": 11.59,
+            "dir_rarity": 0,
+            "spd_rarity": 0.4
+          }
+        },
+        "model_pct": 8.7,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823940,
+      "matchup": "Tampa Bay Rays @ Los Angeles Dodgers",
+      "venue": "UNIQLO Field at Dodger Stadium",
+      "game_time": "2026-06-17T19:10:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 76,
+        "humidity_pct": 55,
+        "wind_speed_mph": 5,
+        "wind_dir": "SSW",
+        "precip_pct": 0,
+        "short_forecast": "Sunny",
+        "start_time": "2026-06-17T12:00:00-07:00",
+        "game_window_temp_f": 76.6,
+        "game_window_humidity_pct": 52.1,
+        "first_pitch_temp_f": 76
+      },
+      "v8": {
+        "run_adj_pct": -0.8,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -1.4,
+          "t_adj_pct": -0.5,
+          "w_adj_pct": 0.2,
+          "dp_adj_pct": 0.2,
+          "p_adj_pct": -0.9,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 4.31,
+            "dir_rarity": 0.8,
+            "spd_rarity": 0.04
+          }
+        },
+        "model_pct": -0.8,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 825072,
+      "matchup": "Los Angeles Angels @ Arizona Diamondbacks",
+      "venue": "Chase Field",
+      "game_time": "2026-06-17T19:40:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 105,
+        "humidity_pct": 16,
+        "wind_speed_mph": 10,
+        "wind_dir": "SW",
+        "precip_pct": 0,
+        "short_forecast": "Sunny",
+        "start_time": "2026-06-17T13:00:00-07:00",
+        "game_window_temp_f": 105.7,
+        "game_window_humidity_pct": 16.0,
+        "first_pitch_temp_f": 105
+      },
+      "open_v8": {
+        "run_adj_pct": 0.2,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": 17.7,
+          "t_adj_pct": 7.2,
+          "w_adj_pct": 0.3,
+          "dp_adj_pct": 2.2,
+          "p_adj_pct": -1.5,
+          "precip_adj_pct": 0,
+          "carry_pct": 0.3,
+          "wind": {
+            "out_component": 9.93,
+            "dir_rarity": 0,
+            "spd_rarity": 0.7
+          }
+        },
+        "model_pct": 0.2,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 824746,
+      "matchup": "Toronto Blue Jays @ Boston Red Sox",
+      "venue": "Fenway Park",
+      "game_time": "2026-06-17T22:45:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 73,
+        "humidity_pct": 55,
+        "wind_speed_mph": 6,
+        "wind_dir": "S",
+        "precip_pct": 4,
+        "short_forecast": "Partly Cloudy",
+        "start_time": "2026-06-17T19:00:00-04:00",
+        "game_window_temp_f": 69.8,
+        "game_window_humidity_pct": 63.1,
+        "first_pitch_temp_f": 73
+      },
+      "v8": {
+        "run_adj_pct": 2.0,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -0.2,
+          "t_adj_pct": -0.1,
+          "w_adj_pct": 2.0,
+          "dp_adj_pct": 0.2,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 2.72,
+            "dir_rarity": 0.05,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 2.0,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823536,
+      "matchup": "Chicago White Sox @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-06-17T23:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 70,
+        "humidity_pct": 76,
+        "wind_speed_mph": 12,
+        "wind_dir": "S",
+        "precip_pct": 41,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-06-17T19:00:00-04:00",
+        "game_window_temp_f": 69.6,
+        "game_window_humidity_pct": 80.8,
+        "first_pitch_temp_f": 70
+      },
+      "v8": {
+        "run_adj_pct": -0.1,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -4.4,
+          "t_adj_pct": -1.7,
+          "w_adj_pct": 2.3,
+          "dp_adj_pct": 0.9,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -1.6,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 9.58,
+            "dir_rarity": 0.15,
+            "spd_rarity": 0.31
+          }
+        },
+        "model_pct": -0.1,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824913,
+      "matchup": "San Francisco Giants @ Atlanta Braves",
+      "venue": "Truist Park",
+      "game_time": "2026-06-17T23:15:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 82,
+        "humidity_pct": 70,
+        "wind_speed_mph": 10,
+        "wind_dir": "SW",
+        "precip_pct": 41,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-06-17T19:00:00-04:00",
+        "game_window_temp_f": 79.5,
+        "game_window_humidity_pct": 76.2,
+        "first_pitch_temp_f": 82
+      },
+      "v8": {
+        "run_adj_pct": -1.8,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -2.5,
+          "t_adj_pct": -1.1,
+          "w_adj_pct": -0.6,
+          "dp_adj_pct": 1.4,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -1.6,
+          "carry_pct": -0.2,
+          "wind": {
+            "out_component": -6.43,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0.01
+          }
+        },
+        "model_pct": -1.8,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823774,
+      "matchup": "Cleveland Guardians @ Milwaukee Brewers",
+      "venue": "American Family Field",
+      "game_time": "2026-06-17T23:40:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 64,
+        "humidity_pct": 81,
+        "wind_speed_mph": 15,
+        "wind_dir": "SE",
+        "precip_pct": 73,
+        "short_forecast": "Showers And Thunderstorms Likely",
+        "start_time": "2026-06-17T19:00:00-05:00",
+        "game_window_temp_f": 63.4,
+        "game_window_humidity_pct": 84.8,
+        "first_pitch_temp_f": 64
+      },
+      "open_v8": {
+        "run_adj_pct": -1.3,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": -12.6,
+          "t_adj_pct": -5.8,
+          "w_adj_pct": -1.2,
+          "dp_adj_pct": -0.3,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -3.5,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -14.49,
+            "dir_rarity": 0.15,
+            "spd_rarity": 0.46
+          }
+        },
+        "model_pct": -1.3,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 824668,
+      "matchup": "Colorado Rockies @ Chicago Cubs",
+      "venue": "Wrigley Field",
+      "game_time": "2026-06-18T00:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 70,
+        "humidity_pct": 80,
+        "wind_speed_mph": 20,
+        "wind_dir": "S",
+        "precip_pct": 85,
+        "short_forecast": "Showers And Thunderstorms",
+        "start_time": "2026-06-17T19:00:00-05:00",
+        "game_window_temp_f": 69.1,
+        "game_window_humidity_pct": 83.1,
+        "first_pitch_temp_f": 70
+      },
+      "v8": {
+        "run_adj_pct": 10.6,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -0.9,
+          "t_adj_pct": -0.3,
+          "w_adj_pct": 13.0,
+          "dp_adj_pct": 1.0,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -3.5,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 19.75,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0.88
+          }
+        },
+        "model_pct": 10.6,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824992,
+      "matchup": "Pittsburgh Pirates @ Athletics",
+      "venue": "Sutter Health Park",
+      "game_time": "2026-06-18T01:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 88,
+        "humidity_pct": 33,
+        "wind_speed_mph": 6,
+        "wind_dir": "NNW",
+        "precip_pct": 0,
+        "short_forecast": "Clear",
+        "start_time": "2026-06-17T19:00:00-07:00",
+        "game_window_temp_f": 84.8,
+        "game_window_humidity_pct": 36.8,
+        "first_pitch_temp_f": 88
+      },
+      "v8": {
+        "run_adj_pct": -1.0,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 3.8,
+          "t_adj_pct": 1.2,
+          "w_adj_pct": -1.2,
+          "dp_adj_pct": 0.2,
+          "p_adj_pct": -0.9,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.5,
+          "wind": {
+            "out_component": -2.49,
+            "dir_rarity": 1.0,
+            "spd_rarity": 0.58
+          }
+        },
+        "model_pct": -1.0,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823127,
+      "matchup": "Baltimore Orioles @ Seattle Mariners",
+      "venue": "T-Mobile Park",
+      "game_time": "2026-06-18T01:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "weather": {
+        "temp_f": 72,
+        "humidity_pct": 45,
+        "wind_speed_mph": 8,
+        "wind_dir": "N",
+        "precip_pct": 0,
+        "short_forecast": "Clear",
+        "start_time": "2026-06-17T19:00:00-07:00",
+        "game_window_temp_f": 69.3,
+        "game_window_humidity_pct": 48.9,
+        "first_pitch_temp_f": 72
+      },
+      "v8": {
+        "run_adj_pct": -1.9,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -1.7,
+          "t_adj_pct": -0.7,
+          "w_adj_pct": -1.5,
+          "dp_adj_pct": -0.4,
+          "p_adj_pct": 0.3,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -8.0,
+            "dir_rarity": 1.0,
+            "spd_rarity": 0.64
+          }
+        },
+        "model_pct": -1.9,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
