@@ -2260,7 +2260,7 @@
   </div>
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
-    <button class="tab" data-tab="env" role="tab">Park | WX | Umps</button>
+    <button class="tab" data-tab="env" role="tab">Park | wX | Umps</button>
     <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
@@ -3083,7 +3083,7 @@ function apxCardHTML(g){
   const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
   const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span></div>';
   let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
-  let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">Wx</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'Wx','Blended weather runs adj'):''; }catch(e){}
+  let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">wX</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'wX','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
   const hpFull=hp||(g._projectedHP&&g._projectedHP.name)||'';
@@ -3318,40 +3318,40 @@ function renderScoreboard(){
 const GLOSSARY = [
   {sec:'Projections & Edges', items:[
     ['Proj','Our projected final score / run total for each team.'],
-    ['Total','Projected combined runs — compare against the market over/under.'],
+    ['Total','Projected combined runs; compare against the market over/under.'],
     ['Edge','Our number minus the market line. <b>Positive = value</b> on that side. Shown for the moneyline and the total.'],
-    ['ML','Moneyline — straight-up winner.'],
+    ['ML','Moneyline (straight-up winner).'],
     ['Proj / Confirmed','Whether the lineup shown is our <b>projection</b> or the team’s <b>posted</b> (confirmed) lineup.'],
   ]},
   {sec:'Pitching', items:[
-    ['wFIP','<b>Weighted FIP</b> — our blended run-prevention metric: rolling xFIP 28% / SIERA 22% / xERA 18% / botERA 17% / projection 15%. <b>Lower is better.</b>'],
-    ['xFIP','Expected Fielding-Independent Pitching — an ERA estimate that normalizes home-run rate. Lower is better.'],
-    ['SIERA','Skill-Interactive ERA — folds in strikeouts, walks and batted-ball type. Lower is better.'],
-    ['xERA','Statcast Expected ERA, from contact quality allowed. Lower is better.'],
-    ['botERA','FanGraphs PitchingBot ERA — a pitch-model run estimate. Lower is better.'],
+    ['wFIP','<b>Weighted FIP</b>, our pitcher run-prevention metric.'],
+    ['xFIP','Expected Fielding-Independent Pitching; an ERA estimate that normalizes home-run rate.'],
+    ['SIERA','Skill-Interactive ERA; folds in strikeouts, walks and batted-ball type.'],
+    ['xERA','Statcast Expected ERA, from contact quality allowed.'],
+    ['botERA','FanGraphs PitchingBot ERA, a pitch-model run estimate.'],
     ['Stuff+','Pitch-quality model (velocity + movement). <b>100 = league average</b>, higher is better.'],
     ['FBv','Average fastball velocity (mph).'],
     ['K% / BB%','Strikeout rate / walk rate.'],
-    ['SwStr%','Swinging-strike rate — whiffs per pitch.'],
+    ['SwStr%','Swinging-strike rate (whiffs per pitch).'],
   ]},
   {sec:'Hitting', items:[
-    ['wRC+','<b>Weighted Runs Created Plus</b> — total offensive value, park- & league-adjusted. <b>100 = league average.</b>'],
-    ['xwOBA','Expected weighted On-Base Average — from Statcast contact quality.'],
-    ['OFF','Offense grade — combined wRC+ / power / contact / eye.'],
-    ['POW','Power — barrel / hard-hit / xSLG percentiles.'],
-    ['CON','Contact — strikeout avoidance.'],
-    ['EYE','Plate discipline — walk rate + chase rate.'],
-    ['BSR','Base Running — projected BsR (base-running runs).'],
-    ['DEF','Defense — projected fielding runs. A DH shows “—”.'],
+    ['wRC+','<b>Weighted Runs Created Plus</b>; total offensive value, park- & league-adjusted. <b>100 = league average.</b>'],
+    ['xwOBA','Expected weighted On-Base Average, from Statcast contact quality.'],
+    ['OFF','Offense grade (combined wRC+ / power / contact / eye).'],
+    ['POW','Power (barrel / hard-hit / xSLG percentiles).'],
+    ['CON','Contact (strikeout avoidance).'],
+    ['EYE','Plate discipline (walk rate + chase rate).'],
+    ['BSR','Base Running (projected base-running runs).'],
+    ['DEF','Defense (projected fielding runs); blank for a DH.'],
     ['EV / maxEV','Average / max exit velocity (mph).'],
     ['Barrel%','Rate of barreled (ideal-contact) batted balls.'],
     ['HardHit%','Share of batted balls hit 95+ mph.'],
-    ['Chase','Out-of-zone swing rate — lower is better.'],
+    ['Chase','Out-of-zone swing rate.'],
   ]},
   {sec:'Ballpark & Environment', items:[
-    ['PF','<b>Park Factor</b> — the ballpark’s run-scoring environment. <b>100 = neutral</b>; higher boosts offense.'],
-    ['WX / Wx','<b>Weather adjustment</b> — temperature, humidity, air pressure and wind converted into a run impact.'],
-    ['Ump','The home-plate umpire’s strike-zone tendency.'],
+    ['PF','<b>Park Factor</b>; the ballpark’s run-scoring environment. <b>100 = neutral</b>; higher boosts offense.'],
+    ['wX','<b>Weather adjustment</b>; temperature, humidity, air pressure and wind converted into a run impact.'],
+    ['Ump','The home-plate umpire’s run impact.'],
   ]},
   {sec:'Grades', items:[
     ['A+ → F','Letter grades are <b>percentiles vs MLB regulars</b>; C ≈ league average. <b style="color:var(--tier-good)">Green</b> = good, grey = average, <b style="color:var(--tier-bad)">red</b> = poor.'],
