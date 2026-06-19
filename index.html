@@ -3624,10 +3624,25 @@ function normName(s) {
     .replace(/ jr\.?$/,"").replace(/ sr\.?$/,"").replace(/ iii$/,"").replace(/ ii$/,"")
     .replace(/\./g,"").trim();
 }
+// Canonical DISPLAY name: ASCII (strip accents), drop trailing suffixes
+// (Jr/Sr/II-V), drop single-letter middle initials, normalize initials
+// (P.J.->PJ). Mirrors scripts/refresh_roster_names.py clean_name(). Display
+// only — never used as a join key (so disambiguating middle initials, e.g. two
+// "Luis Ortiz", don't collide in the data layer).
+const _NAME_SUFFIX = {jr:1,sr:1,ii:1,iii:1,iv:1,v:1};
+function cleanName(name){
+  if(!name) return "";
+  let s = String(name).normalize("NFKD").replace(/[\u0300-\u036f]/g,"");
+  let toks = s.split(/\s+/).map(t=>t.replace(/\./g,"")).filter(Boolean);
+  while(toks.length>2 && _NAME_SUFFIX[toks[toks.length-1].toLowerCase().replace(/,$/,"")]) toks.pop();
+  if(toks.length>2) toks = [toks[0]].concat(toks.slice(1,-1).filter(t=>t.length>1)).concat([toks[toks.length-1]]);
+  return toks.join(" ");
+}
 // "F. Lastname" — keeps lineup rows at a consistent width. Handles compound
 // surnames (De Los Santos), hyphens (Lowe-Williams), suffix (Jr./Sr./II/III)
 // and the common single-word stage-names used in MLB (e.g., "Ichiro").
 function shortName(name) {
+  name = cleanName(name);
   if (!name) return "";
   const clean = String(name).trim().replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, "");
   const parts = clean.split(/\s+/);
@@ -3650,6 +3665,7 @@ function fiLast(name){
 }
 function autoName(name) {
   if (!name) return "";
+  name = cleanName(name);
   const parts = String(name).trim().split(/\s+/);
   const last = parts.slice(-1)[0] || "";
   const isLong = name.length > 17;
@@ -4267,7 +4283,7 @@ function spMiniCell(name, teamName, sideCls) {
 
   if (!s) {
     return `<div class="sb-sp-cell ${sideCls}">
-      <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
+      <div class="sb-sp-name">${cleanName(name)}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
       <span class="sb-sp-none">no stats</span>
       ${penLine}
     </div>`;
@@ -5352,7 +5368,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     // Modal (compact) uses slash format; full Bullpen tab uses day abbrev.
     const daysTxt = f ? fatigueBreakdown(f.days, compact ? "slashes" : "days", fLabels) : "";
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
-    const nameShown = p.name;
+    const nameShown = cleanName(p.name);
     const fipSrc = useW ? 'w' : (useXfip ? 'x' : 'p');
     const fipLbl = useW ? "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)"
                  : (useXfip ? "xFIP — season actual (≥10 IP)" : "pFIP — projection (no qualified xFIP yet)");
