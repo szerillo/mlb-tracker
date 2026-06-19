@@ -3196,6 +3196,7 @@ async function exportScoreboardPNG(){
       await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&im.src.indexOf('mlbstatic')>=0){ im.src=await logoData(im.src); } }catch(e){} }));
       document.body.appendChild(stage);
       try{
+        await _pngRasterizeInlineSVGs(stage);
         const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:winW});
         const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
         const url=URL.createObjectURL(blob);
@@ -3224,6 +3225,29 @@ async function _pngRasterizeLogos(stage){
   const imgs=stage.querySelectorAll('img');
   await Promise.all(Array.prototype.map.call(imgs, async im=>{ try{ if(im.src&&(im.src.indexOf('mlbstatic')>=0||im.src.indexOf('.svg')>=0)){ im.src=await logoData(im.src); } }catch(e){} }));
 }
+async function _pngRasterizeInlineSVGs(stage){
+  // html2canvas distorts complex inline <svg> (e.g. the brand donkey). Rasterize
+  // each to a square PNG <img> first so it keeps its aspect ratio in the export.
+  const svgs=stage.querySelectorAll('svg.brand-logo');
+  await Promise.all(Array.prototype.map.call(svgs, async sv=>{ try{
+    const rect=sv.getBoundingClientRect(); const disp=Math.round(rect.width)||62;
+    const px=Math.max(128, disp*2);
+    const clone=sv.cloneNode(true);
+    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    clone.setAttribute('width',px); clone.setAttribute('height',px);
+    const xml=new XMLSerializer().serializeToString(clone);
+    const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+    const img=new Image(); img.decoding='sync';
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});
+    const c=document.createElement('canvas'); c.width=px; c.height=px;
+    const ctx=c.getContext('2d'); ctx.clearRect(0,0,px,px); ctx.drawImage(img,0,0,px,px);
+    const out=document.createElement('img');
+    out.src=c.toDataURL('image/png');
+    out.width=disp; out.height=disp;
+    out.style.cssText='display:block;flex-shrink:0;width:'+disp+'px;height:'+disp+'px;';
+    if(sv.parentNode) sv.parentNode.replaceChild(out, sv);
+  }catch(e){} }));
+}
 async function exportModalSectionPNG(node, title, width, slug){
   if(!node){ alert('That section is not available for this game.'); return; }
   if(typeof html2canvas==='undefined'){ alert('Image library still loading — try again in a moment.'); return; }
@@ -3243,6 +3267,7 @@ async function exportModalSectionPNG(node, title, width, slug){
   document.body.appendChild(stage);
   try{
     await _pngRasterizeLogos(stage);
+    await _pngRasterizeInlineSVGs(stage);
     const canvas=await html2canvas(stage,{backgroundColor:'#0d1117',scale:2,useCORS:true,logging:false,windowWidth:W+40});
     const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
     const url=URL.createObjectURL(blob);
