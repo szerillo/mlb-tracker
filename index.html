@@ -3236,9 +3236,10 @@ async function _pngRasterizeInlineSVGs(stage){
     clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
     clone.setAttribute('width',px); clone.setAttribute('height',px);
     let xml=new XMLSerializer().serializeToString(clone);
-    // The DataGolf color remap rewrites fills as hsla(); the SVG-as-<img>
-    // renderer doesn't honor hsla() in presentation attributes (falls back to
-    // black), so convert hsl/hsla -> rgb/rgba (same color, supported format).
+    // A dark-mode browser extension (e.g. Night Eye / Dark Reader) can rewrite
+    // fills as hsla() in the live DOM; the SVG-as-<img> renderer doesn't honor
+    // hsla() in presentation attributes (falls back to black), so convert
+    // hsl/hsla -> rgb/rgba (same color, supported format). No-op without an extension.
     xml=xml.replace(/hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/g,function(m,h,sat,lig,a){
       h=parseFloat(h); var S=parseFloat(sat)/100, L=parseFloat(lig)/100;
       var C=(1-Math.abs(2*L-1))*S, X=C*(1-Math.abs((h/60)%2-1)), M=L-C/2, r,g,b;
@@ -6232,7 +6233,7 @@ function renderSPTrendsHTML(gl) {
     </div>`).join("");
 
   const sieraTxt = l5.siera != null ? l5.siera.toFixed(2) : '—';
-  const fbNote = gl.source === 'mlb-fallback' ? ' · line scores only (FG pending)' : '';
+  const fbNote = '';  // (data-source caveat note removed for clean exports)
   return `<div class="sp-trends">
     <div class="sp-trends-hdr">Recent starts
       <span class="sp-trends-sub">last ${recent.length} · L5 SIERA ${sieraTxt}${fbNote}</span></div>
