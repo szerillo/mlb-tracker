@@ -3235,7 +3235,18 @@ async function _pngRasterizeInlineSVGs(stage){
     const clone=sv.cloneNode(true);
     clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
     clone.setAttribute('width',px); clone.setAttribute('height',px);
-    const xml=new XMLSerializer().serializeToString(clone);
+    let xml=new XMLSerializer().serializeToString(clone);
+    // The DataGolf color remap rewrites fills as hsla(); the SVG-as-<img>
+    // renderer doesn't honor hsla() in presentation attributes (falls back to
+    // black), so convert hsl/hsla -> rgb/rgba (same color, supported format).
+    xml=xml.replace(/hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/g,function(m,h,sat,lig,a){
+      h=parseFloat(h); var S=parseFloat(sat)/100, L=parseFloat(lig)/100;
+      var C=(1-Math.abs(2*L-1))*S, X=C*(1-Math.abs((h/60)%2-1)), M=L-C/2, r,g,b;
+      if(h<60){r=C;g=X;b=0;}else if(h<120){r=X;g=C;b=0;}else if(h<180){r=0;g=C;b=X;}
+      else if(h<240){r=0;g=X;b=C;}else if(h<300){r=X;g=0;b=C;}else{r=C;g=0;b=X;}
+      var R=Math.round((r+M)*255),G=Math.round((g+M)*255),B=Math.round((b+M)*255);
+      return (a!==undefined&&parseFloat(a)<1)?('rgba('+R+','+G+','+B+','+a+')'):('rgb('+R+','+G+','+B+')');
+    });
     const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
     const img=new Image(); img.decoding='sync';
     await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});
