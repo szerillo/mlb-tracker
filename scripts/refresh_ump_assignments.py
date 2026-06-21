@@ -113,6 +113,20 @@ def slate_dates() -> list[str]:
     t = et_today()
     return [t.isoformat(), (t + datetime.timedelta(days=1)).isoformat()]
 
+# ----------------------------------------------------------------------------- ratings
+def load_ump_ratings():
+    """(name_lower -> rating dict, league_baseline_off_adj). Names de-accented so
+    they match the MLB-API ump names we write. Reads the repo's data/umps.json."""
+    path = os.path.join(REPO_ROOT, "data", "umps.json")
+    try:
+        d = json.load(open(path))
+    except Exception as e:
+        print(f"  [warn] could not read data/umps.json: {e}", file=sys.stderr)
+        return {}, None
+    out = {clean_name(n).lower(): r for n, r in d.get("umpires", {}).items()}
+    return out, d.get("baseline")
+
+
 # ----------------------------------------------------------------------------- ump map
 def build_anid_to_ump(dates: list[str]) -> dict[str, dict]:
     """an_event_id (str) -> {ump, gamePk, date, away, home}. Only games with a
@@ -223,6 +237,12 @@ def main():
     if DRY_RUN:
         grid = read_grid_via_gviz()
         title = MODEL_TAB_NAME or f"gid:{MODEL_TAB_GID}"
+    elif not os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip():
+        # Dormant until the service-account secret is configured. Exit 0 so the
+        # scheduled workflow stays green (no failure emails) before setup.
+        print("[umps] GOOGLE_SERVICE_ACCOUNT_JSON not set — skipping (no-op). "
+              "Add the secret to enable writes. Exiting 0.")
+        return 0
     else:
         svc = _sheets_service()
         title = resolve_tab_title(svc)
@@ -230,6 +250,7 @@ def main():
     blocks = parse_blocks(grid)
     print(f"[umps] found {len(blocks)} matchup blocks in tab '{title}'")
 
+    ratings, league_baseline = load_ump_ratings()
     writes, planned, json_rows = [], [], {}
     for b in blocks:
         rec = anid_ump.get(b["an_id"])
@@ -238,7 +259,15 @@ def main():
         cell_a1 = f"{UMP_COL_LETTER}{b['ump_row']}"
         planned.append((b["matchup"], b["an_id"], cell_a1, b["team_label"], rec["ump"]))
         writes.append({"range": f"'{title}'!{cell_a1}", "values": [[rec["ump"]]]})
-        json_rows[b["an_id"]] = {**rec, "matchup": b["matchup"], "cell": cell_a1}
+        rt = ratings.get(clean_name(rec["ump"]).lower(), {})
+        json_rows[b["an_id"]] = {
+            **rec, "matchup": b["matchup"], "cell": cell_a1,
+            # ump lean from data/umps.json: off_adj_shrunk = recency-weighted,
+            # shrunk runs the ump's zone adds to offense (vs league baseline).
+            "off_adj_shrunk": rt.get("off_adj_shrunk"),
+            "acc_above_x": rt.get("acc_above_x"),
+            "ump_games": rt.get("n"),
+        }
 
     planned.sort(key=lambda x: x[0])
     print(f"\n{'M#':>3} {'AN_id':>7} {'cell':>7}  {'team':<14} -> HP ump")
@@ -251,7 +280,9 @@ def main():
         os.makedirs(os.path.dirname(JSON_OUT), exist_ok=True)
         with open(JSON_OUT, "w") as f:
             json.dump({"generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
-                       "dates": dates, "source": "MLB Stats API officials (HP ump)",
+                       "dates": dates,
+                       "source": "MLB Stats API officials (HP ump) + data/umps.json ratings",
+                       "league_baseline_off_adj": league_baseline,
                        "n": len(json_rows), "assignments": json_rows}, f, indent=2)
         print(f"[umps] wrote {JSON_OUT}")
 
