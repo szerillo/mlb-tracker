@@ -2997,7 +2997,7 @@ function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRa
 function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=getBullpenRank(id); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'bp'); } }catch(e){} return ''; }
 function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; if(!fd.teams[team]) return ''; const rows=(typeof _penRelievers==='function')?_penRelievers(fd.teams[team]):fd.teams[team]; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
 function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT; }catch(e){ return null; } }
-function _teamConLetter(players){ try{ if(typeof HITTERS==='undefined'||!HITTERS||!players||!players.length) return null; let wsum=0,tw=0; for(const p of players){ const h=HITTERS.hitters[normName(p.name||'')]; if(!h)continue; const k=(h.k_pct_actual!=null)?h.k_pct_actual:h.k_pct; if(k==null||k<0||k>80)continue; const slot=(p.order||0)-1; const delta=(slot>=0&&slot<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[slot]:0; const w=SLOT_BASE_PA+delta; wsum+=k*w; tw+=w; } if(tw<=0)return null; const k_pct=wsum/tw; const pctDisp=Math.max(1,Math.min(99,99-(k_pct-TEAM_K_BEST)/(TEAM_K_WORST-TEAM_K_BEST)*98)); return gradeLetter(pctDisp); }catch(e){ return null; } }
+function _teamConLetter(players){ try{ if(typeof HITTERS==='undefined'||!HITTERS||!players||!players.length) return null; let wsum=0,tw=0; for(const p of players){ const h=HITTERS.hitters[normName(p.name||'')]; if(!h)continue; const k=(h.k_pct_actual!=null)?h.k_pct_actual:h.k_pct; if(k==null||k<0||k>80)continue; wsum+=k; tw+=1; /* CON = pure average (per spec; only wRC+ is slot-weighted) */ } if(tw<=0)return null; const k_pct=wsum/tw; const pctDisp=Math.max(1,Math.min(99,99-(k_pct-TEAM_K_BEST)/(TEAM_K_WORST-TEAM_K_BEST)*98)); return gradeLetter(pctDisp); }catch(e){ return null; } }
 function _apxTeamGrades(game,side){
   try{
     const t=game.teams[side].team; const abbr=t.abbreviation||teamAbbr(t.name);
@@ -4879,7 +4879,8 @@ function _ensureTeamRankGrades() {
       else if (typeof h.wrc==='number') w=h.wrc;
       else if (typeof h.wrc_vs_r==='number') w=h.wrc_vs_r;
       else if (typeof h.wrc_vs_l==='number') w=h.wrc_vs_l;
-      if (w!=null) { oS+=w; oN++; }
+      // OFF is wRC+ → slot-weighted (per spec). oN accumulates the weights.
+      if (w!=null) { const _s=(x.order||0)-1; const _d=(_s>=0&&_s<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[_s]:0; const _wt=SLOT_BASE_PA+_d; oS+=w*_wt; oN+=_wt; }
       const pc = HP ? HP[normName(x.name||'')] : null;
       if (pc) {
         const pw=(typeof powerPct==='function')?powerPct(pc,x.name):null; if(pw!=null){pS+=pw;pN++;}
@@ -4887,7 +4888,10 @@ function _ensureTeamRankGrades() {
         if(typeof pc.k_pct==='number'){cS+=pc.k_pct;cN++;}
       }
     }
-    return { abbr: tb.team?.abbr, def: dN?dS:null, bsr: bN?bS:null, off: oN?oS/oN:null,
+    // DEF/BSR = pure AVERAGE of per-player runs (was SUM, which rewarded
+    // lineups for having more contributors / a non-DH 9th bat). off is the
+    // slot-weighted wRC+ mean; pwr/eye/con are simple means.
+    return { abbr: tb.team?.abbr, def: dN?dS/dN:null, bsr: bN?bS/bN:null, off: oN?oS/oN:null,
              pwr: pN?pS/pN:null, eye: eN?eS/eN:null, con: cN?cS/cN:null };
   }).filter(r => r.abbr);
   const total = rows.length || 30;
@@ -4928,10 +4932,10 @@ function teamGradePct(players, cat) {
       pct = cat === 'bsr' ? bsrPct(h, nm) : fldPct(h, nm);
     }
     if (pct == null) continue;
-    const slot = (p.order || 0) - 1;
-    const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
-    const w = SLOT_BASE_PA + delta;
-    wsum += pct * w; tw += w;
+    // Pure average — non-wRC+ team grades are NOT slot-weighted (per spec:
+    // only lineup wRC+ is weighted by batting-order slot). Hitters with no
+    // data stay excluded from the mean (not counted as 0).
+    wsum += pct; tw += 1;
   }
   return tw > 0 ? wsum / tw : null;
 }
@@ -4983,7 +4987,7 @@ function teamLineupWrc(side, oppHand){
   try{
     if(!side || !side.players) return null;
     const oh=(oppHand||'').toUpperCase();
-    let sum=0,n=0;
+    let wsum=0,tw=0;
     for(const p of side.players){
       const nm=(p&&p.name)||'';
       const se=HITTER_SPLITS&&HITTER_SPLITS.hitters?HITTER_SPLITS.hitters[normName(nm)]:null;
@@ -4991,9 +4995,10 @@ function teamLineupWrc(side, oppHand){
       const vR=(se&&se.wrc_vs_r!=null)?se.wrc_vs_r:(h&&h.wrc_vs_r);
       const vL=(se&&se.wrc_vs_l!=null)?se.wrc_vs_l:(h&&h.wrc_vs_l);
       let v = oh==='L'?vL : oh==='R'?vR : (vR!=null&&vL!=null?(vR+vL)/2 : (vR!=null?vR:vL));
-      if(v!=null){sum+=v;n++;}
+      // wRC+ → slot-weighted by batting order (per spec).
+      if(v!=null){ const slot=((p&&p.order)||0)-1; const d=(slot>=0&&slot<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[slot]:0; const w=SLOT_BASE_PA+d; wsum+=v*w; tw+=w; }
     }
-    return n?Math.round(sum/n):null;
+    return tw>0?Math.round(wsum/tw):null;
   }catch(e){return null;}
 }
 function teamWrcChip(side, oppHand){
@@ -6609,11 +6614,9 @@ function teamContactSpan(players) {
     if (!h) continue;
     const k = (h.k_pct_actual != null) ? h.k_pct_actual : h.k_pct;
     if (k == null || k < 0 || k > 80) continue;  // sanity guard
-    const slot = (p.order || 0) - 1;
-    const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
-    const w = SLOT_BASE_PA + delta;
-    wsum += k * w;
-    tw += w;
+    // Pure average (per spec: only wRC+ is slot-weighted). Missing K% excluded.
+    wsum += k;
+    tw += 1;
     n_have++;
   }
   if (tw <= 0) return "";
@@ -6623,7 +6626,7 @@ function teamContactSpan(players) {
     99 - (k_pct - TEAM_K_BEST) / (TEAM_K_WORST - TEAM_K_BEST) * 98));
   const letter = gradeLetter(pctDisp);
   if (!letter) return "";
-  const title = `Team contact grade ${letter} — combined K% ${k_pct.toFixed(1)}% (PA-weighted by slot, season actuals). ${n_have}/${players.length} hitters had data; missing entries are excluded (NOT averaged in as 0). League ref: best ≈ 17.5% · avg ≈ 22.2% · worst ≈ 27.5%`;
+  const title = `Team contact grade ${letter} — combined K% ${k_pct.toFixed(1)}% (simple lineup average, season actuals). ${n_have}/${players.length} hitters had data; missing entries are excluded (NOT averaged in as 0). League ref: best ≈ 17.5% · avg ≈ 22.2% · worst ≈ 27.5%`;
   return `<span class="tg-chip" title="${title.replace(/"/g,'&quot;')}"><span class="tg-lbl">Con</span><span class="grade ${gradeCls(letter)}">${letter}</span></span>`;
 }
 
@@ -7889,11 +7892,12 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
       const eye = eyePct(pc, _hnm);
       const slot = i;
       const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
-      const w = SLOT_BASE_PA + delta;
+      const w = SLOT_BASE_PA + delta;          // slot weight — wRC+ ONLY
       if (wrc != null) { wrcSum += wrc * w; wrcW += w; }
-      if (pwr != null) { pwrSum += pwr * w; pwrW += w; }
-      if (con != null) { conSum += con * w; conW += w; }
-      if (eye != null) { eyeSum += eye * w; eyeW += w; }
+      // PWR/CON/EYE = pure averages (per spec: only wRC+ is slot-weighted).
+      if (pwr != null) { pwrSum += pwr; pwrW += 1; }
+      if (con != null) { conSum += con; conW += 1; }
+      if (eye != null) { eyeSum += eye; eyeW += 1; }
     });
     return {
       team: tb.team, tb,
@@ -7973,8 +7977,10 @@ function renderDefBsrCombined(hitters, nameToTeam, teams) {
     if (!defVals.length && !bsrVals.length) return null;
     return {
       team: tb.team,
-      def: defVals.length ? defVals.reduce((a,b)=>a+b,0) : null,
-      bsr: bsrVals.length ? bsrVals.reduce((a,b)=>a+b,0) : null,
+      // Pure AVERAGE of per-player runs (was SUM — biased toward lineups with
+      // more contributors / a non-DH 9th bat).
+      def: defVals.length ? defVals.reduce((a,b)=>a+b,0)/defVals.length : null,
+      bsr: bsrVals.length ? bsrVals.reduce((a,b)=>a+b,0)/bsrVals.length : null,
       tb,
     };
   }).filter(Boolean);
