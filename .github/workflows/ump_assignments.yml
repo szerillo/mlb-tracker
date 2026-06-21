@@ -1,0 +1,45 @@
+name: ump_assignments
+
+# Writes Home-Plate umpire names into the model sheet (column J of each
+# "Matchup N" block). MLB posts plate-ump assignments on GAME DAY, so we run
+# repeatedly through the day to fill cells in as they post. Safe to re-run:
+# it only writes games whose ump is posted, and overwrites with the same value.
+
+on:
+  workflow_dispatch: {}            # manual "Run workflow" button
+  schedule:
+    # Every 30 min, ~9:30am–8:00pm ET (13:30–24:00 UTC). Adjust as you like.
+    - cron: "*/30 13-23 * * *"
+
+permissions:
+  contents: write                  # only needed if WRITE_JSON commits data/ump_assignments.json
+
+jobs:
+  write-umps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install google-api-python-client google-auth
+
+      - name: Write ump assignments into the model
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SHEET_ID: 1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE
+          MODEL_TAB_GID: "121298510"
+          WRITE_JSON: "1"          # also drop data/ump_assignments.json for the tool/frontend
+        run: python scripts/refresh_ump_assignments.py
+
+      # Optional: publish the JSON artifact back to the repo so the tool can read it too.
+      - name: Commit ump_assignments.json
+        run: |
+          git config user.name  "github-actions"
+          git config user.email "actions@github.com"
+          git add data/ump_assignments.json || true
+          git commit -m "ump assignments [skip ci]" || echo "no changes"
+          git push || echo "nothing to push"
