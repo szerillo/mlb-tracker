@@ -204,14 +204,13 @@ jobs:
 
       - name: Import my Action PRO projections (GAME UPLOADER sheet -> sheet_projections.json)
         # Reads the published GAME UPLOADER tab CSV, maps game_id (AN event id)
-        # -> gamePk, writes data/sheet_projections.json. No-op if the secret is
-        # unset. The site also reads the published CSV live in-browser.
+        # -> gamePk, writes data/sheet_projections.json. Falls back to the public
+        # published-CSV URL (the same one index.html reads in-browser) when the
+        # SHEET_CSV_URL secret isn't set — this is a published-to-web link, not a
+        # credential, so the snapshot stays fresh without needing the secret.
         run: |
-          if [ -n "$SHEET_CSV_URL" ]; then
-            python scripts/refresh_sheet_projections.py
-          else
-            echo "SHEET_CSV_URL not set - skipping sheet projection import"
-          fi
+          export SHEET_CSV_URL="${SHEET_CSV_URL:-https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P/pub?gid=580753288&single=true&output=csv}"
+          python scripts/refresh_sheet_projections.py
         continue-on-error: true
         env:
           SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
