@@ -2913,7 +2913,10 @@ async function loadSheetProjections(){
           for(let c=start;c<rows[0].length;c++){let hits=0;
             for(let r2=1;r2<Math.min(rows.length,25);r2++){if(rows[r2][c]&&_parseDateCell(rows[r2][c]))hits++;}
             if(hits>=3){iDate=c;break;}}
-          const today=_todayISO_ET();
+          // Match the date being VIEWED (e.g. Monday when you've paged to the
+          // next slate), not just today — otherwise next-day projection rows
+          // get filtered out and the games show "No projection uploaded".
+          const today=(typeof VIEW_DATE!=='undefined' && VIEW_DATE)?VIEW_DATE:_todayISO_ET();
           const num=v=>{v=(v==null?'':v).toString().trim().replace(/,/g,'');return v===''||isNaN(+v)?null:+v;};
           for(let r2=1;r2<rows.length;r2++){const row=rows[r2];
             const gid=num(row[iGid]); const aw=num(row[ix('away_score')]);
