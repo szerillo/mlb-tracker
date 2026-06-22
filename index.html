@@ -1933,8 +1933,9 @@
   body.embed-mode .brand-text h1 { font-size: 1.15rem !important; margin: 0 !important; }
   body.embed-mode .brand-tagline { display: block !important; font-size: 0.72rem !important; line-height: 1.3; }
   body.embed-mode .sub { display: block !important; text-align: left !important; font-size: 0.78rem !important; color: var(--muted); margin: 0.25rem 0 0 !important; }
-  /* Footer for embeds: keep only the Built by @SeanZerillo byline. */
-  body.embed-mode > footer { display: block !important; border-top: 1px solid var(--border); margin-top: 0.6rem !important; padding: 0.6rem 0.7rem !important; font-size: 0.8rem !important; text-align: center; }
+  /* Embeds: attribution is already in the top brand header (hdr-built) — hide
+     the footer byline so "Built by @SeanZerillo" isn't shown twice. */
+  body.embed-mode > footer { display: none !important; }
   body.embed-mode .footer-detail { display: none !important; }
   /* Embeds: force LINEUPS and BULLPENS to stack (full info needs full width). */
   body.embed-mode .m-lineup-grid,
@@ -3185,7 +3186,6 @@ async function exportScoreboardPNG(){
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:13px;color:#9aa4b2;">'+
           '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;"><span style="display:inline-flex;width:18px;height:18px;border-radius:50%;background:#3ddc84;color:#0d1117;align-items:center;justify-content:center;font-size:12px;font-weight:800;">&#10003;</span>ACTION</span>'+
           '<span>&#10003; Lineup Confirmed&nbsp;&nbsp;&middot;&nbsp;&nbsp;&#9733; Lineup Projected</span>'+
-          '<span style="font-weight:700;color:#fff;">@SeanZerillo</span>'+
         '</div>';
       // Center a single trailing card (e.g. 7 games in a 2-wide grid).
       if (chunk.length % cols === 1) {
@@ -3282,7 +3282,7 @@ async function exportModalSectionPNG(node, title, width, slug){
   // No separate title — each captured section already includes its own header.
   stage.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'+brandHTML+'</div>';
   const cwrap=document.createElement('div'); cwrap.style.display='inline-block'; cwrap.appendChild(clone); stage.appendChild(cwrap);
-  stage.insertAdjacentHTML('beforeend','<div style="margin-top:14px;font-size:12px;color:#9aa4b2;font-weight:700;text-align:right;">Built by @SeanZerillo</div>');
+  // (Attribution shown once in the top brand header — no second byline needed.)
   document.body.appendChild(stage);
   try{
     await _pngRasterizeLogos(stage);
