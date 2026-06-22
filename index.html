@@ -4869,14 +4869,22 @@ function handOfPitcher(name) {
 // uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
 // the SAME map. Lazily compute, cache on HITTERS identity.
 let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null,
-    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null, _TEAM_RANK_OFF_N = null, _TEAM_RANK_N_TOTAL = 0, _TEAM_RANK_LU = null;
+    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null, _TEAM_RANK_OFF_N = null, _TEAM_RANK_N_TOTAL = 0,
+    _TEAM_RANK_LU = null, _TEAM_RANK_G = null, _TEAM_RANK_P = null, _TEAM_RANK_T = null;
 function _ensureTeamRankGrades() {
-  // Rebuild when HITTERS OR the lineups change. The team grades come from the
-  // CURRENT posted lineups, so caching on HITTERS alone left the rank letters
-  // stale after a date change / new lineup post — which made the same team
-  // disagree between the chips and the Team Ranks tab.
+  // Rebuild whenever ANY input the grades are derived from changes identity.
+  // These all load async and independently — HITTERS, the posted LINEUPS, the
+  // GRADES_V2 / HITTER_PCT percentile sources powerPct/eyePct read, and the
+  // team list. Caching on HITTERS alone (or HITTERS+LINEUPS) left the rank
+  // letters computed from whichever sources had loaded first — stale, and
+  // disagreeing between the chips and the Team Ranks tab.
   const _luNow = (typeof LINEUPS !== 'undefined') ? LINEUPS : null;
-  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_LU === _luNow && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
+  const _gNow  = (typeof GRADES_V2 !== 'undefined') ? GRADES_V2 : null;
+  const _pNow  = (typeof HITTER_PCT !== 'undefined') ? HITTER_PCT : null;
+  const _tNow  = (typeof ALL_TEAMS_CACHE !== 'undefined') ? ALL_TEAMS_CACHE : null;
+  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_LU === _luNow && _TEAM_RANK_G === _gNow &&
+      _TEAM_RANK_P === _pNow && _TEAM_RANK_T === _tNow &&
+      _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
   if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
       typeof gradeByRank !== 'function' ||
       !HITTERS || !Array.isArray(ALL_TEAMS_CACHE) || !ALL_TEAMS_CACHE.length) return;
@@ -4914,7 +4922,7 @@ function _ensureTeamRankGrades() {
   _TEAM_RANK_PWR = rankInto('pwr'); _TEAM_RANK_EYE = rankInto('eye'); _TEAM_RANK_CON = rankInto('con');
   _TEAM_RANK_OFF_N = {}; _TEAM_RANK_N_TOTAL = total;
   rows.filter(r=>r.off!=null).sort((a,b)=>b.off-a.off).forEach((r,i)=>{ _TEAM_RANK_OFF_N[r.abbr]=i+1; });
-  _TEAM_RANK_SRC = HITTERS; _TEAM_RANK_LU = _luNow;
+  _TEAM_RANK_SRC = HITTERS; _TEAM_RANK_LU = _luNow; _TEAM_RANK_G = _gNow; _TEAM_RANK_P = _pNow; _TEAM_RANK_T = _tNow;
 }
 function teamRankGradeLetter(abbr, cat) {
   _ensureTeamRankGrades();
