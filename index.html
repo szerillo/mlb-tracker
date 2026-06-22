@@ -4869,9 +4869,14 @@ function handOfPitcher(name) {
 // uses rank-curved grades (rank 1 of 30 → A+, rank 30 → D-) so the chip needs
 // the SAME map. Lazily compute, cache on HITTERS identity.
 let _TEAM_RANK_SRC = null, _TEAM_RANK_DEF = null, _TEAM_RANK_BSR = null, _TEAM_RANK_OFF = null,
-    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null, _TEAM_RANK_OFF_N = null, _TEAM_RANK_N_TOTAL = 0;
+    _TEAM_RANK_PWR = null, _TEAM_RANK_EYE = null, _TEAM_RANK_CON = null, _TEAM_RANK_OFF_N = null, _TEAM_RANK_N_TOTAL = 0, _TEAM_RANK_LU = null;
 function _ensureTeamRankGrades() {
-  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
+  // Rebuild when HITTERS OR the lineups change. The team grades come from the
+  // CURRENT posted lineups, so caching on HITTERS alone left the rank letters
+  // stale after a date change / new lineup post — which made the same team
+  // disagree between the chips and the Team Ranks tab.
+  const _luNow = (typeof LINEUPS !== 'undefined') ? LINEUPS : null;
+  if (_TEAM_RANK_SRC === HITTERS && _TEAM_RANK_LU === _luNow && _TEAM_RANK_DEF && _TEAM_RANK_BSR && _TEAM_RANK_OFF && _TEAM_RANK_PWR) return;
   if (typeof _allTeamsLineupHittersByTeam !== 'function' ||
       typeof gradeByRank !== 'function' ||
       !HITTERS || !Array.isArray(ALL_TEAMS_CACHE) || !ALL_TEAMS_CACHE.length) return;
@@ -4909,7 +4914,7 @@ function _ensureTeamRankGrades() {
   _TEAM_RANK_PWR = rankInto('pwr'); _TEAM_RANK_EYE = rankInto('eye'); _TEAM_RANK_CON = rankInto('con');
   _TEAM_RANK_OFF_N = {}; _TEAM_RANK_N_TOTAL = total;
   rows.filter(r=>r.off!=null).sort((a,b)=>b.off-a.off).forEach((r,i)=>{ _TEAM_RANK_OFF_N[r.abbr]=i+1; });
-  _TEAM_RANK_SRC = HITTERS;
+  _TEAM_RANK_SRC = HITTERS; _TEAM_RANK_LU = _luNow;
 }
 function teamRankGradeLetter(abbr, cat) {
   _ensureTeamRankGrades();
