@@ -4961,14 +4961,19 @@ function teamGradeBar(game, side, opts) {
   const players = lg?.lineups?.[side]?.players || [];
   if (!HITTERS || !players.length) return "";
   const wrc = (opts && opts.noWrc) ? "" : teamWrcSpan(game, side);
-  const con = teamContactSpan(players);
-  // DEF + BSR routed through the same rank-curved grader the Team Ranks tab
-  // uses — letters match across both pages. PWR + EYE keep SD-stretched MLB-
-  // population pctile (no rank-curved Team Ranks display exists for those).
   const abbr = game?.teams?.[side]?.team?.abbreviation || null;
+  // CON rank-curved across all 30 teams so it matches the Team Ranks tab
+  // (falls back to the absolute K% chip only if the abbr / rank table isn't ready).
+  const conRank = abbr ? teamRankGradeLetter(abbr, 'con') : null;
+  const con = conRank
+    ? `<span class="tg-chip" title="Team Con grade ${conRank} (rank-curved across all 30 teams — matches Team Ranks tab)."><span class="tg-lbl">Con</span><span class="grade ${gradeCls(conRank)}">${conRank}</span></span>`
+    : teamContactSpan(players);
+  // ALL chips routed through the same rank-curved grader (teamRankGradeLetter)
+  // the Team Ranks tab uses, so the letters match across both pages. Absolute
+  // MLB-population pctile is only a fallback when the abbr / rank table is absent.
   const chips = [['PWR', 'pwr'], ['EYE', 'eye'], ['BSR', 'bsr'], ['DEF', 'def']].map(([lbl, cat]) => {
     let letter = null, titleSuffix = '';
-    if ((cat === 'def' || cat === 'bsr') && abbr) {
+    if (abbr) {
       letter = teamRankGradeLetter(abbr, cat);
       titleSuffix = ' (rank-curved across all 30 teams — matches Team Ranks tab)';
     }
@@ -7935,10 +7940,14 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
     TEAM_PP[r.team.id] = Object.assign(TEAM_PP[r.team.id]||{}, {off: rank, team: r.team});
-    const wrcG = r.wrcAvg != null ? gradeByRank(r.wrcR, total) : '—';
-    const pwrG = r.pwrAvg != null ? gradeByRank(r.pwrR, total) : '—';
-    const conG = r.conAvg != null ? gradeByRank(r.conR, total) : '—';
-    const eyeG = r.eyeAvg != null ? gradeByRank(r.eyeR, total) : '—';
+    // Per-category letters come from the SAME teamRankGradeLetter source the
+    // lineup-tab chips use, so the two pages can't disagree. Local rank is only
+    // a fallback when the shared store lacks the team.
+    const _ab = r.team.abbr;
+    const wrcG = teamRankGradeLetter(_ab, 'off') || (r.wrcAvg != null ? gradeByRank(r.wrcR, total) : '—');
+    const pwrG = teamRankGradeLetter(_ab, 'pwr') || (r.pwrAvg != null ? gradeByRank(r.pwrR, total) : '—');
+    const conG = teamRankGradeLetter(_ab, 'con') || (r.conAvg != null ? gradeByRank(r.conR, total) : '—');
+    const eyeG = teamRankGradeLetter(_ab, 'eye') || (r.eyeAvg != null ? gradeByRank(r.eyeR, total) : '—');
     const avgG = gradeByRank(rank, total);
     const upcoming = r.tb && r.tb._fromUpcoming
       ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
@@ -8002,8 +8011,11 @@ function renderDefBsrCombined(hitters, nameToTeam, teams) {
   const rows = teamRows.map((r, i) => {
     const rank = i + 1;
     TEAM_PP[r.team.id] = Object.assign(TEAM_PP[r.team.id]||{}, {def: r.defRank, bsr: r.bsrRank, team: r.team});
-    const defG = r.def != null ? gradeByRank(r.defRank, total) : '—';
-    const bsrG = r.bsr != null ? gradeByRank(r.bsrRank, total) : '—';
+    // Letters from the shared teamRankGradeLetter source so they match the
+    // lineup-tab DEF/BSR chips exactly. Local rank is only a fallback.
+    const _ab = r.team.abbr;
+    const defG = teamRankGradeLetter(_ab, 'def') || (r.def != null ? gradeByRank(r.defRank, total) : '—');
+    const bsrG = teamRankGradeLetter(_ab, 'bsr') || (r.bsr != null ? gradeByRank(r.bsrRank, total) : '—');
     const avgG = gradeByRank(rank, total);
     const upcoming = r.tb && r.tb._fromUpcoming
       ? `<span class="rk-upcoming" title="Earliest upcoming lineup — team isn't playing today">·${r.tb._upcomingDate ? r.tb._upcomingDate.slice(5) : 'next'}</span>` : '';
