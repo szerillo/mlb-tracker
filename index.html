@@ -3008,12 +3008,18 @@ function _apxTeamGrades(game,side){
     const lg=(typeof lineupsForGame==='function')?lineupsForGame(game):null;
     const players=lg&&lg.lineups&&lg.lineups[side]?lg.lineups[side].players:null;
     const out={con:null,pow:null,eye:null,bsr:null,def:null};
-    if(players&&players.length&&typeof teamGradePct==='function'&&typeof teamGradeLetter==='function'){
-      const pw=teamGradeLetter(teamGradePct(players,'pwr'),'pwr'); out.pow=pw?pw.letter:null;
-      const ey=teamGradeLetter(teamGradePct(players,'eye'),'eye'); out.eye=ey?ey.letter:null;
-      out.con=_teamConLetter(players);
+    // All five rank-curved across the 30 teams (same teamRankGradeLetter source
+    // the lineup chips + Team Ranks tab use) so the scoreboard cards agree.
+    if(typeof teamRankGradeLetter==='function'){
+      out.pow=teamRankGradeLetter(abbr,'pwr'); out.eye=teamRankGradeLetter(abbr,'eye'); out.con=teamRankGradeLetter(abbr,'con');
+      out.bsr=teamRankGradeLetter(abbr,'bsr'); out.def=teamRankGradeLetter(abbr,'def');
     }
-    if(typeof teamRankGradeLetter==='function'){ out.bsr=teamRankGradeLetter(abbr,'bsr'); out.def=teamRankGradeLetter(abbr,'def'); }
+    // Absolute MLB-pctile fallback only if the rank store isn't built yet.
+    if(players&&players.length){
+      if(out.pow==null&&typeof teamGradePct==='function'&&typeof teamGradeLetter==='function'){ const pw=teamGradeLetter(teamGradePct(players,'pwr'),'pwr'); out.pow=pw?pw.letter:null; }
+      if(out.eye==null&&typeof teamGradePct==='function'&&typeof teamGradeLetter==='function'){ const ey=teamGradeLetter(teamGradePct(players,'eye'),'eye'); out.eye=ey?ey.letter:null; }
+      if(out.con==null){ out.con=_teamConLetter(players); }
+    }
     return out;
   }catch(e){ return null; }
 }
@@ -4961,7 +4967,11 @@ function teamGradeBar(game, side, opts) {
   const players = lg?.lineups?.[side]?.players || [];
   if (!HITTERS || !players.length) return "";
   const wrc = (opts && opts.noWrc) ? "" : teamWrcSpan(game, side);
-  const abbr = game?.teams?.[side]?.team?.abbreviation || null;
+  // Many game objects don't carry .abbreviation; fall back to teamAbbr(name).
+  // Without this abbr was null → teamRankGradeLetter returned null → every chip
+  // silently used the absolute grade, so the rank-curve appeared to do nothing.
+  const _tm = game?.teams?.[side]?.team;
+  const abbr = _tm ? (_tm.abbreviation || (typeof teamAbbr === 'function' ? teamAbbr(_tm.name) : null)) : null;
   // CON rank-curved across all 30 teams so it matches the Team Ranks tab
   // (falls back to the absolute K% chip only if the abbr / rank table isn't ready).
   const conRank = abbr ? teamRankGradeLetter(abbr, 'con') : null;
