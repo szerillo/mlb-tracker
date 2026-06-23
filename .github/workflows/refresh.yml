@@ -107,6 +107,14 @@ jobs:
           python scripts/rotowire_platoons.py data/lineups.json > /tmp/l.json && mv /tmp/l.json data/lineups.json || true
         continue-on-error: true
 
+      # Hand-entered lineup overrides (data/lineup_overrides.json) win over the
+      # scraped projection while a game is still projected — fixes games where
+      # the scraped order has wrong positions / no DH. Runs AFTER the platoon
+      # step so it isn't clobbered; a real MLB-confirmed lineup still supersedes.
+      - name: Apply manual lineup overrides
+        run: python scripts/apply_lineup_overrides.py
+        continue-on-error: true
+
       - name: Refresh pitcher stats (overnight only)
         run: python scripts/refresh_pitcher_stats.py
         continue-on-error: true
