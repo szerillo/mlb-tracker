@@ -2556,6 +2556,33 @@ async function loadStaticData() {
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
   HITTER_SPLITS = hsplits; PITCHER_ROLES = proles; GAMELOGS = glogs;
   HITTER_GAMELOGS = hglogs;
+  // Apply manual lineup overrides (data/lineup_overrides.json) client-side, so a
+  // hand-entered lineup (positions + DH from the model) always shows regardless
+  // of the scraper or the backend commit/push race. A real MLB-confirmed lineup
+  // still wins (lineupsForGame prefers LIVE_LINEUPS, and we skip confirmed sides).
+  try {
+    const _ov = await fetchJSON(`data/lineup_overrides.json?t=${Date.now()}`).catch(() => null);
+    if (_ov && _ov.games && LINEUPS && Array.isArray(LINEUPS.games)) {
+      const _byPk = {};
+      LINEUPS.games.forEach(g => { _byPk[String(g.game_pk)] = g; });
+      for (const _pk in _ov.games) {
+        const _g = _byPk[_pk]; if (!_g) continue;
+        const _spec = _ov.games[_pk];
+        ['away', 'home'].forEach(side => {
+          const _ss = _spec[side];
+          if (!_ss || !Array.isArray(_ss.players) || !_ss.players.length) return;
+          const _cur = (_g.lineups && _g.lineups[side]) || {};
+          if (_cur.status === 'confirmed') return;   // real confirmed lineup wins
+          const _players = _ss.players.map(p => ({
+            order: p.order, person_id: p.person_id, name: p.name,
+            pos: p.pos || '', bats: p.bats || '', status: 'projected'
+          }));
+          _g.lineups = _g.lineups || {};
+          _g.lineups[side] = { status: 'projected', players: _players, source: 'sheet-override' };
+        });
+      }
+    }
+  } catch (e) {}
   // Pre-game backtest payload — model proj vs actual outcomes (joined by
   // game_pk via refresh_pregame_backtest.py).
   PREGAME_BACKTEST = pgbt;
