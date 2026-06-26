@@ -4931,11 +4931,14 @@ function _ensureTeamRankGrades() {
       const h=x.hitter||{};
       if (typeof h.fld === 'number') { dS+=h.fld; dN++; }
       if (typeof h.bsr === 'number') { bS+=h.bsr; bN++; }
+      const _se=(typeof HITTER_SPLITS!=='undefined'&&HITTER_SPLITS&&HITTER_SPLITS.hitters)?HITTER_SPLITS.hitters[normName(x.name||'')]:null;
+      const _wr=(_se&&_se.wrc_vs_r!=null)?_se.wrc_vs_r:h.wrc_vs_r;   // prefer splits file
+      const _wl=(_se&&_se.wrc_vs_l!=null)?_se.wrc_vs_l:h.wrc_vs_l;
       let w=null;
-      if (typeof h.wrc_vs_l==='number' && typeof h.wrc_vs_r==='number') w=(h.wrc_vs_l+h.wrc_vs_r)/2;
+      if (typeof _wl==='number' && typeof _wr==='number') w=(_wl+_wr)/2;
       else if (typeof h.wrc==='number') w=h.wrc;
-      else if (typeof h.wrc_vs_r==='number') w=h.wrc_vs_r;
-      else if (typeof h.wrc_vs_l==='number') w=h.wrc_vs_l;
+      else if (typeof _wr==='number') w=_wr;
+      else if (typeof _wl==='number') w=_wl;
       // OFF is wRC+ → slot-weighted (per spec). oN accumulates the weights.
       if (w!=null) { const _s=(x.order||0)-1; const _d=(_s>=0&&_s<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[_s]:0; const _wt=SLOT_BASE_PA+_d; oS+=w*_wt; oN+=_wt; }
       const pc = HP ? HP[normName(x.name||'')] : null;
@@ -6650,12 +6653,15 @@ function teamWrcSpan(game, side) {
   // can be inspected — if 2/9 hitters had data, the chip says so.
   let wsum = 0, tw = 0, n_have = 0;
   for (const p of players) {
-    const h = HITTERS.hitters[normName(p.name || "")];
-    if (!(h && h[key] != null)) continue;
+    const _nm = normName(p.name || "");
+    const _se = (HITTER_SPLITS && HITTER_SPLITS.hitters) ? HITTER_SPLITS.hitters[_nm] : null;
+    const h = HITTERS.hitters[_nm];
+    const val = (_se && _se[key] != null) ? _se[key] : (h ? h[key] : null);   // prefer splits file
+    if (val == null) continue;
     const slot = (p.order || 0) - 1;  // convert 1-based → 0-based
     const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
     const w = SLOT_BASE_PA + delta;
-    wsum += h[key] * w;
+    wsum += val * w;
     tw += w;
     n_have++;
   }
@@ -7865,13 +7871,18 @@ function renderLineupRankings(hitters, nameToTeam, teams, splitField, elementId)
   const body = document.getElementById(elementId);
   if (!body) return;
   const byTeam = _allTeamsLineupHittersByTeam(hitters, teams);
+  // prefer the manual splits file (hitter_splits.json) over hitters.json
+  const _sv = (x) => {
+    const se = (HITTER_SPLITS && HITTER_SPLITS.hitters) ? HITTER_SPLITS.hitters[normName(x.name||'')] : null;
+    return (se && se[splitField] != null) ? se[splitField] : x.hitter[splitField];
+  };
   const teamRows = Object.values(byTeam).map(tb => {
-    const vals = tb.list.map(x => x.hitter[splitField]).filter(v => v != null);
+    const vals = tb.list.map(_sv).filter(v => v != null);
     if (vals.length < 5) return null;
     // PA-weighted by lineup slot (top-of-order bats more than bottom)
     let wsum = 0, tw = 0;
     tb.list.forEach((x, i) => {
-      const v = x.hitter[splitField];
+      const v = _sv(x);
       if (v == null) return;
       const d = (i >= 0 && i < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[i] : 0;
       const w = SLOT_BASE_PA + d;
