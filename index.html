@@ -4882,7 +4882,9 @@ function xwobaPct(h){ return xwToPct(_seasonXw(h)); }
 // MLB avg ~22% K% → ~52nd pct (C+). Uses season actual K% (k_pct_actual) with
 // projection (k_pct) as fallback. Returns null for missing data so the
 // team-grade and per-row chips both skip the hitter rather than averaging in 0.
-function conPct(h) {
+function conPct(h, lookupName) {
+  const v2 = _gradesV2Lookup(lookupName);
+  if (v2 && typeof v2.con_pct === 'number') return v2.con_pct;   // prefer grades_v2 Contact (Savant K% pctile)
   if (!h) return null;
   const k = h.k_pct_actual != null ? h.k_pct_actual : h.k_pct;
   if (k == null || k < 0 || k > 80) return null;  // sanity guard against corrupt entries
@@ -5210,7 +5212,7 @@ function renderLineupTable(side, opts={}) {
       // BsR/Def from projected runs ranked vs MLB regulars.
       const pwrCell = gradeCellHTML(powerPct(hpct, nm), "Power", "Orr-equivalent Power (Barrel% + EV95%) when grades_v2 has the hitter; else legacy Savant pctiles");
       const eyeCell = gradeCellHTML(eyePct(hpct, nm), "Eye", "Orr-equivalent SEAGER (plate disc + zone run values) when grades_v2 has the hitter; else BB%+Chase pctiles");
-      const conCell = gradeCellHTML(conPct(h), "Contact", "K% vs MLB hitter distribution (lower K% = better)");
+      const conCell = gradeCellHTML(conPct(h, nm), "Contact", "K% vs MLB hitter distribution (lower K% = better)");
       const bsrGradeCell = gradeCellHTML(bsrPct(h, nm), "BsR", h?.sprint_elite ? "elite Savant sprint speed" : "");
       // DH has no defensive position — show a dash, and they're excluded from the
       // team DEF average (see teamGradePct).
@@ -7449,7 +7451,7 @@ function hitterGradeRows(){
     const pa=h.pa_actual!=null?h.pa_actual:(h.pa||0); if(pa<60) continue;
     const pc=HP[normName(nm)];
     const isDH=(pg==='DH');
-    const pow=powerPct(pc,nm), con=conPct(h), eye=eyePct(pc,nm), xw=xwobaPct(h), wrc=wrcPct(h), bsr=bsrPct(h,nm), fld=isDH?null:fldPct(h,nm);
+    const pow=powerPct(pc,nm), con=conPct(h,nm), eye=eyePct(pc,nm), xw=xwobaPct(h), wrc=wrcPct(h), bsr=bsrPct(h,nm), fld=isDH?null:fldPct(h,nm);
     // OVR = simple average of every available datapoint. Offense (POW/CON/EYE/
     // xwOBA/wRC+ = up to 5) naturally outweighs BSR + DEF (1 each). DH drops DEF.
     const off=[pow,con,eye,xw,wrc].filter(v=>typeof v==='number');
@@ -7970,7 +7972,7 @@ function renderCombinedOffenseRankings(hitters, nameToTeam, teams) {
       const _hnm = normName(x.name || h.name || "");
       const pc  = HITTER_PCT?.hitters?.[_hnm];
       const pwr = powerPct(pc, _hnm);
-      const con = conPct(h);
+      const con = conPct(h, _hnm);
       const eye = eyePct(pc, _hnm);
       const slot = i;
       const delta = (slot >= 0 && slot < SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[slot] : 0;
