@@ -4942,8 +4942,13 @@ function _ensureTeamRankGrades() {
       if (pc) {
         const pw=(typeof powerPct==='function')?powerPct(pc,x.name):null; if(pw!=null){pS+=pw;pN++;}
         const ey=(typeof eyePct==='function')?eyePct(pc,x.name):null; if(ey!=null){eS+=ey;eN++;}
-        if(typeof pc.k_pct==='number'){cS+=pc.k_pct;cN++;}
       }
+      // Contact: prefer grades_v2 con_pct (Savant K% percentile — fills more
+      // players incl. ones missing from HITTER_PCT), else HITTER_PCT k_pct.
+      // Both are oriented higher = better contact (fewer strikeouts).
+      const _g2c = (typeof GRADES_V2!=='undefined'&&GRADES_V2&&GRADES_V2.by_name)?GRADES_V2.by_name[normName(x.name||'')]:null;
+      const _con = (_g2c && typeof _g2c.con_pct==='number') ? _g2c.con_pct : (pc && typeof pc.k_pct==='number' ? pc.k_pct : null);
+      if(_con!=null){cS+=_con;cN++;}
     }
     // DEF/BSR = pure AVERAGE of per-player runs (was SUM, which rewarded
     // lineups for having more contributors / a non-DH 9th bat). off is the
