@@ -68,7 +68,7 @@ def main():
     rows = {}  # norm -> dict of raw inputs/values
 
     # EV + discipline
-    sel = "pa,barrel_batted_rate,hard_hit_percent,oz_swing_percent,z_swing_percent,in_zone_percent,whiff_percent,swing_percent"
+    sel = "pa,barrel_batted_rate,hard_hit_percent,oz_swing_percent,z_swing_percent,in_zone_percent,whiff_percent,swing_percent,k_percent"
     rdr = _csv.reader(io.StringIO(fetch(f"https://baseballsavant.mlb.com/leaderboard/custom?year={YEAR}&type=batter&filter=&min=10&selections={sel}&chart=false&x=pa&y=pa&r=no&csv=true")))
     data = list(rdr); hdr = [h.strip().replace("\n"," ").strip() for h in data[0]]
     ix = {h:i for i,h in enumerate(hdr)}; ncol = [h for h in hdr if "last_name" in h][0]
@@ -82,7 +82,8 @@ def main():
         whiff, sw = f(r,"whiff_percent"), f(r,"swing_percent")
         rows[key] = {"name": disp, "barrel": f(r,"barrel_batted_rate"), "hardhit": f(r,"hard_hit_percent"),
                      "oz": f(r,"oz_swing_percent"), "zsw": f(r,"z_swing_percent"), "zone": f(r,"in_zone_percent"),
-                     "swstr": (whiff*sw/100.0) if (whiff is not None and sw is not None) else None}
+                     "swstr": (whiff*sw/100.0) if (whiff is not None and sw is not None) else None,
+                     "kld": f(r,"k_percent")}   # K% for ALL leaderboard hitters (fills Contact)
 
     # bat tracking (blast_per_swing)
     try:
@@ -156,14 +157,18 @@ def main():
     e_pct = rank_pct({k:v["eye"] for k,v in rows.items()})
     f_pct = rank_pct({k:v["fld"] for k,v in rows.items()})
     b_pct = rank_pct({k:v["bsr"] for k,v in rows.items()})
+    # Contact percentile from Savant custom-leaderboard K% (lower K% = better);
+    # negate so rank_pct gives higher pct to lower K%. Covers all leaderboard hitters.
+    kld_pct = rank_pct({k:(-v["kld"] if v.get("kld") is not None else None) for k,v in rows.items()})
 
     out = {}
     for k,v in rows.items():
         rec = {"name": v["name"]}
         if v["power"] is not None: rec.update(power=v["power"], power_pct=p_pct[k], power_grade=grade(p_pct[k]))
         if v["eye"]   is not None: rec.update(eye=v["eye"], eye_pct=e_pct[k], eye_grade=grade(e_pct[k]))
-        cpc = v.get("k_p")
-        if cpc is None: cpc = kpct_season(kseason.get(k))
+        cpc = kld_pct.get(k)                              # primary: leaderboard K% (542 players)
+        if cpc is None: cpc = v.get("k_p")                # Savant qualified percentile
+        if cpc is None: cpc = kpct_season(kseason.get(k)) # season K% from hitters.json
         if cpc is not None: rec.update(con_pct=round(cpc,1), con_grade=grade(cpc))
         if v["fld"]   is not None: rec.update(fld=v["fld"], fld_pct=f_pct[k], fld_grade=grade(f_pct[k]))
         if v["bsr"]   is not None: rec.update(bsr=v["bsr"], bsr_pct=b_pct[k], bsr_grade=grade(b_pct[k]))
