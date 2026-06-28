@@ -4350,7 +4350,7 @@ function spMiniCell(name, teamName, sideCls) {
 
   return `<div class="sb-sp-cell ${sideCls}">
     <div class="sb-sp-name">${name}${handTag}${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</div>
-    ${(() => { const u = unifiedScoreChip(s); return u ? `<div class="sb-sp-score">${u}</div>` : ''; })()}
+    ${(() => { const u = unifiedScoreChip(s, {isFip:true}); return u ? `<div class="sb-sp-score">${u}</div>` : ''; })()}
     <div class="sb-sp-stats">
       ${cell(primary.label, primary.val, primaryCls)}
       ${cell("xERA", s.xera, xeraCls)}
@@ -4754,7 +4754,7 @@ function renderLineupSPHeader(spName, prefix="vs") {
   return `<div class="lu-sp">
     <div class="lu-sp-left">
       <span class="lu-sp-label">${prefix}</span>
-      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}${unifiedScoreChip(s)}
+      <span class="lu-sp-name">${spName}</span>${handTag}${openerTag}${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}${unifiedScoreChip(s, {isFip:true})}
       ${plusLine}
     </div>
     <div class="lu-sp-stats">
@@ -5241,7 +5241,7 @@ function renderLineupTable(side, opts={}) {
         ? `<td class="split split-chip ${wobaCls}" title="${wobaTitle}">${wobaStr}</td>`
         : "";
       // Unified hitter score chip — slots between Player and Brl%
-      const scoreCell = `<td class="split">${unifiedScoreChip(h, {tight:true,label:""}) || '<span style="color:var(--muted);font-size:0.75rem;">—</span>'}</td>`;
+      const scoreCell = `<td class="split">${unifiedScoreChip(h, {tight:true,label:"",isFip:false}) || '<span style="color:var(--muted);font-size:0.75rem;">—</span>'}</td>`;
       // Clickable hitter name → inline rolling-form + vs-pitch-type panel,
       // only when the gamelog pull has this batter (otherwise plain text).
       const hasGl = !!(HITTER_GAMELOGS && HITTER_GAMELOGS.hitters && HITTER_GAMELOGS.hitters[normName(nm)]);
@@ -5736,7 +5736,7 @@ function renderPitcherDeepSP(spName, teamName) {
       <span class="pt-sp-name">${spName}</span>
       ${headerHand}${headerOpener}
       ${(() => { const r = getSpRank(spName); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}
-      ${unifiedScoreChip(s)}
+      ${unifiedScoreChip(s, {isFip:true})}
     </div>
     ${renderSPTrends(spName)}
     <div class="pt-stat-grid">${tiles}</div>
@@ -7352,7 +7352,14 @@ function unifiedScoreChip(entry, opts={}) {
   const tierLabel = entry.unified_tier || "Avg";
   const cls = (tierLabel || "Avg").toLowerCase();
   const cov = entry.unified_weight_covered;
-  const isFip = score < 10;
+  // Pitcher entries are wFIP (lower=better); hitter entries are wRC+. Decide by
+  // the explicit opts.isFip the call site passes — magnitude alone is ambiguous
+  // (a bad pitcher's wFIP can exceed 10, a bad hitter's wRC+ can dip below it),
+  // which is what made a pitcher's 10.7 wFIP render as "wRC+ 11".
+  const isFip = (opts.isFip !== undefined) ? opts.isFip : (score < 10);
+  // Off-scale pitcher wFIP (>=10) is an unreliable small-sample blend — hide it,
+  // matching the dedicated SP wFIP chip elsewhere.
+  if (isFip && score >= 10) return "";
   const text = isFip ? score.toFixed(2) : Math.round(score).toString();
   const tightCls = opts.tight ? " tight" : "";
   const label = (opts.label !== undefined) ? opts.label : (isFip ? "wFIP" : "wRC+");
