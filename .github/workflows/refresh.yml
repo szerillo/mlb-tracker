@@ -331,6 +331,16 @@ jobs:
         run: python scripts/build_grades_v2.py
         continue-on-error: true
 
+      - name: Build sheet sync feed (weather % + HP ump per Action Network GameID)
+        # Emits data/sheet_sync.json — the pre-joined feed the projection-model
+        # Google Sheet pulls (Apps Script checkbox) to overwrite each matchup's
+        # weather % (col J, header+3) and HP umpire name (col J, header+5),
+        # matched on the AN event id stored in the model's "GameID" column.
+        # Reuses data/weather.json + live AN/MLB officials (posted, else the
+        # crew-rotation projection the tool uses; de-accented).
+        run: python scripts/build_sheet_sync.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
