@@ -874,17 +874,41 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
     # Baseline (original-methodology) probabilities — every player calibrated to
     # the market with NO extra sharpening.
     base_p  = _softmax(all_scores, temp)
-    model_p = base_p
-    # Targeted runaway-leader bump (MVP only; sharpen < 1 enables it). Instead of
-    # sharpening the whole field (which inflated every favorite, e.g. Witt), we
-    # bump ONLY a *dominant* WAR leader and leave everyone else at their original
-    # relative probabilities. A leader qualifies as a runaway when their WAR
-    # exceeds the next-best in the pool by >= RUNAWAY_WAR_GAP. Ohtani (+3 WAR)
-    # qualifies and rises to ~80%; Witt (+1.5 over Judge) does not, so the AL
-    # field stays on the original methodology.
+    # ── Global concentration calibration (ALPHA) ────────────────────────────
+    # The KL-fit temperature leaves the model systematically too FLAT vs the
+    # market: favorites land ~15-20% below market and probability bleeds to the
+    # field, manufacturing a long tail of spurious longshot edges. A single
+    # global sharpening exponent ALPHA — model_p ∝ base_p**ALPHA, renormalized —
+    # fixes the concentration WITHOUT changing the model's rankings or its
+    # genuine disagreements with the market (the transform is monotonic, so real
+    # edges survive; only the flatness artifact is removed).
+    #
+    # ALPHA was fit across ALL SIX markets jointly over the full calibration
+    # pool (per-market a*: 1.02-1.30, mean 1.15, std 0.10; leave-one-out stable).
+    # Deliberately a SINGLE global constant, not per-market (6 params / 6 markets
+    # would overfit). The Cy Young pools want slightly more (~1.28) because their
+    # contender fields are thinner — accepted as mild under-confidence rather
+    # than risk over-sharpening MVP/ROY. RE-FIT this when refreshing odds (the
+    # right value drifts up as the season's favorites separate); revisit a
+    # season-progress curve only once a full season of (alpha, date) data exists.
+    # This replaces the old MVP-only runaway-leader bump.
+    ALPHA = 1.15
+    if ALPHA != 1.0 and len(base_p) >= 2:
+        _w = [p ** ALPHA for p in base_p]; _z = sum(_w) or 1.0
+        model_p = [x / _z for x in _w]
+    else:
+        model_p = base_p
+
+    # Runaway-leader relief (dominant MVP leader only). Uniform ALPHA sharpening
+    # cannot lift a near-certain favorite to its market level because model_p
+    # must sum to 1 across a large pool — a 95%+ market favorite (e.g. Ohtani)
+    # gets capped well below market. When ONE leader's WAR dominates the field
+    # by >= RUNAWAY_WAR_GAP, lift it to its sharp-temperature probability and
+    # rescale the rest proportionally. Complements ALPHA (which fixes the broad
+    # field flatness); does not fire for tight races (e.g. Witt +1.5 over Judge).
     RUNAWAY_WAR_GAP = 2.0
     if sharpen != 1.0 and len(pool) >= 2:
-        lead_idx = max(range(len(pool)), key=lambda i: base_p[i])
+        lead_idx = max(range(len(pool)), key=lambda i: model_p[i])
         wars     = [(x.get("combined_war") if x.get("combined_war") is not None else 0.0)
                     for x in pool]
         lead_war = wars[lead_idx]
@@ -892,9 +916,9 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
         if (lead_war - rest_war) >= RUNAWAY_WAR_GAP:
             sharp_p   = _softmax(all_scores, temp * sharpen)
             lead_p    = sharp_p[lead_idx]
-            base_lead = base_p[lead_idx]
+            base_lead = model_p[lead_idx]
             scale     = (1.0 - lead_p) / ((1.0 - base_lead) or 1e-9)
-            model_p   = [lead_p if i == lead_idx else base_p[i] * scale
+            model_p   = [lead_p if i == lead_idx else model_p[i] * scale
                          for i in range(len(pool))]
 
     results = []
