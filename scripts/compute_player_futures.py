@@ -424,8 +424,13 @@ def _ros_blend(player, stat, default=None):
 
 
 def _atc(player, mod):
-    """mod ∈ {'vol','skew','dim'} — pulled from ROS-blend (ATC modifier copy)."""
-    return _ros_blend(player, mod) or 0.0
+    """mod ∈ {'vol','skew','dim'} — pulled from ROS-blend (ATC modifier copy).
+
+    Returns None (not 0.0) when the modifier is absent so missing values stay
+    OUT of the z-score pool (_mean/_stdev filter None) and the player gets a
+    NEUTRAL z (0.0) via _zscore(None, …) — instead of being scored as a real
+    0.0 outlier that also drags down the pool mean."""
+    return _ros_blend(player, mod)
 
 
 def _season_progress():
@@ -781,19 +786,52 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
         if not key: continue
         rec = merged.get(key)
         if rec is None:
-            rec = {"name": p.get("name"), "all_book_odds": {},
+            rec = {"name": p.get("name"), "obs": [],
                    "mlbam_id": p.get("mlbam_id"), "team_abbr": p.get("team_abbr"),
                    "league": p.get("league")}
             merged[key] = rec
         books = dict(p.get("all_book_odds") or {})
         if not books and p.get("best_odds") is not None:
             books[p.get("best_book") or "?"] = p["best_odds"]
+        # Collect EVERY (book, price) observation across all rows. VegasInsider
+        # frequently emits a clean multi-book row AND a stale single-book row for
+        # the same player; we reconcile by CONSENSUS below, not by best payout
+        # (which used to systematically select the stale soft line and invent a
+        # phantom edge).
         for bk, o in books.items():
-            if bk not in rec["all_book_odds"] or _payout(o) > _payout(rec["all_book_odds"][bk]):
-                rec["all_book_odds"][bk] = o
+            rec["obs"].append((bk, o))
+
+    def _median(xs):
+        xs = sorted(xs)
+        n = len(xs)
+        if n == 0: return None
+        return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2.0
+
     for rec in merged.values():
+        probs = [(bk, o, _amer_to_prob(o)) for bk, o in rec["obs"]
+                 if _amer_to_prob(o) is not None]
+        if not probs:
+            rec["all_book_odds"] = {}
+            rec["best_odds"] = rec["best_book"] = rec["consensus_prob"] = None
+            continue
+        med = _median([pr for _, _, pr in probs])
+        # Outlier rejection: a book's implied prob must sit within a band of the
+        # cross-book median. Band = max(6 pts, 25% of median) so a stale soft
+        # line (e.g. +180 against a -225 consensus) is dropped, not bet against.
+        tol = max(0.06, 0.25 * med)
+        kept = [(bk, o, pr) for bk, o, pr in probs if abs(pr - med) <= tol]
+        if not kept:
+            kept = probs  # books all disagree — keep raw rather than guess
+        per_book = {}
+        for bk, o, pr in kept:
+            if bk not in per_book or abs(pr - med) < abs(_amer_to_prob(per_book[bk]) - med):
+                per_book[bk] = o
+        rec["all_book_odds"] = per_book
+        # Consensus (median implied prob across surviving books) drives the edge.
+        rec["consensus_prob"] = _median([_amer_to_prob(o) for o in per_book.values()])
+        # Best AVAILABLE bettable price among surviving books — display only.
         best = best_bk = None
-        for bk, o in rec["all_book_odds"].items():
+        for bk, o in per_book.items():
             if best is None or _payout(o) > _payout(best):
                 best, best_bk = o, bk
         rec["best_odds"], rec["best_book"] = best, best_bk
@@ -813,6 +851,7 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
         x["best_odds"]    = (odds_rec or {}).get("best_odds")
         x["best_book"]    = (odds_rec or {}).get("best_book")
         x["all_book_odds"]= (odds_rec or {}).get("all_book_odds", {})
+        x["consensus_prob"]= (odds_rec or {}).get("consensus_prob")
         enriched.append(x)
 
     # Sort by score desc, take top N for model probability
@@ -821,10 +860,10 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
 
     # Calibrate temperature against market — drop players with no odds for the
     # KL-min fit; they still get a model probability assigned post-hoc.
-    cal_pool = [x for x in pool if x["best_odds"] is not None]
+    cal_pool = [x for x in pool if x.get("consensus_prob") is not None]
     if cal_pool:
         scores  = [x["score"] for x in cal_pool]
-        mkt_p   = [_amer_to_prob(x["best_odds"]) for x in cal_pool]
+        mkt_p   = [x["consensus_prob"] for x in cal_pool]
         mkt_sum = sum(mkt_p) or 1
         mkt_p_n = [p / mkt_sum for p in mkt_p]   # normalize so dist sums to 1
         temp = _calibrate_temp(scores, mkt_p_n)
@@ -860,7 +899,7 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
 
     results = []
     for x, p_mod in zip(pool, model_p):
-        market_p = _amer_to_prob(x["best_odds"])
+        market_p = x.get("consensus_prob")
         edge = (p_mod - market_p) if market_p is not None else None
         if   edge is None:       stars = ""
         elif edge >= 0.04:       stars = "★★★"
