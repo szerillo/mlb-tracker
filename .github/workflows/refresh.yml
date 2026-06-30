@@ -341,6 +341,14 @@ jobs:
         run: python scripts/build_sheet_sync.py
         continue-on-error: true
 
+      - name: Log weather calibration (model vs BallparkPal, per game)
+        # Upserts one row per game into data/weather_calibration_log.csv each
+        # refresh — pure model_pct, headline run_adj_pct, BP bp_pct + inputs +
+        # v8 component breakdown. Accumulates the sample needed to recalibrate
+        # TEMP_C / wind / per-park terms against BP (and later actual runs).
+        run: python scripts/log_weather_calibration.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
