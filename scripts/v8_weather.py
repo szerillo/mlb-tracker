@@ -51,10 +51,10 @@ BP_BASE = {
     "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":4.58,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
     "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":1.27,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
     "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0.75,"wr_in":2.47,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
-    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":0.65,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
+    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":6.50,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
     "TB": {"temp":72,"hum":44,"pres":1014,"carry":-53.00,"wr_out":0,"wr_in":0,"of":"Medium","cr":"Poor","cq":"Poor","var":0.03,"runs":-7,"alt":0,"dome":True},
     "TOR":{"temp":73,"hum":59,"pres":1015,"carry":-1.67,"wr_out":-1.02,"wr_in":-1.37,"of":"Medium","cr":"Great","cq":"Good","var":0.81,"runs":-3,"alt":247,"dome":True},
-    "NYY":{"temp":74,"hum":56,"pres":1015,"carry":-1.50,"wr_out":1.53,"wr_in":3.90,"of":"Variable","cr":"Avg","cq":"Great","var":1.95,"runs":-3,"alt":54},
+    "NYY":{"temp":74,"hum":56,"pres":1015,"carry":-1.50,"wr_out":2.50,"wr_in":3.90,"of":"Variable","cr":"Avg","cq":"Great","var":1.95,"runs":-3,"alt":54},
     "DET":{"temp":72,"hum":56,"pres":1015,"carry":-1.54,"wr_out":0.36,"wr_in":4.69,"of":"Large","cr":"Avg","cq":"Avg","var":1.31,"runs":-1,"alt":596},
     "MIN":{"temp":73,"hum":53,"pres":1014,"carry":-53.00,"wr_out":1.62,"wr_in":-0.11,"of":"Medium","cr":"Avg","cq":"Good","var":0.98,"runs":3,"alt":812},
     "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":1.83,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
@@ -64,15 +64,15 @@ BP_BASE = {
     "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":2.61,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
     "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":0.04,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
     "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":0.16,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
-    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":1.33,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
+    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":4.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
     "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":1.19,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
-    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":4.43,"wr_in":4.72,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
+    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":11.00,"wr_in":4.72,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
     "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":2.87,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
     "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
     "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":0.84,"wr_in":2.48,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
     "STL":{"temp":79,"hum":58,"pres":1014,"carry":-77.00,"wr_out":2.63,"wr_in":1.28,"of":"Large","cr":"Good","cq":"Avg","var":1.25,"runs":-5,"alt":455},
     "ARI":{"temp":88,"hum":15,"pres":1010,"carry":68.00,"wr_out":0.19,"wr_in":1.09,"of":"Large","cr":"Great","cq":"Bad","var":0.48,"runs":2,"alt":1082,"dome":True},
-    "COL":{"temp":75,"hum":28,"pres":1012,"carry":3.75,"wr_out":0.82,"wr_in":1.81,"of":"X","cr":"Great","cq":"Avg","var":1.36,"runs":32,"alt":5183},
+    "COL":{"temp":75,"hum":28,"pres":1012,"carry":3.75,"wr_out":3.00,"wr_in":1.81,"of":"X","cr":"Great","cq":"Avg","var":1.36,"runs":32,"alt":5183},
     "LAD":{"temp":78,"hum":47,"pres":1012,"carry":-1.49,"wr_out":-0.32,"wr_in":3.19,"of":"Medium","cr":"Avg","cq":"Great","var":0.87,"runs":0,"alt":267},
     "SD": {"temp":72,"hum":62,"pres":1013,"carry":-1.77,"wr_out":0.68,"wr_in":1.64,"of":"Medium","cr":"Avg","cq":"Avg","var":1.00,"runs":-3,"alt":13},
     "SF": {"temp":66,"hum":64,"pres":1014,"carry":-2.30,"wr_out":0.08,"wr_in":0.82,"of":"Variable","cr":"Good","cq":"Poor","var":0.81,"runs":-3,"alt":63},
@@ -180,9 +180,12 @@ WIND_I = 0.0015
 # Per-park wr_out/wr_in are already in "%/10mph" units; WIND_SCALE is the global
 # multiplier on top. Refit to 0.95 (was 2.0) with the sign bug fixed.
 WIND_SCALE = 0.95
-# Cap on the per-game wind-only contribution (BP rarely shows wind-only beyond
-# this on the slates we can observe; our wind input is too coarse to trust more).
-WIND_CAP = 0.20
+# Wind-only contribution ceiling. Removed per 2026-06 calibration decision —
+# the 0.20 (20pt) cap was clipping legit big wind-out parks (CHC/KC) below their
+# BallparkPal-style targets. Set to an effectively-unbounded sentinel so genuine
+# strong wind-out games can run high; the magnitude is still governed by per-park
+# wr_out + WIND_SCALE + EMPIRICAL_SCALE.
+WIND_CAP = 5.00
 DP_C = 0.0014
 PRES_C = 0.0030   # 2026-06 recal: wind-controlled pressure slope ~-0.24 %/mb (earlier -0.39 was wind confound); net ~-0.26.
 CARRY_INT = 0.0003
@@ -313,9 +316,11 @@ def _compass_to_out_component(park, wd_degrees, ws):
 # ============================================================================
 # Main compute
 # ============================================================================
-def compute_v8(park, wx):
+def compute_v8(park, wx, treat_as_open=False):
     """
     Compute V8 weather-only run adjustment percentage for a park.
+    treat_as_open=True computes a retractable-roof park as a true OUTDOOR park
+    (skips the dome dampening), used when the roof is open / likely open.
 
     Args:
         park: park code ("BOS", "CHC", etc.)
@@ -432,8 +437,9 @@ def compute_v8(park, wx):
     weather_sum *= variation_mult * runs_amp
     total = weather_sum + carry
 
-    # Dome dampen
-    if is_dome:
+    # Dome dampen — skipped when the retractable roof is (likely) open, so the
+    # park computes as a normal outdoor venue.
+    if is_dome and not treat_as_open:
         dd = cal.get("dome_damp", DOME_DAMP_DEFAULT)
         total = -0.01 + total * dd
 

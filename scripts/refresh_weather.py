@@ -103,6 +103,19 @@ DOMES = {"Tampa Bay Rays", "Toronto Blue Jays", "Houston Astros", "Texas Rangers
 # open-roof adjustment so the UI can show a dual "closed 0 · open +X%" readout.
 RETRACTABLE = DOMES - {"Tampa Bay Rays"}
 
+# Cold-climate retractables that open their roof OFTEN. With no roof-schedule
+# source for them, if the roof state is unknown and the weather is mild & dry we
+# lean OPEN (compute the real outdoor number) rather than defaulting to closed-0.
+# Hot-climate retractables (HOU/TEX/ARI/MIA) stay closed-by-default (summer AC).
+LEAN_OPEN_PARKS = {"Toronto Blue Jays", "Milwaukee Brewers"}
+def _likely_open(hour):
+    """Heuristic: roof probably open when it's dry and comfortably mild."""
+    if not hour:
+        return False
+    t = hour.get("game_window_temp_f") or hour.get("temp_f")
+    p = hour.get("precip_pct") or 0
+    return t is not None and p < 25 and 55 <= t <= 92
+
 # Teams whose roof schedule is published on mlb.com. Parse the table and
 # determine "Open" vs "Closed" per game date.
 ROOF_SCHEDULE_URLS = {
@@ -174,6 +187,46 @@ def fetch(url, timeout=30):
 def get_forecast(office, x, y):
     url = f"https://api.weather.gov/gridpoints/{office}/{x},{y}/forecast/hourly"
     return fetch(url)
+
+
+# Parks NWS can't cover (Canada). Open-Meteo (free, global, no key) provides the
+# hourly forecast; we adapt its output into the NWS hourly shape the rest of the
+# pipeline expects so extract_hour / game_window_avg work unchanged.
+OPENMETEO_PARKS = {
+    "Toronto Blue Jays": (43.6414, -79.3894),   # Rogers Centre
+}
+_DEG16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+def _deg_to_compass(deg):
+    if deg is None:
+        return None
+    return _DEG16[int((deg % 360) / 22.5 + 0.5) % 16]
+
+
+def get_forecast_openmeteo(lat, lon):
+    url = ("https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s"
+           "&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,"
+           "wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit"
+           "&wind_speed_unit=mph&timezone=UTC&forecast_days=4" % (lat, lon))
+    d = fetch(url)
+    h = (d or {}).get("hourly")
+    if not h:
+        return None
+    times = h.get("time", [])
+    def col(k, i):
+        a = h.get(k) or []
+        return a[i] if i < len(a) else None
+    periods = []
+    for i, t in enumerate(times):
+        periods.append({
+            "startTime": t + "Z",   # Open-Meteo UTC time -> NWS-style Z suffix
+            "temperature": col("temperature_2m", i),
+            "relativeHumidity": {"value": col("relative_humidity_2m", i)},
+            "windSpeed": "%d mph" % round(col("wind_speed_10m", i) or 0),
+            "windDirection": _deg_to_compass(col("wind_direction_10m", i)),
+            "probabilityOfPrecipitation": {"value": col("precipitation_probability", i) or 0},
+            "shortForecast": "",
+        })
+    return {"properties": {"periods": periods}}
 
 
 def _mlb_business_date():
@@ -368,7 +421,7 @@ def compute_open_v8(home, game, fc):
         "precip": hour.get("precip_pct") or 0,
         "t_hours": t_hours,
     }
-    v8 = compute_v8(park_code, wx_in)
+    v8 = compute_v8(park_code, wx_in, treat_as_open=True)
     # Mirror the shape of the normal path so the frontend can read it uniformly,
     # but mark it as pure model (no BP pressure input, no blend).
     v8["model_pct"] = v8.get("run_adj_pct")
@@ -418,7 +471,7 @@ def main():
     # whose roofs are OPEN today even if they're in DOMES.
     unique_teams = set()
     for g in schedule:
-        if g["home"] not in NWS_GRIDS: continue
+        if g["home"] not in NWS_GRIDS and g["home"] not in OPENMETEO_PARKS: continue
         if game_has_started(g.get("status", "")): continue
         # ET date of this game (for roof-schedule lookup)
         try:
@@ -435,8 +488,10 @@ def main():
     forecasts = {}
 
     def _load(team):
-        grid = NWS_GRIDS[team]
-        return team, get_forecast(*grid)
+        if team in NWS_GRIDS:
+            return team, get_forecast(*NWS_GRIDS[team])
+        ll = OPENMETEO_PARKS.get(team)
+        return team, (get_forecast_openmeteo(*ll) if ll else None)
 
     with ThreadPoolExecutor(max_workers=10) as ex:
         for team, fc in ex.map(_load, unique_teams):
@@ -459,9 +514,18 @@ def main():
         except Exception:
             gd_et = None
         roof_open = gd_et and is_roof_open(home, gd_et)
-        # If this is a retractable-roof park but roof is OPEN for the date,
-        # fall through to normal forecast/V8 path.
-        if home in DOMES and not roof_open:
+        # Lean-open: TOR/MIL open their roof often and have no roof-schedule
+        # source. If the roof state is unknown and the weather is mild & dry,
+        # treat the game as OPEN (compute the real outdoor number) rather than
+        # defaulting to closed-0.
+        roof_likely_open = False
+        if home in LEAN_OPEN_PARKS and not roof_open:
+            if _likely_open(extract_hour(forecasts.get(home), g["game_time"])):
+                roof_likely_open = True
+        is_open = bool(roof_open or roof_likely_open)
+        # Retractable park, roof closed/unknown -> headline 0, but still surface
+        # the (correct, undamped) open-roof number for the dual readout.
+        if home in DOMES and not is_open:
             entry = {
                 "game_pk": g["game_pk"],
                 "matchup": f"{g['away']} @ {home}",
@@ -471,11 +535,7 @@ def main():
                 "weather": None,
                 "note": "Dome / retractable roof — weather adjustment minimal",
             }
-            # Retractable park, roof state unknown: assume CLOSED (headline 0)
-            # but also compute the pure-model open-roof adjustment so the UI can
-            # show "closed 0 · open +X%". Skip parks we can't forecast (e.g. TOR
-            # has no NWS coverage in Canada).
-            if home in RETRACTABLE and home in NWS_GRIDS:
+            if home in RETRACTABLE and (home in NWS_GRIDS or home in OPENMETEO_PARKS):
                 ofc = forecasts.get(home)
                 ohour, ov8 = compute_open_v8(home, g, ofc)
                 if ov8 is not None:
@@ -487,7 +547,7 @@ def main():
                                      "open-roof model adjustment shown if it opens")
             games_out.append(entry)
             continue
-        if roof_open:
+        if is_open:
             roof_open_count += 1
         fc = forecasts.get(home)
         hour = extract_hour(fc, g["game_time"])
@@ -522,7 +582,8 @@ def main():
             }
             if bp_pres is not None:
                 wx_in["pres"] = bp_pres
-            v8 = compute_v8(park_code, wx_in)
+            # An open/likely-open retractable computes as a true outdoor park.
+            v8 = compute_v8(park_code, wx_in, treat_as_open=(home in RETRACTABLE))
             # V9 step 2 — weight the published number toward BP's weather-only runs
             # on the games BP covers. We never display BP's raw number; this blended
             # value IS the displayed "V9". Uncovered games stay pure model.
@@ -545,7 +606,9 @@ def main():
             "venue": g["venue"],
             "game_time": g["game_time"],
             "is_dome": False,
-            "roof_open": True if roof_open else None,
+            "roof_open": True if is_open else None,
+            "roof_state": ("likely-open (weather)" if roof_likely_open
+                           else ("open" if roof_open else None)),
             "weather": hour,
             "v8": v8,
             "note": None if hour else "NWS forecast unavailable",
