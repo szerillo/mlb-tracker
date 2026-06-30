@@ -87,7 +87,7 @@ NWS_GRIDS = {
     "Tampa Bay Rays":       ("TBW", 64, 89),
     "Texas Rangers":        ("FWD", 83, 107),
     "Washington Nationals": ("LWX", 96, 72),
-    "Athletics":            ("STO", 41, 18),
+    "Athletics":            ("STO", 40, 68),
     # Toronto is in Canada — no NWS coverage. Dome anyway.
 }
 
