@@ -1,20 +1,30 @@
 name: Odds refresh (frequent)
 
-# Lightweight, odds-ONLY refresh that runs far more often than the full data
-# pipeline. The main refresh.yml only does odds every 15 min midday and drops to
-# hourly after 8 PM ET — exactly when evening lines move most. This runs every
-# 5 min across pregame + game hours so odds stay fresh. refresh_odds.py
-# self-gates on within_game_window (4h before → 5h after a game) + overnight
-# anchors, so slots with no nearby game are cheap no-ops.
+# Odds-ONLY refresh, decoupled from the heavy data pipeline so lines can update
+# on a tight cadence. Times below are ET (EDT, UTC-4); GitHub cron is UTC, so
+# there's a ~1h seasonal drift in winter (same convention as refresh.yml).
+#
+# Cadence (ET):
+#   • 12 AM           — next-day pull
+#   • 1 AM – 7 AM     — hourly
+#   • 8 AM – 3 PM     — every 20 min (lines posting / day-game lineups)
+#   • 3 PM – 10 PM    — every 5 min (lineups setting + games live)
+#   • 10 PM           — one pull for the following day
+#
+# FORCE_RUN=1 is set so the script fetches on every scheduled fire instead of
+# self-skipping when no game is within its ~4h window (otherwise the morning and
+# overnight pulls would no-op).
 
 on:
   schedule:
-    - cron: "*/5 15-23 * * *"   # 11 AM – 7:45 PM ET, every 5 min
-    - cron: "*/5 0-6 * * *"     # 8 PM – 2 AM ET, every 5 min
+    - cron: "0 4 * * *"          # 12 AM ET — next-day pull
+    - cron: "0 5-11 * * *"       # 1 AM – 7 AM ET — hourly
+    - cron: "*/20 12-18 * * *"   # 8 AM – 2:59 PM ET — every 20 min
+    - cron: "*/5 19-23 * * *"    # 3 PM – 7:59 PM ET — every 5 min
+    - cron: "*/5 0-1 * * *"      # 8 PM – 9:59 PM ET — every 5 min
+    - cron: "0 2 * * *"          # 10 PM ET — one pull for the following day
   workflow_dispatch:
 
-# Don't pile up overlapping runs; let an in-flight commit finish rather than
-# cancel it mid-push.
 concurrency:
   group: odds-refresh
   cancel-in-progress: false
@@ -25,6 +35,8 @@ permissions:
 jobs:
   odds:
     runs-on: ubuntu-latest
+    env:
+      FORCE_RUN: "1"
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -34,8 +46,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      # refresh_odds.py is pure stdlib; bs4/requests only for the multi-source
-      # fallback parser. Cached, ~10s.
+      # refresh_odds.py is pure stdlib; bs4/requests only for the fallback parser.
       - name: Install deps
         run: pip install requests beautifulsoup4
 
@@ -44,8 +55,6 @@ jobs:
         continue-on-error: true
 
       - name: Odds fallback — multi-source (if primary empty or stale)
-        # Same guard the main pipeline uses: only override when odds.json is
-        # missing, has no priced games, or is still on yesterday's date.
         run: |
           if [ ! -s data/odds.json ] || ! python -c "import json, datetime as dt; d=json.load(open('data/odds.json')); today=(dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat(); exit(0 if (d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) and d.get('date')==today) else 1)" 2>/dev/null; then
             echo "Primary odds empty or stale — trying multi-source fallback"
@@ -62,8 +71,6 @@ jobs:
             echo "No odds change."
           else
             git commit -m "Odds refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
-            # Rebase-on-reject retry — this races with the main refresh.yml
-            # commit; reconcile rather than fail.
             for attempt in 1 2 3; do
               if git push; then break; fi
               echo "push attempt $attempt rejected; rebasing onto origin/main"
