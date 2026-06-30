@@ -1,28 +1,22 @@
 name: Odds refresh (frequent)
 
-# Odds-ONLY refresh, decoupled from the heavy data pipeline so lines can update
-# on a tight cadence. Times below are ET (EDT, UTC-4); GitHub cron is UTC, so
-# there's a ~1h seasonal drift in winter (same convention as refresh.yml).
+# Odds-ONLY refresh, decoupled from the heavy data pipeline. GAME-AWARE: the
+# cron fires every 5 min across the active day, but refresh_odds.py only actually
+# fetches when a game is within its window (~4h before first pitch → 5h after) OR
+# at the overnight anchors (12 AM / 2 AM / 8 AM ET, for next-day line snapshots).
+# So it auto-tightens to a 5-min cadence whenever ANY game — day or night — is
+# live or near, and self-skips when nothing's happening (no wasted API calls).
 #
-# Cadence (ET):
-#   • 12 AM           — next-day pull
-#   • 1 AM – 7 AM     — hourly
-#   • 8 AM – 3 PM     — every 20 min (lines posting / day-game lineups)
-#   • 3 PM – 10 PM    — every 5 min (lineups setting + games live)
-#   • 10 PM           — one pull for the following day
+# No FORCE_RUN on scheduled fires (that's what makes it game-aware). A manual
+# "Run workflow" forces a pull regardless.
 #
-# FORCE_RUN=1 is set so the script fetches on every scheduled fire instead of
-# self-skipping when no game is within its ~4h window (otherwise the morning and
-# overnight pulls would no-op).
+# Times are ET (EDT, UTC-4); GitHub cron is UTC (~1h seasonal drift, same as
+# refresh.yml).
 
 on:
   schedule:
-    - cron: "0 4 * * *"          # 12 AM ET — next-day pull
-    - cron: "0 5-11 * * *"       # 1 AM – 7 AM ET — hourly
-    - cron: "*/20 12-18 * * *"   # 8 AM – 2:59 PM ET — every 20 min
-    - cron: "*/5 19-23 * * *"    # 3 PM – 7:59 PM ET — every 5 min
-    - cron: "*/5 0-1 * * *"      # 8 PM – 9:59 PM ET — every 5 min
-    - cron: "0 2 * * *"          # 10 PM ET — one pull for the following day
+    - cron: "*/5 11-23 * * *"   # 7 AM – 7:59 PM ET
+    - cron: "*/5 0-6 * * *"     # 8 PM – 2:59 AM ET
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +30,8 @@ jobs:
   odds:
     runs-on: ubuntu-latest
     env:
-      FORCE_RUN: "1"
+      # Force only on manual dispatch; scheduled runs stay game-aware.
+      FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
