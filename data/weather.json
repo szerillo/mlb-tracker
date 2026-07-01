@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-01T19:24:16.292768Z",
+  "generated_at": "2026-07-01T20:59:43.236731Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -299,7 +299,7 @@
         "first_pitch_temp_f": 94
       },
       "v8": {
-        "run_adj_pct": 10.9,
+        "run_adj_pct": 9.4,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -318,7 +318,7 @@
         },
         "model_pct": 11.9,
         "pressure_source": "BP",
-        "bp_pct": 10,
+        "bp_pct": 7,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -334,14 +334,14 @@
       "roof_state": null,
       "weather": {
         "temp_f": 91,
-        "humidity_pct": 55,
+        "humidity_pct": 54,
         "wind_speed_mph": 5,
         "wind_dir": "E",
         "precip_pct": 30,
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-01T19:00:00-04:00",
         "game_window_temp_f": 88.1,
-        "game_window_humidity_pct": 60.5,
+        "game_window_humidity_pct": 60.2,
         "first_pitch_temp_f": 91
       },
       "v8": {
@@ -431,7 +431,7 @@
         "humidity_pct": 58,
         "wind_speed_mph": 10,
         "wind_dir": "SE",
-        "precip_pct": 15,
+        "precip_pct": 20,
         "short_forecast": "Slight Chance Showers And Thunderstorms",
         "start_time": "2026-07-01T19:00:00-05:00",
         "game_window_temp_f": 87.1,
