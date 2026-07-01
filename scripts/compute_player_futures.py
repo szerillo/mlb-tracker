@@ -693,10 +693,16 @@ def _score_mvp(pool):
 
     # WAR backbone across the whole pool (hitter + pitcher WAR are comparable).
     war_all = [p["combined_war"] for p in pool]
+    # OPS co-driver: MVP voting rewards the bat far more than defensive WAR
+    # (10yr backtest: when WAR & OPS split, winners tracked OPS+ — Harper '21 won
+    # at bWAR #8 / OPS+ #1). So OPS enters the backbone alongside WAR rather than
+    # only as the diluted 0.25 hitter tiebreaker.
+    ops_all = [ (p["stats"].get("ops") if p.get("side") == "hit" else None) for p in pool ]
     out = []
     for p in pool:
         warz  = _zscore(p["combined_war"], war_all)
-        score = warz + 0.25 * p["_hbonus"] + p["team_bonus"]
+        opsz  = _zscore(p["stats"].get("ops") if p.get("side") == "hit" else None, ops_all)
+        score = 0.45 * warz + 0.85 * opsz + 0.25 * p["_hbonus"] + p["team_bonus"]
         out.append({**p, "score": score})
     return out
 
@@ -755,11 +761,11 @@ def _score_roy(pool_h, pool_p):
 # Sharpen factor applied to the MVP softmax temperature (<1 = more decisive).
 # Keeps a dominant WAR leader (e.g. Ohtani) reading as a clear favorite
 # instead of being flattened across the contender field.
-MVP_SHARPEN = 0.78  # baseline WAR weight (.791) + mild favorite-sharpening so a
+MVP_SHARPEN = 0.55  # baseline WAR weight (.791) + mild favorite-sharpening so a
                     # dominant WAR leader (Ohtani ~80%) reads as a clear favorite
 
 
-def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
+def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.28):
     """Take scored candidates, join with odds, calibrate temp, emit final list.
 
     Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
@@ -892,7 +898,7 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0):
     # right value drifts up as the season's favorites separate); revisit a
     # season-progress curve only once a full season of (alpha, date) data exists.
     # This replaces the old MVP-only runaway-leader bump.
-    ALPHA = 1.15
+    ALPHA = alpha  # per-market concentration (was global 1.15)
     if ALPHA != 1.0 and len(base_p) >= 2:
         _w = [p ** ALPHA for p in base_p]; _z = sum(_w) or 1.0
         model_p = [x / _z for x in _w]
@@ -1000,7 +1006,7 @@ def main():
         cy_scored = _score_cy(cy_pool)
         out_markets[cy_key] = _render_market(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=70)
+            top_n=70, alpha=1.55)
 
         # ROY
         roy_key = f"{league}_ROY"
@@ -1009,7 +1015,7 @@ def main():
         roy_scored = _score_roy(pool_h, pool_p)
         out_markets[roy_key] = _render_market(
             roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
-            top_n=50)
+            top_n=50, alpha=1.35)
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
