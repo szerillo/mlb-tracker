@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-01T12:09:03.664793Z",
+  "generated_at": "2026-07-01T14:39:41.248580Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -70,7 +70,7 @@
         "first_pitch_temp_f": 93
       },
       "v8": {
-        "run_adj_pct": 7.8,
+        "run_adj_pct": 6.8,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -89,7 +89,7 @@
         },
         "model_pct": 13.5,
         "pressure_source": "BP",
-        "bp_pct": 2,
+        "bp_pct": 0,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -116,7 +116,7 @@
         "first_pitch_temp_f": 94
       },
       "v8": {
-        "run_adj_pct": 18.9,
+        "run_adj_pct": 20.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -124,7 +124,7 @@
           "t_adj_pct": 10.4,
           "w_adj_pct": 8.7,
           "dp_adj_pct": 2.2,
-          "p_adj_pct": 1.2,
+          "p_adj_pct": 0.9,
           "precip_adj_pct": -0.6,
           "carry_pct": -0.0,
           "wind": {
@@ -133,9 +133,9 @@
             "spd_rarity": 0.67
           }
         },
-        "model_pct": 21.7,
+        "model_pct": 21.4,
         "pressure_source": "BP",
-        "bp_pct": 16,
+        "bp_pct": 19,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -162,7 +162,7 @@
         "first_pitch_temp_f": 85
       },
       "v8": {
-        "run_adj_pct": 8.8,
+        "run_adj_pct": 9.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -170,7 +170,7 @@
           "t_adj_pct": 5.9,
           "w_adj_pct": 3.8,
           "dp_adj_pct": 2.0,
-          "p_adj_pct": 0.3,
+          "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -179,9 +179,9 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 11.7,
+        "model_pct": 11.4,
         "pressure_source": "BP",
-        "bp_pct": 6,
+        "bp_pct": 7,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -208,7 +208,7 @@
         "first_pitch_temp_f": 92
       },
       "v8": {
-        "run_adj_pct": 29.9,
+        "run_adj_pct": 34.6,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -216,7 +216,7 @@
           "t_adj_pct": 10.5,
           "w_adj_pct": 19.7,
           "dp_adj_pct": 2.0,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -225,9 +225,9 @@
             "spd_rarity": 0.22
           }
         },
-        "model_pct": 33.8,
+        "model_pct": 34.2,
         "pressure_source": "BP",
-        "bp_pct": 26,
+        "bp_pct": 35,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -242,36 +242,36 @@
       "roof_open": true,
       "roof_state": "likely-open (weather)",
       "weather": {
-        "temp_f": 89.5,
-        "humidity_pct": 60,
-        "wind_speed_mph": 11,
+        "temp_f": 91.4,
+        "humidity_pct": 56,
+        "wind_speed_mph": 10,
         "wind_dir": "SSW",
-        "precip_pct": 6,
+        "precip_pct": 5,
         "short_forecast": "",
         "start_time": "2026-07-01T19:00Z",
-        "game_window_temp_f": 92.0,
-        "game_window_humidity_pct": 53.1,
-        "first_pitch_temp_f": 89.5
+        "game_window_temp_f": 93.0,
+        "game_window_humidity_pct": 51.8,
+        "first_pitch_temp_f": 91.4
       },
       "v8": {
-        "run_adj_pct": 10.4,
+        "run_adj_pct": 10.7,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 19.0,
-          "t_adj_pct": 8.9,
-          "w_adj_pct": 1.7,
+          "temp_delta": 20.0,
+          "t_adj_pct": 9.4,
+          "w_adj_pct": 1.5,
           "dp_adj_pct": 2.1,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 10.23,
+            "out_component": 9.3,
             "dir_rarity": 0.4,
             "spd_rarity": 0.19
           }
         },
-        "model_pct": 10.4,
+        "model_pct": 10.7,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -299,7 +299,7 @@
         "first_pitch_temp_f": 94
       },
       "v8": {
-        "run_adj_pct": 11.1,
+        "run_adj_pct": 11.4,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -307,7 +307,7 @@
           "t_adj_pct": 4.9,
           "w_adj_pct": 5.3,
           "dp_adj_pct": 1.7,
-          "p_adj_pct": 0.6,
+          "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -316,9 +316,9 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 12.1,
+        "model_pct": 11.8,
         "pressure_source": "BP",
-        "bp_pct": 10,
+        "bp_pct": 11,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -345,7 +345,7 @@
         "first_pitch_temp_f": 89
       },
       "v8": {
-        "run_adj_pct": 2.0,
+        "run_adj_pct": 4.8,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -353,7 +353,7 @@
           "t_adj_pct": 1.6,
           "w_adj_pct": -0.0,
           "dp_adj_pct": 1.7,
-          "p_adj_pct": -0.6,
+          "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
@@ -362,9 +362,9 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 2.0,
+        "model_pct": 2.5,
         "pressure_source": "BP",
-        "bp_pct": 2,
+        "bp_pct": 7,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -381,9 +381,9 @@
       "weather": {
         "temp_f": 92,
         "humidity_pct": 54,
-        "wind_speed_mph": 13,
+        "wind_speed_mph": 14,
         "wind_dir": "S",
-        "precip_pct": 1,
+        "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
         "start_time": "2026-07-01T19:00:00-05:00",
         "game_window_temp_f": 89.5,
@@ -391,26 +391,26 @@
         "first_pitch_temp_f": 92
       },
       "v8": {
-        "run_adj_pct": 12.9,
+        "run_adj_pct": 13.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 11.5,
           "t_adj_pct": 3.8,
-          "w_adj_pct": 9.3,
+          "w_adj_pct": 10.0,
           "dp_adj_pct": 1.7,
           "p_adj_pct": 0.6,
           "precip_adj_pct": 0,
           "carry_pct": 0.1,
           "wind": {
-            "out_component": 8.53,
+            "out_component": 9.18,
             "dir_rarity": 0,
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 13.9,
+        "model_pct": 14.5,
         "pressure_source": "BP",
-        "bp_pct": 12,
+        "bp_pct": 13,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -528,7 +528,7 @@
         "first_pitch_temp_f": 84
       },
       "v8": {
-        "run_adj_pct": 2.1,
+        "run_adj_pct": 2.3,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -536,7 +536,7 @@
           "t_adj_pct": 2.0,
           "w_adj_pct": -3.9,
           "dp_adj_pct": -0.2,
-          "p_adj_pct": 4.4,
+          "p_adj_pct": 3.8,
           "precip_adj_pct": 0,
           "carry_pct": 0.0,
           "wind": {
@@ -545,9 +545,9 @@
             "spd_rarity": 0.58
           }
         },
-        "model_pct": 2.2,
+        "model_pct": 1.6,
         "pressure_source": "BP",
-        "bp_pct": 2,
+        "bp_pct": 3,
         "bp_blended": true,
         "blend_weight": 0.5
       },
