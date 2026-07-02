@@ -223,6 +223,21 @@ jobs:
         env:
           SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
 
+      - name: Archive my sheet projections (daily snapshot of MY runs/totals)
+        # data/sheet_projections.json is overwritten every run, so snapshot it
+        # into the daily archive to build a per-day record of MY projected
+        # runs/totals. Enables model-vs-market/actual backtests across the FULL
+        # slate (not just the ~2/day CLV-tracked lean games). Overwrites the
+        # day's copy each run so it converges to the final pre-game projection.
+        run: |
+          D=$(python -c "import datetime as dt; print((dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat())")
+          mkdir -p "data/archive/$D"
+          if [ -s data/sheet_projections.json ]; then
+            cp data/sheet_projections.json "data/archive/$D/sheet_projections.json"
+            echo "archived sheet_projections -> data/archive/$D/"
+          fi
+        continue-on-error: true
+
       - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
         # Triggers if odds.json is missing, has no games, OR has yesterday's date.
         # Date-freshness check was added because ActionNetwork's API sometimes
