@@ -974,7 +974,37 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
 
 
 # ── Main ───────────────────────────────────────────────────────────────────
+def _skip_daily(output_path, label, am_hour_et=9):
+    """Recompute at most once per day — the first pipeline run at/after ~9 AM ET.
+    Keeps the published generated_at steady all day (futures embeds show a fixed
+    daily timestamp; only the scoreboard rolls). FORCE_RUN bypasses."""
+    import os, json, datetime
+    if os.environ.get("FORCE_RUN"):
+        return False
+    try:
+        if not output_path.exists():
+            return False
+        gen = json.loads(output_path.read_text()).get("generated_at", "") or ""
+        g = gen.replace("Z", "")
+        if "+" in g:
+            g = g.split("+")[0]
+        gen_dt = datetime.datetime.fromisoformat(g)
+    except Exception:
+        return False
+    et_now = datetime.datetime.utcnow() - datetime.timedelta(hours=4)
+    gen_et = gen_dt - datetime.timedelta(hours=4)
+    if gen_et.date() >= et_now.date():
+        print(f"[{label}] skip recompute: already refreshed today ({gen}); keeping steady.")
+        return True
+    if et_now.hour < am_hour_et:
+        print(f"[{label}] skip recompute: before {am_hour_et}AM ET; holding until the AM data pull.")
+        return True
+    return False
+
+
 def main():
+    if _skip_daily(OUTPUT, "player-futures"):
+        return 0
     _build_rookie_index()
 
     if not ODDS_PATH.exists() or not WAR_PATH.exists():

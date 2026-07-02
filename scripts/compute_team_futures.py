@@ -110,7 +110,36 @@ def devig_field(odds_by_team: dict[str, int]) -> dict[str, float]:
     return {abbr: round(p / total * 100, 2) for abbr, p in raws.items()}
 
 
+def _skip_daily(output_path, label, am_hour_et=9):
+    """Recompute at most once per day — the first pipeline run at/after ~9 AM ET,
+    so the published generated_at stays steady all day. FORCE_RUN bypasses."""
+    import os, json, datetime
+    if os.environ.get("FORCE_RUN"):
+        return False
+    try:
+        if not output_path.exists():
+            return False
+        gen = json.loads(output_path.read_text()).get("generated_at", "") or ""
+        g = gen.replace("Z", "")
+        if "+" in g:
+            g = g.split("+")[0]
+        gen_dt = datetime.datetime.fromisoformat(g)
+    except Exception:
+        return False
+    et_now = datetime.datetime.utcnow() - datetime.timedelta(hours=4)
+    gen_et = gen_dt - datetime.timedelta(hours=4)
+    if gen_et.date() >= et_now.date():
+        print(f"[{label}] skip recompute: already refreshed today ({gen}); keeping steady.")
+        return True
+    if et_now.hour < am_hour_et:
+        print(f"[{label}] skip recompute: before {am_hour_et}AM ET; holding until the AM data pull.")
+        return True
+    return False
+
+
 def main():
+    if _skip_daily(OUTPUT, "team-futures"):
+        return 0
     if not PROJ_FILE.exists() or not ODDS_FILE.exists():
         print(f"[team-futures] missing inputs (proj={PROJ_FILE.exists()}, odds={ODDS_FILE.exists()})",
               file=sys.stderr)
