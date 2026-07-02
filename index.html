@@ -1937,6 +1937,14 @@
   .wsr-team .ft-logo { vertical-align: middle; margin-right: 0.3rem; }
   .wsr-pct { font-weight: 700; }
   .ws-race-block { margin-top: 1.5rem; }
+  /* Futures/WS embeds carry their own STEADY data-update timestamp (Projections /
+     Model updated / WS updated), so hide the rolling "Last loaded · live" header
+     line there — only the scoreboard should roll. */
+  body.embed-mode.embed-futures .hdr-meta,
+  body.embed-mode.embed-player-futures .hdr-meta,
+  body.embed-mode.embed-ws .hdr-meta {
+    display: none !important;
+  }
   /* Compact header for embeds: logo + name + live/last-loaded only. */
   body.embed-mode > header { display: block !important; text-align: left !important; padding: 0.5rem 0.7rem 0 !important; }
   /* Last header line (date · loaded · live) centered + snug to the board. */
