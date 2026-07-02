@@ -201,6 +201,61 @@ def _deg_to_compass(deg):
         return None
     return _DEG16[int((deg % 360) / 22.5 + 0.5) % 16]
 
+import math as _math
+
+# Home-plate coords per park (team -> lat, lon) for the Open-Meteo wind pull that
+# we vector-average with NWS. Cross-checked vs actual airport wind (12 games,
+# 6/30-7/01): blended wind MAE 2.08 mph vs NWS 2.61 / Open-Meteo 2.74 — neither
+# source is reliably better, but averaging their (independent) errors wins.
+PARK_LATLON = {
+    "Arizona Diamondbacks": (33.4455, -112.0667), "Atlanta Braves": (33.8908, -84.4678),
+    "Baltimore Orioles": (39.2839, -76.6217), "Boston Red Sox": (42.3467, -71.0972),
+    "Chicago Cubs": (41.9484, -87.6553), "Chicago White Sox": (41.8300, -87.6339),
+    "Cincinnati Reds": (39.0975, -84.5069), "Cleveland Guardians": (41.4962, -81.6852),
+    "Colorado Rockies": (39.7559, -104.9942), "Detroit Tigers": (42.3390, -83.0485),
+    "Houston Astros": (29.7570, -95.3555), "Kansas City Royals": (39.0517, -94.4803),
+    "Los Angeles Angels": (33.8003, -117.8827), "Los Angeles Dodgers": (34.0739, -118.2400),
+    "Miami Marlins": (25.7781, -80.2197), "Milwaukee Brewers": (43.0280, -87.9712),
+    "Minnesota Twins": (44.9817, -93.2776), "New York Mets": (40.7571, -73.8458),
+    "New York Yankees": (40.8296, -73.9262), "Athletics": (38.5800, -121.5130),
+    "Philadelphia Phillies": (39.9061, -75.1665), "Pittsburgh Pirates": (40.4469, -80.0057),
+    "San Diego Padres": (32.7073, -117.1566), "Seattle Mariners": (47.5914, -122.3325),
+    "San Francisco Giants": (37.7786, -122.3893), "St. Louis Cardinals": (38.6226, -90.1928),
+    "Tampa Bay Rays": (27.7683, -82.6534), "Texas Rangers": (32.7473, -97.0847),
+    "Toronto Blue Jays": (43.6414, -79.3894), "Washington Nationals": (38.8730, -77.0074),
+}
+
+def _compass_str_to_deg(s):
+    if not s: return None
+    return {"N":0,"NNE":22.5,"NE":45,"ENE":67.5,"E":90,"ESE":112.5,"SE":135,"SSE":157.5,
+            "S":180,"SSW":202.5,"SW":225,"WSW":247.5,"W":270,"WNW":292.5,"NW":315,"NNW":337.5}.get(s.strip().upper())
+
+def _blend_wind(ws1, wd1, ws2, wd2):
+    """Vector-average two winds (speeds mph; dirs = compass degrees FROM)."""
+    def uv(ws, wd):
+        r = _math.radians(wd); return (-ws * _math.sin(r), -ws * _math.cos(r))
+    u1, v1 = uv(ws1, wd1); u2, v2 = uv(ws2, wd2)
+    u = (u1 + u2) / 2.0; v = (v1 + v2) / 2.0
+    return _math.hypot(u, v), _math.degrees(_math.atan2(-u, -v)) % 360
+
+def _blend_hour_wind(hour, om_fc, game_time):
+    """Blend NWS `hour` wind with Open-Meteo (vector avg), writing the blended
+    speed/dir back into `hour`. Returns (speed_mph, dir_deg); falls back to NWS
+    alone when Open-Meteo is unavailable."""
+    if not hour: return None, None
+    n_ws = hour.get("wind_speed_mph") or 0
+    n_wd = _compass_str_to_deg(hour.get("wind_dir"))
+    om_hour = extract_hour(om_fc, game_time) if om_fc else None
+    o_ws = (om_hour or {}).get("wind_speed_mph")
+    o_wd = _compass_str_to_deg((om_hour or {}).get("wind_dir"))
+    if o_ws is None or o_wd is None or n_wd is None:
+        return n_ws, n_wd
+    ws, wd = _blend_wind(n_ws, n_wd, o_ws, o_wd)
+    hour["wind_speed_mph"] = round(ws)
+    hour["wind_dir"] = _deg_to_compass(wd)
+    hour["wind_blended"] = True
+    return round(ws), wd
+
 
 def get_forecast_openmeteo(lat, lon):
     url = ("https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s"
@@ -497,6 +552,15 @@ def main():
         for team, fc in ex.map(_load, unique_teams):
             forecasts[team] = fc
 
+    # Open-Meteo wind for the same parks (vector-averaged with NWS below).
+    om_forecasts = {}
+    def _load_om(team):
+        ll = PARK_LATLON.get(team)
+        return team, (get_forecast_openmeteo(*ll) if ll else None)
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        for team, fc in ex.map(_load_om, unique_teams):
+            om_forecasts[team] = fc
+
     games_out = []
     frozen = 0
     roof_open_count = 0
@@ -564,6 +628,9 @@ def main():
                 hour["game_window_temp_f"] = win_t
                 hour["game_window_humidity_pct"] = win_h
                 hour["first_pitch_temp_f"] = hour.get("temp_f")
+            # Vector-average NWS wind with Open-Meteo (mutates hour's wind fields
+            # so the stored/displayed wind is the blend too).
+            _bws, _bwd = _blend_hour_wind(hour, om_forecasts.get(home), g["game_time"])
             # V9 step 1 — pull BP's barometric pressure for this game (only when
             # BP's slate matches the game date) and feed it in. Keep NWS humidity.
             bp_match = bp_by_venue.get(g["venue"]) if (gd_et and gd_et == bp_date) else None
@@ -575,8 +642,8 @@ def main():
             wx_in = {
                 "t": win_t if win_t is not None else hour.get("temp_f"),
                 "hum": win_h if win_h is not None else hour.get("humidity_pct"),
-                "ws": hour.get("wind_speed_mph") or 0,
-                "wd_compass": nws_wind_to_compass(hour.get("wind_dir")),
+                "ws": _bws or 0,
+                "wd_compass": _bwd if _bwd is not None else nws_wind_to_compass(hour.get("wind_dir")),
                 "precip": hour.get("precip_pct") or 0,
                 "t_hours": t_hours,
             }
