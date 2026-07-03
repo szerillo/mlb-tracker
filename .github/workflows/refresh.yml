@@ -229,13 +229,24 @@ jobs:
         # runs/totals. Enables model-vs-market/actual backtests across the FULL
         # slate (not just the ~2/day CLV-tracked lean games). Overwrites the
         # day's copy each run so it converges to the final pre-game projection.
+        # Only snapshot when the sheet actually has games — a run where the
+        # published sheet returns 0 games must NOT clobber a good earlier copy.
         run: |
-          D=$(python -c "import datetime as dt; print((dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat())")
-          mkdir -p "data/archive/$D"
-          if [ -s data/sheet_projections.json ]; then
-            cp data/sheet_projections.json "data/archive/$D/sheet_projections.json"
-            echo "archived sheet_projections -> data/archive/$D/"
-          fi
+          python - <<'PY'
+          import json, os, shutil, datetime as dt
+          D = (dt.datetime.utcnow() - dt.timedelta(hours=4)).date().isoformat()
+          os.makedirs(f"data/archive/{D}", exist_ok=True)
+          src = "data/sheet_projections.json"; dst = f"data/archive/{D}/sheet_projections.json"
+          try:
+              d = json.load(open(src)); n = d.get("n_games") or len(d.get("games") or [])
+          except Exception:
+              n = 0
+          if n > 0:
+              shutil.copy(src, dst); print(f"archived {n} games -> {dst}")
+          else:
+              # keep any existing good snapshot; don't overwrite with an empty one
+              print("sheet_projections has 0 games; skipping (won't clobber a good snapshot)")
+          PY
         continue-on-error: true
 
       - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
