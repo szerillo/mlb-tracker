@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T15:11:54.777223Z",
+  "generated_at": "2026-07-03T16:25:54.278301Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 50% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -26,26 +26,26 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 14.3,
+        "run_adj_pct": 15.7,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 15.2,
           "t_adj_pct": 6.3,
-          "w_adj_pct": 7.5,
+          "w_adj_pct": 7.2,
           "dp_adj_pct": 2.7,
           "p_adj_pct": 0.0,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 4.69,
+            "out_component": 4.5,
             "dir_rarity": 0.45,
             "spd_rarity": 0.07
           }
         },
-        "model_pct": 13.7,
+        "model_pct": 13.4,
         "pressure_source": "BP",
-        "bp_pct": 15,
+        "bp_pct": 18,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -120,7 +120,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 11.7,
+        "run_adj_pct": 10.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -139,7 +139,7 @@
         },
         "model_pct": 11.4,
         "pressure_source": "BP",
-        "bp_pct": 12,
+        "bp_pct": 9,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -157,7 +157,7 @@
         "temp_f": 94,
         "humidity_pct": 53,
         "wind_speed_mph": 4,
-        "wind_dir": "WSW",
+        "wind_dir": "W",
         "precip_pct": 13,
         "short_forecast": "Mostly Clear",
         "start_time": "2026-07-03T19:00:00-04:00",
@@ -167,24 +167,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 6.7,
+        "run_adj_pct": 6.5,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 14.4,
           "t_adj_pct": 5.5,
-          "w_adj_pct": 0.7,
+          "w_adj_pct": 0.6,
           "dp_adj_pct": 1.8,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": 3.41,
+            "out_component": 2.62,
             "dir_rarity": 0.6,
             "spd_rarity": 0
           }
         },
-        "model_pct": 6.7,
+        "model_pct": 6.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -203,7 +203,7 @@
         "temp_f": 90,
         "humidity_pct": 56,
         "wind_speed_mph": 9,
-        "wind_dir": "W",
+        "wind_dir": "WNW",
         "precip_pct": 37,
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-03T19:00:00-04:00",
@@ -213,24 +213,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 8.0,
+        "run_adj_pct": 7.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 14.9,
           "t_adj_pct": 5.7,
-          "w_adj_pct": 0.2,
+          "w_adj_pct": -0.2,
           "dp_adj_pct": 2.1,
           "p_adj_pct": 0.3,
           "precip_adj_pct": -1.2,
           "carry_pct": -0.4,
           "wind": {
-            "out_component": 1.41,
+            "out_component": -0.55,
             "dir_rarity": 0.85,
             "spd_rarity": 0.04
           }
         },
-        "model_pct": 6.0,
+        "model_pct": 5.7,
         "pressure_source": "BP",
         "bp_pct": 10,
         "bp_blended": true,
@@ -249,8 +249,8 @@
       "weather": {
         "temp_f": 90,
         "humidity_pct": 55,
-        "wind_speed_mph": 2,
-        "wind_dir": "W",
+        "wind_speed_mph": 4,
+        "wind_dir": "SW",
         "precip_pct": 20,
         "short_forecast": "Slight Chance Showers And Thunderstorms",
         "start_time": "2026-07-03T19:00:00-04:00",
@@ -260,24 +260,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 1.2,
+        "run_adj_pct": 1.1,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 5.1,
           "t_adj_pct": 1.7,
-          "w_adj_pct": -0.0,
+          "w_adj_pct": -0.3,
           "dp_adj_pct": 1.5,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": -0.18,
-            "dir_rarity": 0.55,
-            "spd_rarity": 0.7
+            "out_component": -3.12,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0
           }
         },
-        "model_pct": 2.4,
+        "model_pct": 2.2,
         "pressure_source": "BP",
         "bp_pct": 0,
         "bp_blended": true,
@@ -296,8 +296,8 @@
       "weather": {
         "temp_f": 89,
         "humidity_pct": 9,
-        "wind_speed_mph": 8,
-        "wind_dir": "NNE",
+        "wind_speed_mph": 9,
+        "wind_dir": "NE",
         "precip_pct": 3,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-03T18:00:00-06:00",
@@ -307,24 +307,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 2.6,
+        "run_adj_pct": 2.3,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 11.1,
           "t_adj_pct": 4.2,
-          "w_adj_pct": -1.7,
+          "w_adj_pct": -2.4,
           "dp_adj_pct": -1.9,
           "p_adj_pct": 2.7,
           "precip_adj_pct": 0,
           "carry_pct": 0.0,
           "wind": {
-            "out_component": -5.65,
+            "out_component": -8.07,
             "dir_rarity": 0,
             "spd_rarity": 0.34
           }
         },
-        "model_pct": 3.3,
+        "model_pct": 2.6,
         "pressure_source": "BP",
         "bp_pct": 2,
         "bp_blended": true,
@@ -343,26 +343,26 @@
       "retractable": true,
       "roof_state": "unknown",
       "open_weather": {
-        "temp_f": 92,
-        "humidity_pct": 58,
+        "temp_f": 91,
+        "humidity_pct": 60,
         "wind_speed_mph": 5,
         "wind_dir": "S",
-        "precip_pct": 2,
+        "precip_pct": 4,
         "short_forecast": "Mostly Clear",
         "start_time": "2026-07-03T19:00:00-05:00",
-        "game_window_temp_f": 88.1,
-        "game_window_humidity_pct": 65.9,
-        "first_pitch_temp_f": 92
+        "game_window_temp_f": 87.9,
+        "game_window_humidity_pct": 66.6,
+        "first_pitch_temp_f": 91
       },
       "open_v8": {
-        "run_adj_pct": 4.9,
+        "run_adj_pct": 5.3,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 8.1,
-          "t_adj_pct": 2.9,
+          "temp_delta": 7.9,
+          "t_adj_pct": 3.3,
           "w_adj_pct": 1.1,
-          "dp_adj_pct": 2.3,
+          "dp_adj_pct": 2.4,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -372,7 +372,7 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 4.9,
+        "model_pct": 5.3,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -387,27 +387,27 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 74,
-        "humidity_pct": 50,
+        "temp_f": 72,
+        "humidity_pct": 48,
         "wind_speed_mph": 8,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-03T19:00:00-07:00",
-        "game_window_temp_f": 69.6,
-        "game_window_humidity_pct": 59.7,
-        "first_pitch_temp_f": 74,
+        "game_window_temp_f": 69.1,
+        "game_window_humidity_pct": 63.4,
+        "first_pitch_temp_f": 72,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -1.2,
+        "run_adj_pct": -1.3,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -7.4,
-          "t_adj_pct": -3.4,
+          "temp_delta": -7.9,
+          "t_adj_pct": -3.7,
           "w_adj_pct": 2.5,
-          "dp_adj_pct": -0.4,
+          "dp_adj_pct": -0.2,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
@@ -417,7 +417,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -1.5,
+        "model_pct": -1.6,
         "pressure_source": "BP",
         "bp_pct": -1,
         "bp_blended": true,
@@ -447,7 +447,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 5.8,
+        "run_adj_pct": 5.3,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -466,7 +466,7 @@
         },
         "model_pct": 1.6,
         "pressure_source": "BP",
-        "bp_pct": 10,
+        "bp_pct": 9,
         "bp_blended": true,
         "blend_weight": 0.5
       },
@@ -527,27 +527,27 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 70,
-        "humidity_pct": 59,
+        "temp_f": 69,
+        "humidity_pct": 60,
         "wind_speed_mph": 9,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-03T19:00:00-07:00",
-        "game_window_temp_f": 66.4,
-        "game_window_humidity_pct": 67.4,
-        "first_pitch_temp_f": 70,
+        "game_window_temp_f": 66.9,
+        "game_window_humidity_pct": 73.2,
+        "first_pitch_temp_f": 69,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -5.1,
+        "run_adj_pct": -4.6,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -11.6,
-          "t_adj_pct": -5.5,
+          "temp_delta": -11.1,
+          "t_adj_pct": -5.2,
           "w_adj_pct": 0.4,
-          "dp_adj_pct": -0.1,
+          "dp_adj_pct": 0.3,
           "p_adj_pct": -0.9,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -557,7 +557,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -5.1,
+        "model_pct": -4.6,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -576,7 +576,7 @@
         "temp_f": 73,
         "humidity_pct": 60,
         "wind_speed_mph": 4,
-        "wind_dir": "NW",
+        "wind_dir": "NNW",
         "precip_pct": 1,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-03T19:00:00-07:00",
@@ -586,24 +586,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -1.7,
+        "run_adj_pct": -1.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -1.6,
           "t_adj_pct": -0.7,
-          "w_adj_pct": -0.5,
+          "w_adj_pct": -0.7,
           "dp_adj_pct": 0.8,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -2.86,
+            "out_component": -3.64,
             "dir_rarity": 0.95,
             "spd_rarity": 0
           }
         },
-        "model_pct": -0.4,
+        "model_pct": -0.5,
         "pressure_source": "BP",
         "bp_pct": -3,
         "bp_blended": true,
@@ -622,9 +622,9 @@
       "weather": {
         "temp_f": 97,
         "humidity_pct": 45,
-        "wind_speed_mph": 2,
-        "wind_dir": "NNW",
-        "precip_pct": 0,
+        "wind_speed_mph": 1,
+        "wind_dir": "NW",
+        "precip_pct": 1,
         "short_forecast": "Sunny",
         "start_time": "2026-07-04T11:00:00-04:00",
         "game_window_temp_f": 99.7,
@@ -633,24 +633,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 10.3,
+        "run_adj_pct": 10.5,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 21.7,
           "t_adj_pct": 11.0,
-          "w_adj_pct": -0.2,
+          "w_adj_pct": 0.0,
           "dp_adj_pct": 1.5,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.3,
           "wind": {
-            "out_component": -1.14,
-            "dir_rarity": 0.45,
+            "out_component": 0.04,
+            "dir_rarity": 0.4,
             "spd_rarity": 0.64
           }
         },
-        "model_pct": 10.3,
+        "model_pct": 10.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -852,36 +852,36 @@
       "retractable": true,
       "roof_state": "unknown",
       "open_weather": {
-        "temp_f": 93,
-        "humidity_pct": 54,
-        "wind_speed_mph": 5,
+        "temp_f": 94,
+        "humidity_pct": 53,
+        "wind_speed_mph": 10,
         "wind_dir": "S",
-        "precip_pct": 4,
-        "short_forecast": "Partly Cloudy",
+        "precip_pct": 10,
+        "short_forecast": "Mostly Clear",
         "start_time": "2026-07-04T18:00:00-05:00",
-        "game_window_temp_f": 89.5,
-        "game_window_humidity_pct": 61.6,
-        "first_pitch_temp_f": 93
+        "game_window_temp_f": 90.8,
+        "game_window_humidity_pct": 60.0,
+        "first_pitch_temp_f": 94
       },
       "open_v8": {
-        "run_adj_pct": 5.5,
+        "run_adj_pct": 6.8,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 9.5,
-          "t_adj_pct": 3.7,
-          "w_adj_pct": 1.1,
-          "dp_adj_pct": 2.2,
+          "temp_delta": 10.8,
+          "t_adj_pct": 4.3,
+          "w_adj_pct": 2.2,
+          "dp_adj_pct": 2.3,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 3.77,
+            "out_component": 7.55,
             "dir_rarity": 0.75,
-            "spd_rarity": 0.31
+            "spd_rarity": 0.25
           }
         },
-        "model_pct": 5.5,
+        "model_pct": 6.8,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1121,16 +1121,16 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 75,
-        "humidity_pct": 53,
+        "temp_f": 73,
+        "humidity_pct": 51,
         "wind_speed_mph": 8,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-04T19:00:00-07:00",
-        "game_window_temp_f": 71.4,
-        "game_window_humidity_pct": 60.0,
-        "first_pitch_temp_f": 75,
+        "game_window_temp_f": 71.1,
+        "game_window_humidity_pct": 62.1,
+        "first_pitch_temp_f": 73,
         "wind_blended": true
       },
       "v8": {
@@ -1138,10 +1138,10 @@
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -5.6,
-          "t_adj_pct": -2.5,
+          "temp_delta": -5.9,
+          "t_adj_pct": -2.7,
           "w_adj_pct": 2.5,
-          "dp_adj_pct": -0.1,
+          "dp_adj_pct": -0.0,
           "p_adj_pct": -0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
@@ -1259,27 +1259,27 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 71,
-        "humidity_pct": 61,
+        "temp_f": 69,
+        "humidity_pct": 59,
         "wind_speed_mph": 8,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-07-04T19:00:00-07:00",
-        "game_window_temp_f": 68.5,
-        "game_window_humidity_pct": 67.7,
-        "first_pitch_temp_f": 71,
+        "game_window_temp_f": 67.8,
+        "game_window_humidity_pct": 68.7,
+        "first_pitch_temp_f": 69,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -4.0,
+        "run_adj_pct": -4.3,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -9.5,
-          "t_adj_pct": -4.5,
+          "temp_delta": -10.2,
+          "t_adj_pct": -4.8,
           "w_adj_pct": 0.4,
-          "dp_adj_pct": 0.2,
+          "dp_adj_pct": 0.1,
           "p_adj_pct": -0.9,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -1289,7 +1289,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -4.0,
+        "model_pct": -4.3,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
