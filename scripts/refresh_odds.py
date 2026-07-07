@@ -123,26 +123,67 @@ def _pull_slate(date):
         return None
     games = data.get("games", []) or []
 
-    # Today's MLB games for gamePk join
+    # Today's MLB games for gamePk join.
+    # NOTE: a naive (away, home) -> gamePk map collapses doubleheaders onto a
+    # single pk (the last-written game wins), so both games of a DH resolve to
+    # the same pk. Instead, keep ALL games per matchup and match each AN event
+    # to the MLB game with the nearest start time, consuming each pk once.
     sched = _http_get(MLB_API.format(iso=date.isoformat())) or {}
     mlb_games = (sched.get("dates") or [{}])[0].get("games", []) or []
-    team_to_pk = {}
+
+    def _parse_dt(ts):
+        if not ts:
+            return None
+        try:
+            return datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+    mlb_by_teams = {}   # (away, home) -> list of {"pk", "dt", "num"}
     for g in mlb_games:
         try:
             a = g["teams"]["away"]["team"]["name"]
             h = g["teams"]["home"]["team"]["name"]
-            team_to_pk[(a, h)] = g.get("gamePk")
         except Exception:
             continue
+        mlb_by_teams.setdefault((a, h), []).append({
+            "pk": g.get("gamePk"),
+            "dt": _parse_dt(g.get("gameDate")),
+            "num": g.get("gameNumber") or 1,
+        })
+    for lst in mlb_by_teams.values():
+        lst.sort(key=lambda x: (x["num"], x["dt"] or datetime.datetime.max))
+
+    used_pks = set()
+
+    def _resolve_pk(away_nm, home_nm, an_start):
+        cand = mlb_by_teams.get((away_nm, home_nm)) or []
+        cand = [c for c in cand if c["pk"] not in used_pks]
+        if not cand:
+            return None
+        if len(cand) == 1:
+            pk = cand[0]["pk"]
+        else:
+            ant = _parse_dt(an_start)
+            if ant is None:
+                pk = cand[0]["pk"]
+            else:
+                pk = min(
+                    cand,
+                    key=lambda c: abs((c["dt"] - ant).total_seconds()) if c["dt"] else 9e18,
+                )["pk"]
+        used_pks.add(pk)
+        return pk
 
     games_out = []
-    for g in games:
+    # process in start-time order so nearest-time DH matching is stable
+    for g in sorted(games, key=lambda x: str(x.get("start_time") or "")):
         teams = g.get("teams") or []
         away = next((t for t in teams if t.get("id") == g.get("away_team_id")), {})
         home = next((t for t in teams if t.get("id") == g.get("home_team_id")), {})
         away_nm = away.get("full_name") or away.get("display_name") or ""
         home_nm = home.get("full_name") or home.get("display_name") or ""
-        pk = team_to_pk.get((away_nm, home_nm))
+        pk = _resolve_pk(away_nm, home_nm, g.get("start_time"))
 
         ml_away = best_market(g, "moneyline", side="away")
         ml_home = best_market(g, "moneyline", side="home")

@@ -48,6 +48,14 @@ def _http_get_text(url, timeout=25):
 def _tkey(s): return (s or "").lower().replace(" ", "").replace(".", "")
 def _nick(name): return _tkey(name.split()[-1]) if name else ""
 
+def _parse_dt(ts):
+    if not ts:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
 
 def _et_today() -> datetime.date:
     return (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)).date()
@@ -121,18 +129,29 @@ def parse_sheet_csv(text: str, target_iso: str):
 
 
 def build_id_maps(iso: str):
-    """an_event_id -> (away_name, home_name)  and  (nick,nick) -> gamePk"""
+    """an_event_id -> (away_name, home_name, start_time)  and
+       (nick, nick) -> sorted list of {pk, dt, num} (keeps BOTH games of a DH,
+       so we can resolve each AN event to its own gamePk by start time instead
+       of collapsing the doubleheader onto a single pk)."""
     an = _http_get_json(AN_API.format(yyyymmdd=iso.replace("-", "")))
     an_teams = {}
     for g in an.get("games", []) or []:
         tm = {t.get("id"): (t.get("full_name") or t.get("display_name")) for t in g.get("teams", [])}
-        an_teams[g.get("id")] = (tm.get(g.get("away_team_id")), tm.get(g.get("home_team_id")))
+        an_teams[g.get("id")] = (tm.get(g.get("away_team_id")),
+                                 tm.get(g.get("home_team_id")),
+                                 g.get("start_time"))
     sched = _http_get_json(MLB_API.format(iso=iso))
     pk = {}
     for day in sched.get("dates", []) or []:
         for g in day.get("games", []) or []:
             a = g["teams"]["away"]["team"]["name"]; h = g["teams"]["home"]["team"]["name"]
-            pk[(_nick(a), _nick(h))] = g.get("gamePk")
+            pk.setdefault((_nick(a), _nick(h)), []).append({
+                "pk": g.get("gamePk"),
+                "dt": _parse_dt(g.get("gameDate")),
+                "num": g.get("gameNumber") or 1,
+            })
+    for lst in pk.values():
+        lst.sort(key=lambda x: (x["num"], x["dt"] or datetime.datetime.max))
     return an_teams, pk
 
 
@@ -156,14 +175,32 @@ def main():
     print(f"[sheet_projections] slate date {iso} ({len(rows)} projection rows)")
     an_teams, pk_map = build_id_maps(iso)
 
+    used_pks = set()
+    def _resolve_pk(a, h, an_start):
+        cand = [c for c in (pk_map.get((_nick(a), _nick(h))) or []) if c["pk"] not in used_pks]
+        if not cand:
+            return None
+        if len(cand) == 1:
+            gpk = cand[0]["pk"]
+        else:
+            ant = _parse_dt(an_start)
+            if ant is None:
+                gpk = cand[0]["pk"]
+            else:
+                gpk = min(cand, key=lambda c: abs((c["dt"] - ant).total_seconds())
+                          if c["dt"] else 9e18)["pk"]
+        used_pks.add(gpk)
+        return gpk
+
     games = {}
     n_join = n_miss = 0
-    for row in rows:
+    # process in AN start-time order so DH nearest-time matching is stable
+    for row in sorted(rows, key=lambda r: str((an_teams.get(r["game_id"]) or (None, None, ""))[2] or "")):
         nm = an_teams.get(row["game_id"])
         if not nm or not nm[0] or not nm[1]:
             n_miss += 1; continue
-        a, h = nm
-        gpk = pk_map.get((_nick(a), _nick(h)))
+        a, h, an_start = nm
+        gpk = _resolve_pk(a, h, an_start)
         if gpk is None:
             n_miss += 1; continue
         games[str(gpk)] = {
