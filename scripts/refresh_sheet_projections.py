@@ -84,9 +84,10 @@ def _parse_date_cell(v):
     return None
 
 
-def parse_sheet_csv(text: str, target_iso: str):
+def parse_sheet_csv(text: str, target_iso: str, require_col: str = "away_score"):
     """Return list of dicts for rows whose date == target_iso AND that carry a
-    projection (away_score present)."""
+    projection. Full-game keys off away_score; F5 keys off 'total' because the
+    F5 tab carries total/win%/ML but no team-run split (away_score blank)."""
     rows = list(csv.reader(io.StringIO(text)))
     if not rows: return []
     header = [h.strip().lower() for h in rows[0]]
@@ -106,8 +107,8 @@ def parse_sheet_csv(text: str, target_iso: str):
             i = idx.get(name)
             return r[i] if (i is not None and i < len(r)) else ""
         gid = _parse_float(cell("game_id"))
-        away = _parse_float(cell("away_score"))
-        if gid is None or away is None:
+        req = _parse_float(cell(require_col))
+        if gid is None or req is None:
             continue
         row_iso = None
         if date_col is not None and date_col < len(r):

@@ -37,7 +37,8 @@ def main():
         print(f"ERR: could not fetch F5 sheet CSV: {e}", file=sys.stderr)
         return 1
 
-    all_rows = parse_sheet_csv(text, None)
+    # F5 tab has total/win%/ML but no team-run split, so require 'total' (not away_score).
+    all_rows = parse_sheet_csv(text, None, require_col="total")
     dates = sorted({r.get("date") for r in all_rows if r.get("date")})
     iso = dates[-1] if dates else _et_today().isoformat()
     rows = [r for r in all_rows if (r.get("date") or iso) == iso]
