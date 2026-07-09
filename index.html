@@ -1454,6 +1454,8 @@
   .apx-total-f5{color:var(--text);font-weight:600;}
   .apx-total-f5 .apx-proj-num{color:#5dade2;}
   .apx-final-f5{color:#5dade2 !important;letter-spacing:.06em;}
+  /* Embeds: never show the win-probability jump chip — final cards show score only. */
+  body.embed-mode .sb-wp-chip, body.embed-mode .apx-wpchip{display:none !important;}
   /* Site scoreboard auto-fits: each card stays >=400px so the CON-POW-EYE-BSR-DEF
      grade row always fits on one line; columns drop as the window narrows. */
   .apx-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(400px,100%),1fr));gap:12px;}
@@ -3210,7 +3212,8 @@ function apxCardHTML(g){
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
   const _tov=o&&o.total&&o.total.over?o.total.over.odds:null, _tun=o&&o.total&&o.total.under?o.total.under.odds:null;
   const _juice=(_tov!=null||_tun!=null)?(' '+(_tov!=null?(_tov>0?'+'+_tov:''+_tov):'—')+'/'+(_tun!=null?(_tun>0?'+'+_tun:''+_tun):'—')):'';
-  const wpChip=(isFinal&&!F5)?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
+  const _isEmbed=(typeof document!=='undefined'&&document.body&&document.body.classList.contains('embed-mode'));
+  const wpChip=(isFinal&&!F5&&!_isEmbed)?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
