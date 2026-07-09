@@ -236,12 +236,8 @@ jobs:
         # published URL here (same doc, F5 tab's gid) like the GAME UPLOADER one.
         # Skips cleanly until the URL is provided so runs never fail.
         run: |
-          export SHEET_F5_CSV_URL="${SHEET_F5_CSV_URL:-}"
-          if [ -n "$SHEET_F5_CSV_URL" ]; then
-            python scripts/refresh_f5_projections.py
-          else
-            echo "SHEET_F5_CSV_URL not set yet; skipping F5 projections import"
-          fi
+          export SHEET_F5_CSV_URL="${SHEET_F5_CSV_URL:-https://docs.google.com/spreadsheets/d/1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE/export?format=csv&gid=194749669}"
+          python scripts/refresh_f5_projections.py
         continue-on-error: true
         env:
           SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
