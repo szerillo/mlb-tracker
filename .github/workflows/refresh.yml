@@ -194,6 +194,12 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
 
+      - name: Refresh F5 (first-5-innings) odds
+        # Same AN endpoint/best-price logic as full-game odds but the
+        # firstfiveinnings period -> data/f5_odds.json (F5 total + F5 ML).
+        run: python scripts/refresh_f5_odds.py
+        continue-on-error: true
+
       - name: Scrape AN archive (prior day finalized odds + PRO where public)
         run: python scripts/scrape_action_archive.py --start yesterday --end yesterday
         continue-on-error: true
@@ -222,6 +228,23 @@ jobs:
         continue-on-error: true
         env:
           SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+
+      - name: Import my F5 projections (F5 UPLOADER sheet -> f5_projections.json)
+        # Same as the GAME UPLOADER import but reads the F5 tab. Provide the F5
+        # tab's published-CSV URL via the SHEET_F5_CSV_URL secret (File -> Share
+        # -> Publish to web -> F5 UPLOADER -> CSV), or hardcode the public
+        # published URL here (same doc, F5 tab's gid) like the GAME UPLOADER one.
+        # Skips cleanly until the URL is provided so runs never fail.
+        run: |
+          export SHEET_F5_CSV_URL="${SHEET_F5_CSV_URL:-}"
+          if [ -n "$SHEET_F5_CSV_URL" ]; then
+            python scripts/refresh_f5_projections.py
+          else
+            echo "SHEET_F5_CSV_URL not set yet; skipping F5 projections import"
+          fi
+        continue-on-error: true
+        env:
+          SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
 
       - name: Archive my sheet projections (daily snapshot of MY runs/totals)
         # data/sheet_projections.json is overwritten every run, so snapshot it
@@ -272,6 +295,87 @@ jobs:
               shutil.copy(src, dst); print(f"archived {n} games -> {dst} (prev {existing})")
           else:
               print(f"kept fuller snapshot at {dst} ({existing} games) over thinner run ({n})")
+          PY
+        continue-on-error: true
+
+      - name: Archive my F5 projections (daily snapshot)
+        # Same DH-safe guards as the full-game archive, for data/f5_projections.json.
+        run: |
+          python - <<'PY'
+          import json, os, shutil, datetime as dt
+          src = "data/f5_projections.json"
+          if not os.path.exists(src):
+              print("no f5_projections.json this run; skipping"); raise SystemExit(0)
+          try:
+              d = json.load(open(src)); n = d.get("n_games") or len(d.get("games") or [])
+          except Exception:
+              d, n = {}, 0
+          if n <= 0:
+              print("f5_projections has 0 games; skipping (won't clobber a good snapshot)")
+              raise SystemExit(0)
+          et = (dt.datetime.utcnow() - dt.timedelta(hours=4)).date()
+          D = et.isoformat()
+          sd = str(d.get("date") or "")
+          try:
+              sd_date = dt.date.fromisoformat(sd)
+              if -1 <= (sd_date - et).days <= 2:
+                  D = sd
+              else:
+                  print(f"f5 sheet date {sd} out of window vs ET {et}; using ET folder")
+          except Exception:
+              print(f"f5 sheet date {sd!r} unparseable; using ET folder {D}")
+          os.makedirs(f"data/archive/{D}", exist_ok=True)
+          dst = f"data/archive/{D}/f5_projections.json"
+          existing = 0
+          if os.path.exists(dst):
+              try:
+                  e = json.load(open(dst)); existing = e.get("n_games") or len(e.get("games") or [])
+              except Exception:
+                  existing = 0
+          if n >= existing:
+              shutil.copy(src, dst); print(f"archived {n} F5 games -> {dst} (prev {existing})")
+          else:
+              print(f"kept fuller F5 snapshot at {dst} ({existing}) over thinner run ({n})")
+          PY
+        continue-on-error: true
+
+      - name: Archive F5 odds (open + close, for backtest / CLV)
+        # Mirrors full-game open/close capture for F5 markets so we can backtest
+        # F5 total & ML vs both the opener and the closing line:
+        #   f5_odds_open.json  -> write-ONCE per day (first snapshot = opener)
+        #   f5_odds.json       -> overwritten every run (converges to the close)
+        # Filed by the odds feed's own date (DH-safe), games>0 only.
+        run: |
+          python - <<'PY'
+          import json, os, shutil, datetime as dt
+          src = "data/f5_odds.json"
+          if not os.path.exists(src):
+              print("no f5_odds.json this run; skipping"); raise SystemExit(0)
+          try:
+              d = json.load(open(src)); n = d.get("n_games") or len(d.get("games") or [])
+          except Exception:
+              d, n = {}, 0
+          if n <= 0:
+              print("f5_odds has 0 games; skipping"); raise SystemExit(0)
+          et = (dt.datetime.utcnow() - dt.timedelta(hours=4)).date()
+          D = et.isoformat()
+          sd = str(d.get("date") or "")
+          try:
+              sd_date = dt.date.fromisoformat(sd)
+              if -1 <= (sd_date - et).days <= 2:
+                  D = sd
+          except Exception:
+              pass
+          os.makedirs(f"data/archive/{D}", exist_ok=True)
+          # opener: write once, never overwrite
+          op = f"data/archive/{D}/f5_odds_open.json"
+          if not os.path.exists(op):
+              shutil.copy(src, op); print(f"F5 opener captured -> {op} ({n} games)")
+          else:
+              print(f"F5 opener already exists ({op}); leaving intact")
+          # closing: overwrite each run so it converges to the final line
+          cl = f"data/archive/{D}/f5_odds.json"
+          shutil.copy(src, cl); print(f"F5 closing snapshot -> {cl} ({n} games)")
           PY
         continue-on-error: true
 
