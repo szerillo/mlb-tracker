@@ -1505,6 +1505,9 @@
   .apx-parkname{color:var(--text);}
   .apx-ump{color:var(--muted);}
   .apx-mkt{color:var(--muted);font-weight:400;font-size:0.82em;}
+  /* Projected fair line (my number) — accent-colored so it's clearly distinct
+     from the grey market/listed odds. */
+  .apx-fair{color:var(--accent);font-weight:500;font-size:0.82em;}
   .apx-info2{border-top:1px solid var(--border);margin-top:9px;padding-top:8px;display:none;flex-direction:column;gap:5px;}
   .apx-projbadge{display:flex;justify-content:center;margin:0;}
   .apx-grid.apx-detailed .apx-info2{display:flex;}
@@ -2108,6 +2111,8 @@
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-abbr .apx-mkt { display: inline !important; font-size: 0.52rem; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-total .apx-mkt,
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-mkt { display: none !important; }
+  /* Show MY projected line (accent) in embeds too — market stays next to the abbr. */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-fair { display: inline !important; font-size: 0.92em; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.55rem; line-height: 1.1; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 0.98rem; gap: 5px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.47rem; }
@@ -3061,14 +3066,14 @@ function _apxEdgeBarF5(g){
   if(!sp) return '';
   const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
   const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
-  let ml='<span class="apx-pill">F5 ML —</span>';
+  let ml='<span class="apx-pill">ML —</span>';
   const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO);
-  if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">F5 '+ab+' ML +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No F5 ML edge</span>'; } }
+  if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">'+ab+' ML +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No ML edge</span>'; } }
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
-  let tot='<span class="apx-pill">F5 Total —</span>';
+  let tot='<span class="apx-pill">Total —</span>';
   const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
-  if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">F5 '+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
+  if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
 let APX_DETAILED=true;
@@ -3239,7 +3244,7 @@ function apxCardHTML(g){
   } else if(F5 && sp){
     // F5 view: F5 win% + F5 total + F5 market ML, NO expected team runs.
     const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
-    const fo=v=>v==null?'':' <span class="apx-mkt">('+(v>0?'+'+v:''+v)+')</span>';
+    const fo=v=>v==null?'':' <span class="apx-fair">('+(v>0?'+'+v:''+v)+')</span>';
     const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center apx-center-f5">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
@@ -3250,7 +3255,7 @@ function apxCardHTML(g){
     center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No F5 projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp && sp.away_runs!=null && sp.home_runs!=null){
     const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
-    const fo=v=>v==null?'':' <span class="apx-mkt">('+(v>0?'+'+v:''+v)+')</span>';
+    const fo=v=>v==null?'':' <span class="apx-fair">('+(v>0?'+'+v:''+v)+')</span>';
     const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
