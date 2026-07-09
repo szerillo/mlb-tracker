@@ -1436,8 +1436,23 @@
   .se-sum-sub{font-size:0.72rem;color:var(--muted);}
   .se-sum-mid .se-sum-runs{color:var(--accent);}
   .apx-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .apx-toolbar-top{justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .apx-toolbar-right{display:flex;align-items:center;}
   .apx-toggle{background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:5px 11px;border-radius:6px;cursor:pointer;}
   .apx-toggle:hover{border-color:var(--accent);color:var(--accent);}
+  /* Prominent Full Game / F5 segmented switch — bigger + more obvious than the
+     Compact/Detailed toggle. */
+  .apx-modeseg{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:3px;gap:3px;}
+  .apx-modeseg-btn{background:transparent;border:none;color:var(--muted);font-size:0.86rem;font-weight:700;letter-spacing:.02em;padding:7px 16px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .12s,color .12s;}
+  .apx-modeseg-btn:hover{color:var(--text);}
+  .apx-modeseg-btn.active{background:var(--accent);color:#0d1117;box-shadow:0 1px 6px rgba(0,0,0,.25);}
+  .apx-modeseg-sub{font-size:0.62rem;font-weight:800;opacity:.7;background:rgba(0,0,0,.18);padding:1px 5px;border-radius:5px;}
+  .apx-modeseg-btn.active .apx-modeseg-sub{background:rgba(0,0,0,.22);opacity:.85;}
+  .apx-lu.f5{background:rgba(93,173,226,0.18);color:#5dade2;margin-right:5px;font-weight:800;letter-spacing:.04em;}
+  .apx-card-f5{box-shadow:inset 0 2px 0 rgba(93,173,226,.55);}
+  .apx-f5badge{font-size:0.56rem;font-weight:800;letter-spacing:.08em;color:#5dade2;background:rgba(93,173,226,.14);border-radius:4px;padding:1px 6px;margin-bottom:3px;display:inline-block;}
+  .apx-total-f5{color:var(--text);font-weight:600;}
+  .apx-total-f5 .apx-proj-num{color:#5dade2;}
   /* Site scoreboard auto-fits: each card stays >=400px so the CON-POW-EYE-BSR-DEF
      grade row always fits on one line; columns drop as the window narrows. */
   .apx-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(400px,100%),1fr));gap:12px;}
@@ -3004,14 +3019,65 @@ function sheetProjForGame(game_pk){
   if(eid!=null && SHEET_PROJ.byEid && SHEET_PROJ.byEid[eid]) return SHEET_PROJ.byEid[eid];
   return null;
 }
+
+/* ── First-5-innings (F5) view ─────────────────────────────────────────
+   FIVE_MODE swaps the scoreboard cards to show F5 total + F5 moneyline +
+   edges, sourced from data/f5_projections.json (Sean's F5 uploader tab) and
+   data/f5_odds.json (best-price F5 lines). Both are keyed by gamePk (DH-safe)
+   so they join to the live slate exactly like the full-game data. */
+let F5_PROJ=null, F5_ODDS=null, FIVE_MODE=false;
+async function loadF5(){
+  const proj={byEid:{},byPk:{}}, odds={byEid:{},byPk:{}};
+  try{ const j=await fetchJSON('data/f5_projections.json?t='+Date.now());
+    if(j&&j.games){ for(const pk in j.games){ const g=j.games[pk]; proj.byPk[pk]=g;
+      if(g.an_event_id!=null) proj.byEid[g.an_event_id]=g; } } }catch(e){}
+  try{ const j=await fetchJSON('data/f5_odds.json?t='+Date.now());
+    if(j&&j.games){ for(const g of j.games){ if(g.game_pk!=null) odds.byPk[g.game_pk]=g;
+      if(g.an_event_id!=null) odds.byEid[g.an_event_id]=g; } } }catch(e){}
+  F5_PROJ=proj; F5_ODDS=odds;
+  try{ if(FIVE_MODE && typeof CURRENT_GAMES!=='undefined' && CURRENT_GAMES && CURRENT_GAMES.length && typeof renderScoreboard==='function') renderScoreboard(); }catch(e){}
+}
+function f5ProjForGame(game_pk){
+  if(!F5_PROJ) return null;
+  if(F5_PROJ.byPk[game_pk]) return F5_PROJ.byPk[game_pk];
+  const o=oddsForGame(game_pk); const eid=o&&o.an_event_id;
+  if(eid!=null && F5_PROJ.byEid[eid]) return F5_PROJ.byEid[eid];
+  return null;
+}
+function f5OddsForGame(game_pk){
+  if(!F5_ODDS) return null;
+  if(F5_ODDS.byPk[game_pk]) return F5_ODDS.byPk[game_pk];
+  const o=oddsForGame(game_pk); const eid=o&&o.an_event_id;
+  if(eid!=null && F5_ODDS.byEid[eid]) return F5_ODDS.byEid[eid];
+  return null;
+}
+// F5 edge pills (mirrors _apxEdgeBar but F5 sources + labels). ML edge is exact
+// (proj win% vs implied); total edge reuses the half-run slope as an approximation.
+function _apxEdgeBarF5(g){
+  const sp=f5ProjForGame(g.gamePk); const o=f5OddsForGame(g.gamePk);
+  if(!sp) return '';
+  const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
+  const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
+  let ml='<span class="apx-pill">F5 ML —</span>';
+  const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO);
+  if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">F5 '+ab+' ML +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No F5 ML edge</span>'; } }
+  const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
+  const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
+  let tot='<span class="apx-pill">F5 Total —</span>';
+  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
+  if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">F5 '+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
+  return '<div class="apx-edgebar">'+ml+tot+'</div>';
+}
 let APX_DETAILED=true;
 function _apxFair(v){return v==null?'—':(v>0?'+'+v:''+v);}
 
 function renderSheetEdgesHTML(game){
-  const sp=sheetProjForGame(game.gamePk);
-  if(!sp) return '<div class="coming-soon">No projection uploaded for this game yet.</div>';
+  const F5=(typeof FIVE_MODE!=='undefined'&&FIVE_MODE);
+  const sp=F5?f5ProjForGame(game.gamePk):sheetProjForGame(game.gamePk);
+  if(!sp) return '<div class="coming-soon">No '+(F5?'F5 ':'')+'projection uploaded for this game yet.</div>';
+  const pfx=F5?'F5 ':'';
   const aAb=teamAbbr(game.teams.away.team.name), hAb=teamAbbr(game.teams.home.team.name);
-  const o=oddsForGame(game.gamePk);
+  const o=F5?f5OddsForGame(game.gamePk):oddsForGame(game.gamePk);
   const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
   const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
@@ -3020,7 +3086,10 @@ function renderSheetEdgesHTML(game){
   const ip=x=>x==null?null:(x<0?(-x)/((-x)+100):100/(x+100));
   const pc=v=>v==null?'—':Math.round(v*100)+'%';
   let score='';
-  if(sp.away_runs!=null&&sp.home_runs!=null){
+  if(F5){
+    // F5 view: no expected team runs — just the projected F5 total.
+    score='<div class="se-score-tot">Projected F5 total '+(sp.total!=null?sp.total.toFixed(1):'—')+'</div>';
+  } else if(sp.away_runs!=null&&sp.home_runs!=null){
     score='<div class="se-score"><span class="se-score-ab">'+aAb+'</span><span class="se-score-n">'+sp.away_runs.toFixed(2)+'</span><span class="se-score-lbl">EXP<br>RUNS</span><span class="se-score-n">'+sp.home_runs.toFixed(2)+'</span><span class="se-score-ab">'+hAb+'</span></div>'+
       '<div class="se-score-tot">Projected total '+(sp.total!=null?sp.total.toFixed(2):'—')+'</div>';
   }
@@ -3035,12 +3104,12 @@ function renderSheetEdgesHTML(game){
   const edgeCell=e=> e==null?'<td class="se-c-edge">—</td>':'<td class="se-c-edge '+(e>0?'pos':'neg')+'">'+(e>=0?'+':'')+e.toFixed(1)+'%</td>';
   const row=(bet,projP,mktOdds,impl,edge)=>'<tr><td class="se-c-bet">'+bet+'</td><td>'+pc(projP)+'</td><td class="se-c-mkt">'+f(mktOdds)+' ('+pc(impl)+')</td>'+edgeCell(edge)+'</tr>';
   const table='<table class="se-table"><thead><tr><td>Bet</td><td>Proj</td><td>Market (impl)</td><td style="text-align:right;">Edge</td></tr></thead><tbody>'+
-    row(aAb+' ML', sp.away_wp, aO, iA, eA)+
-    row(hAb+' ML', sp.home_wp, hO, iH, eH)+
-    row('Over '+(ovL!=null?ovL:'—'), pOv, ovO, iOv, eOv)+
-    row('Under '+(unL!=null?unL:'—'), pUn, unO, iUn, eUn)+
+    row(pfx+aAb+' ML', sp.away_wp, aO, iA, eA)+
+    row(pfx+hAb+' ML', sp.home_wp, hO, iH, eH)+
+    row(pfx+'Over '+(ovL!=null?ovL:'—'), pOv, ovO, iOv, eOv)+
+    row(pfx+'Under '+(unL!=null?unL:'—'), pUn, unO, iUn, eUn)+
   '</tbody></table>'+
-  '<div class="se-tt">Team totals: '+aAb+' '+(sp.away_runs!=null?sp.away_runs.toFixed(2):'—')+' · '+hAb+' '+(sp.home_runs!=null?sp.home_runs.toFixed(2):'—')+'</div>';
+  (F5?'':('<div class="se-tt">Team totals: '+aAb+' '+(sp.away_runs!=null?sp.away_runs.toFixed(2):'—')+' · '+hAb+' '+(sp.home_runs!=null?sp.home_runs.toFixed(2):'—')+'</div>'));
   return score+table;
 }
 
@@ -3132,8 +3201,9 @@ function apxCardHTML(g){
   const aId=g.teams.away.team.id, hId=g.teams.home.team.id;
   const status=g.status.detailedState;
   const isFinal=status==="Final"||status==="Game Over";
-  const sp=sheetProjForGame(g.gamePk);
-  const o=oddsForGame(g.gamePk);
+  const F5=(typeof FIVE_MODE!=='undefined'&&FIVE_MODE);
+  const sp=F5?f5ProjForGame(g.gamePk):sheetProjForGame(g.gamePk);
+  const o=F5?f5OddsForGame(g.gamePk):oddsForGame(g.gamePk);
   const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
   const hML=o&&o.moneyline&&o.moneyline.home?o.moneyline.home:null;
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
@@ -3161,6 +3231,18 @@ function apxCardHTML(g){
       '<div class="apx-team">'+teamLogo(aId,36)+'<span class="apx-abbr">'+aAb+'</span></div>'+
       '<div class="apx-mid"><div class="apx-runs"><span>'+fs.away+'</span><span class="apx-final-lbl">FINAL</span><span>'+fs.home+'</span></div></div>'+
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
+  } else if(F5 && sp){
+    // F5 view: F5 win% + F5 total + F5 market ML, NO expected team runs.
+    const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
+    const fo=v=>v==null?'':' <span class="apx-mkt">('+(v>0?'+'+v:''+v)+')</span>';
+    const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
+    center='<div class="apx-center apx-center-f5">'+
+      team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
+      '<div class="apx-mid"><div class="apx-f5badge">FIRST 5</div><div class="apx-total apx-total-f5">F5 Total <span class="apx-proj-num">'+(sp.total!=null?sp.total.toFixed(1):'—')+'</span>'+(mktLine!=null?' <span class="apx-mkt">('+mktLine+_juice+')</span>':'')+'</div></div>'+
+      team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.ml_home,sp.home_wp,!aFav)+
+    '</div>';
+  } else if(F5 && !sp){
+    center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No F5 projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(sp && sp.away_runs!=null && sp.home_runs!=null){
     const aFav=(sp.away_wp||0)>=(sp.home_wp||0);
     const fo=v=>v==null?'':' <span class="apx-mkt">('+(v>0?'+'+v:''+v)+')</span>';
@@ -3173,7 +3255,7 @@ function apxCardHTML(g){
   } else {
     center='<div class="apx-center"><div class="apx-team">'+teamLogo(aId,38)+'<span class="apx-abbr">'+aAb+'</span></div><div class="apx-mid"><div class="apx-noproj">No projection yet</div></div><div class="apx-team">'+teamLogo(hId,38)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   }
-  const edge=(!isFinal&&sp)?_apxEdgeBar(g):'';
+  const edge=(!isFinal&&sp)?(F5?_apxEdgeBarF5(g):_apxEdgeBar(g)):'';
   const aSPn=g.teams.away.probablePitcher?g.teams.away.probablePitcher.fullName:null;
   const hSPn=g.teams.home.probablePitcher?g.teams.home.probablePitcher.fullName:null;
   const aRk=aSPn?_apxRank(aSPn):'', hRk=hSPn?_apxRank(hSPn):'';
@@ -3193,8 +3275,9 @@ function apxCardHTML(g){
       '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
     '</div>'+
   '</div>';
-  const projBadge='<div class="apx-projbadge">'+luChip+'</div>';
-  return '<div class="apx-card sb-clickable" data-pk="'+g.gamePk+'">'+head+parkLine+center+projBadge+edge+info+'</div>';
+  const f5tag=F5?'<span class="apx-lu f5">F5</span>':'';
+  const projBadge='<div class="apx-projbadge">'+f5tag+luChip+'</div>';
+  return '<div class="apx-card sb-clickable'+(F5?' apx-card-f5':'')+'" data-pk="'+g.gamePk+'">'+head+parkLine+center+projBadge+edge+info+'</div>';
 }
 
 
@@ -3406,10 +3489,16 @@ async function bootShotMode(params){
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
-  const toolbar='<div class="apx-toolbar"><button class="apx-toggle gloss-trigger" type="button" style="margin-right:6px;">&#9432; Glossary</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div>';
-  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
+  const f5seg='<div class="apx-modeseg" id="apx-modeseg" role="tablist" aria-label="Scoreboard view">'+
+      '<button class="apx-modeseg-btn'+(!FIVE_MODE?' active':'')+'" data-f5="0" role="tab" aria-selected="'+(!FIVE_MODE)+'">Full Game</button>'+
+      '<button class="apx-modeseg-btn'+(FIVE_MODE?' active':'')+'" data-f5="1" role="tab" aria-selected="'+(FIVE_MODE)+'">First 5 <span class="apx-modeseg-sub">F5</span></button>'+
+    '</div>';
+  const toolbar='<div class="apx-toolbar apx-toolbar-top">'+f5seg+'<div class="apx-toolbar-right"><button class="apx-toggle gloss-trigger" type="button" style="margin-right:6px;">&#9432; Glossary</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div></div>';
+  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+(FIVE_MODE?' apx-grid-f5':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
+  const mseg=document.getElementById('apx-modeseg');
+  if(mseg)mseg.querySelectorAll('.apx-modeseg-btn').forEach(b=>{ b.onclick=()=>{ const want=b.dataset.f5==='1'; if(want===FIVE_MODE)return; FIVE_MODE=want; try{ if(F5_PROJ==null||F5_ODDS==null) loadF5(); }catch(e){} renderScoreboard(); }; });
   const pngBtn=document.getElementById('apx-png'); if(pngBtn) pngBtn.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
   const pngBtn2=document.getElementById('apx-png-bottom'); if(pngBtn2) pngBtn2.onclick=()=>{ if(typeof exportScoreboardPNG==='function') exportScoreboardPNG(); };
   el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=(e)=>{ if(e.target.closest('.sb-wp-chip'))return; const pk=parseInt(c.dataset.pk,10); const g=CURRENT_GAMES.find(x=>x.gamePk===pk); if(g)openModal(g); }; });
@@ -4132,6 +4221,8 @@ async function loadForDate(date) {
   // Load Action PRO sheet projections in the BACKGROUND so a slow/blocked live
   // CSV fetch can never hold up the scoreboard render. Re-render when it lands.
   loadSheetProjections().then(() => { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
+  // F5 (first-5) projections + odds, also in the background.
+  if (typeof loadF5 === 'function') { loadF5().catch(() => {}); }
   // Load the team list up front so team-rank grades (OFF/DEF/BSR) match the
   // Rankings tab and populate on the scoreboard; re-render when ready.
   if (typeof fetchAllTeams === 'function') { fetchAllTeams().then(() => { try { if (typeof _ensureTeamRankGrades === 'function') _ensureTeamRankGrades(); if (typeof CURRENT_GAMES !== 'undefined' && CURRENT_GAMES && CURRENT_GAMES.length && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {}); }
@@ -9755,6 +9846,8 @@ document.addEventListener("click", hitTrendDelegate);
   // Boot data, then auto-open the requested modal if embed=game
   (async function bootEmbedData() {
     const reqDate = params.get('date');
+    // ?view=f5 (or ?f5=1) starts a scoreboard/game embed in First-5 mode.
+    try { const _vw=(params.get('view')||'').toLowerCase(); if (_vw==='f5' || params.get('f5')==='1') FIVE_MODE=true; } catch(e){}
     try {
       await loadForDate(reqDate || today());
     } catch (e) {
@@ -9766,6 +9859,9 @@ document.addEventListener("click", hitTrendDelegate);
     // away — so await them here, otherwise the game card renders "No projection
     // yet" and never refreshes.
     try { await loadSheetProjections(); } catch (e) { /* fall back to no-proj card */ }
+    // F5 data for embeds (so an F5-mode scoreboard/game embed has lines on first paint).
+    try { if (typeof loadF5 === 'function') await loadF5(); } catch (e) {}
+    if (FIVE_MODE) { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }
 
     // Futures embeds: activate the requested futures tab (renders + reveals its
     // section via the .embed-futures / .embed-player-futures CSS above).
