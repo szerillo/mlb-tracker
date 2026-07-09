@@ -1453,6 +1453,7 @@
   .apx-f5badge{font-size:0.56rem;font-weight:800;letter-spacing:.08em;color:#5dade2;background:rgba(93,173,226,.14);border-radius:4px;padding:1px 6px;margin-bottom:3px;display:inline-block;}
   .apx-total-f5{color:var(--text);font-weight:600;}
   .apx-total-f5 .apx-proj-num{color:#5dade2;}
+  .apx-final-f5{color:#5dade2 !important;letter-spacing:.06em;}
   /* Site scoreboard auto-fits: each card stays >=400px so the CON-POW-EYE-BSR-DEF
      grade row always fits on one line; columns drop as the window narrows. */
   .apx-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(400px,100%),1fr));gap:12px;}
@@ -3209,7 +3210,7 @@ function apxCardHTML(g){
   const mktLine=(o&&o.total&&o.total.over&&o.total.over.line!=null)?o.total.over.line:((o&&o.total&&o.total.under)?o.total.under.line:null);
   const _tov=o&&o.total&&o.total.over?o.total.over.odds:null, _tun=o&&o.total&&o.total.under?o.total.under.odds:null;
   const _juice=(_tov!=null||_tun!=null)?(' '+(_tov!=null?(_tov>0?'+'+_tov:''+_tov):'—')+'/'+(_tun!=null?(_tun>0?'+'+_tun:''+_tun):'—')):'';
-  const wpChip=isFinal?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
+  const wpChip=(isFinal&&!F5)?'<span class="sb-wp-chip apx-wpchip" data-wp-pk="'+g.gamePk+'" role="button" tabindex="0">→ WP</span>':'';
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
@@ -3225,11 +3226,12 @@ function apxCardHTML(g){
   if(hpFull){ const _pp=hpFull.split(' '); const _last=_pp.slice(-1)[0]; const _up=_umpPct(hpFull); const _uc=_up==null?'':(_up>0.5?'over':(_up<-0.5?'under':'')); const _uv=_last+(_up!=null?(' '+(_up>=0?'+':'')+_up.toFixed(1)+'%'):''); umpHtml='<span class="sb-pct-chip '+_uc+'"><span class="pct-label">Ump</span>'+_uv+'</span>'; }
   const parkLine='<div class="apx-park">'+pfChip+wxChip+umpHtml+'</div>';
   let center;
-  if(isFinal && g._finalScore){
-    const fs=g._finalScore;
+  if(isFinal && (F5 ? g._f5Score : g._finalScore)){
+    const fs = F5 ? g._f5Score : g._finalScore;
+    const flbl = F5 ? 'END 5' : 'FINAL';
     center='<div class="apx-center">'+
       '<div class="apx-team">'+teamLogo(aId,36)+'<span class="apx-abbr">'+aAb+'</span></div>'+
-      '<div class="apx-mid"><div class="apx-runs"><span>'+fs.away+'</span><span class="apx-final-lbl">FINAL</span><span>'+fs.home+'</span></div></div>'+
+      '<div class="apx-mid"><div class="apx-runs"><span>'+fs.away+'</span><span class="apx-final-lbl'+(F5?' apx-final-f5':'')+'">'+flbl+'</span><span>'+fs.home+'</span></div></div>'+
       '<div class="apx-team">'+teamLogo(hId,36)+'<span class="apx-abbr">'+hAb+'</span></div></div>';
   } else if(F5 && sp){
     // F5 view: F5 win% + F5 total + F5 market ML, NO expected team runs.
@@ -4061,6 +4063,21 @@ async function getGameLive(pk) {
       const h = linescore?.teams?.home?.runs;
       if (a != null && h != null) finalScore = { away: a, home: h };
     }
+    // Score through 5 innings (for the F5 view). Sum innings 1-5 per team from
+    // the linescore; only trust it once at least 5 innings have been recorded.
+    let f5Score = null;
+    const innings = linescore?.innings || [];
+    if (innings.length >= 5) {
+      let a5 = 0, h5 = 0;
+      for (const inn of innings) {
+        const n = inn && inn.num;
+        if (n >= 1 && n <= 5) {
+          a5 += (inn.away && inn.away.runs != null) ? inn.away.runs : 0;
+          h5 += (inn.home && inn.home.runs != null) ? inn.home.runs : 0;
+        }
+      }
+      f5Score = { away: a5, home: h5 };
+    }
     return {
       officials: box.officials || d.gameData?.officials || [],
       awayBattingOrder: teams.away?.battingOrder || [],
@@ -4068,6 +4085,7 @@ async function getGameLive(pk) {
       awayPlayers: teams.away?.players || {},
       homePlayers: teams.home?.players || {},
       finalScore,
+      f5Score,
     };
   } catch {
     return { officials: [], awayBattingOrder: [], homeBattingOrder: [],
@@ -4278,6 +4296,7 @@ async function loadForDate(date) {
     const lv = liveByPk[g.gamePk] || {};
     g._officials = lv.officials || [];
     g._finalScore = lv.finalScore || null;
+    g._f5Score = lv.f5Score || null;
     if ((lv.awayBattingOrder?.length || 0) >= 8 && (lv.homeBattingOrder?.length || 0) >= 8) {
       LIVE_LINEUPS[g.gamePk] = {
         away: buildLineupFromLive(lv.awayBattingOrder, lv.awayPlayers),
