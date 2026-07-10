@@ -75,6 +75,19 @@ def _norm(n):
     return (n or "").lower().replace(".", "").replace("'", "").replace("-", " ").strip()
 
 
+import re as _re
+def _clean_name(n):
+    """Canonical display name. Roster Resource's `player` field carries quirks
+    (team tags like 'Abner Uribe (mil)', middle initials 'Fernando E. Cruz',
+    formal first names 'Peter Fairbanks'); we prefer StatsAPI fullName upstream,
+    and here just strip a trailing generational suffix (Jr./Sr.) to match the
+    name convention used elsewhere in Sean's model."""
+    n = (n or "").strip()
+    n = _re.sub(r"\s*\([^)]*\)\s*$", "", n)          # drop any trailing (TAG)
+    n = _re.sub(r"\s+(Jr\.?|Sr\.?)$", "", n, flags=_re.I)  # drop Jr./Sr.
+    return n.strip()
+
+
 def _slate_date():
     """The slate the bullpen supports — match it so e.g. 7/10 games use 7/10
     rest/fatigue. Prefer SLATE_DATE env, else the date on the live sheet
@@ -148,11 +161,13 @@ def main():
     # 2) Resolve each reliever's real team from StatsAPI (mlbamid -> currentTeam).
     ids = list(pen.keys())
     team_of = {}
+    name_of = {}   # mlbamid -> canonical StatsAPI fullName (clean common name)
     for j in range(0, len(ids), 100):
         chunk = ids[j:j + 100]
         d = _get(PEOPLE_URL.format(ids=",".join(map(str, chunk))))
         for p in (d or {}).get("people", []):
             team_of[p["id"]] = (p.get("currentTeam", {}) or {}).get("name")
+            name_of[p["id"]] = p.get("fullName")
         time.sleep(0.3)
 
     # 3) Group by team, order by role, number 1..N.
@@ -172,7 +187,9 @@ def main():
         nick = NICK.get(full) or full.split()[-1]
         pen_sorted = sorted(byteam[full], key=lambda x: (_role_pri(x[2]), x[3]))
         arr = []
-        for num, (mid, player, role, _o) in enumerate(pen_sorted, start=1):
+        for num, (mid, rr_player, role, _o) in enumerate(pen_sorted, start=1):
+            # canonical name: StatsAPI fullName if we have it, else cleaned RR name
+            player = _clean_name(name_of.get(mid) or rr_player)
             workload = (full, _norm(player)) in flagged
             rows.append([nick, "RP", mid, player, 8, num, f"{nick} {num}",
                          "TRUE" if workload else "FALSE"])
