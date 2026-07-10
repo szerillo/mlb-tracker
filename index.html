@@ -1454,9 +1454,10 @@
   .apx-total-f5{color:var(--text);font-weight:600;}
   .apx-total-f5 .apx-proj-num{color:#5dade2;}
   .apx-final-f5{color:#5dade2 !important;letter-spacing:.06em;}
-  /* Market total + odds line, sits under my projected total. */
-  .apx-mkttot{text-align:center;font-size:0.74rem;color:var(--muted);margin:3px 0 1px;}
-  .apx-mkttot-k{font-weight:700;opacity:.65;font-size:0.6rem;letter-spacing:.05em;text-transform:uppercase;margin-right:2px;}
+  /* Market total + odds line, sits just under my projected total (tight to the
+     total above, with a bit of breathing room before the Proj/Confirmed pill). */
+  .apx-mkttot{text-align:center;font-size:0.72rem;color:var(--muted);margin:0 0 7px;line-height:1.15;}
+  .apx-mkttot-k{font-weight:700;opacity:.65;font-size:0.58rem;letter-spacing:.05em;text-transform:uppercase;margin-right:2px;}
   /* Embeds: never show the win-probability jump chip — final cards show score only. */
   body.embed-mode .sb-wp-chip, body.embed-mode .apx-wpchip{display:none !important;}
   /* Site scoreboard auto-fits: each card stays >=400px so the CON-POW-EYE-BSR-DEF
@@ -2116,6 +2117,10 @@
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-mkt { display: none !important; }
   /* Show MY projected line (accent) in embeds too — market stays next to the abbr. */
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp .apx-fair { display: inline !important; font-size: 0.92em; }
+  /* Market total line: compact in embeds so it fits just under the projected total
+     without expanding the card. */
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-mkttot { font-size: 0.5rem; margin: 0 0 3px; line-height: 1.05; }
+  body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-mkttot-k { font-size: 0.44rem; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-wp { font-size: 0.55rem; line-height: 1.1; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs { font-size: 0.98rem; gap: 5px; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card .apx-runs-lbl { font-size: 0.47rem; }
