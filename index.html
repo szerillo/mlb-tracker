@@ -1447,6 +1447,10 @@
   .apx-modeseg-btn:hover{color:var(--text);}
   .apx-modeseg-btn.active{background:var(--accent);color:#0d1117;box-shadow:0 1px 6px rgba(0,0,0,.25);}
   .apx-modeseg-sub{font-size:0.62rem;font-weight:800;opacity:.7;background:rgba(0,0,0,.18);padding:1px 5px;border-radius:5px;}
+  /* Compact variant of the segmented switch inside the game modal. */
+  .m-modeseg-row{display:flex;justify-content:center;margin:2px 0 9px;}
+  .m-modeseg{padding:2px;}
+  .m-modeseg .apx-modeseg-btn{font-size:0.78rem;padding:5px 14px;}
   .apx-modeseg-btn.active .apx-modeseg-sub{background:rgba(0,0,0,.22);opacity:.85;}
   .apx-lu.f5{background:rgba(93,173,226,0.18);color:#5dade2;margin-right:5px;font-weight:800;letter-spacing:.04em;}
   .apx-card-f5{box-shadow:inset 0 2px 0 rgba(93,173,226,.55);}
@@ -3208,14 +3212,14 @@ function _apxEdgeBar(g){
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
 
-function apxCardHTML(g){
+function apxCardHTML(g, opts){
   const away=g.teams.away.team.name, home=g.teams.home.team.name;
   const aAb=g.teams.away.team.abbreviation||teamAbbr(away);
   const hAb=g.teams.home.team.abbreviation||teamAbbr(home);
   const aId=g.teams.away.team.id, hId=g.teams.home.team.id;
   const status=g.status.detailedState;
   const isFinal=status==="Final"||status==="Game Over";
-  const F5=(typeof FIVE_MODE!=='undefined'&&FIVE_MODE);
+  const F5=(opts&&opts.f5!==undefined)?opts.f5:(typeof FIVE_MODE!=='undefined'&&FIVE_MODE);
   const sp=F5?f5ProjForGame(g.gamePk):sheetProjForGame(g.gamePk);
   const o=F5?f5OddsForGame(g.gamePk):oddsForGame(g.gamePk);
   const aML=o&&o.moneyline&&o.moneyline.away?o.moneyline.away:null;
@@ -6862,6 +6866,7 @@ function teamContactSpan(players) {
 
 
 let MODAL_GAME_PK = null;
+let MODAL_F5 = false;   // per-modal Full Game / F5 view (independent of the scoreboard toggle)
 
 function modalGamesInOrder() {
   // All games on the current scoreboard, sorted by start time.
@@ -6919,6 +6924,7 @@ function renderModalGameStrip() {
 
 async function openModal(game) {
   MODAL_GAME_PK = game.gamePk;
+  MODAL_F5 = (typeof FIVE_MODE !== 'undefined' && FIVE_MODE);   // open matching the scoreboard's current view
   const bg = document.getElementById("modal-bg");
   const body = document.getElementById("modal-body");
   // Show modal immediately with a loading shim, then fill in once rosters are ready
@@ -6983,7 +6989,11 @@ async function openModal(game) {
   const venueLine = `${venue} · ${timeOrScore}`;
 
   body.innerHTML = `
-    <div class="apx-grid m-apx-wrap apx-detailed" style="grid-template-columns:1fr;">${apxCardHTML(game)}</div>
+    <div class="m-modeseg-row"><div class="apx-modeseg m-modeseg" id="m-modeseg" role="tablist" aria-label="Projection view">
+      <button class="apx-modeseg-btn${MODAL_F5?'':' active'}" data-f5="0" role="tab" aria-selected="${!MODAL_F5}">Full Game</button>
+      <button class="apx-modeseg-btn${MODAL_F5?' active':''}" data-f5="1" role="tab" aria-selected="${MODAL_F5}">First 5 <span class="apx-modeseg-sub">F5</span></button>
+    </div></div>
+    <div class="apx-grid m-apx-wrap apx-detailed${MODAL_F5?' apx-grid-f5':''}" id="m-apx-host" style="grid-template-columns:1fr;">${apxCardHTML(game, {f5: MODAL_F5})}</div>
 
     <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
     <div class="m-env-row">
@@ -7074,6 +7084,21 @@ async function openModal(game) {
     </details>
   `;
 
+  // Per-game Full Game / F5 toggle — re-renders just the projection card + edges.
+  const _mseg = document.getElementById('m-modeseg');
+  if (_mseg) _mseg.querySelectorAll('.apx-modeseg-btn').forEach(b => {
+    b.onclick = () => {
+      const want = b.dataset.f5 === '1';
+      if (want === MODAL_F5) return;
+      MODAL_F5 = want;
+      _mseg.querySelectorAll('.apx-modeseg-btn').forEach(x => {
+        const on = (x.dataset.f5 === '1') === MODAL_F5;
+        x.classList.toggle('active', on); x.setAttribute('aria-selected', on);
+      });
+      const host = document.getElementById('m-apx-host');
+      if (host) { host.classList.toggle('apx-grid-f5', MODAL_F5); host.innerHTML = apxCardHTML(game, {f5: MODAL_F5}); }
+    };
+  });
 }
 function closeModal() {
   document.getElementById("modal-bg").classList.remove("active");
