@@ -214,6 +214,17 @@ def main():
         }
         n_join += 1
 
+    # Don't let an empty run (tab still being filled / rolled over) wipe a good
+    # live feed — keep the previous non-empty snapshot instead.
+    if n_join == 0:
+        try:
+            prev = json.load(open(OUTPUT))
+            if (prev.get("n_games") or len(prev.get("games") or [])) > 0:
+                print("[sheet_projections] 0 games joined; keeping previous non-empty feed (won't clobber)")
+                return 0
+        except Exception:
+            pass
+
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "date": iso,
