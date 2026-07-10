@@ -1455,8 +1455,8 @@
   .apx-lu.f5{background:rgba(93,173,226,0.18);color:#5dade2;margin-right:5px;font-weight:800;letter-spacing:.04em;}
   .apx-card-f5{box-shadow:inset 0 2px 0 rgba(93,173,226,.55);}
   .apx-f5badge{font-size:0.56rem;font-weight:800;letter-spacing:.08em;color:#5dade2;background:rgba(93,173,226,.14);border-radius:4px;padding:1px 6px;margin-bottom:3px;display:inline-block;}
-  .apx-total-f5{color:var(--text);font-weight:600;}
-  .apx-total-f5 .apx-proj-num{color:#5dade2;}
+  /* F5 total intentionally matches the full-game total colors (muted label +
+     accent number); the blue FIRST 5 badge / F5 labels signal the mode. */
   .apx-final-f5{color:#5dade2 !important;letter-spacing:.06em;}
   /* Market total + odds — tucked directly under my projected total, styled like
      the listed MLs (grey, not bold) so market = grey / my projections = accent. */
@@ -3076,14 +3076,14 @@ function _apxEdgeBarF5(g){
   if(!sp) return '';
   const aO=o&&o.moneyline&&o.moneyline.away?o.moneyline.away.odds:null;
   const hO=o&&o.moneyline&&o.moneyline.home?o.moneyline.home.odds:null;
-  let ml='<span class="apx-pill">ML —</span>';
+  let ml='<span class="apx-pill">No F5 ML edge</span>';
   const mi=mlEdgeInfo(sp.away_wp,sp.home_wp,aO,hO);
-  if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">'+ab+' ML +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No ML edge</span>'; } }
+  if(mi){ if(mi.edge>0){ const ab=mi.side==='away'?teamAbbr(g.teams.away.team.name):teamAbbr(g.teams.home.team.name); const cls=mi.edge>=3?'apx-edge-strong':'apx-edge-mild'; ml='<span class="apx-pill '+cls+'">'+ab+' F5 +'+mi.edge.toFixed(1)+'%</span>'; } else { ml='<span class="apx-pill">No F5 ML edge</span>'; } }
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
-  let tot='<span class="apx-pill">Total —</span>';
+  let tot='<span class="apx-pill">No F5 total edge</span>';
   const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
-  if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
+  if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
 let APX_DETAILED=true;
