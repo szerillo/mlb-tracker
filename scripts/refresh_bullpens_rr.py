@@ -96,20 +96,24 @@ def _clean_name(n):
 
 
 def _slate_date():
-    """The slate the bullpen supports — match it so e.g. 7/10 games use 7/10
-    rest/fatigue. Prefer SLATE_DATE env, else the date on the live sheet
-    projections (same slate Sean is projecting), else ET business day."""
+    """The game date the bullpen supports, so e.g. 7/10 games use 7/10 rest.
+    Priority: SLATE_DATE env -> the sheet-projections date ONLY when it actually
+    has a loaded slate (n_games > 0; it often sits empty/stale on yesterday's
+    date between uploads) -> current ET game day."""
     import datetime as _dt
+    et = (_dt.datetime.utcnow() - _dt.timedelta(hours=4)).date().isoformat()
     env = os.environ.get("SLATE_DATE", "").strip()
     if env:
         return env
     try:
         sp = json.load(open(os.path.join(REPO_ROOT, "data", "sheet_projections.json")))
-        if sp.get("date"):
-            return sp["date"]
+        n = sp.get("n_games") or len(sp.get("games") or [])
+        d = sp.get("date")
+        if d and n > 0:      # only trust the sheet's date when a real slate is loaded
+            return d
     except Exception:
         pass
-    return (_dt.datetime.utcnow() - _dt.timedelta(hours=4)).date().isoformat()
+    return et
 
 
 def load_fatigue(slate):
