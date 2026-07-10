@@ -3106,7 +3106,7 @@ function renderSheetEdgesHTML(game){
   let score='';
   if(F5){
     // F5 view: no expected team runs — just the projected F5 total.
-    score='<div class="se-score-tot">Projected F5 total '+(sp.total!=null?sp.total.toFixed(1):'—')+'</div>';
+    score='<div class="se-score-tot">Projected F5 total '+(sp.total!=null?sp.total.toFixed(2):'—')+'</div>';
   } else if(sp.away_runs!=null&&sp.home_runs!=null){
     score='<div class="se-score"><span class="se-score-ab">'+aAb+'</span><span class="se-score-n">'+sp.away_runs.toFixed(2)+'</span><span class="se-score-lbl">EXP<br>RUNS</span><span class="se-score-n">'+sp.home_runs.toFixed(2)+'</span><span class="se-score-ab">'+hAb+'</span></div>'+
       '<div class="se-score-tot">Projected total '+(sp.total!=null?sp.total.toFixed(2):'—')+'</div>';
@@ -3258,7 +3258,7 @@ function apxCardHTML(g, opts){
     const team=(logo,ab,mk,fair,wp,fav)=>'<div class="apx-team">'+logo+'<span class="apx-abbr">'+ab+(mk!=null?' <span class="apx-mkt">('+(mk>0?'+'+mk:''+mk)+')</span>':'')+'</span><span class="apx-wp'+(fav?' apx-wp-fav':'')+'">'+(wp!=null?(wp*100).toFixed(1)+'% win':'—')+fo(fair)+'</span></div>';
     center='<div class="apx-center apx-center-f5">'+
       team(teamLogo(aId,38),aAb,aML?aML.odds:null,sp.ml_away,sp.away_wp,aFav)+
-      '<div class="apx-mid"><div class="apx-f5badge">FIRST 5</div><div class="apx-total apx-total-f5">F5 Total <span class="apx-proj-num">'+(sp.total!=null?sp.total.toFixed(1):'—')+'</span></div>'+(mktLine!=null?'<div class="apx-mkttot">'+mktLine+(_juice?' ('+_juice.trim()+')':'')+'</div>':'')+'</div>'+
+      '<div class="apx-mid"><div class="apx-f5badge">FIRST 5</div><div class="apx-total apx-total-f5">F5 Total <span class="apx-proj-num">'+(sp.total!=null?sp.total.toFixed(2):'—')+'</span></div>'+(mktLine!=null?'<div class="apx-mkttot">'+mktLine+(_juice?' ('+_juice.trim()+')':'')+'</div>':'')+'</div>'+
       team(teamLogo(hId,38),hAb,hML?hML.odds:null,sp.ml_home,sp.home_wp,!aFav)+
     '</div>';
   } else if(F5 && !sp){
