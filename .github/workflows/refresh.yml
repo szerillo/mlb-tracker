@@ -244,6 +244,14 @@ jobs:
         env:
           SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
 
+      - name: Official bullpens from Roster Resource (-> bullpens_rr.csv)
+        # Clean per-team bullpens (FanGraphs Roster Resource, role order) with
+        # formal names, keyed team via MLB StatsAPI, and a Workload flag from
+        # Bartolo's fatigue for the SLATE date (reads sheet_projections.json date).
+        # Runs after sheet_projections + fatigue so both are available.
+        run: python scripts/refresh_bullpens_rr.py
+        continue-on-error: true
+
       - name: Archive my sheet projections (daily snapshot of MY runs/totals)
         # data/sheet_projections.json is overwritten every run, so snapshot it
         # into the daily archive to build a per-day record of MY projected
