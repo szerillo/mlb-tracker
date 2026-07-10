@@ -71,20 +71,27 @@ def _get(url, tries=3, timeout=30):
     return None
 
 
-def _norm(n):
-    return (n or "").lower().replace(".", "").replace("'", "").replace("-", " ").strip()
-
-
 import re as _re
+import unicodedata as _ud
+def _deaccent(s):
+    """Strip diacritics to plain ASCII (José -> Jose, Muñoz -> Munoz)."""
+    return _ud.normalize("NFKD", s or "").encode("ascii", "ignore").decode("ascii")
+
+
+def _norm(n):
+    return _deaccent(n).lower().replace(".", "").replace("'", "").replace("-", " ").strip()
+
+
 def _clean_name(n):
     """Canonical display name. Roster Resource's `player` field carries quirks
-    (team tags like 'Abner Uribe (mil)', middle initials 'Fernando E. Cruz',
-    formal first names 'Peter Fairbanks'); we prefer StatsAPI fullName upstream,
-    and here just strip a trailing generational suffix (Jr./Sr.) to match the
-    name convention used elsewhere in Sean's model."""
+    (team tags 'Abner Uribe (mil)', middle initials 'Fernando E. Cruz', formal
+    first names 'Peter Fairbanks'); we prefer StatsAPI fullName upstream, then
+    here: drop trailing generational suffixes (Jr./Sr./II/III/IV) and strip
+    Spanish accents incl. ñ, to match the name convention in Sean's model."""
     n = (n or "").strip()
-    n = _re.sub(r"\s*\([^)]*\)\s*$", "", n)          # drop any trailing (TAG)
-    n = _re.sub(r"\s+(Jr\.?|Sr\.?)$", "", n, flags=_re.I)  # drop Jr./Sr.
+    n = _re.sub(r"\s*\([^)]*\)\s*$", "", n)                       # drop trailing (TAG)
+    n = _re.sub(r"\s+(Jr\.?|Sr\.?|IV|III|II)$", "", n, flags=_re.I)  # drop Jr/Sr/II/III/IV
+    n = _deaccent(n)                                              # José -> Jose, ñ -> n
     return n.strip()
 
 
