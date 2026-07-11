@@ -45,6 +45,10 @@ def _wx_override_for(game_pk, game_date_et):
         return None
     ov = (_WX_OV.get("games") or {}).get(str(game_pk))
     if ov is None:
+        # Slate-wide flag with no per-game pins: still drop the BP blend so the
+        # published number is our own (fresh) forecast, uncontaminated.
+        if _WX_OV.get("no_bp_blend"):
+            return {"no_bp_blend": True}
         return None
     ov = dict(ov)
     if _WX_OV.get("no_bp_blend") and "no_bp_blend" not in ov:
