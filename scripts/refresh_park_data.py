@@ -129,6 +129,20 @@ def parse_pct(s):
     return int(m.group(1)) if m else None
 
 
+def parse_temp(vals):
+    """BP's forecast temperature. Found by scanning for the degree-marked cell
+    rather than a hard-coded index, so a BP column reshuffle can't silently
+    poison it. We log this to score BP's FORECAST (not just its runs number)
+    against MLB's officially recorded game-time temp."""
+    for v in vals[1:22]:
+        m = re.match(r'^\s*([+\-]?\d{1,3})\s*°', v or "")
+        if m:
+            t = int(m.group(1))
+            if -20 <= t <= 130:
+                return t
+    return None
+
+
 def build_bp_weather():
     html = fetch(BP_URL)
     rows = re.findall(r'<tr>(.*?)</tr>', html, re.DOTALL)
@@ -180,6 +194,7 @@ def build_bp_weather():
             "bp_weather_23b_pct":  parse_pct(vals[38]) if len(vals) > 38 else None,
             "bp_weather_1b_pct":   parse_pct(vals[39]) if len(vals) > 39 else None,
             # Context
+            "bp_temp_f":           parse_temp(vals),
             "humidity_pct":        parse_pct(vals[15]) if len(vals) > 15 else None,
             "pressure_mb":         int(re.sub(r'[^\d]','', vals[16])) if len(vals) > 16 and re.sub(r'[^\d]','',vals[16]) else None,
         })

@@ -39,7 +39,7 @@ FIELDS = [
     "t_adj_pct", "w_adj_pct", "dp_adj_pct", "p_adj_pct", "precip_adj_pct",
     "carry_pct", "wind_out_component", "wind_dir_rarity", "wind_spd_rarity",
     # outputs
-    "model_pct", "run_adj_pct", "bp_pct", "bp_weather_hr_pct", "bp_weather_23b_pct",
+    "model_pct", "run_adj_pct", "bp_pct", "bp_temp_f", "bp_weather_hr_pct", "bp_weather_23b_pct",
     "bp_blended", "capped", "pressure_source", "is_dome", "roof_open",
     # provenance
     "forecast_generated_at", "logged_at",
@@ -112,6 +112,7 @@ def main():
             "wind_dir_rarity": wind.get("dir_rarity"), "wind_spd_rarity": wind.get("spd_rarity"),
             "model_pct": v8.get("model_pct"), "run_adj_pct": v8.get("run_adj_pct"),
             "bp_pct": v8.get("bp_pct"),
+            "bp_temp_f": v8.get("bp_temp_f"),
             "bp_weather_hr_pct": bp.get("bp_weather_hr_pct"),
             "bp_weather_23b_pct": bp.get("bp_weather_23b_pct"),
             "bp_blended": v8.get("bp_blended"), "capped": v8.get("capped"),

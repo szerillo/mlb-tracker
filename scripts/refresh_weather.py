@@ -61,12 +61,21 @@ def _wx_override_for(game_pk, game_date_et):
 #      runs respond to, so feeding it into the model sharpens our number on covered
 #      games (calibration: MAE 4.83→4.53). NWS doesn't carry pressure; BP does, and
 #      we already scrape it. We keep NWS humidity (BP's humidity hurt our dew-point).
-#   2. WEIGHT — the final published "V9" number is a weighted blend of our physical
-#      model and BP's weather-only runs on the games BP covers. 0 = pure model,
-#      1 = pure BP. 0.5 = equal ensemble: anchors us to BP (a strong reference, but
-#      not ground truth, and it misses ~half the slate) without surrendering to it.
-#      Uncovered games (tomorrow + scrape gaps) stay pure recalibrated model.
-BP_BLEND_WEIGHT = 0.5
+#   2. WEIGHT — the published number USED to be a 50/50 ensemble with BP's
+#      weather-only runs. Backtested 2026-07-11 on the calibration log (97 non-dome
+#      finals w/ closing totals, 6/30-7/11), scoring each signal against actual runs
+#      vs the closing total:
+#          our pure model   r = +0.162
+#          BallparkPal      r = +0.129
+#          50/50 blend      r = +0.150   <- strictly between; the blend never won
+#      corr(model, BP) = +0.77, so 60% of BP is just restating our own number. The
+#      part BP adds ON TOP of us -- its unique component, sd ~5 pts of run-adj --
+#      scored r = +0.006 vs actual runs. That is noise, not signal, and it was
+#      stable across every leave-one-day-out fold (-0.05..+0.05). RMSE of a
+#      total-based run prediction fell monotonically as BP weight went to zero.
+#      So: weight 0. We still SCRAPE BP (pressure input below + we keep logging
+#      bp_pct and bp_temp_f to keep scoring them), we just don't publish their view.
+BP_BLEND_WEIGHT = 0.0
 MODEL_VERSION = "v9"
 
 
@@ -544,7 +553,7 @@ def main():
     # V9: load the existing BP scrape (prior cycle) for pressure + blend.
     bp_by_venue, bp_date = load_bp_weather()
     print(f"  [v9] BP integration: {len(bp_by_venue)} games on slate {bp_date} "
-          f"(pressure input + {int(BP_BLEND_WEIGHT*100)}% weight on covered games)")
+          f"(pressure input; {int(BP_BLEND_WEIGHT*100)}% weight on covered games)")
 
     # Retractable roof status per date (currently ARI only — only mlb.com
     # page that exposes a public schedule). If a game's date is tagged "open"
@@ -709,11 +718,15 @@ def main():
                 w = BP_BLEND_WEIGHT
                 v8["run_adj_pct"] = round((1.0 - w) * model_pct + w * bp_runs, 1)
                 v8["bp_pct"] = bp_runs
-                v8["bp_blended"] = True
+                v8["bp_blended"] = w > 0
                 v8["blend_weight"] = w
             else:
                 v8["bp_pct"] = None
                 v8["bp_blended"] = False
+            # Always carry BP's forecast temp through so the calibration log can
+            # score BP's FORECAST against MLB's recorded game temp over time.
+            if bp_match:
+                v8["bp_temp_f"] = bp_match.get("bp_temp_f")
             if _ov:
                 v8["overridden"] = True
         games_out.append({
