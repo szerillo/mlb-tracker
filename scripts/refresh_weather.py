@@ -21,6 +21,36 @@ from v8_weather import compute_v8, TEAM_TO_PARK, nws_wind_to_compass
 OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "weather.json")
 BP_WEATHER_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "bp_weather.json")
 
+# ── Manual weather override (date-gated; auto-expires) ───────────────────────
+# data/weather_override.json lets us pin a corrected forecast for ONE slate when
+# an upstream source (e.g. BallparkPal) is clearly wrong. Shape:
+#   {"date": "2026-07-11",
+#    "no_bp_blend": true,                      # optional, applies to all games
+#    "games": {"<game_pk>": {"t":77,"ws":14,"precip":0,"no_bp_blend":true}}}
+# It only applies when its "date" matches the game's ET date, so it silently
+# stops applying the next day — no cleanup needed.
+OVERRIDE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "weather_override.json")
+_WX_OV = None
+
+
+def _wx_override_for(game_pk, game_date_et):
+    global _WX_OV
+    if _WX_OV is None:
+        try:
+            with open(OVERRIDE_PATH) as f:
+                _WX_OV = json.load(f)
+        except Exception:
+            _WX_OV = {}
+    if not _WX_OV or not game_date_et or _WX_OV.get("date") != game_date_et:
+        return None
+    ov = (_WX_OV.get("games") or {}).get(str(game_pk))
+    if ov is None:
+        return None
+    ov = dict(ov)
+    if _WX_OV.get("no_bp_blend") and "no_bp_blend" not in ov:
+        ov["no_bp_blend"] = True
+    return ov
+
 # ── V9 backend BP integration ────────────────────────────────────────────────
 # We never DISPLAY BallparkPal's raw number, but we use it on the backend two ways:
 #   1. PRESSURE input — BP's barometric pressure is the air-density figure BP's own
@@ -649,6 +679,13 @@ def main():
             }
             if bp_pres is not None:
                 wx_in["pres"] = bp_pres
+            # Date-gated manual override: pin corrected forecast inputs for this
+            # slate (used when an upstream source is clearly wrong for the day).
+            _ov = _wx_override_for(g["game_pk"], gd_et)
+            if _ov:
+                for _k in ("t", "hum", "ws", "wd_compass", "precip", "pres"):
+                    if _ov.get(_k) is not None:
+                        wx_in[_k] = _ov[_k]
             # An open/likely-open retractable computes as a true outdoor park.
             v8 = compute_v8(park_code, wx_in, treat_as_open=(home in RETRACTABLE))
             # V9 step 2 — weight the published number toward BP's weather-only runs
@@ -658,7 +695,13 @@ def main():
             bp_runs = bp_match.get("bp_weather_runs_pct") if bp_match else None
             v8["model_pct"] = model_pct
             v8["pressure_source"] = "BP" if bp_pres is not None else "default"
-            if model_pct is not None and isinstance(bp_runs, (int, float)):
+            if _ov and _ov.get("no_bp_blend"):
+                # BP is untrustworthy for this slate — publish the pure model.
+                v8["run_adj_pct"] = model_pct
+                v8["bp_pct"] = bp_runs
+                v8["bp_blended"] = False
+                v8["overridden"] = True
+            elif model_pct is not None and isinstance(bp_runs, (int, float)):
                 w = BP_BLEND_WEIGHT
                 v8["run_adj_pct"] = round((1.0 - w) * model_pct + w * bp_runs, 1)
                 v8["bp_pct"] = bp_runs
@@ -667,6 +710,8 @@ def main():
             else:
                 v8["bp_pct"] = None
                 v8["bp_blended"] = False
+            if _ov:
+                v8["overridden"] = True
         games_out.append({
             "game_pk": g["game_pk"],
             "matchup": f"{g['away']} @ {home}",
