@@ -19,11 +19,35 @@ USAGE:
         python scripts/refresh_sheet_projections.py
 """
 from __future__ import annotations
-import csv, io, json, os, sys, datetime, urllib.request
+import csv, io, json, os, sys, datetime, urllib.request, urllib.parse, time
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUTPUT = os.path.join(REPO_ROOT, "data", "sheet_projections.json")
 SHEET_CSV_URL = os.environ.get("SHEET_CSV_URL", "").strip()
+
+# The model doc. gviz (below) reads it by TAB NAME, so no gid to go stale.
+SHEET_ID = "1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE"
+GVIZ = "https://docs.google.com/spreadsheets/d/{sid}/gviz/tq?tqx=out:csv&sheet={tab}&_cb={cb}"
+
+
+def sheet_csv_url(env_url: str, tab: str) -> str:
+    """Always read the LIVE sheet.
+
+    Google's /pub ("Publish to web") and /export CSV endpoints serve a CACHED
+    snapshot that can lag the real sheet by hours. That is exactly how a fully
+    filled 15-game slate arrived in CI as "0 projection rows": the importer
+    fetched the publish URL, got the pre-upload blank cache, joined nothing, and
+    the no-clobber guard then froze a stale feed all night.
+
+    The gviz endpoint evaluates live cell values, so we read gviz unconditionally
+    and only honour an env/secret URL if it is itself a gviz URL. A cached
+    publish/export URL in the secret is ignored (loudly) rather than trusted."""
+    if env_url and "gviz/tq" in env_url:
+        return env_url
+    if env_url:
+        print(f"  [sheet] ignoring cached publish/export URL for '{tab}' "
+              f"(serves a stale snapshot); reading the live gviz feed instead")
+    return GVIZ.format(sid=SHEET_ID, tab=urllib.parse.quote(tab), cb=int(time.time()))
 AN_API = ("https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb"
           "?bookIds=15,30&date={yyyymmdd}&periods=event")
 MLB_API = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={iso}"
@@ -129,6 +153,45 @@ def parse_sheet_csv(text: str, target_iso: str, require_col: str = "away_score")
     return out
 
 
+def pick_slate_date(all_rows):
+    """Choose which date's slate to publish.
+
+    We used to take max(date) — but ONE stray future-dated row (e.g. an early
+    projection for a game 2 days out) then hijacked the entire slate: the
+    importer targeted that date, found 1 row, joined 0 games, and the no-clobber
+    guard froze a stale feed. The uploader tab only ever holds one real slate, so
+    the right answer is the date carrying the MOST projection rows (ties -> the
+    later date, preserving 'tomorrow's slate uploaded tonight'), ignoring dates
+    already in the past."""
+    from collections import Counter
+    today = _et_today().isoformat()
+    counts = Counter(r["date"] for r in all_rows if r.get("date"))
+    if not counts:
+        return today
+    live = {d: n for d, n in counts.items() if d >= today} or dict(counts)
+    return max(live, key=lambda d: (live[d], d))
+
+
+def keep_previous(output_path, iso, n_join, n_sched):
+    """True when the new snapshot is a mid-fill partial and we already hold a
+    fuller one. Guards both the empty case (n_join == 0) and the thin case (the
+    tab caught mid-upload: 1 of 15 games), which used to clobber a good feed."""
+    try:
+        prev = json.load(open(output_path))
+    except Exception:
+        return False
+    prev_n = prev.get("n_games") or len(prev.get("games") or {})
+    if prev_n <= 0:
+        return False
+    if n_join == 0:
+        return True
+    # same slate, materially thinner than both the previous snapshot and the
+    # actual MLB schedule -> it's a partial fill, not a real slate reduction
+    if prev.get("date") == iso and n_join < prev_n and n_sched and n_join < 0.6 * n_sched:
+        return True
+    return False
+
+
 def build_id_maps(iso: str):
     """an_event_id -> (away_name, home_name, start_time)  and
        (nick, nick) -> sorted list of {pk, dt, num} (keeps BOTH games of a DH,
@@ -157,11 +220,9 @@ def build_id_maps(iso: str):
 
 
 def main():
-    if not SHEET_CSV_URL:
-        print("ERR: SHEET_CSV_URL not set; nothing to do.", file=sys.stderr)
-        return 1
+    url = sheet_csv_url(SHEET_CSV_URL, "GAME UPLOADER")
     try:
-        text = _http_get_text(SHEET_CSV_URL)
+        text = _http_get_text(url)
     except Exception as e:
         print(f"ERR: could not fetch sheet CSV: {e}", file=sys.stderr)
         return 1
@@ -170,8 +231,7 @@ def main():
     # Use the latest dated projection rows; fall back to ET-today when the
     # sheet has no parseable dates.
     all_rows = parse_sheet_csv(text, None)
-    dates = sorted({r.get("date") for r in all_rows if r.get("date")})
-    iso = dates[-1] if dates else _et_today().isoformat()
+    iso = pick_slate_date(all_rows)
     rows = [r for r in all_rows if (r.get("date") or iso) == iso]
     print(f"[sheet_projections] slate date {iso} ({len(rows)} projection rows)")
     an_teams, pk_map = build_id_maps(iso)
@@ -216,14 +276,11 @@ def main():
 
     # Don't let an empty run (tab still being filled / rolled over) wipe a good
     # live feed — keep the previous non-empty snapshot instead.
-    if n_join == 0:
-        try:
-            prev = json.load(open(OUTPUT))
-            if (prev.get("n_games") or len(prev.get("games") or [])) > 0:
-                print("[sheet_projections] 0 games joined; keeping previous non-empty feed (won't clobber)")
-                return 0
-        except Exception:
-            pass
+    n_sched = sum(len(v) for v in pk_map.values())
+    if keep_previous(OUTPUT, iso, n_join, n_sched):
+        print(f"[sheet_projections] only {n_join}/{n_sched} games joined for {iso}; "
+              f"keeping previous fuller feed (won't clobber)")
+        return 0
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",

@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 # reuse the exact parsing + DH-safe id resolution from the full-game emitter
 from refresh_sheet_projections import (
     parse_sheet_csv, build_id_maps, _nick, _parse_dt, _et_today, _http_get_text,
+    pick_slate_date, keep_previous, sheet_csv_url,
 )
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -28,19 +29,16 @@ SHEET_F5_CSV_URL = os.environ.get("SHEET_F5_CSV_URL", "").strip()
 
 
 def main():
-    if not SHEET_F5_CSV_URL:
-        print("ERR: SHEET_F5_CSV_URL not set; nothing to do.", file=sys.stderr)
-        return 1
+    url = sheet_csv_url(SHEET_F5_CSV_URL, "F5 UPLOADER")
     try:
-        text = _http_get_text(SHEET_F5_CSV_URL)
+        text = _http_get_text(url)
     except Exception as e:
         print(f"ERR: could not fetch F5 sheet CSV: {e}", file=sys.stderr)
         return 1
 
     # F5 tab has total/win%/ML but no team-run split, so require 'total' (not away_score).
     all_rows = parse_sheet_csv(text, None, require_col="total")
-    dates = sorted({r.get("date") for r in all_rows if r.get("date")})
-    iso = dates[-1] if dates else _et_today().isoformat()
+    iso = pick_slate_date(all_rows)
     rows = [r for r in all_rows if (r.get("date") or iso) == iso]
     print(f"[f5_projections] slate date {iso} ({len(rows)} F5 projection rows)")
     an_teams, pk_map = build_id_maps(iso)
@@ -82,14 +80,11 @@ def main():
 
     # Don't let an empty run (tab still being filled) wipe a good live feed —
     # keep the previous non-empty snapshot instead.
-    if n_join == 0:
-        try:
-            prev = json.load(open(OUTPUT))
-            if (prev.get("n_games") or len(prev.get("games") or [])) > 0:
-                print("[f5_projections] 0 games joined; keeping previous non-empty feed (won't clobber)")
-                return 0
-        except Exception:
-            pass
+    n_sched = sum(len(v) for v in pk_map.values())
+    if keep_previous(OUTPUT, iso, n_join, n_sched):
+        print(f"[f5_projections] only {n_join}/{n_sched} games joined for {iso}; "
+              f"keeping previous fuller feed (won't clobber)")
+        return 0
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
