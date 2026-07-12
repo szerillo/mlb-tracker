@@ -101,35 +101,40 @@ def load_bp_weather():
     return by_venue, bp_date
 
 # NWS grid points per park (from V8 methodology doc)
+# NOTE: these MUST match api.weather.gov/points/{lat},{lon} for the PARK itself.
+# Audited 2026-07-12: 15 of 29 were stale/wrong — Citi Field was pulling OKX 38,38,
+# a cell 11 mi south out over Jamaica Bay (sea-breeze air: 75F/64% RH vs the park's
+# real 83F/46%). Angel Stadium was on the wrong forecast OFFICE entirely (LOX->SGX).
+# Re-run scripts/audit_nws_grids.py after any park move.
 NWS_GRIDS = {
-    "Arizona Diamondbacks": ("PSR", 105, 60),
+    "Arizona Diamondbacks": ("PSR", 159, 58),
     "Atlanta Braves":       ("FFC", 47, 93),
     "Baltimore Orioles":    ("LWX", 109, 91),
-    "Boston Red Sox":       ("BOX", 72, 80),
+    "Boston Red Sox":       ("BOX", 70, 100),
     "Chicago Cubs":         ("LOT", 75, 76),
-    "Chicago White Sox":    ("LOT", 76, 70),
+    "Chicago White Sox":    ("LOT", 76, 71),
     "Cincinnati Reds":      ("ILN", 36, 38),
-    "Cleveland Guardians":  ("CLE", 88, 47),
-    "Colorado Rockies":     ("BOU", 61, 60),
+    "Cleveland Guardians":  ("CLE", 84, 65),
+    "Colorado Rockies":     ("BOU", 63, 62),
     "Detroit Tigers":       ("DTX", 66, 34),
-    "Houston Astros":       ("HGX", 56, 88),
+    "Houston Astros":       ("HGX", 63, 94),
     "Kansas City Royals":   ("EAX", 47, 49),
-    "Los Angeles Angels":   ("LOX", 160, 45),
+    "Los Angeles Angels":   ("SGX", 38, 66),
     "Los Angeles Dodgers":  ("LOX", 155, 46),
-    "Miami Marlins":        ("MFL", 109, 50),
+    "Miami Marlins":        ("MFL", 109, 51),
     "Milwaukee Brewers":    ("MKX", 86, 64),
-    "Minnesota Twins":      ("MPX", 107, 71),
-    "New York Mets":        ("OKX", 38, 38),
-    "New York Yankees":     ("OKX", 33, 37),
-    "Philadelphia Phillies":("PHI", 50, 74),
-    "Pittsburgh Pirates":   ("PBZ", 77, 65),
+    "Minnesota Twins":      ("MPX", 108, 72),
+    "New York Mets":        ("OKX", 38, 45),
+    "New York Yankees":     ("OKX", 35, 48),
+    "Philadelphia Phillies":("PHI", 50, 77),
+    "Pittsburgh Pirates":   ("PBZ", 77, 67),
     "San Diego Padres":     ("SGX", 57, 14),
     "Seattle Mariners":     ("SEW", 124, 67),
     "San Francisco Giants": ("MTR", 85, 105),
     "St. Louis Cardinals":  ("LSX", 95, 74),
     "Tampa Bay Rays":       ("TBW", 64, 89),
-    "Texas Rangers":        ("FWD", 83, 107),
-    "Washington Nationals": ("LWX", 96, 72),
+    "Texas Rangers":        ("FWD", 79, 103),
+    "Washington Nationals": ("LWX", 98, 70),
     "Athletics":            ("STO", 40, 68),
     # Toronto is in Canada — no NWS coverage. Dome anyway.
 }
