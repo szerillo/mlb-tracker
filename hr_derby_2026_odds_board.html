@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>2026 Home Run Derby · Model vs. Market</title>
+<style>
+:root {
+  color-scheme: light only;
+  --bg: #ffffff;
+  --bg-muted: #f4f1ec;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e5e1d8;
+  --header-bg: #0e1116;
+  --header-bg-2: #1a1f28;
+  --action-green: #11c75c;
+  --action-green-dark: #0a8842;
+  --pos-soft: #d4f5e2;
+  --pos-strong: #0a6b35;
+  --neg: #d63636;
+  --neg-soft: #fbdada;
+  --neg-strong: #8a1818;
+}
+html, body { background:#fff; margin:0; padding:0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+* { box-sizing: border-box; }
+body { color: var(--text); line-height:1.4; font-size:13px; }
+.ff-widget { max-width: 860px; margin: 0 auto; background: var(--bg); border-radius: 8px;
+  overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+
+/* ---- Header ---- */
+.ff-header { position: relative; background: linear-gradient(135deg, var(--header-bg) 0%, var(--header-bg-2) 100%);
+  color:#fff; padding: 18px 20px 14px; text-align:center; border-bottom: 3px solid var(--action-green); }
+.ff-title { font-size:22px; font-weight:800; margin:0 0 3px; letter-spacing:-0.3px; }
+.ff-subtitle { font-size:12px; opacity:0.78; margin:0; font-weight:500; }
+.ff-byline-header { font-size:11px; margin-top:4px; opacity:0.88; }
+.ff-byline-header a { color:#fff; text-decoration:none; font-weight:700; }
+.ff-odds-status { display:inline-block; margin-top:6px; font-size:10px; font-weight:700; letter-spacing:0.5px;
+  text-transform:uppercase; padding:3px 8px; border-radius:12px; background: rgba(17,199,92,0.25);
+  color:#d4f5e2; font-family:"SF Mono", Menlo, monospace; }
+.ff-odds-status .dot { display:inline-block; width:6px; height:6px; border-radius:50%;
+  background: var(--action-green); margin-right:5px; vertical-align:1px; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+.ff-brand { position:absolute; top:16px; right:18px; display:inline-flex; align-items:center; gap:5px; }
+.ff-brand-text { font-weight:900; font-size:12px; letter-spacing:-0.2px; color:#fff; }
+.ff-brand-check { width:15px; height:15px; border-radius:50%; background:var(--action-green);
+  display:inline-flex; align-items:center; justify-content:center; }
+.ff-brand-check svg { width:10px; height:10px; }
+@media (max-width:600px) {
+  .ff-brand { position: static; justify-content:center; margin-bottom:8px; }
+  .ff-header { padding:14px 12px; }
+  .ff-title { font-size:17px; }
+}
+
+/* ---- Sub tabs ---- */
+.proj-section { padding: 16px 18px 20px; }
+.proj-subtabs { display:flex; background: var(--bg-muted); border:1px solid var(--border);
+  border-bottom:none; border-radius:5px 5px 0 0; overflow:hidden; }
+.proj-subtab { flex:1; padding:10px 8px; text-align:center; font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:0.9px; cursor:pointer; color:var(--text-muted);
+  background:var(--bg-muted); border:none; border-bottom:3px solid transparent; font-family:inherit; }
+.proj-subtab:hover { color: var(--text); }
+.proj-subtab.active { background:var(--bg); color:var(--text); border-bottom-color: var(--action-green); }
+
+/* ---- Table ---- */
+.proj-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff;
+  border:1px solid var(--border); border-top:none; table-layout:fixed; }
+.proj-table thead th { background: var(--bg-muted); border-bottom:2px solid var(--border);
+  padding:7px 4px; text-align:center; font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:0.5px; color:var(--text-muted); white-space:nowrap; cursor:pointer; user-select:none; }
+.proj-table thead th.tleft { text-align:left; padding-left:10px; }
+.proj-table thead tr.grp-row th { font-size:9.5px; letter-spacing:0.7px; padding:6px 3px;
+  background:var(--bg-muted); border-bottom:1px solid var(--border); cursor:default; }
+.proj-table thead tr.grp-row th.proj-grp { color:var(--action-green-dark); border-bottom:2px solid var(--action-green); }
+.proj-table thead tr.grp-row th.list-grp { color:var(--text); border-bottom:2px solid var(--text-muted); }
+.proj-table thead th .arr { font-size:8px; margin-left:3px; color:var(--action-green-dark); }
+.proj-table tbody td { padding:9px 4px; border-bottom:1px solid var(--border); vertical-align:middle;
+  text-align:center; font-variant-numeric: tabular-nums; font-size:13px; }
+.proj-table tbody td.tleft { text-align:left; padding-left:10px; }
+.proj-table tbody tr:hover { background:#fafaf7; }
+.proj-table tbody tr:last-child td { border-bottom:none; }
+th.grp-divider-left, td.grp-divider-left { border-left:1px solid var(--border); }
+.proj-num { font-weight:700; color:var(--text-muted); font-size:11px; }
+.proj-name { font-weight:800; font-size:13px; display:block; line-height:1.2; }
+.proj-sub { font-size:10.5px; color:var(--text-muted); font-weight:500; display:block; margin-top:2px; }
+.cell-odds { font-weight:800; font-family:"SF Mono", Menlo, monospace; font-size:12.5px; }
+.cell-pct { font-weight:600; font-size:12px; color:var(--text); }
+.cell-pct-muted { font-weight:600; font-size:11.5px; color:var(--text-muted); }
+.edge-pill { font-weight:800; white-space:nowrap; border-radius:4px; padding:3px 6px; display:inline-block;
+  min-width:52px; font-family:"SF Mono", Menlo, monospace; font-size:11px; }
+.edge-pill.strong-pos { background: var(--pos-soft); color: var(--pos-strong); }
+.edge-pill.pos { color: var(--action-green-dark); }
+.edge-pill.neutral { background:#efebe2; color: var(--text-muted); }
+.edge-pill.neg { color: var(--neg); }
+.edge-pill.strong-neg { background: var(--neg-soft); color: var(--neg-strong); }
+@media (max-width:520px) {
+  .proj-section { padding:10px 6px 12px; }
+  .proj-table tbody td, .proj-table thead th { padding:7px 2px; font-size:11px; }
+  .proj-name { font-size:11.5px; } .cell-odds { font-size:11px; }
+  .edge-pill { min-width:42px; font-size:10px; padding:2px 4px; }
+}
+</style>
+</head>
+<body>
+<div class="ff-widget">
+  <div class="ff-header">
+    <div class="ff-brand">
+      <span class="ff-brand-text">ACTION</span>
+      <span class="ff-brand-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"></polyline></svg></span>
+    </div>
+    <div class="ff-title">2026 Home Run Derby · Model vs. Market</div>
+    <div class="ff-subtitle">Monday, July 13, 2026 · Citizens Bank Park, Philadelphia</div>
+    <div class="ff-byline-header">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+    <div class="ff-odds-status"><span class="dot"></span>Best Available Odds</div>
+  </div>
+
+  <div class="proj-section">
+    <div class="proj-subtabs" id="tabs">
+      <button class="proj-subtab active" data-tab="champ">Champion</button>
+      <button class="proj-subtab" data-tab="final">Make Finals</button>
+      <button class="proj-subtab" data-tab="semi">Make Semis</button>
+    </div>
+    <div class="proj-scroll"><table class="proj-table" id="board">
+      <colgroup>
+        <col style="width:30px"><col>
+        <col style="width:74px"><col style="width:76px">
+        <col style="width:76px"><col style="width:74px">
+        <col style="width:78px">
+      </colgroup>
+      <thead>
+        <tr id="hdr">
+          <th data-k="i">#</th><th class="tleft" data-k="name">Player</th>
+          <th class="grp-divider-left" data-k="proj">Proj %<span class="arr" id="a-proj"></span></th>
+          <th data-k="fair">Fair Odds<span class="arr" id="a-fair"></span></th>
+          <th class="grp-divider-left" data-k="mkt">Mkt Odds<span class="arr" id="a-mkt"></span></th>
+          <th data-k="imp">Mkt %<span class="arr" id="a-imp"></span></th>
+          <th class="grp-divider-left" data-k="edge">Edge<span class="arr" id="a-edge"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+// name, hand, team, [champProj, champOdds], [finalProj, finalOdds], [semiProj, semiOdds]
+const FIELD = [
+  ["Junior Caminero","R","TB",   [22.4, 480], [39.1, 220], [66.7, -145]],
+  ["Jac Caglianone","L","KC",    [16.4, 700], [31.2, 250], [57.8, -105]],
+  ["Jordan Walker","R","STL",    [16.3, 750], [31.1, 280], [58.6, -125]],
+  ["Munetaka Murakami","L","CWS",[14.1, 500], [28.2, 250], [54.9, -145]],
+  ["Kyle Schwarber","L","PHI",   [12.5, 340], [25.9, 140], [52.8, -185]],
+  ["Bryce Harper","L","PHI",     [ 6.3, 850], [15.3, 380], [38.0, -115]],
+  ["Ben Rice","L","NYY",         [ 6.2, 900], [14.6, 400], [34.7,  120]],
+  ["Willson Contreras","R","BOS",[ 5.8,1300], [14.6, 525], [36.4,  200]],
+];
+const TAB_IDX = { champ: 3, final: 4, semi: 5 };
+const NORM = { champ: 100, final: 200, semi: 400 };   // de-vig target (1 winner / 2 finalists / 4 semifinalists)
+
+let tab = "champ";
+let sortK = "proj", sortDir = -1;
+
+const fmtOdds = o => o > 0 ? "+" + o : String(o);
+const fairFromPct = p => p >= 50 ? -Math.round(100*p/(100-p)) : Math.round(100*(100-p)/p);
+const decFromOdds = o => o > 0 ? 1 + o/100 : 1 + 100/(-o);
+const edgeClass = e => e >= 4 ? "strong-pos" : e > 1 ? "pos" : e <= -4 ? "strong-neg" : e < -1 ? "neg" : "neutral";
+
+function rowsFor(t) {
+  const k = TAB_IDX[t];
+  const rawImp = FIELD.map(f => 100 / decFromOdds(f[k][1]));
+  const scale = NORM[t] / rawImp.reduce((a,b) => a+b, 0);
+  return FIELD.map((f,i) => {
+    const [proj, mkt] = f[k];
+    const imp = rawImp[i] * scale;
+    return { i:i+1, name:f[0], hand:f[1], team:f[2], proj, fair: fairFromPct(proj), mkt, imp, edge: proj - imp };
+  });
+}
+
+function render() {
+  const rows = rowsFor(tab);
+  rows.sort((a,b) => {
+    const va = a[sortK], vb = b[sortK];
+    if (typeof va === "string") return sortDir * va.localeCompare(vb);
+    return sortDir * (va - vb);
+  });
+  document.getElementById("tbody").innerHTML = rows.map((r,idx) => `<tr>
+      <td><span class="proj-num">${idx+1}</span></td>
+      <td class="tleft"><span class="proj-name">${r.name}</span><span class="proj-sub">${r.team} · Bats ${r.hand}</span></td>
+      <td class="grp-divider-left"><span class="cell-pct">${r.proj.toFixed(1)}%</span></td>
+      <td><span class="cell-odds">${fmtOdds(r.fair)}</span></td>
+      <td class="grp-divider-left"><span class="cell-odds">${fmtOdds(r.mkt)}</span></td>
+      <td><span class="cell-pct-muted">${r.imp.toFixed(1)}%</span></td>
+      <td class="grp-divider-left"><span class="edge-pill ${edgeClass(r.edge)}">${r.edge>0?"+":""}${r.edge.toFixed(1)}%</span></td>
+    </tr>`).join("");
+
+  document.querySelectorAll("#hdr .arr").forEach(a => a.textContent = "");
+  if (sortK !== "i" && sortK !== "name") {
+    const arr = document.getElementById("a-" + sortK);
+    if (arr) arr.textContent = sortDir < 0 ? "▼" : "▲";
+  }
+}
+
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest(".proj-subtab"); if (!b) return;
+  document.querySelectorAll(".proj-subtab").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  tab = b.dataset.tab;
+  render();
+});
+document.getElementById("hdr").addEventListener("click", e => {
+  const th = e.target.closest("th"); if (!th || !th.dataset.k || th.dataset.k === "i") return;
+  const k = th.dataset.k;
+  if (sortK === k) sortDir *= -1; else { sortK = k; sortDir = (k === "name") ? 1 : -1; }
+  render();
+});
+render();
+</script>
+</body>
+</html>
