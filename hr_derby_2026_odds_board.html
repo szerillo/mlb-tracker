@@ -113,7 +113,6 @@ th.grp-divider-left, td.grp-divider-left { border-left:1px solid var(--border); 
     <div class="ff-title">2026 Home Run Derby · Model vs. Market</div>
     <div class="ff-subtitle">Monday, July 13, 2026 · Citizens Bank Park, Philadelphia</div>
     <div class="ff-byline-header">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
-    <div class="ff-odds-status"><span class="dot"></span>Best Available Odds</div>
   </div>
 
   <div class="proj-section">
@@ -157,7 +156,6 @@ const FIELD = [
   ["Willson Contreras","R","BOS",[ 5.8,1300], [14.6, 525], [36.4,  200]],
 ];
 const TAB_IDX = { champ: 3, final: 4, semi: 5 };
-const NORM = { champ: 100, final: 200, semi: 400 };   // de-vig target (1 winner / 2 finalists / 4 semifinalists)
 
 let tab = "champ";
 let sortK = "proj", sortDir = -1;
@@ -169,11 +167,9 @@ const edgeClass = e => e >= 4 ? "strong-pos" : e > 1 ? "pos" : e <= -4 ? "strong
 
 function rowsFor(t) {
   const k = TAB_IDX[t];
-  const rawImp = FIELD.map(f => 100 / decFromOdds(f[k][1]));
-  const scale = NORM[t] / rawImp.reduce((a,b) => a+b, 0);
   return FIELD.map((f,i) => {
     const [proj, mkt] = f[k];
-    const imp = rawImp[i] * scale;
+    const imp = 100 / decFromOdds(mkt);   // straight implied from listed odds
     return { i:i+1, name:f[0], hand:f[1], team:f[2], proj, fair: fairFromPct(proj), mkt, imp, edge: proj - imp };
   });
 }
