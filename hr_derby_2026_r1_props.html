@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>2026 Home Run Derby · Round 1 &amp; Distance Props</title>
+<style>
+:root {
+  color-scheme: light only;
+  --bg: #ffffff;
+  --bg-muted: #f4f1ec;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e5e1d8;
+  --header-bg: #0e1116;
+  --header-bg-2: #1a1f28;
+  --action-green: #11c75c;
+  --action-green-dark: #0a8842;
+  --pos-soft: #d4f5e2;
+  --pos-strong: #0a6b35;
+  --neg: #d63636;
+  --neg-soft: #fbdada;
+  --neg-strong: #8a1818;
+}
+html, body { background:#fff; margin:0; padding:0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+* { box-sizing: border-box; }
+body { color: var(--text); line-height:1.4; font-size:13px; }
+.ff-widget { max-width: 900px; margin: 0 auto; background: var(--bg); border-radius: 8px;
+  overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.ff-header { position: relative; background: linear-gradient(135deg, var(--header-bg) 0%, var(--header-bg-2) 100%);
+  color:#fff; padding: 18px 20px 14px; text-align:center; border-bottom: 3px solid var(--action-green); }
+.ff-title { font-size:22px; font-weight:800; margin:0 0 3px; letter-spacing:-0.3px; }
+.ff-subtitle { font-size:12px; opacity:0.78; margin:0; font-weight:500; }
+.ff-byline-header { font-size:11px; margin-top:4px; opacity:0.88; }
+.ff-byline-header a { color:#fff; text-decoration:none; font-weight:700; }
+.ff-brand { position:absolute; top:16px; right:18px; display:inline-flex; align-items:center; gap:5px; }
+.ff-brand-text { font-weight:900; font-size:12px; letter-spacing:-0.2px; color:#fff; }
+.ff-brand-check { width:15px; height:15px; border-radius:50%; background:var(--action-green);
+  display:inline-flex; align-items:center; justify-content:center; }
+.ff-brand-check svg { width:10px; height:10px; }
+@media (max-width:600px) {
+  .ff-brand { position: static; justify-content:center; margin-bottom:8px; }
+  .ff-header { padding:14px 12px; }
+  .ff-title { font-size:17px; }
+}
+.proj-section { padding: 16px 18px 20px; }
+.proj-subtabs { display:flex; background: var(--bg-muted); border:1px solid var(--border);
+  border-bottom:none; border-radius:5px 5px 0 0; overflow:hidden; }
+.proj-subtab { flex:1; padding:10px 6px; text-align:center; font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:0.7px; cursor:pointer; color:var(--text-muted);
+  background:var(--bg-muted); border:none; border-bottom:3px solid transparent; font-family:inherit; }
+.proj-subtab:hover { color: var(--text); }
+.proj-subtab.active { background:var(--bg); color:var(--text); border-bottom-color: var(--action-green); }
+
+.proj-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff;
+  border:1px solid var(--border); border-top:none; table-layout:fixed; }
+.proj-table thead th { background: var(--bg-muted); border-bottom:2px solid var(--border);
+  padding:7px 4px; text-align:center; font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:0.5px; color:var(--text-muted); white-space:nowrap; cursor:pointer; user-select:none; }
+.proj-table thead th.tleft { text-align:left; padding-left:10px; }
+.proj-table tbody td { padding:9px 4px; border-bottom:1px solid var(--border); vertical-align:middle;
+  text-align:center; font-variant-numeric: tabular-nums; font-size:13px; }
+.proj-table tbody td.tleft { text-align:left; padding-left:10px; }
+.proj-table tbody tr:hover { background:#fafaf7; }
+.proj-table tbody tr:last-child td { border-bottom:none; }
+th.grp-divider-left, td.grp-divider-left { border-left:1px solid var(--border); }
+.proj-num { font-weight:700; color:var(--text-muted); font-size:11px; }
+.proj-name { font-weight:800; font-size:13px; display:block; line-height:1.2; }
+.proj-sub { font-size:10.5px; color:var(--text-muted); font-weight:500; display:block; margin-top:2px; }
+.cell-odds { font-weight:800; font-family:"SF Mono", Menlo, monospace; font-size:12.5px; }
+.cell-pct { font-weight:600; font-size:12px; color:var(--text); }
+.cell-pct-muted { font-weight:600; font-size:11.5px; color:var(--text-muted); }
+.edge-pill { font-weight:800; white-space:nowrap; border-radius:4px; padding:3px 6px; display:inline-block;
+  min-width:52px; font-family:"SF Mono", Menlo, monospace; font-size:11px; }
+.edge-pill.strong-pos { background: var(--pos-soft); color: var(--pos-strong); }
+.edge-pill.pos { color: var(--action-green-dark); }
+.edge-pill.neutral { background:#efebe2; color: var(--text-muted); }
+.edge-pill.neg { color: var(--neg); }
+.edge-pill.strong-neg { background: var(--neg-soft); color: var(--neg-strong); }
+.side-tag { font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:2px; }
+.side-tag.over { color: var(--action-green-dark); }
+.side-tag.under { color: #1b4fb0; }
+
+.grid-table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--border);
+  border-top:none; table-layout:fixed; font-variant-numeric: tabular-nums; }
+.grid-table th { background: var(--bg-muted); border:1px solid var(--border); border-top:none;
+  padding:6px 2px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px;
+  color:var(--text-muted); white-space:nowrap; }
+.grid-table th.rowh { text-align:right; padding-right:7px; color:var(--text); font-size:10px; }
+.grid-table td { border:1px solid var(--border); padding:5px 1px; text-align:center; vertical-align:middle; height:46px; }
+.grid-table td.diag { background:#efebe2; }
+.gcell-odds { font-weight:800; font-family:"SF Mono", Menlo, monospace; font-size:11.5px; display:block; line-height:1.25; }
+.gcell-edge { font-size:9.5px; font-weight:700; font-family:"SF Mono", Menlo, monospace; display:block;
+  color:#a9a294; line-height:1.3; }
+td.ev { background: var(--pos-soft); }
+td.ev .gcell-odds, td.ev .gcell-edge { color: var(--pos-strong); }
+.legend { display:flex; gap:14px; justify-content:center; padding:9px 4px 0; font-size:10.5px; color:var(--text-muted); font-weight:600; flex-wrap:wrap; }
+.legend .sw { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:-1px; margin-right:5px; }
+.evlist { padding:12px 2px 0; }
+.evlist-title { font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.9px;
+  color:var(--text-muted); margin-bottom:7px; }
+.ev-chip { display:inline-block; background:var(--pos-soft); color:var(--pos-strong); font-weight:800;
+  border-radius:4px; padding:4px 8px; margin:0 6px 6px 0; font-size:11px; }
+.ev-chip .odds { font-family:"SF Mono", Menlo, monospace; }
+@media (max-width:560px) {
+  .proj-section { padding:10px 4px 14px; }
+  .proj-table tbody td, .proj-table thead th { padding:7px 2px; font-size:11px; }
+  .proj-name { font-size:11.5px; } .cell-odds { font-size:11px; }
+  .edge-pill { min-width:42px; font-size:10px; padding:2px 4px; }
+  .grid-table td { height:40px; padding:3px 0; }
+  .gcell-odds { font-size:9.5px; } .gcell-edge { font-size:8px; }
+  .grid-table th { font-size:8px; padding:4px 1px; }
+  .grid-table th.rowh { font-size:8.5px; padding-right:3px; }
+  .proj-subtab { font-size:9px; letter-spacing:0.4px; padding:8px 2px; }
+}
+</style>
+</head>
+<body>
+<div class="ff-widget">
+  <div class="ff-header">
+    <div class="ff-brand">
+      <span class="ff-brand-text">ACTION</span>
+      <span class="ff-brand-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"></polyline></svg></span>
+    </div>
+    <div class="ff-title">2026 Home Run Derby · Round 1 &amp; Distance Props</div>
+    <div class="ff-subtitle">Monday, July 13, 2026 · Citizens Bank Park, Philadelphia</div>
+    <div class="ff-byline-header">By <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener">@SeanZerillo</a></div>
+  </div>
+
+  <div class="proj-section">
+    <div class="proj-subtabs" id="tabs">
+      <button class="proj-subtab active" data-tab="leader">R1 Leader</button>
+      <button class="proj-subtab" data-tab="longest">Longest HR</button>
+      <button class="proj-subtab" data-tab="totals">R1 Totals</button>
+      <button class="proj-subtab" data-tab="h2h">R1 H2H</button>
+    </div>
+    <div id="content"></div>
+    <div class="legend" id="legend"></div>
+    <div class="evlist" id="evlist"></div>
+  </div>
+</div>
+
+<script>
+const P = ["Junior Caminero","Jac Caglianone","Jordan Walker","Munetaka Murakami","Kyle Schwarber","Bryce Harper","Ben Rice","Willson Contreras"];
+const META = { "Junior Caminero":["TB","R"],"Jac Caglianone":["KC","L"],"Jordan Walker":["STL","R"],
+  "Munetaka Murakami":["CWS","L"],"Kyle Schwarber":["PHI","L"],"Bryce Harper":["PHI","L"],
+  "Ben Rice":["NYY","L"],"Willson Contreras":["BOS","R"] };
+const AB = { "Junior Caminero":"CAM","Jac Caglianone":"CAG","Jordan Walker":"WLK","Munetaka Murakami":"MUR",
+  "Kyle Schwarber":"SCH","Bryce Harper":"HAR","Ben Rice":"RIC","Willson Contreras":"CON" };
+const LAST = n => n.split(" ").slice(-1)[0];
+
+// ---- model outputs (300k-sim blended tournament) ----
+const MODEL = {
+  "Junior Caminero":   { leader:20.2, longest:26.6, exp:10.1, line:9.5,  pover:57.4 },
+  "Jac Caglianone":    { leader:16.0, longest: 4.5, exp: 9.7, line:9.5,  pover:51.2 },
+  "Jordan Walker":     { leader:15.4, longest:21.0, exp: 9.6, line:9.5,  pover:50.2 },
+  "Munetaka Murakami": { leader:14.1, longest: 7.4, exp: 9.5, line:9.5,  pover:47.8 },
+  "Kyle Schwarber":    { leader:12.5, longest:23.3, exp: 9.3, line:10.5, pover:30.9 },
+  "Bryce Harper":      { leader: 7.3, longest:10.5, exp: 8.4, line:8.5,  pover:46.5 },
+  "Ben Rice":          { leader: 7.8, longest: 0.3, exp: 8.5, line:9.5,  pover:34.0 },
+  "Willson Contreras": { leader: 6.7, longest: 6.4, exp: 8.3, line:8.5,  pover:45.1 },
+};
+// H2H: P(row beats col | no tie), %
+const H2H_P = {
+"Junior Caminero":{"Ben Rice":67.9,"Jac Caglianone":54.9,"Willson Contreras":70.2,"Bryce Harper":69.3,"Jordan Walker":55.5,"Kyle Schwarber":59.6,"Munetaka Murakami":57.4},
+"Ben Rice":{"Junior Caminero":32.1,"Jac Caglianone":36.6,"Willson Contreras":52.7,"Bryce Harper":51.6,"Jordan Walker":37.2,"Kyle Schwarber":41.2,"Munetaka Murakami":39.0},
+"Jac Caglianone":{"Junior Caminero":45.1,"Ben Rice":63.4,"Willson Contreras":65.8,"Bryce Harper":64.8,"Jordan Walker":50.7,"Kyle Schwarber":54.8,"Munetaka Murakami":52.6},
+"Willson Contreras":{"Junior Caminero":29.8,"Ben Rice":47.3,"Jac Caglianone":34.2,"Bryce Harper":48.9,"Jordan Walker":34.7,"Kyle Schwarber":38.7,"Munetaka Murakami":36.4},
+"Bryce Harper":{"Junior Caminero":30.7,"Ben Rice":48.4,"Jac Caglianone":35.2,"Willson Contreras":51.1,"Jordan Walker":35.7,"Kyle Schwarber":39.7,"Munetaka Murakami":37.5},
+"Jordan Walker":{"Junior Caminero":44.5,"Ben Rice":62.8,"Jac Caglianone":49.3,"Willson Contreras":65.3,"Bryce Harper":64.3,"Kyle Schwarber":54.2,"Munetaka Murakami":51.9},
+"Kyle Schwarber":{"Junior Caminero":40.4,"Ben Rice":58.8,"Jac Caglianone":45.2,"Willson Contreras":61.3,"Bryce Harper":60.3,"Jordan Walker":45.8,"Munetaka Murakami":52.3},
+"Munetaka Murakami":{"Junior Caminero":42.6,"Ben Rice":61.0,"Jac Caglianone":47.4,"Willson Contreras":63.6,"Bryce Harper":62.5,"Jordan Walker":48.1,"Kyle Schwarber":47.7}};
+
+// ---- market odds ----
+const ODDS_LEADER = { "Kyle Schwarber":340,"Junior Caminero":500,"Munetaka Murakami":550,"Jac Caglianone":550,
+  "Jordan Walker":650,"Bryce Harper":800,"Ben Rice":950,"Willson Contreras":1100 };
+const ODDS_LONGEST = { "Kyle Schwarber":300,"Junior Caminero":350,"Jordan Walker":450,"Jac Caglianone":450,
+  "Munetaka Murakami":650,"Willson Contreras":1200,"Bryce Harper":1200,"Ben Rice":2000 };
+const ODDS_TOTALS = { // over, under at MODEL[name].line
+  "Junior Caminero":[-125,105],"Ben Rice":[110,-130],"Jac Caglianone":[-115,-105],"Willson Contreras":[-110,-110],
+  "Bryce Harper":[-125,105],"Jordan Walker":[110,-130],"Kyle Schwarber":[-110,-110],"Munetaka Murakami":[-110,-110] };
+// H2H odds: [rowPlayer, colPlayer, rowOdds, colOdds]
+const H2H_ODDS = [
+ ["Bryce Harper","Ben Rice",-115,-105],
+ ["Jac Caglianone","Ben Rice",-165,135],
+ ["Jordan Walker","Ben Rice",-135,110],
+ ["Munetaka Murakami","Ben Rice",-150,125],
+ ["Ben Rice","Willson Contreras",-115,-105],
+ ["Jac Caglianone","Bryce Harper",-150,125],
+ ["Jac Caglianone","Jordan Walker",-120,100],
+ ["Jac Caglianone","Munetaka Murakami",-110,-105],
+ ["Jac Caglianone","Willson Contreras",-170,140],
+ ["Jordan Walker","Bryce Harper",-135,110],
+ ["Munetaka Murakami","Jordan Walker",-115,-105],
+ ["Junior Caminero","Ben Rice",-160,130],
+ ["Junior Caminero","Bryce Harper",-155,130],
+ ["Junior Caminero","Jac Caglianone",-110,-110],
+ ["Junior Caminero","Jordan Walker",-125,105],
+ ["Junior Caminero","Munetaka Murakami",-120,100],
+ ["Junior Caminero","Willson Contreras",-170,140],
+ ["Kyle Schwarber","Ben Rice",-200,160],
+ ["Kyle Schwarber","Bryce Harper",-200,160],
+ ["Kyle Schwarber","Jac Caglianone",-145,120],
+ ["Kyle Schwarber","Jordan Walker",-165,135],
+ ["Kyle Schwarber","Junior Caminero",-145,120],
+ ["Kyle Schwarber","Munetaka Murakami",-155,130],
+ ["Kyle Schwarber","Willson Contreras",-225,180],
+ ["Munetaka Murakami","Bryce Harper",-140,115],
+ ["Bryce Harper","Willson Contreras",-120,100],
+ ["Jordan Walker","Willson Contreras",-145,120],
+ ["Munetaka Murakami","Willson Contreras",-155,130]];
+const H2H_MAP = {};
+H2H_ODDS.forEach(([a,b,oa,ob]) => { H2H_MAP[a+"|"+b]=oa; H2H_MAP[b+"|"+a]=ob; });
+
+const dec = o => o > 0 ? 1 + o/100 : 1 + 100/(-o);
+const imp = o => 100/dec(o);
+const fmt = o => o > 0 ? "+" + o : String(o);
+const fairFromPct = p => p >= 50 ? -Math.round(100*p/(100-p)) : Math.round(100*(100-p)/p);
+const eCls = e => e >= 4 ? "strong-pos" : e > 1 ? "pos" : e <= -4 ? "strong-neg" : e < -1 ? "neg" : "neutral";
+
+let tab = "leader", sortK = "edge", sortDir = -1;
+
+function boardRows(oddsMap, key) {
+  return P.map((nm,i) => {
+    const proj = MODEL[nm][key], mkt = oddsMap[nm], mi = imp(mkt);
+    return { name:nm, proj, fair: fairFromPct(proj), mkt, imp:mi, edge: proj-mi };
+  });
+}
+
+function renderBoard(oddsMap, key) {
+  let rows = boardRows(oddsMap, key);
+  rows.sort((a,b) => typeof a[sortK]==="string" ? sortDir*a[sortK].localeCompare(b[sortK]) : sortDir*(a[sortK]-b[sortK]));
+  let h = `<table class="proj-table"><colgroup><col style="width:30px"><col>
+    <col style="width:74px"><col style="width:76px"><col style="width:76px"><col style="width:74px"><col style="width:78px"></colgroup>
+    <thead><tr>
+      <th>#</th><th class="tleft" data-k="name">Player</th>
+      <th class="grp-divider-left" data-k="proj">Proj %</th><th data-k="fair">Fair Odds</th>
+      <th class="grp-divider-left" data-k="mkt">Mkt Odds</th><th data-k="imp">Mkt %</th>
+      <th class="grp-divider-left" data-k="edge">Edge</th></tr></thead><tbody>`;
+  rows.forEach((r,idx) => {
+    h += `<tr><td><span class="proj-num">${idx+1}</span></td>
+      <td class="tleft"><span class="proj-name">${r.name}</span><span class="proj-sub">${META[r.name][0]} · Bats ${META[r.name][1]}</span></td>
+      <td class="grp-divider-left"><span class="cell-pct">${r.proj.toFixed(1)}%</span></td>
+      <td><span class="cell-odds">${fmt(r.fair)}</span></td>
+      <td class="grp-divider-left"><span class="cell-odds">${fmt(r.mkt)}</span></td>
+      <td><span class="cell-pct-muted">${r.imp.toFixed(1)}%</span></td>
+      <td class="grp-divider-left"><span class="edge-pill ${eCls(r.edge)}">${r.edge>0?"+":""}${r.edge.toFixed(1)}%</span></td></tr>`;
+  });
+  return h + "</tbody></table>";
+}
+
+function renderTotals() {
+  let rows = P.map(nm => {
+    const m = MODEL[nm], [oO,oU] = ODDS_TOTALS[nm];
+    const eO = m.pover - imp(oO), eU = (100-m.pover) - imp(oU);
+    const side = eO >= eU ? "Over" : "Under";
+    const edge = Math.max(eO,eU), sOdds = side==="Over"?oO:oU;
+    return { name:nm, exp:m.exp, line:m.line, oO, oU, pover:m.pover, side, sOdds, edge };
+  });
+  rows.sort((a,b) => sortDir*(a[sortK==="edge"?"edge":sortK] - b[sortK==="edge"?"edge":sortK]) || 0);
+  let h = `<table class="proj-table"><colgroup><col style="width:30px"><col>
+    <col style="width:64px"><col style="width:54px"><col style="width:66px"><col style="width:66px"><col style="width:64px"><col style="width:96px"></colgroup>
+    <thead><tr>
+      <th>#</th><th class="tleft">Player</th>
+      <th class="grp-divider-left" data-k="exp">Proj HR</th><th data-k="line">Line</th>
+      <th class="grp-divider-left">Over</th><th>Under</th>
+      <th class="grp-divider-left" data-k="pover">Over %</th><th data-k="edge">Play · Edge</th></tr></thead><tbody>`;
+  rows.forEach((r,idx) => {
+    const play = r.edge > 0.5
+      ? `<span class="side-tag ${r.side.toLowerCase()}">${r.side} ${r.line} (${fmt(r.sOdds)})</span><span class="edge-pill ${eCls(r.edge)}">+${r.edge.toFixed(1)}%</span>`
+      : `<span class="edge-pill neutral">no play</span>`;
+    h += `<tr><td><span class="proj-num">${idx+1}</span></td>
+      <td class="tleft"><span class="proj-name">${r.name}</span><span class="proj-sub">${META[r.name][0]} · Bats ${META[r.name][1]}</span></td>
+      <td class="grp-divider-left"><span class="cell-pct">${r.exp.toFixed(1)}</span></td>
+      <td><span class="cell-pct-muted">${r.line}</span></td>
+      <td class="grp-divider-left"><span class="cell-odds">${fmt(r.oO)}</span></td>
+      <td><span class="cell-odds">${fmt(r.oU)}</span></td>
+      <td class="grp-divider-left"><span class="cell-pct-muted">${r.pover.toFixed(1)}%</span></td>
+      <td>${play}</td></tr>`;
+  });
+  return h + "</tbody></table>";
+}
+
+function renderH2H() {
+  let h = '<table class="grid-table"><colgroup><col style="width:66px">' + P.map(()=>'<col>').join("") + '</colgroup>';
+  h += '<tr><th>Beats ▶</th>' + P.map(p=>`<th title="${p}">${AB[p]}</th>`).join("") + '</tr>';
+  P.forEach((r,i) => {
+    h += `<tr><th class="rowh" title="${r}">${LAST(r)}</th>`;
+    P.forEach((c,j) => {
+      if (i===j) { h += '<td class="diag"></td>'; return; }
+      const o = H2H_MAP[r+"|"+c];
+      if (o === undefined) { h += '<td class="diag"></td>'; return; }
+      const e = H2H_P[r][c] - imp(o);
+      h += `<td class="${e>0.15?"ev":""}" title="${r} most R1 HR vs ${c} · model ${H2H_P[r][c].toFixed(1)}% (ties push) · implied ${imp(o).toFixed(1)}%">` +
+        `<span class="gcell-odds">${fmt(o)}</span><span class="gcell-edge">${e>0?"+":""}${e.toFixed(1)}%</span></td>`;
+    });
+    h += '</tr>';
+  });
+  return h + '</table>';
+}
+
+function render() {
+  const c = document.getElementById("content");
+  const lg = document.getElementById("legend");
+  const ev = document.getElementById("evlist");
+  lg.innerHTML = ""; ev.innerHTML = "";
+  if (tab === "leader") c.innerHTML = renderBoard(ODDS_LEADER, "leader");
+  else if (tab === "longest") c.innerHTML = renderBoard(ODDS_LONGEST, "longest");
+  else if (tab === "totals") c.innerHTML = renderTotals();
+  else {
+    c.innerHTML = renderH2H();
+    lg.innerHTML = `<span><span class="sw" style="background:var(--pos-soft); border:1px solid #b5e6c8;"></span>+EV at listed odds</span>` +
+      `<span>cell = row's price to out-homer column in R1 · ties push</span>`;
+  }
+  // header sort hooks (boards + totals)
+  c.querySelectorAll("thead th[data-k]").forEach(th => th.addEventListener("click", () => {
+    const k = th.dataset.k;
+    if (sortK === k) sortDir *= -1; else { sortK = k; sortDir = (k==="name")?1:-1; }
+    render();
+  }));
+}
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest(".proj-subtab"); if (!b) return;
+  document.querySelectorAll(".proj-subtab").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  tab = b.dataset.tab; sortK = "edge"; sortDir = -1;
+  render();
+});
+render();
+</script>
+</body>
+</html>
