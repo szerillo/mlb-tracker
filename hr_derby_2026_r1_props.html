@@ -88,7 +88,8 @@ th.grp-divider-left, td.grp-divider-left { border-left:1px solid var(--border); 
 .grid-table th { background: var(--bg-muted); border:1px solid var(--border); border-top:none;
   padding:6px 2px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px;
   color:var(--text-muted); white-space:nowrap; }
-.grid-table th.rowh { text-align:right; padding-right:7px; color:var(--text); font-size:10px; }
+.grid-table th.rowh { text-align:right; padding-right:7px; color:var(--text); font-size:10px;
+  overflow:hidden; text-overflow:ellipsis; }
 .grid-table td { border:1px solid var(--border); padding:5px 1px; text-align:center; vertical-align:middle; height:46px; }
 .grid-table td.diag { background:#efebe2; }
 .gcell-odds { font-weight:800; font-family:"SF Mono", Menlo, monospace; font-size:11.5px; display:block; line-height:1.25; }
@@ -284,10 +285,10 @@ function renderTotals() {
 }
 
 function renderH2H() {
-  let h = '<table class="grid-table"><colgroup><col style="width:66px">' + P.map(()=>'<col>').join("") + '</colgroup>';
+  let h = '<table class="grid-table"><colgroup><col style="width:52px">' + P.map(()=>'<col>').join("") + '</colgroup>';
   h += '<tr><th>Beats ▶</th>' + P.map(p=>`<th title="${p}">${AB[p]}</th>`).join("") + '</tr>';
   P.forEach((r,i) => {
-    h += `<tr><th class="rowh" title="${r}">${LAST(r)}</th>`;
+    h += `<tr><th class="rowh" title="${r}">${AB[r]}</th>`;
     P.forEach((c,j) => {
       if (i===j) { h += '<td class="diag"></td>'; return; }
       const o = H2H_MAP[r+"|"+c];
