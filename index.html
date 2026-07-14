@@ -1194,6 +1194,10 @@
 
   /* ---- All-Star Game (one-off display) ---------------------------------- */
   .m-env-row.asg-env { grid-template-columns: 1fr 1fr; }   /* no umpire box */
+  /* ASG: stack AL over NL in Lineups / Bench / Pitching staffs. Each section is
+     then a single tall column, which is what screenshots to a clean PNG. */
+  body.asg-modal .m-lineup-grid,
+  body.asg-modal .m-split { grid-template-columns: 1fr; }
   .asg-statbar { display: inline-flex; align-items: baseline; gap: 0.35rem;
                  margin: 0.35rem 0 0.5rem; padding: 0.2rem 0.55rem; border-radius: 5px;
                  background: rgba(255,255,255,0.045); border: 1px solid var(--border); }
@@ -3530,7 +3534,16 @@ function buildShotBar(game){
   const secs=[...document.querySelectorAll('#modal-body .m-sec')];
   const byTitle=(t)=>secs.find(sx=>{const h=sx.querySelector('.m-section-header');return h&&h.textContent.toLowerCase().includes(t);});
   const matchup=document.querySelector('#modal-body .m-apx-wrap');
-  const items=[
+  // The ASG modal has different sections (no SP box, no bullpen-fatigue, no ump)
+  // — and each side is stacked AL-over-NL — so it gets its own shot list:
+  // scoreboard/projection, lineups, reserves, pitching staffs.
+  const items = isASGGame(game) ? [
+    ['Scoreboard / projection', matchup, 460, 'scoreboard'],
+    ['Weather · Park', byTitle('weather'), 900, 'env'],
+    ['Lineups', byTitle('lineup'), 700, 'lineups'],
+    ['Bench', byTitle('bench'), 700, 'reserves'],
+    ['Pitching staffs', byTitle('pitching'), 700, 'staffs'],
+  ] : [
     ['Matchup', matchup, 460, 'matchup'],
     ['Weather · Park · Umpire', byTitle('weather'), 900, 'env'],
     ['Starting Pitchers', byTitle('starting'), 940, 'sp'],
@@ -4043,6 +4056,10 @@ function teamAbbr(name) {
     "Philadelphia Phillies":"PHI","Atlanta Braves":"ATL","Washington Nationals":"WSH","Miami Marlins":"MIA",
     "Pittsburgh Pirates":"PIT","Cincinnati Reds":"CIN","Milwaukee Brewers":"MIL","St. Louis Cardinals":"STL",
     "Arizona Diamondbacks":"ARI","Colorado Rockies":"COL",
+    // All-Star Game. Without these the generic fallback takes the last word of
+    // "American League All-Stars" -> "All-Stars" -> "ALL", so BOTH sides showed
+    // the same "ALL" abbreviation.
+    "American League All-Stars":"AL","National League All-Stars":"NL",
   };
   return map[name] || name.split(" ").slice(-1)[0].slice(0,3).toUpperCase();
 }
@@ -7317,6 +7334,7 @@ async function openModal(game) {
   // All-Star Game: one-off layout. No umpire box, no SP arsenals / rolling graphs.
   // Bullpen box becomes the full 12-man staff; a combined Bench section is added.
   const _isASG = isASGGame(game);
+  document.body.classList.toggle('asg-modal', _isASG);
   const parkAbbr = hostParkAbbr(game);   // ASG -> host club (Citizens Bank Park -> PHI)
 
   body.innerHTML = `
@@ -7434,6 +7452,7 @@ async function openModal(game) {
   });
 }
 function closeModal() {
+  document.body.classList.remove('asg-modal');
   document.getElementById("modal-bg").classList.remove("active");
   document.body.style.overflow = "";
 }
