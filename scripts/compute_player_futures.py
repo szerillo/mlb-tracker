@@ -760,8 +760,10 @@ def _score_roy(pool_h, pool_p):
     war_all    = [x["talent_war"]  for x in out]
     for x in out:
         # 2026-07-14: 0.60/0.40 -> 0.45/0.55 (temper within-pool runaway rookie SPs)
-        x["score"] = (0.45 * _zscore(x["within_pool"], within_all)
-                     + 0.55 * _zscore(x["talent_war"], war_all))
+        x["score"] = (0.30 * _zscore(x["within_pool"], within_all)
+                     + 0.70 * _zscore(x["talent_war"], war_all))
+        if x.get("side") == "pit" or x.get("is_pitcher") or ((x.get("stats") or {}).get("ip") is not None):
+            x["score"] -= 0.35   # ROY voting discounts pitchers vs raw WAR
     return out
 
 
@@ -920,11 +922,15 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
     # by >= RUNAWAY_WAR_GAP, lift it to its sharp-temperature probability and
     # rescale the rest proportionally. Complements ALPHA (which fixes the broad
     # field flatness); does not fire for tight races (e.g. Witt +1.5 over Judge).
-    RUNAWAY_WAR_GAP = 2.0
+    RUNAWAY_WAR_GAP = 1.5
     if sharpen != 1.0 and len(pool) >= 2:
         lead_idx = max(range(len(pool)), key=lambda i: model_p[i])
-        wars     = [(x.get("combined_war") if x.get("combined_war") is not None else 0.0)
-                    for x in pool]
+        def _war_of(x):
+            v = x.get("combined_war")
+            if v is None: v = x.get("talent_war")
+            if v is None: v = (x.get("stats") or {}).get("war")
+            return v if v is not None else 0.0
+        wars     = [_war_of(x) for x in pool]
         lead_war = wars[lead_idx]
         rest_war = max([w for i, w in enumerate(wars) if i != lead_idx] or [0.0])
         if (lead_war - rest_war) >= RUNAWAY_WAR_GAP:
@@ -1044,7 +1050,7 @@ def main():
         cy_scored = _score_cy(cy_pool)
         out_markets[cy_key] = _render_market(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=70, alpha=1.55)
+            top_n=70, alpha=1.85)
 
         # ROY
         roy_key = f"{league}_ROY"
@@ -1053,7 +1059,7 @@ def main():
         roy_scored = _score_roy(pool_h, pool_p)
         out_markets[roy_key] = _render_market(
             roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
-            top_n=50, alpha=1.35)
+            top_n=50, alpha=1.35, sharpen=0.65)
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
