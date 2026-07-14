@@ -168,6 +168,19 @@ def main():
     if games is None:
         print("[f5_odds] fetch failed; leaving previous f5_odds.json intact")
         return 0
+
+    # Also pull TOMORROW's slate, exactly as refresh_odds.py does for full-game.
+    # Without this the F5 feed only ever carried the CURRENT ET day, so next-day
+    # F5 lines never reached the tool — and on an off-day (the All-Star break,
+    # where today has zero games and the only game is tomorrow) f5_odds.json came
+    # out completely empty, so the F5 toggle showed "No F5 ML edge / No F5 total
+    # edge" even though the books had the market hung.
+    _tom = date + datetime.timedelta(days=1)
+    _tom_games = _pull(_tom) or []
+    if _tom_games:
+        print(f"[f5_odds]  +{len(_tom_games)} next-day F5 games for {_tom.isoformat()}")
+        games += _tom_games
+
     pk_ct = sum(1 for g in games if g["game_pk"])
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
