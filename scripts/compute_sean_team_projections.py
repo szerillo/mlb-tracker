@@ -36,9 +36,10 @@ Method
                     byes (seeds 1-2 per league).
   Playoff sim       team strength REBUILT from consolidated roster rates:
                       lineup  = top 9 hitters by ROS WAR-rate (min 60 ROS PA)
-                      rotation= top 4 SP by ROS WAR-rate, weights .32/.27/.22/.19
+                      rotation= top 4 SP by ROS WAR-rate, weights .38/.28/.20/.14
                       pen     = top 7 RP in bullpens_rr order (min 5 ROS IP)
-                    Playoff RA blend: 58% rotation / 42% pen (October usage).
+                    Playoff RA blend: 55% rotation / 45% leverage-weighted pen;
+                    lineup + pen star/leverage-weighted (top arms & bats).
                     DEF + BSR ride along inside FG WAR (not double-counted).
                     Bracket: WC bo3 (all @ higher seed), DS bo5, CS bo7, WS
                     bo7 with 2-3-2 HFA to better record.
@@ -172,19 +173,25 @@ def build_strengths(pwp, pen_data, adj):
 
         hs = [(w, pa) for w, pa in hitters_by_team.get(ab, []) if pa >= 60]
         hs.sort(key=lambda x: _rate(x[0], x[1], 600), reverse=True)
-        lineup_eq = sum(_rate(w, pa, 620) for w, pa in hs[:9])
+        # 2026-07-14: star-weighted lineup — top of the order soaks up playoff
+        # PA; weights sum to 9 lineup-slots-equivalent
+        H_WTS = [1.25, 1.20, 1.15, 1.10, 1.00, 0.90, 0.85, 0.80, 0.75]
+        lineup_eq = sum(_rate(w, pa, 620) * hw for (w, pa), hw in zip(hs[:9], H_WTS))
 
         ss = [(w, ip) for w, ip in sp_by_team.get(ab, []) if ip >= 25]
         ss.sort(key=lambda x: _rate(x[0], x[1], 180), reverse=True)
-        wts = [0.32, 0.27, 0.22, 0.19]
+        wts = [0.38, 0.28, 0.20, 0.14]  # 2026-07-14: pushed top-heavier (ace matters most in October)
         rot_eq = sum(_rate(w, ip, 180) * 4 * wt for (w, ip), wt in zip(ss[:4], wts))
 
         order = {m: i for i, m in enumerate(pen_ids.get(ab, []))}
         rr = sorted([(w, ip, m) for w, ip, m in rp_by_team.get(ab, []) if ip >= 5],
                     key=lambda x: order.get(x[2], 99))
-        pen_eq = sum(_rate(w, ip, 65) for w, ip, _ in rr[:7])
+        # 2026-07-14: leverage-weighted pen — top 3 arms throw the innings
+        # that decide October games; weights sum to 7 slots-equivalent
+        P_WTS = [1.55, 1.35, 1.15, 0.90, 0.75, 0.70, 0.60]
+        pen_eq = sum(_rate(w, ip, 65) * pw for (w, ip, _), pw in zip(rr[:7], P_WTS))
 
-        playoff_war = (lineup_eq + 0.58 * rot_eq + 0.42 * pen_eq
+        playoff_war = (lineup_eq + 0.55 * rot_eq + 0.45 * pen_eq
                        + (a.get("playoff_war_adj") if a.get("playoff_war_adj") is not None
                           else (a.get("ros_war_adj") or 0.0)))
 
@@ -327,7 +334,7 @@ def main():
         "season": SEASON,
         "n_sims": N_SIMS,
         "method": ("player-level ROS WAR (depth) -> season sim; consolidated "
-                   "top-9 hitters / top-4 SP (58%) / top-7 RP (42%) -> playoff sim; "
+                   "star-weighted top-9 hitters / top-heavy top-4 SP (55%) / leverage-weighted top-7 RP (45%) -> playoff sim; "
                    "manual deadline_adjustments.json layer"),
         "teams": teams_out,
     }
