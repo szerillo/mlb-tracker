@@ -3335,14 +3335,16 @@ function apxCardHTML(g, opts){
   const gcell=l=> l?('<span class="grade '+gradeCls(l)+'">'+l+'</span>'):'<span class="gr-na">—</span>';
   const gset=(...vs)=>vs.map(v=>gcell(v)).join('');
   const sideRow=(lab,aV,hV)=>'<div class="apx-side-row"><span class="apx-side-a">'+aV+'</span><span class="apx-side-k">'+lab+'</span><span class="apx-side-h">'+hV+'</span></div>';
+  const _asgCard = (typeof isASGGame==='function') && isASGGame(g);
   const info='<div class="apx-info2">'+
     sideRow('SP', aSP, hSP)+
-    sideRow('PEN', '<span class="apx-pname">'+_apxPenTag(away)+'</span> '+_apxPenRank(aId), _apxPenRank(hId)+' <span class="apx-pname">'+_apxPenTag(home)+'</span>')+
-    '<div class="apx-side-row apx-grades-row">'+
-      '<span class="apx-side-a"><b class="apx-gteam">'+aAb+'</b>'+gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def)+'</span>'+
-      '<span class="apx-side-k">CON·POW·EYE·BSR·DEF</span>'+
-      '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
-    '</div>'+
+    (_asgCard ? '' :
+      sideRow('PEN', '<span class="apx-pname">'+_apxPenTag(away)+'</span> '+_apxPenRank(aId), _apxPenRank(hId)+' <span class="apx-pname">'+_apxPenTag(home)+'</span>')+
+      '<div class="apx-side-row apx-grades-row">'+
+        '<span class="apx-side-a"><b class="apx-gteam">'+aAb+'</b>'+gset(ga&&ga.con,ga&&ga.pow,ga&&ga.eye,ga&&ga.bsr,ga&&ga.def)+'</span>'+
+        '<span class="apx-side-k">CON·POW·EYE·BSR·DEF</span>'+
+        '<span class="apx-side-h"><b class="apx-gteam">'+hAb+'</b>'+gset(gh&&gh.con,gh&&gh.pow,gh&&gh.eye,gh&&gh.bsr,gh&&gh.def)+'</span>'+
+      '</div>')+
   '</div>';
   const f5tag=F5?'<span class="apx-lu f5">F5</span>':'';
   const projBadge='<div class="apx-projbadge">'+f5tag+luChip+'</div>';
