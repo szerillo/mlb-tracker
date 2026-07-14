@@ -5260,13 +5260,22 @@ function asgGradeBar(players, label) {
 // Bench = position reserves + additional bench, combined. Rendered through the
 // SAME renderLineupTable the starters use, so every projected stat column is
 // identical — we just hand it a synthetic "side" with no batting order.
-function renderASGBench(side, oppHand) {
+function renderASGBench(game, side, oppHand) {
   const r = asgRoster(side);
   if (!r || !r.bench?.length) return `<div class="coming-soon">No bench listed</div>`;
-  const players = r.bench.map(b => ({
-    order: null, name: b.name, pos: b.pos || "", bats: "",
-    status: "projected", flag: null, team: b.team,
-  }));
+  // MLB posts the real ASG batting order pre-game and it can differ from the
+  // projected 9 — in 2026 Ben Rice started at 1B over Willson Contreras. When a
+  // bench player gets promoted into the confirmed lineup he must NOT also show
+  // up down here, so drop anyone already batting.
+  const lg = lineupsForGame(game);
+  const starting = new Set((lg?.lineups?.[side]?.players || []).map(p => normName(p.name)));
+  const players = r.bench
+    .filter(b => !starting.has(normName(b.name)))
+    .map(b => ({
+      order: null, name: b.name, pos: b.pos || "", bats: "",
+      status: "projected", flag: null, team: b.team,
+    }));
+  if (!players.length) return `<div class="coming-soon">No bench listed</div>`;
   return renderLineupTable(
     { status: "projected", source: `${asgLeague(side)} reserves`, players },
     { expanded: true, oppHand }
@@ -5352,13 +5361,20 @@ function renderASGBenchSection(game) {
   const homeName = game.teams.home.team.name;
   const awayHand = handOfPitcher(game.teams.home.probablePitcher?.fullName);
   const homeHand = handOfPitcher(game.teams.away.probablePitcher?.fullName);
-  const benchPlayers = (side) => (asgRoster(side)?.bench || [])
-    .map(b => ({name: b.name, pos: b.pos, order: null}));
+  // Same exclusion the table uses, so the Reserves grade doesn't count a player
+  // who was actually promoted into the starting nine.
+  const benchPlayers = (side) => {
+    const lg = lineupsForGame(game);
+    const starting = new Set((lg?.lineups?.[side]?.players || []).map(p => normName(p.name)));
+    return (asgRoster(side)?.bench || [])
+      .filter(b => !starting.has(normName(b.name)))
+      .map(b => ({name: b.name, pos: b.pos, order: null}));
+  };
   const box = (side, name, hand) => `
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams[side].team.id, 22)} ${name}</h4>
         ${asgGradeBar(benchPlayers(side), "Reserves")}
-        ${renderASGBench(side, hand)}
+        ${renderASGBench(game, side, hand)}
       </div>`;
   const notes = []
     .concat(asgRoster('away')?.notes || [])
