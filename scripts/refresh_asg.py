@@ -89,8 +89,11 @@ def inject_projection(asg, pk):
             "an_event_id": None,
             "away_team": away_name, "home_team": home_name,
             "total": round(total, 2),
-            "away_wp": round((1.0 - home_wp) * 100, 1),
-            "home_wp": round(home_wp * 100, 1),
+            # NB: the sheet feed stores win prob as a FRACTION (0.562), not a
+            # percent — the card multiplies by 100 itself. Writing 55.0 here is
+            # what produced "5500.0% win".
+            "away_wp": round(1.0 - home_wp, 4),
+            "home_wp": round(home_wp, 4),
             "ml_away": ml_away, "ml_home": ml_home,
             "away_runs": None, "home_runs": None,
             "source": "static ASG projection (data/asg_2026.json)",
@@ -113,7 +116,7 @@ def inject_projection(asg, pk):
         runs = (f" ({entry['away_runs']}-{entry['home_runs']})"
                 if entry["away_runs"] is not None else "")
         print(f"[asg] {key}: total {entry['total']}, {home_lg} {ml_home:+d} "
-              f"(wp {entry['home_wp']}%){runs} -> {os.path.basename(path)}")
+              f"(wp {entry['home_wp']*100:.1f}%){runs} -> {os.path.basename(path)}")
 
 
 def main():

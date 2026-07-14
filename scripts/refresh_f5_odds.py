@@ -128,8 +128,8 @@ def _pull(date):
         teams = g.get("teams") or []
         away = next((t for t in teams if t.get("id") == g.get("away_team_id")), {})
         home = next((t for t in teams if t.get("id") == g.get("home_team_id")), {})
-        away_nm = away.get("full_name") or away.get("display_name") or ""
-        home_nm = home.get("full_name") or home.get("display_name") or ""
+        away_nm = _asg_alias(away.get("full_name") or away.get("display_name") or "")
+        home_nm = _asg_alias(home.get("full_name") or home.get("display_name") or "")
         pk = resolve_pk(away_nm, home_nm, g.get("start_time"))
 
         ml_away = best_market(g, "moneyline", side="away")
@@ -148,6 +148,18 @@ def _pull(date):
             "total": {"over": _fmt(tot_over), "under": _fmt(tot_under)},
         })
     return out
+
+
+# Action Network calls the All-Star squads "American League" / "National League";
+# MLB's schedule calls them "American League All-Stars" / "National League
+# All-Stars". The odds join is an exact (away_name, home_name) match against the
+# MLB schedule, so the ASG landed with game_pk: null and its odds/edges never
+# reached the front end. Normalize AN's names to the MLB form.
+def _asg_alias(n):
+    s = (n or "").strip()
+    if s in ("American League", "National League"):
+        return s + " All-Stars"
+    return s
 
 
 def main():
