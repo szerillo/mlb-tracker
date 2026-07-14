@@ -335,6 +335,37 @@ def main():
     for key, mode in fg_modes.items():
         fg_data[key] = fetch_fg_projection_mode(mode)
 
+    # 2026-07-14: FG blocks GH Actions runners (and the page went client-
+    # rendered). Fallback chain for any empty FG mode:
+    #   1) data/_fg_playoff_odds.json — browser-fetched snapshot committed by
+    #      the user's scheduled Chrome task (same pattern as _fg_ytd etc.)
+    #   2) previous team_projections.json — carry forward rather than wipe.
+    snap_file = REPO_ROOT / "data" / "_fg_playoff_odds.json"
+    snap = {}
+    if snap_file.exists():
+        try:
+            snap = json.loads(snap_file.read_text()).get("modes", {}) or {}
+        except Exception:
+            snap = {}
+    prev = {}
+    if OUTPUT.exists():
+        try:
+            prev = json.loads(OUTPUT.read_text()).get("teams", {}) or {}
+        except Exception:
+            prev = {}
+    for key in fg_modes:
+        if fg_data[key]:
+            continue
+        if snap.get(key):
+            fg_data[key] = snap[key]
+            print(f"  {key}: live fetch empty -> using _fg_playoff_odds.json snapshot", file=sys.stderr)
+        else:
+            carried = {a: t["projections"][key] for a, t in prev.items()
+                       if key in (t.get("projections") or {})}
+            if carried:
+                fg_data[key] = carried
+                print(f"  {key}: live fetch + snapshot empty -> carrying forward previous file", file=sys.stderr)
+
     # Stitch by team abbr
     teams_out = {}
     for abbr, (name, division) in TEAMS_META.items():
