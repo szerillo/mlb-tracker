@@ -963,7 +963,9 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
             "name":         x["player"].get("name"),
             "team_abbr":    x["player"].get("team_abbr"),
             "league":       x["player"].get("league"),
-            "pos":          _clean_pos(x.get("pos") or x["player"].get("pos")),
+            # 2026-07-14: user wants no positions on ROY leaderboards
+            "pos":          (None if "ROY" in market_key
+                             else _clean_pos(x.get("pos") or x["player"].get("pos"))),
             # combined_war set on 2-way players (Ohtani) by _mvp_pool, falls back
             # to single-source WAR otherwise.
             "p_war":        x.get("combined_war") if x.get("combined_war") is not None else _eos(x["player"], "war"),
@@ -1059,7 +1061,7 @@ def main():
         roy_scored = _score_roy(pool_h, pool_p)
         out_markets[roy_key] = _render_market(
             roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
-            top_n=50, alpha=1.35, sharpen=0.65)
+            top_n=50, alpha=1.35, sharpen=0.75)
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
