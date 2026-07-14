@@ -352,15 +352,45 @@ def get_schedule_range(start_iso: str, end_iso: str):
     out = []
     for day in d["dates"]:
         for g in day.get("games", []):
-            out.append({
+            out.append(_resolve_asg_host({
                 "game_pk": g["gamePk"],
                 "away": g["teams"]["away"]["team"]["name"],
                 "home": g["teams"]["home"]["team"]["name"],
                 "game_time": g["gameDate"],
                 "venue": g.get("venue", {}).get("name", ""),
                 "status": g.get("status", {}).get("abstractGameState", ""),
-            })
+            }))
     return out
+
+
+# ---------------------------------------------------------------------------
+# All-Star Game. The schedule lists the home team as "National League All-Stars",
+# which matches no NWS grid, no park code and no park model — so the ASG fell out
+# of the weather feed entirely (the modal showed "NWS forecast unavailable").
+# The game is played at a real stadium, so we rewrite the home team to the HOST
+# club and everything downstream (grid, park factors, v8 park constants) works.
+VENUE_HOST = {
+    "Citizens Bank Park": "Philadelphia Phillies",   # 2026 ASG
+    "Truist Park": "Atlanta Braves",
+    "Dodger Stadium": "Los Angeles Dodgers",
+    "T-Mobile Park": "Seattle Mariners",
+}
+
+
+def _resolve_asg_host(g):
+    """Rewrite an All-Star Game's home team to the club that owns the ballpark."""
+    home = g.get("home") or ""
+    if "All-Stars" not in home:
+        return g
+    host = VENUE_HOST.get(g.get("venue") or "")
+    if not host:
+        print(f"  [asg] no host club mapped for venue {g.get('venue')!r}; skipping weather")
+        return g
+    print(f"  [asg] {g.get('venue')} -> weather/park keyed to {host}")
+    g = dict(g)
+    g["home"] = host
+    g["asg"] = True
+    return g
 
 
 def get_today_schedule():
