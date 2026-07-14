@@ -150,6 +150,15 @@ def main():
     # Optional NO playoff odds snapshot (Rotowire). Falls back to empty dict
     # when the file is missing — the rest of the pipeline still emits valid
     # output, just without the playoff_no_* fields.
+    # 2026-07-14: sean player-data-driven projections (compute_sean_team_projections.py)
+    sean_data = {}
+    sean_file = REPO_ROOT / "data" / "sean_team_projections.json"
+    if sean_file.exists():
+        try:
+            sean_data = json.loads(sean_file.read_text()).get("teams", {}) or {}
+        except Exception as e:
+            print(f"[team-futures] could not load sean projections: {e}", file=sys.stderr)
+
     no_data = {}
     if NO_PLAYOFFS_FILE.exists():
         try:
@@ -284,8 +293,12 @@ def main():
             "division":     info["division"],
             "projections":  info["projections"],
             "composite":    comp,
-            "sean":         {"wins": None, "div_pct": None, "wc_pct": None,
-                             "playoff_pct": None, "ws_pct": None},
+            "sean":         ({k: (sean_data.get(abbr) or {}).get(k) for k in
+                              ("wins", "div_pct", "wc_pct", "playoff_pct",
+                               "bye_pct", "ws_pct")}
+                             if sean_data.get(abbr) else
+                             {"wins": None, "div_pct": None, "wc_pct": None,
+                              "playoff_pct": None, "ws_pct": None}),
             "market": {
                 "win_total_line":    wt.get("line"),
                 "win_total_implied": wt_implied_line,
