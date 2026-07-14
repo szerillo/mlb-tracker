@@ -1202,6 +1202,14 @@
   .asg-statbar-val { font-family: var(--mono); font-size: 1rem; font-weight: 700;
                      color: var(--text); }
   .asg-statbar-unit { color: var(--muted); font-size: 0.68rem; }
+  .asg-bench-group + .asg-bench-group { margin-top: 0.7rem; }
+  .asg-bench-hdr { display: flex; justify-content: space-between; align-items: baseline;
+                   margin: 0 0 0.25rem; color: var(--muted); font-size: 0.62rem;
+                   text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+  .asg-bench-wrc { font-family: var(--mono); font-size: 0.85rem; font-weight: 700;
+                   color: var(--text); text-transform: none; letter-spacing: 0; }
+  .asg-bench-wrc em { font-style: normal; color: var(--muted); font-size: 0.62rem;
+                      font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
   .asg-role.gsp { background: rgba(52,211,153,0.18); color: #34d399; }
   .asg-staff-table tr.asg-gamesp td { background: rgba(52,211,153,0.06); }
   .asg-staff-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -1209,6 +1217,8 @@
                         letter-spacing: 0.08em; font-weight: 600; text-align: right;
                         padding: 0.2rem 0.3rem; border-bottom: 1px solid var(--border); }
   .asg-staff-table th.l { text-align: left; }
+  /* keep the camelCase in 'wFIP' — the th rule uppercases everything. */
+  .asg-staff-table th.mixed { text-transform: none; font-size: 0.64rem; }
   .asg-staff-table td { padding: 0.24rem 0.3rem; text-align: right;
                         font-family: var(--mono); border-top: 1px solid var(--border); }
   .asg-staff-table td.l { text-align: left; font-family: inherit; }
@@ -3281,10 +3291,14 @@ function apxCardHTML(g, opts){
   let luStatus='proj';
   try{ const lg=lineupsForGame(g); const aSt=((lg&&lg.lineups&&lg.lineups.away&&lg.lineups.away.status)||'').toLowerCase(); const hSt=((lg&&lg.lineups&&lg.lineups.home&&lg.lineups.home.status)||'').toLowerCase(); if(aSt==='confirmed'&&hSt==='confirmed') luStatus='conf'; }catch(e){}
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
-  let _park=''; try{ _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(hAb))?parkFactorFor(hAb).venue:'') || ''; }catch(e){}
+  let _park=''; try{ const _pa=(typeof hostParkAbbr==='function')?hostParkAbbr(g):hAb; _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(_pa))?parkFactorFor(_pa).venue:'') || ''; }catch(e){}
   const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
   const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span></div>';
-  let pfPct=null; try{ const pf=parkFactorFor(hAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
+  // Park factor keys off the HOST park, not the nominal home club — for the ASG
+  // the "home team" is the NL All-Stars, which maps to no stadium, so the PF chip
+  // read "—". hostParkAbbr() resolves it to the actual venue (CBP -> PHI).
+  const _pfAb = (typeof hostParkAbbr==='function') ? hostParkAbbr(g) : hAb;
+  let pfPct=null; try{ const pf=parkFactorFor(_pfAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">wX</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'wX','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
@@ -5260,9 +5274,13 @@ function asgRoster(side) {
 // is meaningless for an All-Star squad — every one of these guys grades near the
 // top, so the chips all read A/A+ and carry no information. A flat average is
 // the honest summary here: avg wRC+ for hitters, avg weighted FIP for pitchers.
-function asgAvgWrc(players, oppHand) {
+function asgAvgWrc(players) {
+  // NO handedness split. In the All-Star Game the pitcher changes almost every
+  // inning, so grading a lineup "vs LHP" (or vs RHP) is arbitrary — and the swing
+  // is large: the NL nine reads 133 vs RHP but 112 vs LHP. We blend the two
+  // splits, PA-weighted by how often the hitter actually faces each hand, which
+  // is the honest overall number.
   if (!HITTERS || !players?.length) return null;
-  const oh = (oppHand || "").toUpperCase();
   let sum = 0, n = 0;
   for (const p of players) {
     const k = normName(p.name);
@@ -5270,11 +5288,26 @@ function asgAvgWrc(players, oppHand) {
     const h  = HITTERS.hitters?.[k];
     const vR = se?.wrc_vs_r ?? h?.wrc_vs_r;
     const vL = se?.wrc_vs_l ?? h?.wrc_vs_l;
-    const v = oh === "L" ? vL : oh === "R" ? vR
-            : (vR != null && vL != null ? (vR + vL) / 2 : (vR ?? vL));
+    const pr = se?.pa_vs_r, pl = se?.pa_vs_l;
+    let v = null;
+    if (vR != null && vL != null) {
+      v = (pr && pl) ? (vR * pr + vL * pl) / (pr + pl)
+                     : 0.72 * vR + 0.28 * vL;   // league PA mix when no split PAs
+    } else {
+      v = vR ?? vL;
+    }
     if (v != null) { sum += v; n++; }
   }
   return n ? Math.round(sum / n) : null;
+}
+
+// Sean's own unit wRC+ (data/asg_2026.json -> grades.wrc). Used verbatim when
+// present; falls back to the PA-weighted blend above.
+function asgUnitWrc(side, unit, players) {
+  const code = asgLeague(side);
+  const v = ASG?.grades?.[code]?.[unit];
+  if (v != null) return v;
+  return asgAvgWrc(players || []);
 }
 
 function asgAvgWfip(pitchers) {
@@ -5324,22 +5357,39 @@ function asgReserves(game, side) {
     const k = normName(p.name);
     if (starting.has(k) || seen.has(k)) continue;
     seen.add(k);
-    out.push({name: p.name, pos: p.pos || "", team: p.team, order: null});
+    // p.group is 'reserve' | 'add' on bench entries; a projected starter who got
+    // bumped out of the confirmed lineup has no group, so call him a reserve.
+    out.push({name: p.name, pos: p.pos || "", team: p.team, order: null,
+              group: p.group || "reserve"});
   }
   return out;
 }
 
-function renderASGBench(game, side, oppHand) {
-  const players = asgReserves(game, side).map(b => ({
-    order: null, name: b.name, pos: b.pos, bats: "",
-    status: "projected", flag: null, team: b.team,
-  }));
-  if (!players.length) return `<div class="coming-soon">No bench listed</div>`;
+function renderASGBench(game, side) {
+  const all = asgReserves(game, side);
+  if (!all.length) return `<div class="coming-soon">No bench listed</div>`;
+  const toRow = b => ({order: null, name: b.name, pos: b.pos, bats: "",
+                       status: "projected", flag: null, team: b.team});
+  const groups = [
+    ["Position reserves", all.filter(b => b.group !== "add")],
+    ["Additional bench",  all.filter(b => b.group === "add")],
+  ].filter(([, g]) => g.length);
+
   // expanded:false -> no Brl%/BB%/K% columns (not wanted on the bench).
-  return renderLineupTable(
-    { status: "projected", source: `${asgLeague(side)} reserves`, players },
-    { expanded: false, oppHand }
-  );
+  // oppHand omitted on purpose: the ASG has no single opposing starter to split on.
+  return groups.map(([label, g]) => `
+    <div class="asg-bench-group">
+      <div class="asg-bench-hdr">
+        <span>${label} · ${g.length}</span>
+        ${(() => {
+          const v = asgUnitWrc(side, label === "Additional bench" ? "bench_adds" : "reserves", g);
+          return v != null ? `<span class="asg-bench-wrc">${v} <em>avg wRC+</em></span>` : "";
+        })()}
+      </div>
+      ${renderLineupTable(
+        { status: "projected", source: `${asgLeague(side)} ${label}`, players: g.map(toRow) },
+        { expanded: false })}
+    </div>`).join("");
 }
 
 // Full 12-man staff, one list, starters first, each role-tagged.
@@ -5387,7 +5437,7 @@ function renderASGStaff(game, side) {
   return `<table class="asg-staff-table">
     <thead><tr>
       <th class="l">T</th><th class="l">Pitcher</th><th class="l">Role</th>
-      <th title="Weighted FIP — rolling xFIP/SIERA/xERA/botERA/projection blend (lower = better)">wFIP</th>
+      <th class="mixed" title="Weighted FIP — rolling xFIP/SIERA/xERA/botERA/projection blend (lower = better)">wFIP</th>
       <th title="K% minus BB%">K-BB</th>
       <th title="Stuff+ (100 = league average)">Stuff+</th>
     </tr></thead>
@@ -5426,9 +5476,8 @@ function modalLineupGrade(game, side) {
   if (!isASGGame(game)) return teamGradeBar(game, side, {noWrc: true});
   const lg = lineupsForGame(game);
   const players = lg?.lineups?.[side]?.players || [];
-  const oppHand = handOfPitcher(game.teams[side === 'away' ? 'home' : 'away'].probablePitcher?.fullName);
-  return asgStatBar("Starting 9", asgAvgWrc(players, oppHand), "avg wRC+",
-                    "Mean projected wRC+ of the starting nine vs the opposing starter's hand");
+  return asgStatBar("Starting 9", asgUnitWrc(side, "starters", players), "avg wRC+",
+                    "Projected wRC+ of the starting nine — hand-neutral (the ASG pitcher changes every inning)");
 }
 
 // The whole Bench section (ASG only) — reserves + additional bench, combined,
@@ -5437,21 +5486,17 @@ function renderASGBenchSection(game) {
   if (!isASGGame(game) || !ASG) return "";
   const awayName = game.teams.away.team.name;
   const homeName = game.teams.home.team.name;
-  const awayHand = handOfPitcher(game.teams.home.probablePitcher?.fullName);
-  const homeHand = handOfPitcher(game.teams.away.probablePitcher?.fullName);
-  const benchPlayers = (side) => asgReserves(game, side);
-  const box = (side, name, hand) => `
+
+  const box = (side, name) => `
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams[side].team.id, 22)} ${name}</h4>
-        ${asgStatBar("Reserves", asgAvgWrc(benchPlayers(side), hand), "avg wRC+",
-                     "Mean projected wRC+ across the reserves")}
-        ${renderASGBench(game, side, hand)}
+        ${renderASGBench(game, side)}
       </div>`;
   return `<details open class="m-sec"><summary class="m-section-header"><span>Bench</span>
       <span class="right-note">position reserves + additional bench</span></summary>
     <div class="m-lineup-grid">
-      ${box('away', awayName, awayHand)}
-      ${box('home', homeName, homeHand)}
+      ${box('away', awayName)}
+      ${box('home', homeName)}
     </div>
     </details>`;
 }
