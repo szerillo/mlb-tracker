@@ -126,6 +126,16 @@ def fetch_remaining_schedule():
     return games
 
 
+# player_war_projections uses FG-style abbrs for a few teams
+ABBR_FIX = {"WSN": "WSH", "TBR": "TB", "SDP": "SD", "SFG": "SF", "KCR": "KC",
+            "CHW": "CWS", "OAK": "ATH"}
+
+
+def _team_of(p):
+    ab = p.get("team_abbr")
+    return ABBR_FIX.get(ab, ab)
+
+
 def _rate(war, pt, per):
     if not war or not pt or pt <= 0:
         return 0.0
@@ -141,7 +151,7 @@ def build_strengths(pwp, pen_data, adj):
 
     hit_war, hitters_by_team = {}, {}
     for p in pwp["hitters"].values():
-        ab = p.get("team_abbr")
+        ab = _team_of(p)
         if ab not in LEAGUE_DIV:
             continue
         blend = ((p.get("ros") or {}).get("blend")) or {}
@@ -152,7 +162,7 @@ def build_strengths(pwp, pen_data, adj):
     sp_war, pen_war = {}, {}
     sp_by_team, rp_by_team = {}, {}
     for p in pwp["pitchers"].values():
-        ab = p.get("team_abbr")
+        ab = _team_of(p)
         if ab not in LEAGUE_DIV:
             continue
         blend = ((p.get("ros") or {}).get("blend")) or {}
