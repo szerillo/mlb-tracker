@@ -31,11 +31,89 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ROSTERS = os.path.join(REPO_ROOT, "data", "asg_2026.json")
 LINEUPS = os.path.join(REPO_ROOT, "data", "lineups.json")
 OUTPUT = os.path.join(REPO_ROOT, "data", "asg.json")
+SHEET_PROJ = os.path.join(REPO_ROOT, "data", "sheet_projections.json")
+F5_PROJ = os.path.join(REPO_ROOT, "data", "f5_projections.json")
+
+# Runs-per-point-of-win-probability. Calibrated on this season's slate: a +0.31
+# run home margin corresponds to ~2.9% of win probability, so ~0.107 runs per
+# point. Used ONLY to split a total into team runs, since the ASG projection is
+# entered as (total, moneyline) and the front-end card wants a runs-per-side.
+RUNS_PER_WP_PT = 0.107
 
 
 def load(path):
     with open(path) as f:
         return json.load(f)
+
+
+def _implied(ml):
+    """American odds -> implied probability."""
+    ml = float(ml)
+    return (-ml) / ((-ml) + 100.0) if ml < 0 else 100.0 / (ml + 100.0)
+
+
+def _fair_mirror(ml):
+    """The opposite side of a FAIR (no-vig) price: -122 -> +122."""
+    return int(round(-float(ml)))
+
+
+def inject_projection(asg, pk):
+    """Write the hand-entered ASG projection into sheet_projections.json and
+    f5_projections.json, so the scoreboard card, the F5 toggle and the edge
+    pills all light up exactly as they do for a normal game.
+
+    The ASG is never in the GAME UPLOADER sheet, so those two feeds have no row
+    for it and the card would read 'No projection yet'. We take (total, home ML)
+    from data/asg_2026.json, mirror the away price as the fair opposite, and
+    split the total into team runs using the implied win probability."""
+    proj = asg.get("projection") or {}
+    if not proj:
+        print("[asg] no projection block in asg_2026.json; skipping")
+        return
+
+    lg = asg["leagues"]
+    away_lg, home_lg = asg.get("away_league", "AL"), asg.get("home_league", "NL")
+    away_name = f"{'American' if away_lg == 'AL' else 'National'} League All-Stars"
+    home_name = f"{'American' if home_lg == 'AL' else 'National'} League All-Stars"
+
+    for key, path, split_runs in (("full", SHEET_PROJ, True), ("f5", F5_PROJ, False)):
+        p = proj.get(key)
+        if not p or p.get("total") is None or p.get("ml_home") is None:
+            continue
+        ml_home = int(p["ml_home"])
+        ml_away = _fair_mirror(ml_home)
+        home_wp = _implied(ml_home)
+        total = float(p["total"])
+
+        entry = {
+            "an_event_id": None,
+            "away_team": away_name, "home_team": home_name,
+            "total": round(total, 2),
+            "away_wp": round((1.0 - home_wp) * 100, 1),
+            "home_wp": round(home_wp * 100, 1),
+            "ml_away": ml_away, "ml_home": ml_home,
+            "away_runs": None, "home_runs": None,
+            "source": "static ASG projection (data/asg_2026.json)",
+        }
+        if split_runs:
+            margin = (home_wp * 100 - 50.0) * RUNS_PER_WP_PT   # home run margin
+            entry["home_runs"] = round((total + margin) / 2.0, 2)
+            entry["away_runs"] = round((total - margin) / 2.0, 2)
+
+        try:
+            doc = load(path)
+        except FileNotFoundError:
+            print(f"[asg] {os.path.basename(path)} missing; skipping {key} projection")
+            continue
+        games = doc.setdefault("games", {})
+        games[str(pk)] = entry
+        doc["n_games"] = len(games)
+        with open(path, "w") as f:
+            json.dump(doc, f, indent=2)
+        runs = (f" ({entry['away_runs']}-{entry['home_runs']})"
+                if entry["away_runs"] is not None else "")
+        print(f"[asg] {key}: total {entry['total']}, {home_lg} {ml_home:+d} "
+              f"(wp {entry['home_wp']}%){runs} -> {os.path.basename(path)}")
 
 
 def main():
@@ -120,6 +198,8 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
+
+    inject_projection(asg, pk)
 
     for code in (away_lg, home_lg):
         d = payload["leagues"][code]
