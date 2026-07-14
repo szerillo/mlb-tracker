@@ -188,6 +188,7 @@ def main():
         "away_league": away_lg,
         "home_league": home_lg,
         "source": asg.get("source", ""),
+        "grades": (asg.get("grades") or {}).get("wrc") or {},
         "leagues": {
             code: {
                 "starters": sorted(lg[code]["starters"], key=lambda x: x["order"]),
