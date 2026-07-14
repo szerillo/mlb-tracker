@@ -193,7 +193,15 @@ def main():
     # 1) Compute composites per team
     composites = {}
     for abbr, t in teams_proj.items():
-        composites[abbr] = composite_for_team(t["projections"])
+        # 2026-07-14: sean (player-data sim) enters the composite as a 6th
+        # equal-weight system alongside PECOTA + the 4 FG modes.
+        projs = dict(t["projections"])
+        sd = sean_data.get(abbr)
+        if sd and sd.get("wins") is not None:
+            projs["sean"] = {k: sd.get(k) for k in
+                             ("wins", "losses", "div_pct", "wc_pct",
+                              "playoff_pct", "ws_pct")}
+        composites[abbr] = composite_for_team(projs)
 
     # 2) De-vig the futures markets across the league
     div_odds = {a: ((teams_odds.get(a) or {}).get("division") or {}).get("odds")
