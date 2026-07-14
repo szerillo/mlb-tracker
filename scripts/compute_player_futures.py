@@ -702,7 +702,9 @@ def _score_mvp(pool):
     for p in pool:
         warz  = _zscore(p["combined_war"], war_all)
         opsz  = _zscore(p["stats"].get("ops") if p.get("side") == "hit" else None, ops_all)
-        score = 0.45 * warz + 0.85 * opsz + 0.25 * p["_hbonus"] + p["team_bonus"]
+        # 2026-07-14: rebalanced 0.45/0.85 -> 0.65/0.55 (OPS co-driver was over-
+        # favoring elite-bat/mid-WAR hitters over 8-WAR leaders; split the difference)
+        score = 0.65 * warz + 0.55 * opsz + 0.25 * p["_hbonus"] + p["team_bonus"]
         out.append({**p, "score": score})
     return out
 
@@ -720,13 +722,18 @@ def _score_cy(pool):
                      - 0.10 * _zscore(p["atc"]["vol"], vol_pool)
                      + 0.05 * _zscore(p["atc"]["dim"], dim_pool))
         score = base_z[i] + atc_adj
+        # 2026-07-14: CY winners realistically need ~165+ IP. Dock projected
+        # EOS IP shortfalls -1z per 20 IP under 165 (e.g. Skubal 146 -> -0.96z).
+        proj_ip = (p.get("stats") or {}).get("ip") or 0
+        if proj_ip and proj_ip < 165:
+            score += (proj_ip - 165) / 20.0
         out.append({**p, "score": score})
     return out
 
 
 def _score_roy(pool_h, pool_p):
     """Score hitters + pitchers separately, then cross-pool merge:
-       Final_Score = 0.60·z(within-pool) + 0.40·z(raw WAR)."""
+       Final_Score = 0.45·z(within-pool) + 0.55·z(raw WAR)."""
     h_z = _weighted_z([p["stats"] for p in pool_h], ROY_HIT_WEIGHTS)
     p_z = _weighted_z([p["stats"] for p in pool_p], ROY_PIT_WEIGHTS)
     out = []
@@ -752,8 +759,9 @@ def _score_roy(pool_h, pool_p):
     within_all = [x["within_pool"] for x in out]
     war_all    = [x["talent_war"]  for x in out]
     for x in out:
-        x["score"] = (0.60 * _zscore(x["within_pool"], within_all)
-                     + 0.40 * _zscore(x["talent_war"], war_all))
+        # 2026-07-14: 0.60/0.40 -> 0.45/0.55 (temper within-pool runaway rookie SPs)
+        x["score"] = (0.45 * _zscore(x["within_pool"], within_all)
+                     + 0.55 * _zscore(x["talent_war"], war_all))
     return out
 
 
