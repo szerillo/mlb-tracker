@@ -115,17 +115,6 @@ jobs:
         run: python scripts/apply_lineup_overrides.py
         continue-on-error: true
 
-      # All-Star Game rosters. The ASG is a real scheduled game (gameType "A"),
-      # so the card/weather/odds already work — but MLB posts no batting order
-      # until first pitch and there's no club depth chart to read, so the roster
-      # comes from data/asg_2026.json. This step injects the projected starting 9
-      # into lineups.json (every projected stat joins by NAME and lights up for
-      # free) and emits data/asg.json with the bench + full 12-man staffs.
-      # MUST run after the lineup steps above or the injection gets clobbered.
-      - name: All-Star Game rosters (-> asg.json + lineups.json injection)
-        run: python scripts/refresh_asg.py
-        continue-on-error: true
-
       - name: Refresh pitcher stats (overnight only)
         run: python scripts/refresh_pitcher_stats.py
         continue-on-error: true
@@ -254,6 +243,21 @@ jobs:
         continue-on-error: true
         env:
           SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
+
+      # All-Star Game. The ASG is a real scheduled game (gameType "A"), so the
+      # card / weather / odds already work — but MLB posts no batting order until
+      # first pitch, there's no club depth chart to read, and the game never
+      # appears in the GAME UPLOADER sheet. So the roster AND the projection come
+      # from data/asg_2026.json. This step injects the starting 9 into
+      # lineups.json and the static projection into sheet_projections.json /
+      # f5_projections.json, then emits data/asg.json (bench + full staffs).
+      #
+      # ORDER IS LOAD-BEARING: it must run AFTER the lineup steps AND after both
+      # sheet-projection imports, because every one of those rewrites its file
+      # from scratch and would otherwise wipe the injection.
+      - name: All-Star Game rosters + projection (-> asg.json, lineups, projections)
+        run: python scripts/refresh_asg.py
+        continue-on-error: true
 
       - name: Official bullpens from Roster Resource (-> bullpens_rr.csv)
         # Clean per-team bullpens (FanGraphs Roster Resource, role order) with
