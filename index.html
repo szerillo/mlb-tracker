@@ -2697,6 +2697,20 @@ async function loadStaticData() {
 // ============================================================================
 // HELPERS
 // ============================================================================
+// The park whose factors/weather apply to a game. Normally the home club — but
+// for the All-Star Game the "home team" is the NL/AL All-Stars, which maps to no
+// stadium, so park factors and the weather model both came back empty. Resolve
+// the ASG to its HOST park by matching ASG.venue against park_factors.json.
+function hostParkAbbr(game) {
+  const fallback = game.teams.home.team.abbreviation
+                || teamAbbr(game.teams.home.team.name);
+  if (!isASGGame(game) || !ASG?.venue || !PARK_FACTORS?.parks) return fallback;
+  for (const [abbr, pf] of Object.entries(PARK_FACTORS.parks)) {
+    if (pf.venue === ASG.venue) return abbr;
+  }
+  return fallback;
+}
+
 function parkFactorFor(homeTeamAbbr) {
   if (!PARK_FACTORS) return null;
   // MLB API returns "WSH" for Nationals; park_factors.json keys use "WAS"
@@ -7177,6 +7191,7 @@ async function openModal(game) {
   // All-Star Game: one-off layout. No umpire box, no SP arsenals / rolling graphs.
   // Bullpen box becomes the full 12-man staff; a combined Bench section is added.
   const _isASG = isASGGame(game);
+  const parkAbbr = hostParkAbbr(game);   // ASG -> host club (Citizens Bank Park -> PHI)
 
   body.innerHTML = `
     <div class="m-modeseg-row"><div class="apx-modeseg m-modeseg" id="m-modeseg" role="tablist" aria-label="Projection view">
@@ -7185,14 +7200,14 @@ async function openModal(game) {
     </div></div>
     <div class="apx-grid m-apx-wrap apx-detailed${MODAL_F5?' apx-grid-f5':''}" id="m-apx-host" style="grid-template-columns:1fr;">${apxCardHTML(game, {f5: MODAL_F5})}</div>
 
-    <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
+    <details open class="m-sec"><summary class="m-section-header"><span>${_isASG ? "Weather · Park" : "Weather · Park · Umpire"}</span></summary>
     <div class="m-env-row${_isASG ? ' asg-env' : ''}">
       <div class="m-wx-box">
-        ${renderWeatherDetail(wx, homeAbbr, game)}
+        ${renderWeatherDetail(wx, parkAbbr, game)}
       </div>
       <div class="m-park-box">
         ${(() => {
-          const pf = parkFactorFor(homeAbbr);
+          const pf = parkFactorFor(parkAbbr);
           if (!pf) return `<div class="coming-soon">No park factor</div>`;
           const pfStat = (label, v) => {
             const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
