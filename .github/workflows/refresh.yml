@@ -115,6 +115,17 @@ jobs:
         run: python scripts/apply_lineup_overrides.py
         continue-on-error: true
 
+      # All-Star Game rosters. The ASG is a real scheduled game (gameType "A"),
+      # so the card/weather/odds already work — but MLB posts no batting order
+      # until first pitch and there's no club depth chart to read, so the roster
+      # comes from data/asg_2026.json. This step injects the projected starting 9
+      # into lineups.json (every projected stat joins by NAME and lights up for
+      # free) and emits data/asg.json with the bench + full 12-man staffs.
+      # MUST run after the lineup steps above or the injection gets clobbered.
+      - name: All-Star Game rosters (-> asg.json + lineups.json injection)
+        run: python scripts/refresh_asg.py
+        continue-on-error: true
+
       - name: Refresh pitcher stats (overnight only)
         run: python scripts/refresh_pitcher_stats.py
         continue-on-error: true
