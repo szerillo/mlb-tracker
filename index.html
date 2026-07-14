@@ -5383,87 +5383,28 @@ function asgReserves(game, side) {
 }
 
 function renderASGBench(game, side) {
+  // ONE combined bench per league: position reserves + additional bench, plus any
+  // projected starter who got bumped out of the confirmed lineup. Because that
+  // reconciliation shuffles players between the two source groups, a single
+  // computed wRC+ across the actual bench is the honest figure here — Sean's
+  // static split (reserves 128 / adds 145) no longer maps 1:1 once someone moves.
   const all = asgReserves(game, side);
   if (!all.length) return `<div class="coming-soon">No bench listed</div>`;
-  const toRow = b => ({order: null, name: b.name, pos: b.pos, bats: "",
-                       status: "projected", flag: null, team: b.team});
-  const groups = [
-    ["Position reserves", all.filter(b => b.group !== "add")],
-    ["Additional bench",  all.filter(b => b.group === "add")],
-  ].filter(([, g]) => g.length);
-
-  // expanded:false -> no Brl%/BB%/K% columns (not wanted on the bench).
-  // oppHand omitted on purpose: the ASG has no single opposing starter to split on.
-  return groups.map(([label, g]) => `
+  const players = all.map(b => ({
+    order: null, name: b.name, pos: b.pos, bats: "",
+    status: "projected", flag: null, team: b.team,
+  }));
+  const wrc = asgAvgWrc(all);   // PA-weighted vR/vL blend, hand-neutral
+  return `
     <div class="asg-bench-group">
       <div class="asg-bench-hdr">
-        <span>${label} · ${g.length}</span>
-        ${(() => {
-          const v = asgUnitWrc(side, label === "Additional bench" ? "bench_adds" : "reserves", g);
-          return v != null ? `<span class="asg-bench-wrc">${v} <em>avg wRC+</em></span>` : "";
-        })()}
+        <span>Bench · ${players.length}</span>
+        ${wrc != null ? `<span class="asg-bench-wrc">${wrc} <em>avg wRC+</em></span>` : ""}
       </div>
       ${renderLineupTable(
-        { status: "projected", source: `${asgLeague(side)} ${label}`, players: g.map(toRow) },
+        { status: "projected", source: `${asgLeague(side)} bench`, players },
         { expanded: false, blendPA: true })}
-    </div>`).join("");
-}
-
-// Full 12-man staff, one list, starters first, each role-tagged.
-function renderASGStaff(game, side) {
-  const r = asgRoster(side);
-  if (!r || !r.pitchers?.length) return `<div class="team-none">No staff listed</div>`;
-  const thr = PITCHER_STATS?.thresholds || {};
-  const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
-  // The announced starter for the game itself gets pinned to the top of his
-  // league's staff (Cease for the AL, Sánchez for the NL) — he's the only arm
-  // whose usage is actually known. Matched on normName so the accent in
-  // "Cristopher Sánchez" doesn't break the join.
-  const gameSP = normName(game?.teams?.[side]?.probablePitcher?.fullName || "");
-
-  const row = (p) => {
-    const st = lookupPitcherStats(p.name);
-    // Same FIP preference ladder the bullpen table uses: weighted FIP, else
-    // season xFIP (>=10 IP), else the projection.
-    const wfip = st?.unified_score;
-    const useW = wfip != null && wfip < 10;
-    const useX = !useW && st?.xfip != null && (st?.ip ?? 0) >= 10;
-    const fipVal = useW ? wfip : (useX ? st.xfip : st?.fip_proj);
-    const fipCls = tier(fipVal, (useW || useX) ? (thr.xfip || thr.fip) : thr.fip, false);
-    const kbbCls = tier(st?.k_bb_pct, thr.k_bb, true);
-    const stuffCls = tier(st?.stuff_plus, {elite:115, good:105, bad:95, worst:85}, true);
-    const isSP = (p.role || "") === "Starter";
-    const isGameSP = gameSP && normName(p.name) === gameSP;
-    const hand = (p.throws || "").startsWith("L") ? "L" : "R";
-    return `<tr${isGameSP ? ' class="asg-gamesp"' : ''}>
-      <td class="l hand-${hand.toLowerCase()}">${hand}</td>
-      <td class="l nm">${cleanName(p.name)}<span class="asg-club">${p.team || ""}</span></td>
-      <td class="l">${isGameSP
-        ? `<span class="asg-role gsp" title="Announced starting pitcher for the game">GAME SP</span>`
-        : `<span class="asg-role ${isSP ? 'sp' : 'rp'}">${isSP ? 'SP' : 'RP'}</span>`}</td>
-      <td><span class="v ${fipCls}">${fmt(fipVal)}</span></td>
-      <td><span class="v ${kbbCls}">${fmt(st?.k_bb_pct, "%")}</span></td>
-      <td><span class="v ${stuffCls}">${st?.stuff_plus != null ? Math.round(st.stuff_plus) : "—"}</span></td>
-    </tr>`;
-  };
-
-  const starter = r.pitchers.filter(p => gameSP && normName(p.name) === gameSP);
-  const sp = r.pitchers.filter(p => p.role === "Starter" && !(gameSP && normName(p.name) === gameSP));
-  const rp = r.pitchers.filter(p => p.role !== "Starter" && !(gameSP && normName(p.name) === gameSP));
-  const sec = (label, n) => `<tr class="asg-sec-row"><td colspan="6">${label}${n != null ? ` · ${n}` : ""}</td></tr>`;
-  return `<table class="asg-staff-table">
-    <thead><tr>
-      <th class="l">T</th><th class="l">Pitcher</th><th class="l">Role</th>
-      <th class="mixed" title="Weighted FIP — rolling xFIP/SIERA/xERA/botERA/projection blend (lower = better)">wFIP</th>
-      <th title="K% minus BB%">K-BB</th>
-      <th title="Stuff+ (100 = league average)">Stuff+</th>
-    </tr></thead>
-    <tbody>
-      ${starter.length ? sec("Starting pitcher", null) + starter.map(row).join("") : ""}
-      ${sp.length ? sec("Available starters", sp.length) + sp.map(row).join("") : ""}
-      ${rp.length ? sec("Relievers", rp.length) + rp.map(row).join("") : ""}
-    </tbody>
-  </table>`;
+    </div>`;
 }
 
 // Bullpen box for a normal game; full 12-man All-Star staff for the ASG.
