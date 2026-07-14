@@ -1194,8 +1194,16 @@
 
   /* ---- All-Star Game (one-off display) ---------------------------------- */
   .m-env-row.asg-env { grid-template-columns: 1fr 1fr; }   /* no umpire box */
-  .asg-grade-label { color: var(--muted); font-size: 0.66rem; text-transform: uppercase;
-                     letter-spacing: 0.1em; margin: 0.55rem 0 0.2rem; font-weight: 600; }
+  .asg-statbar { display: inline-flex; align-items: baseline; gap: 0.35rem;
+                 margin: 0.35rem 0 0.5rem; padding: 0.2rem 0.55rem; border-radius: 5px;
+                 background: rgba(255,255,255,0.045); border: 1px solid var(--border); }
+  .asg-statbar-lbl { color: var(--muted); font-size: 0.62rem; text-transform: uppercase;
+                     letter-spacing: 0.1em; font-weight: 700; }
+  .asg-statbar-val { font-family: var(--mono); font-size: 1rem; font-weight: 700;
+                     color: var(--text); }
+  .asg-statbar-unit { color: var(--muted); font-size: 0.68rem; }
+  .asg-role.gsp { background: rgba(52,211,153,0.18); color: #34d399; }
+  .asg-staff-table tr.asg-gamesp td { background: rgba(52,211,153,0.06); }
   .asg-staff-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
   .asg-staff-table th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase;
                         letter-spacing: 0.08em; font-weight: 600; text-align: right;
@@ -5244,17 +5252,51 @@ function asgRoster(side) {
 // starting 9 and the bench separately. Deliberately uses the absolute
 // MLB-population grader (teamGradePct/teamGradeLetter), NOT the 30-team
 // rank curve: an All-Star squad isn't a team and has no rank to curve against.
-function asgGradeBar(players, label) {
-  if (!HITTERS || !players || !players.length) return "";
-  const con = teamContactSpan(players);
-  const chips = [['PWR','pwr'],['EYE','eye'],['BSR','bsr'],['DEF','def']].map(([lbl,cat]) => {
-    const g = teamGradeLetter(teamGradePct(players, cat), cat);
-    if (!g) return "";
-    return `<span class="tg-chip" title="${lbl} grade ${g.letter} for these ${players.length} hitters — vs an average MLB lineup (${g.raw}th-pct raw avg). Players with no projection data are excluded, not counted as 0."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
-  }).join("");
-  if (!con && !chips) return "";
-  return `<div class="asg-grade-label">${label}</div>
-          <div class="team-grade-bar">${con}${chips}</div>`;
+// Summary line for a set of All-Stars.
+//
+// The letter grades used elsewhere are rank-curved against the 30 CLUBS, which
+// is meaningless for an All-Star squad — every one of these guys grades near the
+// top, so the chips all read A/A+ and carry no information. A flat average is
+// the honest summary here: avg wRC+ for hitters, avg weighted FIP for pitchers.
+function asgAvgWrc(players, oppHand) {
+  if (!HITTERS || !players?.length) return null;
+  const oh = (oppHand || "").toUpperCase();
+  let sum = 0, n = 0;
+  for (const p of players) {
+    const k = normName(p.name);
+    const se = HITTER_SPLITS?.hitters?.[k];
+    const h  = HITTERS.hitters?.[k];
+    const vR = se?.wrc_vs_r ?? h?.wrc_vs_r;
+    const vL = se?.wrc_vs_l ?? h?.wrc_vs_l;
+    const v = oh === "L" ? vL : oh === "R" ? vR
+            : (vR != null && vL != null ? (vR + vL) / 2 : (vR ?? vL));
+    if (v != null) { sum += v; n++; }
+  }
+  return n ? Math.round(sum / n) : null;
+}
+
+function asgAvgWfip(pitchers) {
+  if (!pitchers?.length) return null;
+  let sum = 0, n = 0;
+  for (const p of pitchers) {
+    const st = lookupPitcherStats(p.name);
+    const w = st?.unified_score;
+    const v = (w != null && w < 10) ? w
+            : (st?.xfip != null && (st?.ip ?? 0) >= 10) ? st.xfip
+            : st?.fip_proj;
+    if (v != null) { sum += v; n++; }
+  }
+  return n ? sum / n : null;
+}
+
+// One-line summary bar: "STARTING 9 · 132 avg wRC+"
+function asgStatBar(label, value, unit, title) {
+  if (value == null) return "";
+  return `<div class="asg-statbar" title="${title || ""}">
+    <span class="asg-statbar-lbl">${label}</span>
+    <span class="asg-statbar-val">${value}</span>
+    <span class="asg-statbar-unit">${unit}</span>
+  </div>`;
 }
 
 // Bench = position reserves + additional bench, combined. Rendered through the
@@ -5291,18 +5333,24 @@ function renderASGBench(game, side, oppHand) {
     status: "projected", flag: null, team: b.team,
   }));
   if (!players.length) return `<div class="coming-soon">No bench listed</div>`;
+  // expanded:false -> no Brl%/BB%/K% columns (not wanted on the bench).
   return renderLineupTable(
     { status: "projected", source: `${asgLeague(side)} reserves`, players },
-    { expanded: true, oppHand }
+    { expanded: false, oppHand }
   );
 }
 
 // Full 12-man staff, one list, starters first, each role-tagged.
-function renderASGStaff(side) {
+function renderASGStaff(game, side) {
   const r = asgRoster(side);
   if (!r || !r.pitchers?.length) return `<div class="team-none">No staff listed</div>`;
   const thr = PITCHER_STATS?.thresholds || {};
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+  // The announced starter for the game itself gets pinned to the top of his
+  // league's staff (Cease for the AL, Sánchez for the NL) — he's the only arm
+  // whose usage is actually known. Matched on normName so the accent in
+  // "Cristopher Sánchez" doesn't break the join.
+  const gameSP = normName(game?.teams?.[side]?.probablePitcher?.fullName || "");
 
   const row = (p) => {
     const st = lookupPitcherStats(p.name);
@@ -5316,20 +5364,24 @@ function renderASGStaff(side) {
     const kbbCls = tier(st?.k_bb_pct, thr.k_bb, true);
     const stuffCls = tier(st?.stuff_plus, {elite:115, good:105, bad:95, worst:85}, true);
     const isSP = (p.role || "") === "Starter";
+    const isGameSP = gameSP && normName(p.name) === gameSP;
     const hand = (p.throws || "").startsWith("L") ? "L" : "R";
-    return `<tr>
+    return `<tr${isGameSP ? ' class="asg-gamesp"' : ''}>
       <td class="l hand-${hand.toLowerCase()}">${hand}</td>
       <td class="l nm">${cleanName(p.name)}<span class="asg-club">${p.team || ""}</span></td>
-      <td class="l"><span class="asg-role ${isSP ? 'sp' : 'rp'}">${isSP ? 'SP' : 'RP'}</span></td>
+      <td class="l">${isGameSP
+        ? `<span class="asg-role gsp" title="Announced starting pitcher for the game">GAME SP</span>`
+        : `<span class="asg-role ${isSP ? 'sp' : 'rp'}">${isSP ? 'SP' : 'RP'}</span>`}</td>
       <td><span class="v ${fipCls}">${fmt(fipVal)}</span></td>
       <td><span class="v ${kbbCls}">${fmt(st?.k_bb_pct, "%")}</span></td>
       <td><span class="v ${stuffCls}">${st?.stuff_plus != null ? Math.round(st.stuff_plus) : "—"}</span></td>
     </tr>`;
   };
 
-  const sp = r.pitchers.filter(p => p.role === "Starter");
-  const rp = r.pitchers.filter(p => p.role !== "Starter");
-  const sec = (label, n) => `<tr class="asg-sec-row"><td colspan="6">${label} · ${n}</td></tr>`;
+  const starter = r.pitchers.filter(p => gameSP && normName(p.name) === gameSP);
+  const sp = r.pitchers.filter(p => p.role === "Starter" && !(gameSP && normName(p.name) === gameSP));
+  const rp = r.pitchers.filter(p => p.role !== "Starter" && !(gameSP && normName(p.name) === gameSP));
+  const sec = (label, n) => `<tr class="asg-sec-row"><td colspan="6">${label}${n != null ? ` · ${n}` : ""}</td></tr>`;
   return `<table class="asg-staff-table">
     <thead><tr>
       <th class="l">T</th><th class="l">Pitcher</th><th class="l">Role</th>
@@ -5338,7 +5390,8 @@ function renderASGStaff(side) {
       <th title="Stuff+ (100 = league average)">Stuff+</th>
     </tr></thead>
     <tbody>
-      ${sp.length ? sec("Starters", sp.length) + sp.map(row).join("") : ""}
+      ${starter.length ? sec("Starting pitcher", null) + starter.map(row).join("") : ""}
+      ${sp.length ? sec("Available starters", sp.length) + sp.map(row).join("") : ""}
       ${rp.length ? sec("Relievers", rp.length) + rp.map(row).join("") : ""}
     </tbody>
   </table>`;
@@ -5351,7 +5404,12 @@ function modalPenOrStaffBox(game, side, probSPName) {
   const teamId = game.teams[side].team.id;
   const teamName = game.teams[side].team.name;
   if (isASGGame(game)) {
-    return `<div class="m-bp-box"><h4>${teamLogo(teamId, 18)} ${teamName}</h4>${renderASGStaff(side)}</div>`;
+    const wfip = asgAvgWfip(asgRoster(side)?.pitchers || []);
+    return `<div class="m-bp-box">
+      <h4>${teamLogo(teamId, 18)} ${teamName}</h4>
+      ${asgStatBar("Staff", wfip != null ? wfip.toFixed(2) : null, "avg wFIP",
+                   "Mean weighted FIP across all 12 arms (lower = better)")}
+      ${renderASGStaff(game, side)}</div>`;
   }
   const r = getBullpenRank(teamId);
   const chip = r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp');
@@ -5365,7 +5423,10 @@ function modalPenOrStaffBox(game, side, probSPName) {
 function modalLineupGrade(game, side) {
   if (!isASGGame(game)) return teamGradeBar(game, side, {noWrc: true});
   const lg = lineupsForGame(game);
-  return asgGradeBar(lg?.lineups?.[side]?.players || [], "Starting 9");
+  const players = lg?.lineups?.[side]?.players || [];
+  const oppHand = handOfPitcher(game.teams[side === 'away' ? 'home' : 'away'].probablePitcher?.fullName);
+  return asgStatBar("Starting 9", asgAvgWrc(players, oppHand), "avg wRC+",
+                    "Mean projected wRC+ of the starting nine vs the opposing starter's hand");
 }
 
 // The whole Bench section (ASG only) — reserves + additional bench, combined,
@@ -5380,21 +5441,16 @@ function renderASGBenchSection(game) {
   const box = (side, name, hand) => `
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams[side].team.id, 22)} ${name}</h4>
-        ${asgGradeBar(benchPlayers(side), "Reserves")}
+        ${asgStatBar("Reserves", asgAvgWrc(benchPlayers(side), hand), "avg wRC+",
+                     "Mean projected wRC+ across the reserves")}
         ${renderASGBench(game, side, hand)}
       </div>`;
-  const notes = []
-    .concat(asgRoster('away')?.notes || [])
-    .concat(asgRoster('home')?.notes || []);
-  const noteHTML = notes.length
-    ? `<div class="asg-note">${notes.map(n => `• ${n}`).join("<br>")}</div>` : "";
   return `<details open class="m-sec"><summary class="m-section-header"><span>Bench</span>
       <span class="right-note">position reserves + additional bench</span></summary>
     <div class="m-lineup-grid">
       ${box('away', awayName, awayHand)}
       ${box('home', homeName, homeHand)}
     </div>
-    ${noteHTML}
     </details>`;
 }
 
