@@ -5405,7 +5405,7 @@ function renderASGBench(game, side) {
       </div>
       ${renderLineupTable(
         { status: "projected", source: `${asgLeague(side)} ${label}`, players: g.map(toRow) },
-        { expanded: false })}
+        { expanded: false, blendPA: true })}
     </div>`).join("");
 }
 
@@ -5645,12 +5645,23 @@ function renderLineupTable(side, opts={}) {
       // Matchup wRC+ — the split matching the opposing SP's hand (opts.oppHand).
       // When the SP hand is unknown, fall back to the vR/vL average.
       const oppHand = (opts.oppHand || "").toUpperCase();
-      const mV   = oppHand === 'L' ? vL : oppHand === 'R' ? vR
+      // opts.blendPA (All-Star Game): there is no single opposing starter — the
+      // pitcher changes almost every inning — so grading "vs RHP" is arbitrary and
+      // the swing is big (the NL nine reads 133 vs RHP, 112 vs LHP). Blend the two
+      // splits, PA-weighted by how often the hitter actually faces each hand.
+      const _paBlend = () => {
+        if (vR == null || vL == null) return vR ?? vL;
+        const pr = splitEntry?.pa_vs_r, pl = splitEntry?.pa_vs_l;
+        return (pr && pl) ? (vR * pr + vL * pl) / (pr + pl) : 0.72 * vR + 0.28 * vL;
+      };
+      const mV   = opts.blendPA ? _paBlend()
+                 : oppHand === 'L' ? vL : oppHand === 'R' ? vR
                  : (vR != null && vL != null ? (vR + vL) / 2 : (vR != null ? vR : vL));
-      const mRaw = oppHand === 'L' ? vL_raw : oppHand === 'R' ? vR_raw : null;
-      const mPa  = oppHand === 'L' ? vL_pa  : oppHand === 'R' ? vR_pa  : null;
+      const mRaw = opts.blendPA ? null : (oppHand === 'L' ? vL_raw : oppHand === 'R' ? vR_raw : null);
+      const mPa  = opts.blendPA ? null : (oppHand === 'L' ? vL_pa  : oppHand === 'R' ? vR_pa  : null);
       const mCls = tier(mV, wBands, true);
-      const mLbl = oppHand === 'L' ? 'LHP' : oppHand === 'R' ? 'RHP' : 'SP (hand TBD)';
+      const mLbl = opts.blendPA ? 'both hands (PA-weighted)'
+                 : oppHand === 'L' ? 'LHP' : oppHand === 'R' ? 'RHP' : 'SP (hand TBD)';
       const wrcCell = `<td class="split split-chip ${mCls}" title="${mV != null ? `Projected ${Math.round(mV)} wRC+ vs ${mLbl}${mRaw != null ? ` · raw ${Math.round(mRaw)} over ${mPa} PA (3-yr)` : ''}` : 'No split data'}">${mV != null ? Math.round(mV) : "—"}</td>`;
       // Backfill pos/bats from the cached team roster when the lineup source
       // (e.g. Rotowire platoon default) didn't include them.
@@ -5780,7 +5791,7 @@ function renderLineupTable(side, opts={}) {
     <th class="right lu-kbb" style="width:46px;" title="Season K% — actual (projection fallback); lower = better">K%</th>` : "";
   const wobaHeader = expanded
     ? `<th class="right" style="width:50px;" title="Actual current-season wOBA (Savant) — falls back to projection if no PAs yet">wOBA</th>` : "";
-  const oppHandHdr = (opts.oppHand || "").toUpperCase();
+  const oppHandHdr = opts.blendPA ? "" : (opts.oppHand || "").toUpperCase();
   const wrcHdr = `wRC+${oppHandHdr ? ` v${oppHandHdr}` : ''}`;
   let html = `<table class="lineup-table"><thead><tr>
     <th class="center lu-order" style="width:22px;">#</th>
@@ -5805,6 +5816,9 @@ function renderLineupTable(side, opts={}) {
 function renderLineupForTeam(game, side) {
   const lg = lineupsForGame(game);
   if (!lg) return `<div class="coming-soon">Awaiting lineup</div>`;
+  if (isASGGame(game)) {
+    return renderLineupTable(lg.lineups?.[side], { noDataMsg: `Awaiting ${side} lineup`, blendPA: true });
+  }
   const oppSP = game.teams[side === 'away' ? 'home' : 'away'].probablePitcher?.fullName;
   return renderLineupTable(lg.lineups?.[side], { noDataMsg: `Awaiting ${side} lineup`, oppHand: handOfPitcher(oppSP) });
 }
@@ -7421,12 +7435,12 @@ async function openModal(game) {
     <details open class="m-sec"><summary class="m-section-header"><span>Lineups</span></summary>
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}${teamSplitLine(lineupsForGame(game)?.lineups?.away, handOfPitcher(probHome?.fullName))}</h4>
+        <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}${_isASG ? "" : teamSplitLine(lineupsForGame(game)?.lineups?.away, handOfPitcher(probHome?.fullName))}</h4>
         ${modalLineupGrade(game, 'away')}
         ${renderLineupForTeam(game, 'away')}
       </div>
       <div class="m-lineup-box">
-        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}${teamSplitLine(lineupsForGame(game)?.lineups?.home, handOfPitcher(probAway?.fullName))}</h4>
+        <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}${_isASG ? "" : teamSplitLine(lineupsForGame(game)?.lineups?.home, handOfPitcher(probAway?.fullName))}</h4>
         ${modalLineupGrade(game, 'home')}
         ${renderLineupForTeam(game, 'home')}
       </div>
