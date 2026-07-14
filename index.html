@@ -1191,6 +1191,30 @@
   .m-park-box .pf-venue { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.4rem; }
 
   .m-lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+  /* ---- All-Star Game (one-off display) ---------------------------------- */
+  .m-env-row.asg-env { grid-template-columns: 1fr 1fr; }   /* no umpire box */
+  .asg-grade-label { color: var(--muted); font-size: 0.66rem; text-transform: uppercase;
+                     letter-spacing: 0.1em; margin: 0.55rem 0 0.2rem; font-weight: 600; }
+  .asg-staff-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .asg-staff-table th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase;
+                        letter-spacing: 0.08em; font-weight: 600; text-align: right;
+                        padding: 0.2rem 0.3rem; border-bottom: 1px solid var(--border); }
+  .asg-staff-table th.l { text-align: left; }
+  .asg-staff-table td { padding: 0.24rem 0.3rem; text-align: right;
+                        font-family: var(--mono); border-top: 1px solid var(--border); }
+  .asg-staff-table td.l { text-align: left; font-family: inherit; }
+  .asg-staff-table td.nm { color: var(--text); font-weight: 500; }
+  .asg-staff-table .asg-club { color: var(--muted); font-size: 0.72rem; margin-left: 0.3rem; }
+  .asg-role { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em;
+              padding: 0.05rem 0.3rem; border-radius: 3px; font-weight: 700; }
+  .asg-role.sp { background: rgba(96,165,250,0.16); color: #60a5fa; }
+  .asg-role.rp { background: rgba(167,139,250,0.16); color: #a78bfa; }
+  .asg-sec-row td { background: var(--panel-2, rgba(255,255,255,0.03)); color: var(--muted);
+                    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+                    font-weight: 700; text-align: left; font-family: inherit; }
+  .asg-note { color: var(--muted); font-size: 0.72rem; margin-top: 0.5rem; line-height: 1.35; }
+  @media (max-width: 700px) { .m-env-row.asg-env { grid-template-columns: 1fr; } }
   .m-lineup-box .src-note { color: var(--muted); font-size: 0.72rem;
     margin-top: 0.3rem; letter-spacing: 0.04em; }
 
@@ -2526,6 +2550,7 @@ let HITTERS = null;
 let PITCHERS = null;
 let WEATHER = null;
 let LINEUPS = null;
+let ASG = null;          // All-Star Game rosters (data/asg.json)
 let ODDS = null;
 let PITCHER_STATS = null;
 let PARK_FACTORS = null;
@@ -2586,13 +2611,14 @@ async function fetchJSON(url) {
 }
 
 async function loadStaticData() {
-  const [u, f, h, p, w, l, o, ps, pf, bpw, splits, arsenal, hpct, gv2, hsplits, proles, glogs, hglogs, pgbt, tg] = await Promise.all([
+  const [u, f, h, p, w, l, asgFeed, o, ps, pf, bpw, splits, arsenal, hpct, gv2, hsplits, proles, glogs, hglogs, pgbt, tg] = await Promise.all([
     fetchJSON(`data/umps.json?t=${Date.now()}`),
     fetchJSON(`data/fatigue.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/hitters.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitchers.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/weather.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/lineups.json?t=${Date.now()}`).catch(() => null),
+    fetchJSON(`data/asg.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/odds.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/pitcher_stats.json?t=${Date.now()}`).catch(() => null),
     fetchJSON(`data/park_factors.json?t=${Date.now()}`).catch(() => null),
@@ -2613,6 +2639,7 @@ async function loadStaticData() {
     fetchJSON(`data/team_grades.json?t=${Date.now()}`).catch(() => null),
   ]);
   UMP_STATS = u; FATIGUE = f; HITTERS = h; PITCHERS = p; WEATHER = w; LINEUPS = l;
+  ASG = asgFeed;
   ODDS = o; PITCHER_STATS = ps; PARK_FACTORS = pf; BP_WEATHER = bpw;
   HITTER_SPLITS = hsplits; PITCHER_ROLES = proles; GAMELOGS = glogs;
   HITTER_GAMELOGS = hglogs;
@@ -5175,6 +5202,165 @@ function teamGradeLetter(rawPct, cat) {
 }
 
 // Team-grade bar: wRC+ (vs opp hand) + team contact (K%) + PWR/EYE/BSR/DEF letter chips.
+// ============================================================================
+// ALL-STAR GAME — one-off display (data/asg.json)
+// The ASG is a real scheduled game (gameType "A"), so the scoreboard card and
+// the weather/park/odds modules all work untouched. What it has no source for
+// is the roster: MLB posts no batting order until first pitch and there is no
+// club depth chart to read. So we inject the projected starting 9 into
+// lineups.json server-side (every projected stat joins by NAME and lights up for
+// free) and render the two things the normal path can't hold: a combined BENCH
+// and the full 12-man PITCHING STAFF.
+// ============================================================================
+function isASGGame(game) {
+  if (!ASG || !game) return false;
+  return game.gamePk === ASG.game_pk;
+}
+// Which league (AL/NL) sits on a given side of the ASG matchup.
+function asgLeague(side) {
+  if (!ASG) return null;
+  return side === 'away' ? ASG.away_league : ASG.home_league;
+}
+function asgRoster(side) {
+  const code = asgLeague(side);
+  return (code && ASG?.leagues?.[code]) || null;
+}
+
+// Grade bar for an ARBITRARY set of hitters (not a club) — used to grade the
+// starting 9 and the bench separately. Deliberately uses the absolute
+// MLB-population grader (teamGradePct/teamGradeLetter), NOT the 30-team
+// rank curve: an All-Star squad isn't a team and has no rank to curve against.
+function asgGradeBar(players, label) {
+  if (!HITTERS || !players || !players.length) return "";
+  const con = teamContactSpan(players);
+  const chips = [['PWR','pwr'],['EYE','eye'],['BSR','bsr'],['DEF','def']].map(([lbl,cat]) => {
+    const g = teamGradeLetter(teamGradePct(players, cat), cat);
+    if (!g) return "";
+    return `<span class="tg-chip" title="${lbl} grade ${g.letter} for these ${players.length} hitters — vs an average MLB lineup (${g.raw}th-pct raw avg). Players with no projection data are excluded, not counted as 0."><span class="tg-lbl">${lbl}</span><span class="grade ${gradeCls(g.letter)}">${g.letter}</span></span>`;
+  }).join("");
+  if (!con && !chips) return "";
+  return `<div class="asg-grade-label">${label}</div>
+          <div class="team-grade-bar">${con}${chips}</div>`;
+}
+
+// Bench = position reserves + additional bench, combined. Rendered through the
+// SAME renderLineupTable the starters use, so every projected stat column is
+// identical — we just hand it a synthetic "side" with no batting order.
+function renderASGBench(side, oppHand) {
+  const r = asgRoster(side);
+  if (!r || !r.bench?.length) return `<div class="coming-soon">No bench listed</div>`;
+  const players = r.bench.map(b => ({
+    order: null, name: b.name, pos: b.pos || "", bats: "",
+    status: "projected", flag: null, team: b.team,
+  }));
+  return renderLineupTable(
+    { status: "projected", source: `${asgLeague(side)} reserves`, players },
+    { expanded: true, oppHand }
+  );
+}
+
+// Full 12-man staff, one list, starters first, each role-tagged.
+function renderASGStaff(side) {
+  const r = asgRoster(side);
+  if (!r || !r.pitchers?.length) return `<div class="team-none">No staff listed</div>`;
+  const thr = PITCHER_STATS?.thresholds || {};
+  const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
+
+  const row = (p) => {
+    const st = lookupPitcherStats(p.name);
+    // Same FIP preference ladder the bullpen table uses: weighted FIP, else
+    // season xFIP (>=10 IP), else the projection.
+    const wfip = st?.unified_score;
+    const useW = wfip != null && wfip < 10;
+    const useX = !useW && st?.xfip != null && (st?.ip ?? 0) >= 10;
+    const fipVal = useW ? wfip : (useX ? st.xfip : st?.fip_proj);
+    const fipCls = tier(fipVal, (useW || useX) ? (thr.xfip || thr.fip) : thr.fip, false);
+    const kbbCls = tier(st?.k_bb_pct, thr.k_bb, true);
+    const stuffCls = tier(st?.stuff_plus, {elite:115, good:105, bad:95, worst:85}, true);
+    const isSP = (p.role || "") === "Starter";
+    const hand = (p.throws || "").startsWith("L") ? "L" : "R";
+    return `<tr>
+      <td class="l hand-${hand.toLowerCase()}">${hand}</td>
+      <td class="l nm">${cleanName(p.name)}<span class="asg-club">${p.team || ""}</span></td>
+      <td class="l"><span class="asg-role ${isSP ? 'sp' : 'rp'}">${isSP ? 'SP' : 'RP'}</span></td>
+      <td><span class="v ${fipCls}">${fmt(fipVal)}</span></td>
+      <td><span class="v ${kbbCls}">${fmt(st?.k_bb_pct, "%")}</span></td>
+      <td><span class="v ${stuffCls}">${st?.stuff_plus != null ? Math.round(st.stuff_plus) : "—"}</span></td>
+    </tr>`;
+  };
+
+  const sp = r.pitchers.filter(p => p.role === "Starter");
+  const rp = r.pitchers.filter(p => p.role !== "Starter");
+  const sec = (label, n) => `<tr class="asg-sec-row"><td colspan="6">${label} · ${n}</td></tr>`;
+  return `<table class="asg-staff-table">
+    <thead><tr>
+      <th class="l">T</th><th class="l">Pitcher</th><th class="l">Role</th>
+      <th title="Weighted FIP — rolling xFIP/SIERA/xERA/botERA/projection blend (lower = better)">wFIP</th>
+      <th title="K% minus BB%">K-BB</th>
+      <th title="Stuff+ (100 = league average)">Stuff+</th>
+    </tr></thead>
+    <tbody>
+      ${sp.length ? sec("Starters", sp.length) + sp.map(row).join("") : ""}
+      ${rp.length ? sec("Relievers", rp.length) + rp.map(row).join("") : ""}
+    </tbody>
+  </table>`;
+}
+
+// Bullpen box for a normal game; full 12-man All-Star staff for the ASG.
+// Routed through a function (rather than an inline ternary) so the modal
+// template stays one level of nesting deep.
+function modalPenOrStaffBox(game, side, probSPName) {
+  const teamId = game.teams[side].team.id;
+  const teamName = game.teams[side].team.name;
+  if (isASGGame(game)) {
+    return `<div class="m-bp-box"><h4>${teamLogo(teamId, 18)} ${teamName}</h4>${renderASGStaff(side)}</div>`;
+  }
+  const r = getBullpenRank(teamId);
+  const chip = r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp');
+  return `<div class="m-bp-box"><h4>${teamName} ${chip}</h4>${renderBullpenForTeam(
+    teamId, teamName, probSPName,
+    {compact: true, fatigueSlice: fatigueForDate((game.gameDate || "").slice(0, 10))})}</div>`;
+}
+
+// Grade bar above the lineup table. For the ASG we grade the actual 9 hitters
+// against the MLB population (there is no club rank to curve against).
+function modalLineupGrade(game, side) {
+  if (!isASGGame(game)) return teamGradeBar(game, side, {noWrc: true});
+  const lg = lineupsForGame(game);
+  return asgGradeBar(lg?.lineups?.[side]?.players || [], "Starting 9");
+}
+
+// The whole Bench section (ASG only) — reserves + additional bench, combined,
+// with its own grade bar so you can read the reserves independently of the 9.
+function renderASGBenchSection(game) {
+  if (!isASGGame(game) || !ASG) return "";
+  const awayName = game.teams.away.team.name;
+  const homeName = game.teams.home.team.name;
+  const awayHand = handOfPitcher(game.teams.home.probablePitcher?.fullName);
+  const homeHand = handOfPitcher(game.teams.away.probablePitcher?.fullName);
+  const benchPlayers = (side) => (asgRoster(side)?.bench || [])
+    .map(b => ({name: b.name, pos: b.pos, order: null}));
+  const box = (side, name, hand) => `
+      <div class="m-lineup-box">
+        <h4>${teamLogo(game.teams[side].team.id, 22)} ${name}</h4>
+        ${asgGradeBar(benchPlayers(side), "Reserves")}
+        ${renderASGBench(side, hand)}
+      </div>`;
+  const notes = []
+    .concat(asgRoster('away')?.notes || [])
+    .concat(asgRoster('home')?.notes || []);
+  const noteHTML = notes.length
+    ? `<div class="asg-note">${notes.map(n => `• ${n}`).join("<br>")}</div>` : "";
+  return `<details open class="m-sec"><summary class="m-section-header"><span>Bench</span>
+      <span class="right-note">position reserves + additional bench</span></summary>
+    <div class="m-lineup-grid">
+      ${box('away', awayName, awayHand)}
+      ${box('home', homeName, homeHand)}
+    </div>
+    ${noteHTML}
+    </details>`;
+}
+
 function teamGradeBar(game, side, opts) {
   const lg = lineupsForGame(game);
   const players = lg?.lineups?.[side]?.players || [];
@@ -6988,6 +7174,10 @@ async function openModal(game) {
   }
   const venueLine = `${venue} · ${timeOrScore}`;
 
+  // All-Star Game: one-off layout. No umpire box, no SP arsenals / rolling graphs.
+  // Bullpen box becomes the full 12-man staff; a combined Bench section is added.
+  const _isASG = isASGGame(game);
+
   body.innerHTML = `
     <div class="m-modeseg-row"><div class="apx-modeseg m-modeseg" id="m-modeseg" role="tablist" aria-label="Projection view">
       <button class="apx-modeseg-btn${MODAL_F5?'':' active'}" data-f5="0" role="tab" aria-selected="${!MODAL_F5}">Full Game</button>
@@ -6996,7 +7186,7 @@ async function openModal(game) {
     <div class="apx-grid m-apx-wrap apx-detailed${MODAL_F5?' apx-grid-f5':''}" id="m-apx-host" style="grid-template-columns:1fr;">${apxCardHTML(game, {f5: MODAL_F5})}</div>
 
     <details open class="m-sec"><summary class="m-section-header"><span>Weather · Park · Umpire</span></summary>
-    <div class="m-env-row">
+    <div class="m-env-row${_isASG ? ' asg-env' : ''}">
       <div class="m-wx-box">
         ${renderWeatherDetail(wx, homeAbbr, game)}
       </div>
@@ -7022,7 +7212,7 @@ async function openModal(game) {
             </div>`;
         })()}
       </div>
-      <div class="m-ump-box">
+      ${_isASG ? "" : `<div class="m-ump-box">
         ${hp
           ? `<div class="ump-name">${hp} ${umpBadge(hp)}</div>
              <div class="ump-crew">Crew: 1B ${b1||"?"} · 2B ${b2||"?"} · 3B ${b3||"?"}</div>`
@@ -7042,19 +7232,20 @@ async function openModal(game) {
               return `<div class="row">${dayAbbr(CURRENT_DATES[i+1])}: ${proj ? proj + " " + umpBadge(proj) : "NA"}</div>`;
             }).join("")}
           </div>` : ""}
-      </div>
+      </div>`}
     </div>
 
     </details>
-    <details open class="m-sec"><summary class="m-section-header"><span>Starting Pitchers</span></summary>
+    ${_isASG ? "" : `<details open class="m-sec"><summary class="m-section-header"><span>Starting Pitchers</span></summary>
     <div class="m-sp-grid">
       ${renderSPBox(probAway?.fullName, awayAbbr)}
       ${renderSPBox(probHome?.fullName, homeAbbr)}
     </div>
 
-    </details>
-    <details open class="m-sec"><summary class="m-section-header"><span>Bullpens</span>
+    </details>`}
+    <details open class="m-sec"><summary class="m-section-header"><span>${_isASG ? "Pitching Staffs" : "Bullpens"}</span>
       <span class="right-note">${(() => {
+        if (_isASG) return "full 12-man roster · projected";
         const gIso = (game.gameDate || "").slice(0,10);
         const fd = fatigueForDate(gIso);
         if (!fd?.window?.end) return "";
@@ -7063,8 +7254,8 @@ async function openModal(game) {
         return `rest coming into ${whenLabel} · L5 ${fmtDateShort(fd.window.start)} – ${fmtDateShort(fd.window.end)}`;
       })()}</span></summary>
     <div class="m-split">
-      <div class="m-bp-box"><h4>${away} ${(() => { const r = getBullpenRank(game.teams.away.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.away.team.id, away, probAway?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
-      <div class="m-bp-box"><h4>${home} ${(() => { const r = getBullpenRank(game.teams.home.team.id); return r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp'); })()}</h4>${renderBullpenForTeam(game.teams.home.team.id, home, probHome?.fullName, {compact: true, fatigueSlice: fatigueForDate((game.gameDate||"").slice(0,10))})}</div>
+      ${modalPenOrStaffBox(game, 'away', probAway?.fullName)}
+      ${modalPenOrStaffBox(game, 'home', probHome?.fullName)}
     </div>
 
     </details>
@@ -7072,16 +7263,17 @@ async function openModal(game) {
     <div class="m-lineup-grid">
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams.away.team.id, 22)} ${away}${teamSplitLine(lineupsForGame(game)?.lineups?.away, handOfPitcher(probHome?.fullName))}</h4>
-        ${teamGradeBar(game, 'away', {noWrc:true})}
+        ${modalLineupGrade(game, 'away')}
         ${renderLineupForTeam(game, 'away')}
       </div>
       <div class="m-lineup-box">
         <h4>${teamLogo(game.teams.home.team.id, 22)} ${home}${teamSplitLine(lineupsForGame(game)?.lineups?.home, handOfPitcher(probAway?.fullName))}</h4>
-        ${teamGradeBar(game, 'home', {noWrc:true})}
+        ${modalLineupGrade(game, 'home')}
         ${renderLineupForTeam(game, 'home')}
       </div>
     </div>
     </details>
+    ${renderASGBenchSection(game)}
   `;
 
   // Per-game Full Game / F5 toggle — re-renders just the projection card + edges.
