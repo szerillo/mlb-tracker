@@ -166,12 +166,59 @@ def _float(s: str) -> float | None:
 # columns: Team | W | L | W% | GB | Proj W | Proj L | ROS W% | SoS | Win Div |
 #           Clinch Bye | Clinch WC | Make Playoffs | Win WS
 
+def _parse_next_data(html: str) -> dict[str, dict]:
+    """Extract playoff-odds rows from the Next.js __NEXT_DATA__ blob.
+    endData mapping: ExpW/ExpL = proj W/L; divTitle=Win Div; wcTitle=Clinch WC;
+    poffTitle=Make Playoffs; wsWin=Win WS (all 0-1 fractions)."""
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.S)
+    if not m:
+        return {}
+    try:
+        blob = json.loads(m.group(1))
+        queries = blob["props"]["pageProps"]["dehydratedState"]["queries"]
+    except Exception:
+        return {}
+    rows = None
+    for q in queries:
+        qk = q.get("queryKey") or []
+        if qk and qk[0] == "playoff-odds":
+            rows = (q.get("state") or {}).get("data")
+            break
+    if not isinstance(rows, list):
+        return {}
+    out = {}
+    for r in rows:
+        abbr = r.get("abbName")
+        e = r.get("endData") or {}
+        if not abbr or "ExpW" not in e:
+            continue
+        # Normalize FG abbreviations to ours
+        abbr = {"CHW": "CWS", "WSN": "WSH", "TBR": "TB", "SDP": "SD",
+                "SFG": "SF", "KCR": "KC", "OAK": "ATH"}.get(abbr, abbr)
+        out[abbr] = {
+            "wins":        round(e["ExpW"], 1),
+            "losses":      round(e["ExpL"], 1),
+            "div_pct":     round(e.get("divTitle", 0) * 100, 1),
+            "wc_pct":      round(e.get("wcTitle", 0) * 100, 1),
+            "playoff_pct": round(e.get("poffTitle", 0) * 100, 1),
+            "ws_pct":      round(e.get("wsWin", 0) * 100, 1),
+        }
+    return out
+
+
 def fetch_fg_projection_mode(mode: str) -> dict[str, dict]:
     """mode is one of 'fg', 'atc', 'thebat', 'oopsy'."""
     url = f"https://www.fangraphs.com/standings/playoff-odds/{mode}/div"
     html = _http_get(url)
     if not html:
         return {}
+    # 2026-07-14: FG moved playoff-odds to client-rendered Next.js — the HTML
+    # <table> is gone; data now lives in the __NEXT_DATA__ dehydrated queries.
+    # Parse that first; fall back to the legacy table parser just in case.
+    out = _parse_next_data(html)
+    if out:
+        print(f"  fg/{mode}: {len(out)} teams (__NEXT_DATA__)", file=sys.stderr)
+        return out
     tables = extract_tables(html)
     out = {}
     # Find tables with our 14-column shape that have team rows
