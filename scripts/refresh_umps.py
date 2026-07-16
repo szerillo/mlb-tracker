@@ -3,10 +3,23 @@ Refresh umpire stats from UmpScorecards.
 Outputs data/umps.json with the same schema the site expects.
 
 Methodology:
-  - Per-ump value: 2026 games weighted x5, 2025 x4, 2024 x1 (50/40/10), per game.
-  - Baseline: the SAME 50/40/10 recency weighting over 2024-26 (current-weighted
-    league norm, so the 2026 ABS-era level shift is reflected, not anchored to a
-    stale 2025-heavy baseline).
+  - Per-ump value: offense/pitching bias = batter_impact - pitcher_impact (runs).
+    2026 games weighted x5, 2025 x4, 2024 x1 (50/40/10), per game.
+  - CHALLENGE (ABS) DAMPENING (new 2026): UmpScorecards' impact fields are
+    computed on the umpire's CALLED pitches, PRE-challenge — an overturned miss
+    still counts against the umpire even though the ABS challenge erased it from
+    the actual game. Proof from the data: 2026 mean run-impact is HIGHER than
+    2024/25 (1.37 vs ~1.22) and correlates +0.43 with overturns; if overturns
+    were netted out that correlation would be negative. So the raw number
+    OVERSTATES an umpire's realized game impact in the challenge era. We scale
+    every off_adj by (1 - league_overturn_share), where league_overturn_share =
+    overturned / called_wrong across all 2026 games (~0.225). This is applied
+    UNIFORMLY, not per-ump, because per-ump overturn share is noise at this
+    sample (split-half r = 0.08) — trying to differentiate umpires by it would
+    add variance, not signal. It's a conservative floor: challenges target the
+    highest-leverage misses, so the true impact erased is likely somewhat larger.
+  - Baseline: the SAME 50/40/10 recency weighting over 2024-26 on the dampened
+    scale (so 0% = current, ABS-realized league norm).
   - Bayesian shrinkage: 50-game prior toward that baseline.
   - Minimum 10 raw games in 2024-2026.
 """
@@ -18,6 +31,7 @@ OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "umps.json")
 
 PRIOR = 50
 MIN_RAW = 10
+YW = {"2026": 5, "2025": 4, "2024": 1}
 
 
 def off_adj(r):
@@ -30,7 +44,6 @@ def main():
     import sys
     sys.path.insert(0, os.path.dirname(__file__))
     from _common import skip_if_not_in_window
-    # UmpScorecards updates once per day; we only need to run at overnight anchors.
     if skip_if_not_in_window("refresh_umps", overnight_only=True):
         return
     print("Fetching UmpScorecards games...")
@@ -39,42 +52,45 @@ def main():
         rows = json.load(r)["rows"]
     print(f"  loaded {len(rows)} games")
 
-    # Baseline = the SAME 50/40/10 (2026/2025/2024) recency weighting applied to
-    # the per-ump values, so the "0% ump" reference is the current-weighted league
-    # norm. This matters in 2026: the ABS-challenge era shifted league-average
-    # offense-favor toward neutral (2025 +0.40 → 2026 +0.05 runs/g), so a recency
-    # baseline correctly pulls the reference down rather than anchoring to a stale
-    # 2025-heavy level.
-    base_sw = 0.0
-    base_so = 0.0
+    # --- Challenge dampening factor, computed live from the 2026 sample --------
+    ov = cw = 0
+    for r in rows:
+        if r.get("date", "")[:4] == "2026" and r.get("type") == "R" and not r.get("failed"):
+            ov += r.get("n_overturned") or 0
+            cw += r.get("called_wrong") or 0
+    overturn_share = (ov / cw) if cw else 0.0
+    dampen = 1.0 - overturn_share
+    print(f"  2026 overturn share of wrong calls: {overturn_share:.3f} "
+          f"-> challenge dampen x{dampen:.3f}  ({ov}/{cw})")
+
+    def val(r):
+        return off_adj(r) * dampen   # ABS-realized offense/pitching bias
+
+    # Baseline = recency-weighted mean of the dampened per-game values.
+    base_sw = base_so = 0.0
     for r in rows:
         y = r.get("date", "")[:4]
-        w = 5 if y == "2026" else 4 if y == "2025" else 1 if y == "2024" else 0
+        w = YW.get(y, 0)
         if w and not r.get("failed"):
             base_sw += w
-            base_so += w * off_adj(r)
+            base_so += w * val(r)
     baseline = base_so / base_sw
-    print(f"  baseline (50/40/10 weighted 2024-26): {baseline:+.4f}")
+    print(f"  baseline (50/40/10, challenge-dampened): {baseline:+.4f}")
 
-    # Per-ump weighted
     ump_off = defaultdict(float)
     ump_accx = defaultdict(float)
     ump_wn = defaultdict(float)
     raw_n = defaultdict(int)
-
     for r in rows:
         u = r.get("umpire")
         y = r.get("date", "")[:4]
-        if not u or r.get("failed"):
+        w = YW.get(y, 0)
+        if not u or r.get("failed") or w == 0:
             continue
-        w = 5 if y == "2026" else 4 if y == "2025" else 1 if y == "2024" else 0
-        if w == 0:
-            continue
-        ump_off[u] += w * off_adj(r)
+        ump_off[u] += w * val(r)
         ump_accx[u] += w * (r.get("accuracy_above_x") or 0)
         ump_wn[u] += w
-        if y in ("2024", "2025", "2026"):
-            raw_n[u] += 1
+        raw_n[u] += 1
 
     out = {}
     for u in ump_off:
@@ -90,7 +106,6 @@ def main():
             "acc_above_x": round(ump_accx[u] / ump_wn[u], 3),
         }
 
-    # Merge accented Alfonso Márquez if both variants exist
     if "Alfonso Marquez" in out and "Alfonso Márquez" in out:
         a, b = out["Alfonso Marquez"], out["Alfonso Márquez"]
         tn = a["n"] + b["n"]
@@ -109,9 +124,17 @@ def main():
         "generated_at": datetime.date.today().isoformat(),
         "source": "UmpScorecards (umpscorecards.com/api)",
         "source_url": "https://umpscorecards.com",
-        "methodology": f"Per-ump offense adj: 2026x5 + 2025x4 + 2024x1 (50/40/10) per-game weighting, {PRIOR}-game Bayesian prior toward the same 50/40/10-weighted 2024-26 baseline.",
-        "window_label": "2024-2026 (50/40/10 by year, recency-weighted)",
+        "methodology": (
+            "Offense/pitching bias = batter_impact - pitcher_impact (runs). "
+            "2026x5 + 2025x4 + 2024x1 (50/40/10) per-game weighting. "
+            f"Challenge-dampened x{dampen:.3f} = 1 - the 2026 ABS overturn share of "
+            "wrong calls (UmpScorecards impact is pre-challenge; overturned misses "
+            "still count against the ump, so raw overstates realized game impact). "
+            f"{PRIOR}-game Bayesian prior toward the dampened baseline."),
+        "window_label": "2024-2026 (50/40/10 by year, ABS-challenge adjusted)",
         "shrinkage_prior_games": PRIOR,
+        "challenge_dampen": round(dampen, 4),
+        "league_overturn_share_2026": round(overturn_share, 4),
         "baseline": baseline,
         "league_avg": {"baseline_off_adj": round(baseline, 4), "acc_above_x_mean": league_acc},
         "umpires": out,
