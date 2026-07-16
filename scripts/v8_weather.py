@@ -109,11 +109,17 @@ CAL_PARAMS = {
 #   ATL (Truist, most-southward), MIL + TEX (southward; usually roofed).
 # NE-facing parks left unchanged (plausible range) pending a full
 # coordinate-based recompute.
+# Home-plate -> center-field compass bearing (deg from true N). AUTHORITATIVE:
+# MLB StatsAPI venue location.azimuthAngle (official, physically-fixed). Replaced
+# the prior hand-maintained table 2026-07 after an audit found 23/30 parks off by
+# >=15 deg (CIN was 41 vs the true 122 -> in/out winds were flipped; NYY 37 vs 75;
+# PIT 37 vs 116). Drives ONLY the live wind out/in classification; the wr_out/wr_in
+# responsiveness magnitudes are BallparkPal park constants and are unaffected.
 GPS_CF = {
-    "ARI":52,"ATL":175,"BAL":49,"BOS":63,"CHC":9,"CHW":135,"CIN":41,"CLE":9,
-    "COL":69,"DET":150,"HOU":41,"KC":49,"LAA":50,"LAD":53,"MIA":37,"MIL":150,
-    "MIN":38,"NYM":7,"NYY":37,"PHI":46,"PIT":37,"SD":48,"SEA":2,"SF":64,
-    "STL":47,"TB":45,"TEX":155,"TOR":44,"WAS":44,"ATH":43,
+    "ARI":0,"ATL":145,"BAL":31,"BOS":45,"CHC":37,"CHW":127,"CIN":122,"CLE":0,
+    "COL":4,"DET":150,"HOU":343,"KC":46,"LAA":44,"LAD":26,"MIA":128,"MIL":129,
+    "MIN":129,"NYM":13,"NYY":75,"PHI":9,"PIT":116,"SD":0,"SF":85,"SEA":49,
+    "STL":62,"TB":359,"TEX":30,"TOR":345,"WAS":28,"ATH":46,
 }
 
 # Per-park temp and wind distribution buckets (BP_DIST)
