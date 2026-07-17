@@ -66,7 +66,7 @@ BP_BASE = {
     "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":0.16,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
     "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":4.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
     "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":1.19,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
-    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":14.00,"wr_in":4.72,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
+    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":19.30,"wr_in":4.72,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
     "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":2.87,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
     "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
     "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":0.84,"wr_in":2.48,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
