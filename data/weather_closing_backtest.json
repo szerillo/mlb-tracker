@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-07-17T16:36:52Z",
+  "method": "our model on PropFinder OBSERVED weather; closing=PropFinder gameRunLine; actual=MLB",
+  "span": [
+    "2026-04-01",
+    "2026-07-16"
+  ],
+  "skew_window_excluded": [
+    "2026-05-20",
+    "2026-06-15"
+  ],
+  "n_total": 892,
+  "n_clean": 661,
+  "HEADLINE_clean": {
+    "n": 661,
+    "calibrated_slope": 0.092,
+    "calibration_vs_actual": {
+      "slope": 0.0697,
+      "r": 0.146,
+      "n": 661,
+      "realized_x": 0.76
+    },
+    "edge_vs_closing": {
+      "slope": 0.0288,
+      "r": 0.058,
+      "n": 661
+    },
+    "mean_resid_actual_minus_close": 0.62,
+    "hit_rate": {
+      "adj>=+5%_went_over": 48.7,
+      "n_over": 78,
+      "adj<=-5%_went_under": 46.1,
+      "n_under": 228
+    }
+  },
+  "ball_skew_window": {
+    "n": 231,
+    "calibrated_slope": 0.0919,
+    "calibration_vs_actual": {
+      "slope": 0.1467,
+      "r": 0.265,
+      "n": 231,
+      "realized_x": 1.6
+    },
+    "edge_vs_closing": {
+      "slope": 0.11,
+      "r": 0.191,
+      "n": 231
+    },
+    "mean_resid_actual_minus_close": 0.73,
+    "hit_rate": {
+      "adj>=+5%_went_over": 59.0,
+      "n_over": 39,
+      "adj<=-5%_went_under": 53.6,
+      "n_under": 56
+    }
+  },
+  "all_incl_skew": {
+    "n": 892,
+    "calibrated_slope": 0.0919,
+    "calibration_vs_actual": {
+      "slope": 0.0968,
+      "r": 0.193,
+      "n": 892,
+      "realized_x": 1.05
+    },
+    "edge_vs_closing": {
+      "slope": 0.0432,
+      "r": 0.085,
+      "n": 892
+    },
+    "mean_resid_actual_minus_close": 0.65,
+    "hit_rate": {
+      "adj>=+5%_went_over": 52.1,
+      "n_over": 117,
+      "adj<=-5%_went_under": 47.5,
+      "n_under": 284
+    }
+  }
+}
