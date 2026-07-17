@@ -80,6 +80,31 @@ def game_window(weather, gepoch):
     return win, win[0]
 
 
+# high wind-out receptivity parks (BP wr_out top tier)
+HIGH_WIND = {"CHC","BOS","PHI","COL","STL","ATL","NYY","BAL"}
+
+
+def ols2(rows, y_of):
+    """park-demeaned y ~ t_adj + w_adj via normal equations (no numpy).
+    Returns realized-x for temp and wind vs the calibrated slope."""
+    import statistics as _st
+    from collections import defaultdict
+    data=[(x["t_adj"], x["w_adj"], y_of(x)) for x in rows
+          if x.get("t_adj") is not None and x.get("w_adj") is not None]
+    if len(data) < 25: return None
+    cal = _st.mean([x["actual"] for x in rows]) / 100.0
+    mt=_st.mean([d[0] for d in data]); mw=_st.mean([d[1] for d in data]); my=_st.mean([d[2] for d in data])
+    Stt=sum((d[0]-mt)**2 for d in data); Sww=sum((d[1]-mw)**2 for d in data)
+    Stw=sum((d[0]-mt)*(d[1]-mw) for d in data)
+    Sty=sum((d[0]-mt)*(d[2]-my) for d in data); Swy=sum((d[1]-mw)*(d[2]-my) for d in data)
+    det=Stt*Sww-Stw*Stw
+    if det==0: return None
+    bt=(Sww*Sty-Stw*Swy)/det; bw=(Stt*Swy-Stw*Sty)/det
+    return {"n":len(data),
+            "temp_slope":round(bt,4),"temp_realized_x":round(bt/cal,2),
+            "wind_slope":round(bw,4),"wind_realized_x":round(bw/cal,2)}
+
+
 def ols(xy):
     xs=[a for a,_ in xy]; ys=[b for _,b in xy]; n=len(xs)
     if n<3: return None
@@ -120,7 +145,9 @@ def main():
             res = v8.compute_v8(code, wx)
             adj = res.get("run_adj_pct")
             if adj is None or res.get("error"): continue
+            comp = res.get("components", {}) or {}
             recs.append({"date": ds, "pk": pk, "code": code, "adj": adj,
+                         "t_adj": comp.get("t_adj_pct"), "w_adj": comp.get("w_adj_pct"),
                          "close": close, "actual": actual, "resid": actual - close,
                          "skew": SKEW_START <= ds <= SKEW_END})
         d += dt.timedelta(days=1)
@@ -142,9 +169,32 @@ def main():
         under = [x for x in rows if x["adj"] <= -BUCKET]
         hr_over = round(100*sum(1 for x in over if x["resid"] > 0)/len(over), 1) if over else None
         hr_under = round(100*sum(1 for x in under if x["resid"] < 0)/len(under), 1) if under else None
+        # temp-vs-wind split (is the overshoot uniform or wind-only?)
+        tw = ols2(rows, lambda x: x["actual"] - pmean[x["code"]])
+        # per-park realized-x (parks with enough games; CHC/high-wind highlighted)
+        per_park = {}
+        for c in sorted(byp):
+            pr = [x for x in rows if x["code"] == c]
+            if len(pr) < 15: continue
+            pcal = st.mean([x["actual"] for x in pr]) / 100.0
+            o = ols([(x["adj"], x["actual"] - pmean[c]) for x in pr])
+            if o and pcal:
+                per_park[c] = {"n": o["n"], "realized_x": round(o["slope"]/pcal, 2), "r": o["r"],
+                               "mean_adj": round(st.mean([x["adj"] for x in pr]), 1)}
+        # high-wind-tier parks vs the rest
+        def grp(codes):
+            g = [x for x in rows if x["code"] in codes]
+            if len(g) < 20: return None
+            gcal = st.mean([x["actual"] for x in g]) / 100.0
+            o = ols([(x["adj"], x["actual"] - pmean[x["code"]]) for x in g])
+            return {"n": o["n"], "realized_x": round(o["slope"]/gcal, 2), "r": o["r"]} if o else None
         return {"n": len(rows),
                 "calibrated_slope": round(cal, 4),
                 "calibration_vs_actual": calib,
+                "temp_vs_wind_split": tw,
+                "high_wind_parks": grp(HIGH_WIND),
+                "other_parks": grp(set(byp) - HIGH_WIND),
+                "per_park": per_park,
                 "edge_vs_closing": edge,
                 "mean_resid_actual_minus_close": round(st.mean([x["resid"] for x in rows]), 2),
                 "hit_rate": {f"adj>=+{BUCKET:.0f}%_went_over": hr_over, "n_over": len(over),
