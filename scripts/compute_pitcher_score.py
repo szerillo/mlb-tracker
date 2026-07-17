@@ -51,25 +51,49 @@ import os
 import sys
 import unicodedata
 
-HERE     = os.path.dirname(__file__)
-INPUT    = os.path.join(HERE, "..", "data", "pitcher_stats.json")
-GAMELOGS = os.path.join(HERE, "..", "data", "pitcher_gamelogs.json")
-OUTPUT   = INPUT  # in-place enrichment
+HERE      = os.path.dirname(__file__)
+INPUT     = os.path.join(HERE, "..", "data", "pitcher_stats.json")
+GAMELOGS  = os.path.join(HERE, "..", "data", "pitcher_gamelogs.json")
+ROLES     = os.path.join(HERE, "..", "pitcher_roles.json")  # SP/RP classification (repo root)
+OUTPUT    = INPUT  # in-place enrichment
 
 # Stabilized-rolling blend for xFIP/SIERA: 0.6·L5 + 0.4·season-to-date.
 ROLL_L5_WEIGHT     = 0.6
 ROLL_SEASON_WEIGHT = 0.4
 
-# (component_key, weight_pct). roll_* are computed; the rest read from stats.
+# IN-SEASON CORE = these four, in their relative proportions (renormalized among
+# whichever are available). Rolling xFIP/SIERA lead; xERA/botERA add independent
+# contact/stuff info K-BB% misses.
 COMPONENTS = [
     ("roll_xfip",  28.0),
     ("roll_siera", 22.0),
     ("xera",       18.0),
     ("bot_era",    17.0),
-    ("fip_proj",   15.0),
 ]
-TOTAL_WEIGHT = sum(w for _, w in COMPONENTS)  # 100.0
-MIN_WEIGHT_COVERED = 50.0  # need at least half the weight in available metrics
+
+# DYNAMIC in-season vs projection weighting (mid-2026 recalibration).
+# The projection is no longer a flat 15% for everyone. Instead the IN-SEASON
+# core's weight GROWS with the pitcher's actual innings and the projection fades
+# (but never to zero): w_season = IP / (IP + K), w_proj = K / (IP + K). K is the
+# innings at which in-season data earns 50% of the weight. Relievers get a larger
+# K (their per-IP rate stats are noisier and role changes matter), so they lean
+# on the projection longer than starters at equal innings.
+K_SP = 14.0   # starter half-weight innings
+K_RP = 20.0   # reliever half-weight innings
+DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
+
+# Rolling K-BB% TREND tilt. Sean's ask: use the L5-vs-season K-BB% trend as a
+# guide. K-BB% is the best forward rate signal; a pitcher whose recent K-BB% has
+# jumped is pitching better than his blended composite (which lags) yet shows.
+# We nudge the score by the L5-minus-season K-BB% delta, SMALL and capped (the
+# rolling core already carries most recent form, so this is only the residual),
+# and SCALED BY THE IN-SEASON WEIGHT so it informs established arms and barely
+# touches tiny-sample/projection-driven ones.
+KBB_TILT_SLOPE = 0.03   # FIP per point of (L5 - season) K-BB%; sign: better K-BB -> lower FIP
+KBB_TILT_CAP   = 0.20   # max |tilt| in FIP units
+KBB_TILT_MIN_L5 = 3     # need at least this many recent starts/appearances
+
+MIN_CORE_WEIGHT = 40.0  # need ~half of the 85-pt core (or a projection) to score
 
 # Tier on the FIP scale (lower = better)
 TIERS = [
@@ -101,6 +125,34 @@ def _norm(s: str) -> str:
             s = s[: s.rfind(suf)]
             break
     return s.replace(".", "").strip()
+
+
+def load_roles():
+    """normalized name -> 'SP' | 'RP' from pitcher_roles.json (repo root)."""
+    try:
+        d = json.load(open(ROLES))
+    except Exception as e:
+        print(f"[score] no pitcher_roles ({e}); all arms use K_RP", file=sys.stderr)
+        return {}
+    out = {}
+    for k, v in (d.get("pitchers") or {}).items():
+        rl = (v.get("role") or "").upper()
+        out[_norm(v.get("name", k))] = "SP" if rl == "SP" else "RP"
+        out[_norm(k)] = out[_norm(v.get("name", k))]
+    return out
+
+
+def _l5_kbb(g):
+    """L5 K-BB% (points) from the game-log l5 aggregate; None if too sparse."""
+    if not g:
+        return None
+    l5 = g.get("l5") or {}
+    if (g.get("l5_n") or l5.get("n") or 0) < KBB_TILT_MIN_L5:
+        return None
+    kp, bp = l5.get("k_pct"), l5.get("bb_pct")
+    if kp is None or bp is None:
+        return None
+    return kp - bp
 
 
 def load_gamelogs():
@@ -185,8 +237,9 @@ def main() -> int:
 
     glby = load_gamelogs()
     rollby = load_roll()
+    rolesby = load_roles()
     print(f"[score] loaded {len(pitchers)} pitchers, {len(glby)} gamelog arms, "
-          f"{len(rollby)} recent-window arms", file=sys.stderr)
+          f"{len(rollby)} recent-window arms, {len(rolesby)} role tags", file=sys.stderr)
 
     n_scored = n_sparse = n_rolling = 0
     tier_counts = {label: 0 for _, label in TIERS}
@@ -200,28 +253,65 @@ def main() -> int:
             "roll_siera": stabilized_roll("siera", p, g, r),
             "xera":       _f(p.get("xera")),
             "bot_era":    _f(p.get("bot_era")),
-            "fip_proj":   _f(p.get("fip_proj")),
         }
+        proj = _f(p.get("fip_proj"))
 
-        weighted_sum = weight_avail = 0.0
+        # --- in-season CORE: available components in their relative proportions ---
+        core_sum = core_w_avail = 0.0
         components = {}
         for field, weight in COMPONENTS:
             v = vals[field]
             if v is None:
                 continue
             components[field] = round(v, 3)
-            weighted_sum += weight * v
-            weight_avail += weight
+            core_sum += weight * v
+            core_w_avail += weight
+        core = core_sum / core_w_avail if core_w_avail else None
 
-        if weight_avail < MIN_WEIGHT_COVERED:
-            for key in ("unified_score", "unified_tier",
-                        "unified_components", "unified_weight_covered",
-                        "unified_rolling"):
+        # need enough in-season signal, or a projection to fall back on
+        if core is None and proj is None:
+            for key in ("unified_score", "unified_tier", "unified_components",
+                        "unified_weight_covered", "unified_rolling",
+                        "unified_proj_weight"):
+                p.pop(key, None)
+            n_sparse += 1
+            continue
+        if core is not None and core_w_avail < MIN_CORE_WEIGHT and proj is None:
+            for key in ("unified_score", "unified_tier", "unified_components",
+                        "unified_weight_covered", "unified_rolling",
+                        "unified_proj_weight"):
                 p.pop(key, None)
             n_sparse += 1
             continue
 
-        score = weighted_sum / weight_avail  # weighted FIP
+        # --- DYNAMIC in-season vs projection weight, driven by innings + role ---
+        ip = _f(p.get("ip")) or 0.0
+        role = rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))
+        K = K_SP if role == "SP" else DEFAULT_K
+        if core is None:                      # no in-season metrics -> pure projection
+            w_season, w_proj = 0.0, 1.0
+            score = proj
+        elif proj is None:                    # no projection -> pure in-season
+            w_season, w_proj = 1.0, 0.0
+            score = core
+        else:
+            w_proj   = K / (ip + K)
+            w_season = 1.0 - w_proj
+            score = w_season * core + w_proj * proj
+
+        # --- rolling K-BB% trend nudge (scaled by the in-season weight) ---
+        kbb_tilt = 0.0
+        l5_kbb = _l5_kbb(g)
+        season_kbb = _f(p.get("k_bb_pct"))
+        if l5_kbb is not None and season_kbb is not None and core is not None:
+            raw = -KBB_TILT_SLOPE * (l5_kbb - season_kbb)     # better K-BB -> lower FIP
+            raw = max(-KBB_TILT_CAP, min(KBB_TILT_CAP, raw))
+            kbb_tilt = raw * w_season                          # informs established arms most
+            score += kbb_tilt
+
+        # keep the projection visible in the component breakdown
+        if proj is not None:
+            components["fip_proj"] = round(proj, 3)
 
         tier = TIERS[-1][1]
         for thr, label in TIERS:
@@ -240,8 +330,13 @@ def main() -> int:
         p["unified_score"]          = round(score, 2)
         p["unified_tier"]           = tier
         p["unified_components"]     = components
-        p["unified_weight_covered"] = round(weight_avail, 1)
+        p["unified_weight_covered"] = round(core_w_avail + (15.0 if proj is not None else 0.0), 1)
         p["unified_rolling"]        = rolling
+        p["unified_proj_weight"]    = round(w_proj, 3)
+        if kbb_tilt:
+            p["unified_kbb_tilt"] = round(kbb_tilt, 3)
+        else:
+            p.pop("unified_kbb_tilt", None)
         n_scored += 1
         tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
@@ -249,9 +344,16 @@ def main() -> int:
     d["scoring"]["unified_score"] = {
         "computed_at": datetime.datetime.utcnow().isoformat() + "Z",
         "scale": "FIP (weighted average — lower = better)",
-        "method": ("rolling-led: rolling xFIP/SIERA are stabilized "
-                   "0.6·L5 + 0.4·season; projection downweighted"),
-        "weights": {f: w for f, w in COMPONENTS},
+        "method": ("rolling-led in-season core (stabilized 0.6*L5 + 0.4*season "
+                   "xFIP/SIERA + xERA/botERA), blended vs projection with a "
+                   "DYNAMIC weight w_season = IP/(IP+K) that grows with innings "
+                   f"(K_SP={K_SP:g}, K_RP={K_RP:g}); plus a small rolling K-BB% "
+                   "trend nudge."),
+        "core_weights": {f: w for f, w in COMPONENTS},
+        "dynamic_projection": {"K_SP": K_SP, "K_RP": K_RP,
+                               "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
+        "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
+                     "min_l5": KBB_TILT_MIN_L5, "scaled_by": "w_season"},
         "rolling_blend": {"l5": ROLL_L5_WEIGHT, "season": ROLL_SEASON_WEIGHT},
         "tier_thresholds": [{"max_val": t, "label": l}
                             for t, l in TIERS if t < float("inf")],
