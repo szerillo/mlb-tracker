@@ -196,7 +196,7 @@ WIND_CAP = 5.00
 # Linear wind response let extreme winds (Wrigley 22mph out) run to +63% wind / +74%
 # total, which overshoots — wind effect saturates (25mph doesn't help 2.5x a 10mph).
 # ~0.30 keeps the common 5-12mph range near-linear and tapers the tail.
-WIND_SOFT = 0.30
+WIND_SOFT = 0.45
 DP_C = 0.0014
 PRES_C = 0.0030   # 2026-06 recal: wind-controlled pressure slope ~-0.24 %/mb (earlier -0.39 was wind confound); net ~-0.26.
 CARRY_INT = 0.0003

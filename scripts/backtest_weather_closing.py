@@ -281,7 +281,17 @@ def main():
             return {"n": len(g), "realized_x": round(o["slope"]/c, 2), "r": o["r"]} if (o and c) else None
         out = [x for x in rows if x.get("w_adj") is not None and x["w_adj"] > 0.5]
         inn = [x for x in rows if x.get("w_adj") is not None and x["w_adj"] < -0.5]
-        return {"out_wind": cal(out), "in_wind": cal(inn)}
+        # per-park in-wind (suppression) calibration — thin data, only a few parks qualify
+        from collections import defaultdict
+        bypark = defaultdict(list)
+        for x in inn: bypark[x["code"]].append(x)
+        per_park_in = {}
+        for c, g in sorted(bypark.items()):
+            if len(g) < 10: continue
+            m = st.mean([x["actual"] for x in g]); cc = m/100.0
+            o = ols([(x["w_adj"], x["actual"]-m) for x in g])
+            if o and cc: per_park_in[c] = {"n": len(g), "realized_x": round(o["slope"]/cc,2), "r": o["r"]}
+        return {"out_wind": cal(out), "in_wind": cal(inn), "in_wind_by_park": per_park_in}
 
     def recalibrate_parks(rows, B=1200):
         """Empirical-Bayes per-park wr_out proposal. Each park's realized_x (how
