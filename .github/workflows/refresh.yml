@@ -526,6 +526,23 @@ jobs:
         run: python scripts/log_weather_calibration.py
         continue-on-error: true
 
+      - name: Archive PropFinder weather (independent Kevin Roth / Visual Crossing feed)
+        # Pulls api.propfinder.app/mlb/weather-games for today's slate, keyed by
+        # MLB gamePk, and stores the game-hour temp/wind/windDir(deg)/precip to
+        # data/propfinder_weather.json + an append-only data/propfinder_archive.csv.
+        # Independent forecast to compare our NWS inputs against; past dates carry
+        # observed actuals (source "obs") for accuracy grading.
+        run: python scripts/refresh_propfinder_weather.py
+        continue-on-error: true
+
+      - name: Weather forecast accuracy backtest (ours vs BP vs observed)
+        # Joins our NWS forecast + BP (cal log) to PropFinder observed actuals and
+        # actual runs -> data/weather_forecast_accuracy.json: forecast-input MAE
+        # (ours vs BP) and run-adjustment calibration (ours vs BP). Re-runnable;
+        # sharpens as the sample grows.
+        run: python scripts/backtest_weather_forecasts.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
