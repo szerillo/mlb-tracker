@@ -154,6 +154,61 @@ def main():
     if not recs:
         print("[closing-bt] no games", file=sys.stderr); return 0
 
+    import random as _rnd
+
+    def _realized(rows, cal, predkey="adj"):
+        """single-var park-demeaned realized_x for a row subset."""
+        from collections import defaultdict
+        byp = defaultdict(list)
+        for x in rows: byp[x["code"]].append(x["actual"])
+        pm = {c: st.mean(v) for c, v in byp.items()}
+        o = ols([(x[predkey], x["actual"]-pm[x["code"]]) for x in rows if x.get(predkey) is not None])
+        return (o["slope"]/cal) if o else None
+
+    def boot_ci(rows, cal, predkey="adj", B=1500):
+        vals=[]
+        n=len(rows)
+        for _ in range(B):
+            samp=[rows[_rnd.randrange(n)] for _ in range(n)]
+            v=_realized(samp, cal, predkey)
+            if v is not None: vals.append(v)
+        vals.sort()
+        if len(vals)<50: return None
+        return {"x": round(_realized(rows, cal, predkey),2),
+                "ci90": [round(vals[int(.05*len(vals))],2), round(vals[int(.95*len(vals))],2)], "n": n}
+
+    def boot_diff(a, b, cal, B=1500):
+        """CI on realized_x(a) - realized_x(b); if CI excludes 0 the groups truly differ."""
+        na, nb = len(a), len(b); diffs=[]
+        for _ in range(B):
+            sa=[a[_rnd.randrange(na)] for _ in range(na)]
+            sb=[b[_rnd.randrange(nb)] for _ in range(nb)]
+            va=_realized(sa, cal); vb=_realized(sb, cal)
+            if va is not None and vb is not None: diffs.append(va-vb)
+        diffs.sort()
+        return {"diff": round(_realized(a,cal)-_realized(b,cal),2),
+                "ci90": [round(diffs[int(.05*len(diffs))],2), round(diffs[int(.95*len(diffs))],2)],
+                "excludes_0": diffs[int(.05*len(diffs))]>0 or diffs[int(.95*len(diffs))]<0}
+
+    def mag_buckets(rows, cal, key, edges):
+        """park-independent: within each |component| bucket, did runs move as predicted?
+        realized_x = mean(park-demeaned actual) / (mean(adj)*cal)."""
+        from collections import defaultdict
+        byp = defaultdict(list)
+        for x in rows: byp[x["code"]].append(x["actual"])
+        pm = {c: st.mean(v) for c, v in byp.items()}
+        out=[]
+        for lo,hi in edges:
+            g=[x for x in rows if x.get(key) is not None and lo<=x[key]<hi]
+            if len(g)<12: out.append({"range":[lo,hi],"n":len(g),"note":"thin"}); continue
+            madj=st.mean([x[key] for x in g])
+            dev=st.mean([x["actual"]-pm[x["code"]] for x in g])
+            pred=madj*cal
+            out.append({"range":[lo,hi],"n":len(g),"mean_comp_pct":round(madj,1),
+                        "predicted_runs":round(pred,2),"actual_dev_runs":round(dev,2),
+                        "realized_x":(round(dev/pred,2) if abs(pred)>0.05 else None)})
+        return out
+
     def analyze(rows, label):
         if len(rows) < 10: return {"n": len(rows), "note": "too few"}
         from collections import defaultdict
@@ -195,6 +250,17 @@ def main():
                 "high_wind_parks": grp(HIGH_WIND),
                 "other_parks": grp(set(byp) - HIGH_WIND),
                 "per_park": per_park,
+                "robustness": {
+                    "boot_all":  boot_ci(rows, cal),
+                    "boot_high_wind": boot_ci([x for x in rows if x["code"] in HIGH_WIND], cal),
+                    "boot_other":     boot_ci([x for x in rows if x["code"] not in HIGH_WIND], cal),
+                    "high_minus_other_diff": boot_diff([x for x in rows if x["code"] in HIGH_WIND],
+                                                        [x for x in rows if x["code"] not in HIGH_WIND], cal),
+                    "by_total_adj_bucket": mag_buckets(rows, cal, "adj",
+                        [(-99,-5),(-5,-2),(-2,2),(2,5),(5,10),(10,99)]),
+                    "by_wind_component_bucket": mag_buckets(rows, cal, "w_adj",
+                        [(-99,-3),(-3,0),(0,3),(3,7),(7,12),(12,99)]),
+                },
                 "edge_vs_closing": edge,
                 "mean_resid_actual_minus_close": round(st.mean([x["resid"] for x in rows]), 2),
                 "hit_rate": {f"adj>=+{BUCKET:.0f}%_went_over": hr_over, "n_over": len(over),
