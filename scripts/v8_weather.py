@@ -66,7 +66,7 @@ BP_BASE = {
     "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":0.16,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
     "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":4.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
     "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":1.19,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
-    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":19.30,"wr_in":4.72,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
+    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":19.30,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
     "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":2.87,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
     "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
     "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":0.84,"wr_in":2.48,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
@@ -192,6 +192,11 @@ WIND_SCALE = 0.95
 # strong wind-out games can run high; the magnitude is still governed by per-park
 # wr_out + WIND_SCALE + EMPIRICAL_SCALE.
 WIND_CAP = 5.00
+# Diminishing-returns soft ceiling on the wind %: w_adj -> WIND_SOFT*tanh(w_adj/WIND_SOFT).
+# Linear wind response let extreme winds (Wrigley 22mph out) run to +63% wind / +74%
+# total, which overshoots — wind effect saturates (25mph doesn't help 2.5x a 10mph).
+# ~0.30 keeps the common 5-12mph range near-linear and tapers the tail.
+WIND_SOFT = 0.30
 DP_C = 0.0014
 PRES_C = 0.0030   # 2026-06 recal: wind-controlled pressure slope ~-0.24 %/mb (earlier -0.39 was wind confound); net ~-0.26.
 CARRY_INT = 0.0003
@@ -439,7 +444,9 @@ def compute_v8(park, wx, treat_as_open=False):
         # Cap the per-component wind impact so a single park's bad wr value
         # can't dominate the total. Our single-hour NWS wind octant is too
         # coarse to justify a larger swing than this (see V8.2 calibration note).
-        w_adj = max(-WIND_CAP, min(WIND_CAP, w_adj))
+        import math as _m
+        w_adj = WIND_SOFT * _m.tanh(w_adj / WIND_SOFT)   # diminishing returns on strong wind
+        w_adj = max(-WIND_CAP, min(WIND_CAP, w_adj))     # hard sentinel (rarely binds)
         wind_info = {"out_component": round(out_c, 2), "dir_rarity": round(wd_rarity, 2),
                      "spd_rarity": round(ws_rarity, 2)}
 

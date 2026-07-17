@@ -266,6 +266,23 @@ def main():
                 "hit_rate": {f"adj>=+{BUCKET:.0f}%_went_over": hr_over, "n_over": len(over),
                              f"adj<=-{BUCKET:.0f}%_went_under": hr_under, "n_under": len(under)}}
 
+    def wind_dir_split(rows):
+        """Calibrate out-wind vs in-wind (suppression) separately. Group by sign of
+        the wind component; within each, park-demean actual and regress on w_adj.
+        realized_x>1 = that direction under-modeled (needs more weight)."""
+        from collections import defaultdict
+        def cal(g):
+            if len(g) < 15: return {"n": len(g), "note": "thin"}
+            byp = defaultdict(list)
+            for x in g: byp[x["code"]].append(x["actual"])
+            pm = {c: st.mean(v) for c, v in byp.items()}
+            c = st.mean([x["actual"] for x in g]) / 100.0
+            o = ols([(x["w_adj"], x["actual"] - pm[x["code"]]) for x in g if x.get("w_adj") is not None])
+            return {"n": len(g), "realized_x": round(o["slope"]/c, 2), "r": o["r"]} if (o and c) else None
+        out = [x for x in rows if x.get("w_adj") is not None and x["w_adj"] > 0.5]
+        inn = [x for x in rows if x.get("w_adj") is not None and x["w_adj"] < -0.5]
+        return {"out_wind": cal(out), "in_wind": cal(inn)}
+
     def recalibrate_parks(rows, B=1200):
         """Empirical-Bayes per-park wr_out proposal. Each park's realized_x (how
         much runs move vs our prediction) is shrunk toward 1.0 (no change) by its
@@ -324,6 +341,7 @@ def main():
         "ball_skew_window": analyze([x for x in recs if x["skew"]], "skew"),
         "all_incl_skew": analyze(recs, "all"),
         "park_wind_recalibration": recalibrate_parks(clean),
+        "wind_direction_split": wind_dir_split(clean),
     }
     with open(OUT, "w") as f: json.dump(payload, f, indent=2)
     print(json.dumps({k: payload[k] for k in ("span","n_total","n_clean","HEADLINE_clean","ball_skew_window")}, indent=1))
