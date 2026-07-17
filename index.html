@@ -3026,12 +3026,23 @@ async function loadSheetProjections(){
       const _vd=(typeof VIEW_DATE!=='undefined' && VIEW_DATE)?VIEW_DATE:_todayISO_ET();
       const _ymd=_vd.replace(/-/g,'');
       const _norm=x=>(x||'').toString().toLowerCase().replace(/[^a-z]/g,'');
-      const pkByName={};
+      // Map matchup-name -> gamePk, but a DOUBLEHEADER has two gamePks for the
+      // same "away@home" string. Mapping by name alone collapses them, so a row
+      // uploaded for G1 (its an_event_id) would resolve to G2's gamePk (or vice
+      // versa) and both games would show the same projection. Detect any matchup
+      // that appears on >1 gamePk and DROP it from the name bridge — those games
+      // then resolve only by their own distinct an_event_id (via oddsForGame),
+      // so an un-uploaded G2 correctly shows blank instead of G1's numbers.
+      const pkByName={}, _dhNames=new Set();
       for(const g of CURRENT_GAMES){
         const a=_norm(g.teams&&g.teams.away&&g.teams.away.team&&g.teams.away.team.name);
         const h=_norm(g.teams&&g.teams.home&&g.teams.home.team&&g.teams.home.team.name);
-        if(a&&h) pkByName[a+'@'+h]=g.gamePk;
+        if(!(a&&h)) continue;
+        const key=a+'@'+h;
+        if(pkByName[key]!==undefined && pkByName[key]!==g.gamePk) _dhNames.add(key);
+        pkByName[key]=g.gamePk;
       }
+      for(const k of _dhNames) delete pkByName[k];   // ambiguous (doubleheader) — never name-bridge
       const _c2=(typeof AbortController!=='undefined')?new AbortController():null;
       const _t2=_c2?setTimeout(()=>_c2.abort(),7000):null;
       const _anr=await fetch('https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15&date='+_ymd+'&periods=event', _c2?{signal:_c2.signal}:undefined);
