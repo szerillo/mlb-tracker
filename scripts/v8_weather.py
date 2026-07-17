@@ -256,6 +256,28 @@ def _temp_percentile(park, temp_f):
     return 1.0
 
 
+# ── Targeted wind-receptivity shrink (2026-07 calibration) ──────────────────
+# Longer backtest (892 games, model on OBSERVED weather vs closing+actual):
+# high wr_out parks (CHC/BOS/PHI/COL/STL/ATL/NYY/BAL) calibrate at ~1.04x and the
+# high-vs-low-wind gap is significant (bootstrap 90% CI excludes 0). Low-wind
+# parks realize ~0.40x — their wind adjustment is largely noise. So we SHRINK the
+# wind component ONLY at low-receptivity parks and leave the validated high-wind
+# tier untouched. Conservative floor (keep 60% of wind) + directional, while we
+# keep gathering sample. wr_out magnitude is the receptivity proxy.
+WR_FULL = 2.4              # |wr_out| at/above which wind keeps full weight (validated tier)
+WIND_SHRINK_FLOOR = 0.60   # least wind-receptive parks keep 60% of the wind adj
+
+
+def _wind_receptivity_shrink(park):
+    base = BP_BASE.get(park)
+    if not base:
+        return 1.0
+    wr = abs(base.get("wr_out", 0) or 0)
+    if wr >= WR_FULL:
+        return 1.0
+    return WIND_SHRINK_FLOOR + (1.0 - WIND_SHRINK_FLOOR) * (wr / WR_FULL)
+
+
 def _wind_speed_rarity(park, ws):
     dist = (BP_DIST.get(park) or {}).get("wind_spd")
     if not dist: return 0
@@ -413,6 +435,7 @@ def compute_v8(park, wx, treat_as_open=False):
         ws_rarity = _wind_speed_rarity(park, ws)
         rarity_amp = max(wd_rarity * WIND_DIR_RARITY_AMP, ws_rarity * WIND_SPEED_RARITY_AMP)
         w_adj *= (1 + rarity_amp)
+        w_adj *= _wind_receptivity_shrink(park)   # trim wind at low-receptivity parks (noise); high-wind tier untouched
         # Cap the per-component wind impact so a single park's bad wr value
         # can't dominate the total. Our single-hour NWS wind octant is too
         # coarse to justify a larger swing than this (see V8.2 calibration note).
