@@ -1,0 +1,50 @@
+name: Weather closing backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Backtest start date (YYYY-MM-DD)"
+        type: string
+        default: "2026-04-01"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weather-backtest
+  cancel-in-progress: true
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Run closing-total backtest (our model on observed weather vs closing + actual)
+        env:
+          BT_START: ${{ github.event.inputs.start }}
+        run: python scripts/backtest_weather_closing.py
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/weather_closing_backtest.json || true
+          if git diff --cached --quiet; then
+            echo "No change."
+          else
+            git commit -m "Weather closing backtest $(date -u +'%Y-%m-%dT%H:%MZ')"
+            for i in 1 2 3 4 5; do
+              git pull --rebase --autostash origin main && git push && break
+              sleep $((RANDOM % 6 + 2))
+            done
+          fi
