@@ -266,6 +266,53 @@ def main():
                 "hit_rate": {f"adj>=+{BUCKET:.0f}%_went_over": hr_over, "n_over": len(over),
                              f"adj<=-{BUCKET:.0f}%_went_under": hr_under, "n_under": len(under)}}
 
+    def recalibrate_parks(rows, B=1200):
+        """Empirical-Bayes per-park wr_out proposal. Each park's realized_x (how
+        much runs move vs our prediction) is shrunk toward 1.0 (no change) by its
+        reliability: m = 1 + (realized_x - 1) * tau2/(tau2+se^2). Strong-signal
+        parks (low bootstrap se) move; noisy small-n parks stay near prior. New
+        wr_out = current * m, capped to avoid wild swings. Total-adj realized_x is
+        a proxy (wind-dominated parks it fits well; temp-parts have small wind)."""
+        import random as _r
+        from collections import defaultdict
+        byp = defaultdict(list)
+        for x in rows: byp[x["code"]].append(x)
+        parks = {c: g for c, g in byp.items() if len(g) >= 15}
+        # per-park realized_x + bootstrap se
+        est = {}
+        for c, g in parks.items():
+            cal = st.mean([x["actual"] for x in g]) / 100.0
+            m = st.mean([x["actual"] for x in g])
+            o = ols([(x["adj"], x["actual"] - m) for x in g])
+            if not o or cal == 0: continue
+            x0 = o["slope"] / cal
+            bs = []
+            n = len(g)
+            for _ in range(B):
+                samp = [g[_r.randrange(n)] for _ in range(n)]
+                mm = st.mean([z["actual"] for z in samp]); cc = st.mean([z["actual"] for z in samp])/100.0
+                oo = ols([(z["adj"], z["actual"]-mm) for z in samp])
+                if oo and cc: bs.append(oo["slope"]/cc)
+            if len(bs) < 50: continue
+            se = st.pstdev(bs)
+            est[c] = {"n": n, "r": o["r"], "realized_x": round(x0, 2), "se": round(se, 2)}
+        if not est: return {}
+        xs = [e["realized_x"] for e in est.values()]
+        mean_v = st.mean([e["se"]**2 for e in est.values()])
+        tau2 = max(0.0, st.pvariance(xs) - mean_v)   # method-of-moments between-park variance
+        out = {}
+        for c, e in est.items():
+            w = tau2 / (tau2 + e["se"]**2) if (tau2 + e["se"]**2) > 0 else 0.0
+            m_shrunk = 1.0 + (e["realized_x"] - 1.0) * w
+            m_shrunk = max(0.5, min(2.0, m_shrunk))   # cap the multiplier
+            cur = (v8.BP_BASE.get(c) or {}).get("wr_out")
+            proposed = round(cur * m_shrunk, 2) if cur is not None else None
+            out[c] = {**e, "shrink_weight": round(w, 2), "mult": round(m_shrunk, 2),
+                      "wr_out_now": cur, "wr_out_proposed": proposed,
+                      "material": abs(m_shrunk - 1.0) >= 0.10}
+        return {"tau2": round(tau2, 3), "n_parks": len(out),
+                "n_material": sum(1 for v in out.values() if v["material"]), "parks": out}
+
     clean = [x for x in recs if not x["skew"]]
     payload = {
         "generated_at": dt.datetime.utcnow().isoformat(timespec="seconds")+"Z",
@@ -276,6 +323,7 @@ def main():
         "HEADLINE_clean": analyze(clean, "clean"),
         "ball_skew_window": analyze([x for x in recs if x["skew"]], "skew"),
         "all_incl_skew": analyze(recs, "all"),
+        "park_wind_recalibration": recalibrate_parks(clean),
     }
     with open(OUT, "w") as f: json.dump(payload, f, indent=2)
     print(json.dumps({k: payload[k] for k in ("span","n_total","n_clean","HEADLINE_clean","ball_skew_window")}, indent=1))
