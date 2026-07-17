@@ -183,6 +183,12 @@ def keep_previous(output_path, iso, n_join, n_sched):
     prev_n = prev.get("n_games") or len(prev.get("games") or {})
     if prev_n <= 0:
         return False
+    # Only protect a feed for THIS slate. A previous snapshot from an earlier
+    # date is stale — keeping it makes (e.g.) the F5 view show yesterday's/last
+    # week's games for today when today's tab is empty. Let the empty feed
+    # through so today's games render with no projection instead of wrong ones.
+    if prev.get("date") != iso:
+        return False
     if n_join == 0:
         return True
     # same slate, materially thinner than both the previous snapshot and the
