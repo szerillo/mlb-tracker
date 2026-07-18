@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-18T20:35:41.761254Z",
+  "generated_at": "2026-07-18T22:29:51.159277Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -63,8 +63,8 @@
       "weather": {
         "temp_f": 83,
         "humidity_pct": 75,
-        "wind_speed_mph": 14,
-        "wind_dir": "NNW",
+        "wind_speed_mph": 9,
+        "wind_dir": "NW",
         "precip_pct": 80,
         "short_forecast": "Showers And Thunderstorms",
         "start_time": "2026-07-18T19:00:00-04:00",
@@ -74,24 +74,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 0.8,
+        "run_adj_pct": 1.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 9.8,
           "t_adj_pct": 3.4,
-          "w_adj_pct": -2.8,
+          "w_adj_pct": -1.7,
           "dp_adj_pct": 2.0,
           "p_adj_pct": 2.1,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.4,
           "wind": {
-            "out_component": -11.86,
+            "out_component": -7.21,
             "dir_rarity": 0.15,
-            "spd_rarity": 0.4
+            "spd_rarity": 0.04
           }
         },
-        "model_pct": 0.8,
+        "model_pct": 1.8,
         "pressure_source": "BP",
         "bp_pct": 1,
         "bp_blended": false,
@@ -621,6 +621,102 @@
       "note": null
     },
     {
+      "game_pk": 824979,
+      "matchup": "Washington Nationals @ Athletics",
+      "venue": "Sutter Health Park",
+      "game_time": "2026-07-19T02:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 87,
+        "humidity_pct": 30,
+        "wind_speed_mph": 9,
+        "wind_dir": "SW",
+        "precip_pct": 0,
+        "short_forecast": "Clear",
+        "start_time": "2026-07-18T19:00:00-07:00",
+        "game_window_temp_f": 79.6,
+        "game_window_humidity_pct": 42.4,
+        "first_pitch_temp_f": 87,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 3.5,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -1.4,
+          "t_adj_pct": -0.6,
+          "w_adj_pct": 4.4,
+          "dp_adj_pct": 0.0,
+          "p_adj_pct": 0.6,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.5,
+          "wind": {
+            "out_component": 8.84,
+            "dir_rarity": 0,
+            "spd_rarity": 0.25
+          }
+        },
+        "model_pct": 3.5,
+        "pressure_source": "BP",
+        "bp_pct": 1,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 88
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824008,
+      "matchup": "Detroit Tigers @ Los Angeles Angels",
+      "venue": "Angel Stadium",
+      "game_time": "2026-07-19T02:07:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 78,
+        "humidity_pct": 65,
+        "wind_speed_mph": 6,
+        "wind_dir": "SSW",
+        "precip_pct": 2,
+        "short_forecast": "Mostly Clear",
+        "start_time": "2026-07-18T19:00:00-07:00",
+        "game_window_temp_f": 75.2,
+        "game_window_humidity_pct": 70.5,
+        "first_pitch_temp_f": 78,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 1.5,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -1.8,
+          "t_adj_pct": -0.8,
+          "w_adj_pct": 1.8,
+          "dp_adj_pct": 1.0,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.2,
+          "wind": {
+            "out_component": 5.85,
+            "dir_rarity": 0,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 1.5,
+        "pressure_source": "BP",
+        "bp_pct": 3,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 82
+      },
+      "note": null
+    },
+    {
       "game_pk": 823523,
       "matchup": "Los Angeles Dodgers @ New York Yankees",
       "venue": "Yankee Stadium",
@@ -669,102 +765,6 @@
       "note": null
     },
     {
-      "game_pk": 824979,
-      "matchup": "Washington Nationals @ Athletics",
-      "venue": "Sutter Health Park",
-      "game_time": "2026-07-19T02:05:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 87,
-        "humidity_pct": 30,
-        "wind_speed_mph": 9,
-        "wind_dir": "SW",
-        "precip_pct": 0,
-        "short_forecast": "Clear",
-        "start_time": "2026-07-18T19:00:00-07:00",
-        "game_window_temp_f": 79.6,
-        "game_window_humidity_pct": 42.4,
-        "first_pitch_temp_f": 87,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 3.5,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -1.4,
-          "t_adj_pct": -0.6,
-          "w_adj_pct": 4.4,
-          "dp_adj_pct": 0.0,
-          "p_adj_pct": 0.6,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.5,
-          "wind": {
-            "out_component": 8.84,
-            "dir_rarity": 0,
-            "spd_rarity": 0.25
-          }
-        },
-        "model_pct": 3.5,
-        "pressure_source": "BP",
-        "bp_pct": 0,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 86
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824008,
-      "matchup": "Detroit Tigers @ Los Angeles Angels",
-      "venue": "Angel Stadium",
-      "game_time": "2026-07-19T02:07:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 78,
-        "humidity_pct": 65,
-        "wind_speed_mph": 7,
-        "wind_dir": "SW",
-        "precip_pct": 2,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-07-18T19:00:00-07:00",
-        "game_window_temp_f": 75.2,
-        "game_window_humidity_pct": 70.5,
-        "first_pitch_temp_f": 78,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 1.8,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -1.8,
-          "t_adj_pct": -0.8,
-          "w_adj_pct": 2.1,
-          "dp_adj_pct": 1.0,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.2,
-          "wind": {
-            "out_component": 7.0,
-            "dir_rarity": 0,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 1.8,
-        "pressure_source": "BP",
-        "bp_pct": 3,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 77
-      },
-      "note": null
-    },
-    {
       "game_pk": 822786,
       "matchup": "Chicago White Sox @ Toronto Blue Jays",
       "venue": "Rogers Centre",
@@ -804,6 +804,98 @@
           }
         },
         "model_pct": -2.1,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823523,
+      "matchup": "Los Angeles Dodgers @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-07-19T16:35:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 79,
+        "humidity_pct": 50,
+        "wind_speed_mph": 11,
+        "wind_dir": "NW",
+        "precip_pct": 0,
+        "short_forecast": "Sunny",
+        "start_time": "2026-07-19T13:00:00-04:00",
+        "game_window_temp_f": 80.3,
+        "game_window_humidity_pct": 47.6,
+        "first_pitch_temp_f": 79,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 5.5,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 6.3,
+          "t_adj_pct": 2.8,
+          "w_adj_pct": 2.8,
+          "dp_adj_pct": 0.2,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 6.89,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 5.5,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823521,
+      "matchup": "Los Angeles Dodgers @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-07-19T23:20:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 80,
+        "humidity_pct": 45,
+        "wind_speed_mph": 8,
+        "wind_dir": "NW",
+        "precip_pct": 0,
+        "short_forecast": "Clear",
+        "start_time": "2026-07-19T19:00:00-04:00",
+        "game_window_temp_f": 76.8,
+        "game_window_humidity_pct": 50.6,
+        "first_pitch_temp_f": 80,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 2.4,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 2.8,
+          "t_adj_pct": 0.9,
+          "w_adj_pct": 1.6,
+          "dp_adj_pct": -0.0,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 4.0,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 2.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1407,52 +1499,6 @@
         "bp_pct": null,
         "bp_blended": false
       }
-    },
-    {
-      "game_pk": 823521,
-      "matchup": "Los Angeles Dodgers @ New York Yankees",
-      "venue": "Yankee Stadium",
-      "game_time": "2026-07-19T23:20:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 80,
-        "humidity_pct": 45,
-        "wind_speed_mph": 8,
-        "wind_dir": "NW",
-        "precip_pct": 0,
-        "short_forecast": "Clear",
-        "start_time": "2026-07-19T19:00:00-04:00",
-        "game_window_temp_f": 76.8,
-        "game_window_humidity_pct": 50.6,
-        "first_pitch_temp_f": 80,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 2.4,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 2.8,
-          "t_adj_pct": 0.9,
-          "w_adj_pct": 1.6,
-          "dp_adj_pct": -0.0,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 4.0,
-            "dir_rarity": 0.3,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 2.4,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
     }
   ]
 }
