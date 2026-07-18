@@ -19,7 +19,8 @@ USAGE:
         python scripts/refresh_sheet_projections.py
 """
 from __future__ import annotations
-import csv, io, json, os, sys, datetime, urllib.request, urllib.parse, time
+import csv
+import re, io, json, os, sys, datetime, urllib.request, urllib.parse, time
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUTPUT = os.path.join(REPO_ROOT, "data", "sheet_projections.json")
@@ -51,7 +52,11 @@ def sheet_csv_url(env_url: str, tab: str) -> str:
 AN_API = ("https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb"
           "?bookIds=15,30&date={yyyymmdd}&periods=event")
 MLB_API = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={iso}"
-UA = "mlb-tracker/1.0 (+github.com/szerillo/mlb-tracker)"
+# Google's gviz endpoint returns an EMPTY body to non-browser user agents, which
+# parsed as "0 projection rows" and silently froze the feed (2026-07-18 incident:
+# sheet had all 16 rows, CI saw none). Present a browser UA for every fetch.
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 NAMED = ["user_id","expert_id","game_id","away_score","home_score","away_win_p",
          "home_win_p","ml_away","ml_home","spread_away","spread_home","total"]
@@ -64,9 +69,33 @@ def _http_get_json(url, timeout=25):
 
 
 def _http_get_text(url, timeout=25):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    hdrs = {"User-Agent": UA,
+            "Accept": "text/csv,text/plain,*/*",
+            "Accept-Language": "en-US,en;q=0.9"}
+    req = urllib.request.Request(url, headers=hdrs)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")
+
+
+def fetch_sheet_text(url, label="sheet"):
+    """Fetch the sheet CSV, retry once without the cache-buster, and NEVER return
+    an empty body silently — an empty gviz response is what produced a phantom
+    '0 projection rows' run while the sheet was fully populated."""
+    txt = ""
+    try:
+        txt = _http_get_text(url)
+    except Exception as e:
+        print(f"  [{label}] fetch error: {e}", file=sys.stderr)
+    if not (txt or "").strip():
+        alt = re.sub(r"[&?]_cb=\d+", "", url)
+        print(f"  [{label}] EMPTY response from sheet; retrying without cache-buster",
+              file=sys.stderr)
+        try:
+            txt = _http_get_text(alt)
+        except Exception as e:
+            print(f"  [{label}] retry failed: {e}", file=sys.stderr)
+    print(f"  [{label}] sheet CSV bytes={len(txt or '')}", file=sys.stderr)
+    return txt
 
 
 def _tkey(s): return (s or "").lower().replace(" ", "").replace(".", "")
@@ -228,7 +257,7 @@ def build_id_maps(iso: str):
 def main():
     url = sheet_csv_url(SHEET_CSV_URL, "GAME UPLOADER")
     try:
-        text = _http_get_text(url)
+        text = fetch_sheet_text(url, "sheet_projections")
     except Exception as e:
         print(f"ERR: could not fetch sheet CSV: {e}", file=sys.stderr)
         return 1

@@ -19,7 +19,7 @@ import json, os, sys, datetime
 sys.path.insert(0, os.path.dirname(__file__))
 # reuse the exact parsing + DH-safe id resolution from the full-game emitter
 from refresh_sheet_projections import (
-    parse_sheet_csv, build_id_maps, _nick, _parse_dt, _et_today, _http_get_text,
+    parse_sheet_csv, build_id_maps, _nick, _parse_dt, _et_today, fetch_sheet_text,
     pick_slate_date, keep_previous, sheet_csv_url,
 )
 
@@ -31,7 +31,7 @@ SHEET_F5_CSV_URL = os.environ.get("SHEET_F5_CSV_URL", "").strip()
 def main():
     url = sheet_csv_url(SHEET_F5_CSV_URL, "F5 UPLOADER")
     try:
-        text = _http_get_text(url)
+        text = fetch_sheet_text(url, "f5_projections")
     except Exception as e:
         print(f"ERR: could not fetch F5 sheet CSV: {e}", file=sys.stderr)
         return 1
