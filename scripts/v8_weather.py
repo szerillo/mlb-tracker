@@ -14,6 +14,33 @@ History:
         into this model as the `pres` input, and weighting the final published
         number toward BP's weather-only runs on the games BP covers. This module
         stays a pure physical model; refresh_weather.py does the BP ingestion.
+  V9.1  (2026-07-18) INDEPENDENT VALIDATION — no coefficient changes.
+        Pulled 4,312 completed games (2022-2026, 12 open-air parks) from MLB
+        StatsAPI game feeds (game-time temp + reported wind) and regressed total
+        runs on temperature, demeaned by park-season to strip park and run-
+        environment effects.
+          - Empirical temperature slope: 0.411 %/degF (95% boot CI 0.285-0.555).
+            This model delivers a mean 0.421 %/degF across the 23 open-air parks
+            (median 0.415). Temperature term is CORRECTLY calibrated; leave it.
+          - The ALTITUDE_COEF temp amplifier is effectively a Coors-only knob
+            (COL 1.14x; every other park 1.00-1.02x). Suspected it was backwards
+            on physics (humidor decouples ball COR from ambient temp; thinner air
+            means a smaller ABSOLUTE density change per degF). The data does not
+            support that: COL empirical 0.380 %/degF vs an 11-park control mean
+            of 0.313 -> ratio 1.21, against the model's assumed 1.14. Coors is if
+            anything MORE temp-sensitive than average, not less. Left unchanged.
+          - Wind receptivity, per park, controlling for temp (~370 games/park,
+            %/10mph): CHC 18.4 (model 19.3), KC 13.2 (6.5), PIT 8.1 (0.8),
+            CIN 3.8 (-1.6), BOS 3.3 (4.6), PHI 2.9 (4.0), COL 1.5 (3.0),
+            MIN 1.2 (1.6), DET 0.6 (0.4), CLE 0.3 (0.8), NYY -1.2 (2.5),
+            ATL -1.7 (2.6). EVERY current wr_out falls inside its 95% bootstrap
+            CI, so none is rejected -- the CIs are +/-7 to 16 %/10mph because
+            StatsAPI's coarse out/in wind tag is a noisy regressor. Wrigley's
+            19.30 is independently confirmed (18.4 on 370 games). No changes.
+        Net: this pass validated the model rather than retuning it. Do not read
+        BallparkPal disagreement as evidence we are wrong -- on temperature the
+        5-season sample sides with us, and BP runs 3-5 degF hotter on its own
+        inputs (our forecast MAE 2.94 degF vs BP 4.21 degF).
 
 Usage:
     from v8_weather import compute_v8, TEAM_TO_PARK
