@@ -555,6 +555,7 @@
   .env-box .wx-text { flex: 1; min-width: 0; }
   .env-box .wx-headline { font-weight: 600; font-size: 1rem; }
   .env-box .wx-forecast { color: var(--muted); font-size: 0.88rem; margin-top: 0.2rem; }
+  .wx-modelt { color: var(--muted); font-size: 0.82rem; font-weight: 500; }
   .env-box .wx-v8 { margin-top: 0.55rem; display: flex; flex-wrap: wrap;
     gap: 0.4rem; align-items: center; }
   .env-box .wx-v8 .ump-pct { font-size: 0.95rem !important; padding: 0.18rem 0.55rem; }
@@ -6583,7 +6584,7 @@ function renderWeatherDetail(wx, home_park_code, game) {
     <div class="wx-top">
       <div class="wx-text">
         <div class="wx-headline">
-          <b>${w.temp_f}°F</b> · ${w.humidity_pct||'?'}% hum · ${w.wind_speed_mph}mph ${w.wind_dir||''} · ${w.precip_pct||0}% precip
+          <b>${w.temp_f}°F</b>${(w.game_window_temp_f != null && Math.abs(w.game_window_temp_f - w.temp_f) >= 1) ? ` <span class="wx-modelt" title="Game-window average temperature \u2014 this is the value the weather model actually uses, not the first-pitch temp.">(model ${w.game_window_temp_f.toFixed(1)}\u00B0)</span>` : ''} · ${w.humidity_pct||'?'}% hum · ${w.wind_speed_mph}mph ${w.wind_dir||''} · ${w.precip_pct||0}% precip
         </div>
         <div class="wx-forecast">${w.short_forecast||''}</div>
         <div class="wx-v8">
