@@ -71,6 +71,21 @@ def inject_projection(asg, pk):
         print("[asg] no projection block in asg_2026.json; skipping")
         return
 
+    # Once the ASG has been played, stop writing it into sheet_projections.json /
+    # f5_projections.json. It is not in the GAME UPLOADER sheet, so every refresh
+    # was re-adding a stale July-14 row to both feeds (it showed up as a phantom
+    # extra "game" on later slates). Only inject on/after the ASG date (ET).
+    try:
+        et_today = (dt.datetime.now(dt.timezone.utc)
+                    .astimezone(dt.timezone(dt.timedelta(hours=-4))).date())
+        asg_date = dt.date.fromisoformat(str(asg.get("date"))[:10])
+        if asg_date < et_today:
+            print(f"[asg] ASG {asg_date} already played (today {et_today}); "
+                  f"not injecting its projection into the slate feeds")
+            return
+    except Exception as e:
+        print(f"[asg] date guard skipped ({e})")
+
     lg = asg["leagues"]
     away_lg, home_lg = asg.get("away_league", "AL"), asg.get("home_league", "NL")
     away_name = f"{'American' if away_lg == 'AL' else 'National'} League All-Stars"
