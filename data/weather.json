@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T14:57:17.709645Z",
+  "generated_at": "2026-07-19T15:26:01.606508Z",
   "model_version": "v9",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -73,12 +73,12 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 6.3,
+        "run_adj_pct": 6.2,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 6.1,
-          "t_adj_pct": 2.7,
+          "t_adj_pct": 2.5,
           "w_adj_pct": 3.1,
           "dp_adj_pct": -0.5,
           "p_adj_pct": 1.2,
@@ -90,7 +90,7 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 6.3,
+        "model_pct": 6.2,
         "pressure_source": "BP",
         "bp_pct": -1,
         "bp_blended": false,
@@ -313,13 +313,13 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 0.1,
+        "run_adj_pct": 1.6,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 6.7,
           "t_adj_pct": 2.6,
-          "w_adj_pct": -2.4,
+          "w_adj_pct": -0.7,
           "dp_adj_pct": 0.2,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
@@ -330,7 +330,7 @@
             "spd_rarity": 0.04
           }
         },
-        "model_pct": 0.1,
+        "model_pct": 1.6,
         "pressure_source": "BP",
         "bp_pct": 4,
         "bp_blended": false,
@@ -549,12 +549,12 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 11.1,
+        "run_adj_pct": 8.6,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 20.5,
-          "t_adj_pct": 10.2,
+          "t_adj_pct": 7.7,
           "w_adj_pct": -0.7,
           "dp_adj_pct": 0.9,
           "p_adj_pct": 1.0,
@@ -566,7 +566,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 11.1,
+        "model_pct": 8.6,
         "pressure_source": "BP",
         "bp_pct": 4,
         "bp_blended": false,
@@ -597,14 +597,14 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.6,
+        "run_adj_pct": 5.4,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 8.1,
-          "t_adj_pct": 3.6,
+          "temp_delta": 10.1,
+          "t_adj_pct": 4.2,
           "w_adj_pct": 1.5,
-          "dp_adj_pct": -0.0,
+          "dp_adj_pct": 0.2,
           "p_adj_pct": 0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.5,
@@ -614,7 +614,7 @@
             "spd_rarity": 0.58
           }
         },
-        "model_pct": 4.6,
+        "model_pct": 5.4,
         "pressure_source": "BP",
         "bp_pct": 7,
         "bp_blended": false,
@@ -742,12 +742,12 @@
         "first_pitch_temp_f": 98
       },
       "open_v8": {
-        "run_adj_pct": 6.6,
+        "run_adj_pct": 6.4,
         "capped": false,
         "is_dome": true,
         "components": {
           "temp_delta": 10.8,
-          "t_adj_pct": 5.1,
+          "t_adj_pct": 4.8,
           "w_adj_pct": 0.0,
           "dp_adj_pct": 4.4,
           "p_adj_pct": -1.5,
@@ -759,7 +759,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 6.6,
+        "model_pct": 6.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -787,13 +787,13 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 3.0,
+        "run_adj_pct": 3.4,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 10.4,
           "t_adj_pct": 3.6,
-          "w_adj_pct": -0.6,
+          "w_adj_pct": -0.2,
           "dp_adj_pct": 0.4,
           "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
@@ -804,7 +804,7 @@
             "spd_rarity": 0.76
           }
         },
-        "model_pct": 3.0,
+        "model_pct": 3.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -879,12 +879,12 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -2.1,
+        "run_adj_pct": -1.9,
         "capped": false,
         "is_dome": true,
         "components": {
           "temp_delta": -4.5,
-          "t_adj_pct": -2.1,
+          "t_adj_pct": -2.0,
           "w_adj_pct": -0.2,
           "dp_adj_pct": -0.2,
           "p_adj_pct": 0.0,
@@ -896,7 +896,7 @@
             "spd_rarity": 0.19
           }
         },
-        "model_pct": -2.1,
+        "model_pct": -1.9,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -971,13 +971,13 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 5.1,
+        "run_adj_pct": 4.1,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 2.5,
           "t_adj_pct": 0.8,
-          "w_adj_pct": 4.2,
+          "w_adj_pct": 3.1,
           "dp_adj_pct": 0.3,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
@@ -988,7 +988,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 5.1,
+        "model_pct": 4.1,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1155,13 +1155,13 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 37.1,
+        "run_adj_pct": 31.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 12.2,
           "t_adj_pct": 4.2,
-          "w_adj_pct": 31.1,
+          "w_adj_pct": 26.1,
           "dp_adj_pct": 1.9,
           "p_adj_pct": 0.0,
           "precip_adj_pct": -2.1,
@@ -1172,7 +1172,7 @@
             "spd_rarity": 0.22
           }
         },
-        "model_pct": 37.1,
+        "model_pct": 31.8,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1293,12 +1293,12 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.8,
+        "run_adj_pct": 3.2,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 15.9,
-          "t_adj_pct": 6.8,
+          "t_adj_pct": 5.1,
           "w_adj_pct": -2.2,
           "dp_adj_pct": 1.5,
           "p_adj_pct": -1.0,
@@ -1310,7 +1310,7 @@
             "spd_rarity": 0.34
           }
         },
-        "model_pct": 4.8,
+        "model_pct": 3.2,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
