@@ -14,6 +14,15 @@ History:
         into this model as the `pres` input, and weighting the final published
         number toward BP's weather-only runs on the games BP covers. This module
         stays a pure physical model; refresh_weather.py does the BP ingestion.
+  V9.2  (2026-07-19) FULL 30-PARK RECALIBRATION on a 13,286-game pull
+        (2021-2026 home Finals, MLB game feeds; year-demeaned two-var temp+wind
+        regression, bootstrap CIs). Changed ONLY parks whose empirical 95%% CI
+        excludes the model value; 9 changed, 21 held. Temp: PARK_T_MULT WAS x1.9,
+        COL x0.75, CIN x0.55. Wind: PIT wr_out 0.84->7.0/wr_in 2.48->4.0,
+        BAL wr_out 2.40->5.0, CHC wr_out 19.30->15.0, CLE wr_in 2.47->0.75,
+        PHI wr_out 4.0->3.0. ATH base 81->79. TEMP_TREND_AMP 0.15->0.08 (halve
+        the unvalidated rising-temp amplifier). Every changed park re-checked to
+        land inside its empirical CI. See weather_recalibration_2026-07-19 doc.
   V9.1  (2026-07-18) INDEPENDENT VALIDATION — no coefficient changes.
         Pulled 4,312 completed games (2022-2026, 12 open-air parks) from MLB
         StatsAPI game feeds (game-time temp + reported wind) and regressed total
@@ -74,10 +83,10 @@ TEAM_TO_PARK = {
 # ============================================================================
 BP_BASE = {
     "LAA":{"temp":77,"hum":51,"pres":1013,"carry":-48.00,"wr_out":-2.36,"wr_in":3.32,"of":"Small","cr":"Avg","cq":"Good","var":0.79,"runs":-1,"alt":160},
-    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":2.40,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
+    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":5.00,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
     "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":4.58,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
     "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":1.27,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
-    "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0.75,"wr_in":2.47,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
+    "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0.75,"wr_in":0.75,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
     "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":6.50,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
     "TB": {"temp":72,"hum":44,"pres":1014,"carry":-53.00,"wr_out":0,"wr_in":0,"of":"Medium","cr":"Poor","cq":"Poor","var":0.03,"runs":-7,"alt":0,"dome":True},
     "TOR":{"temp":73,"hum":59,"pres":1015,"carry":-1.67,"wr_out":-1.02,"wr_in":-1.37,"of":"Medium","cr":"Great","cq":"Good","var":0.81,"runs":-3,"alt":247,"dome":True},
@@ -87,16 +96,16 @@ BP_BASE = {
     "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":1.83,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
     "TEX":{"temp":81,"hum":42,"pres":1013,"carry":-1.18,"wr_out":1.34,"wr_in":0.79,"of":"Medium","cr":"Avg","cq":"Great","var":0.40,"runs":-5,"alt":616,"dome":True},
     "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":2.32,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
-    "ATH":{"temp":81,"hum":40,"pres":1012,"carry":-95.00,"wr_out":3.00,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},
+    "ATH":{"temp":79,"hum":40,"pres":1012,"carry":-95.00,"wr_out":3.00,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},
     "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":2.61,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
     "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":0.04,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
     "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":0.16,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
-    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":4.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
+    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":3.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
     "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":1.19,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
-    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":19.30,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
+    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":15.00,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
     "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":2.87,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
     "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
-    "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":0.84,"wr_in":2.48,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
+    "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":7.00,"wr_in":4.00,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
     "STL":{"temp":79,"hum":58,"pres":1014,"carry":-77.00,"wr_out":2.63,"wr_in":1.28,"of":"Large","cr":"Good","cq":"Avg","var":1.25,"runs":-5,"alt":455},
     "ARI":{"temp":88,"hum":15,"pres":1010,"carry":68.00,"wr_out":0.19,"wr_in":1.09,"of":"Large","cr":"Great","cq":"Bad","var":0.48,"runs":2,"alt":1082,"dome":True},
     "COL":{"temp":75,"hum":28,"pres":1012,"carry":3.75,"wr_out":3.00,"wr_in":1.81,"of":"X","cr":"Great","cq":"Avg","var":1.36,"runs":32,"alt":5183},
@@ -248,8 +257,18 @@ PRECIP_T1 = 25
 PRECIP_T2 = 60
 PRECIP_MAX_PENALTY = -0.035
 
-TEMP_TREND_AMP = 0.15
+TEMP_TREND_AMP = 0.08
 TEMP_TREND_DAMPEN = 0.85
+
+# V9.2 (2026-07-19) per-park TEMP multiplier from the 13,286-game all-park pull
+# (year-demeaned two-var temp+wind regression). Applied AFTER the temp amps.
+# Only parks whose empirical %/F 95% CI EXCLUDES the model's ~0.42 baseline are
+# moved; noisy parks (wide CIs) are left at 1.0. See recalibration doc.
+PARK_T_MULT = {
+    "WAS": 1.90,   # emp 0.90 %/F, CI[0.50,1.28] -> excludes 0.44; DC heat carries
+    "COL": 0.75,   # emp 0.30 %/F, CI[0.02,0.62]; humidor+thin-air cap the temp effect
+    "CIN": 0.55,   # emp -0.21 %/F, CI upper 0.25 < 0.40; shrink toward ~0.2
+}
 
 CR_MULT = {"Bad":0.94,"Poor":0.97,"Avg":1.0,"Good":1.04,"Great":1.07}
 CQ_MULT = {"Bad":0.94,"Poor":0.97,"Avg":1.0,"Good":1.04,"Great":1.07}
@@ -443,6 +462,7 @@ def compute_v8(park, wx, treat_as_open=False):
     if pct <= 0.1 or pct >= 0.9:
         amp += EXTREME_PCT_BOOST
     t_adj *= (1 + amp)
+    t_adj *= PARK_T_MULT.get(park, 1.0)
 
     # Wind component (requires wd_compass)
     w_adj = 0
