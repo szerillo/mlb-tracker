@@ -4796,8 +4796,6 @@ function renderLineupsTab() {
   }
   sumEl.innerHTML = `<div class="lu-summary">
     <div><b>${confirmed}</b> confirmed · <b>${projected}</b> projected · <b>${total - confirmed - projected}</b> awaiting (of ${total})</div>
-    <div class="lu-grade-key">Grades vs MLB (C ≈ avg): <b>PWR</b>/<b>EYE</b> from Statcast &amp; plate-discipline percentiles · <b>CON</b> from season K% (lower = better) · <b>wRC+</b>/<b>BSR</b>/<b>DEF</b> from projections. Hitters missing data are excluded from team averages (not counted as 0).</div>
-
   </div>`;
 
   let postedHTML = "";
