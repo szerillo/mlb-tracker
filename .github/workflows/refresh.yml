@@ -508,6 +508,10 @@ jobs:
         run: python scripts/build_grades_v2.py
         continue-on-error: true
 
+      - name: Rebuild hitter vR/vL splits (Savant wOBA -> FG-calibrated wRC+, 50/50 baseline blend)
+        run: python scripts/refresh_hitter_splits.py
+        continue-on-error: true
+
       - name: Build sheet sync feed (weather % + HP ump per Action Network GameID)
         # Emits data/sheet_sync.json — the pre-joined feed the projection-model
         # Google Sheet pulls (Apps Script checkbox) to overwrite each matchup's
