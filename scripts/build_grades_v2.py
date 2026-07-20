@@ -132,18 +132,26 @@ def compute_fld_bsr():
         for r in csv.DictReader(open(FLD_PROJ)):
             proj[r["name_key"]]={"name":r["name"],"fld":_f(r["fld_proj_pg"]),"bsr":_f(r["bsr_proj_pg"])}
     games=max(30,_season_games())
-    # OAA observed (fielding runs prevented) -> /150; ignore catchers; no positional adj.
+    # SABR Defensive Index (SDI) observed -> /150. Multi-system composite (the
+    # Gold-Glove metric); rates ALL positions incl. catchers. Auto-discovers the
+    # latest published date. No positional adjustment (SDI is position-contextual).
     oaa={}
     try:
-        for r in csv.DictReader(io.StringIO(fetch(f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielder&year={YEAR}&min=q&csv=true"))):
-            pos=(r.get("primary_pos_formatted") or "").upper()
-            if pos in ("C","P"): continue                 # ignore catchers (OAA excludes C anyway)
-            frp=_f(r.get("fielding_runs_prevented"))
-            if frp is None: continue
-            nk=[k for k in r if "last_name" in k][0]
-            oaa[norm(r[nk])]=frp*150.0/games              # season-to-date -> /150
+        import html as _html
+        land=fetch("https://sabr.org/sdi/", 25)
+        dates=sorted(set(re.findall(r"/sdi/(\d{4}-\d{2}-\d{2})", land)))
+        latest=dates[-1] if dates else "2026-07-12"
+        page=fetch(f"https://sabr.org/sdi/{latest}", 25)
+        rows=re.findall(r"<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>", page, re.S)
+        for nm,tm,pos,val in rows:
+            if pos.strip()=="P": continue                 # exclude pitchers
+            v=_f(val)
+            if v is None: continue
+            k=norm(_html.unescape(nm))
+            oaa[k]=oaa.get(k,0.0)+v*150.0/games           # sum multi-position, season-to-date -> /150
+        print(f"[grades_v2] SDI {latest}: {len(oaa)} position players", file=sys.stderr)
     except Exception as e:
-        print(f"[grades_v2] OAA pull failed ({e})", file=sys.stderr)
+        print(f"[grades_v2] SDI pull failed ({e})", file=sys.stderr)
     # Baserunning observed (runner_runs) -> /150 (via a nominal 650 PA season already? keep proj-led)
     brun={}
     try:
@@ -228,7 +236,7 @@ def main():
 
     payload={"generated_at":datetime.datetime.utcnow().isoformat(timespec="seconds")+"Z",
              "n_players":len(out),
-             "source":"AUTO v2.0: Damage(Savant EV+shrink+frozen cutoffs), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + Savant OAA/runner_runs), Contact(Savant K%).",
+             "source":"AUTO v2.0: Damage(Savant EV+shrink+frozen cutoffs), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + SABR SDI (fielding) + Savant runner_runs (baserunning)), Contact(Savant K%).",
              "methodology_version":"2.0-auto","by_name":out}
     OUT.write_text(json.dumps(payload,indent=2))
     have=lambda f: sum(1 for v in out.values() if f in v)
