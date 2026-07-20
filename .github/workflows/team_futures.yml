@@ -48,6 +48,10 @@ jobs:
 
       - name: Refresh team futures odds (VegasInsider)
         run: python scripts/refresh_team_futures_odds.py
+
+      - name: Refresh win totals + playoff Y/N from BettingPros consensus
+        run: python scripts/refresh_team_futures_bp.py
+        continue-on-error: true
         continue-on-error: true
 
       - name: Compute sean team projections (player-data ROS + playoff sim)
@@ -62,7 +66,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_futures.json data/sean_team_projections.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
