@@ -1,250 +1,141 @@
 #!/usr/bin/env python3
 """
-Build data/hitter_percentiles.json — Savant percentile rankings per hitter.
+Build data/hitter_percentiles.json — percentiles computed OURSELVES from Savant
+min=1 leaderboards, so every hitter (not just the qualified board) gets a value.
 
-Source: https://baseballsavant.mlb.com/leaderboard/percentile-rankings?csv=true
+Each stat is pulled as a RAW value at min=1 from the relevant Savant leaderboard,
+merged by player_id, then percentile-ranked across the full pulled population
+(higher = better; K%/Whiff/Chase inverted). A `qualified` flag marks players below
+the qualified-PA bar so the UI can asterisk their (small-sample) percentiles.
 
-Columns returned (all 0-100 percentiles, some may be blank for small samples):
-    xwoba, xba, xslg, xiso, xobp
-    brl_percent (barrel %), exit_velocity, max_ev, hard_hit_percent
-    k_percent, bb_percent, whiff_percent, chase_percent
-    arm_strength, sprint_speed, oaa, bat_speed, squared_up_rate, swing_length
+Output per hitter: name, mlbam_id, pa, qualified, + 0-100 percentiles:
+  xwoba xba xslg barrel hard_hit exit_velocity k_pct bb_pct whiff chase
+  sprint oaa arm_strength  (+ raw rates: barrel_pct, hard_hit_pct, exit_velocity_avg)
 
-Output:
-    {
-      "generated_at": "...",
-      "year": 2026,
-      "hitters": { "<norm_name>": { "name": "...", "mlbam_id": 592450,
-                                     "xwoba": 92, "barrel": 85, "hard_hit": 78,
-                                     "exit_velocity": 82, "max_ev": 91, ... }, ... }
-    }
-
-USAGE:
-    python scripts/refresh_hitter_percentiles.py > data/hitter_percentiles.json
+USAGE: python scripts/refresh_hitter_percentiles.py > data/hitter_percentiles.json
 """
 from __future__ import annotations
-import csv
-import datetime
-import io
-import json
-import os
-import re
-import sys
-import unicodedata
-import urllib.request
+import csv, datetime, io, json, os, sys, unicodedata, urllib.request
 
-UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36")
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/121.0 Safari/537.36")
+YEAR = int(os.environ.get("SAVANT_YEAR", datetime.date.today().year))
 
-URL = ("https://baseballsavant.mlb.com/leaderboard/percentile-rankings"
-       "?type=batter&year={year}&abs=50&csv=true")
-
-# Savant's statcast leaderboard returns raw rates (barrel %, hard-hit %, etc.)
-# alongside the counting stats. We merge this into each hitter entry so the
-# frontend can show e.g. "Brl 12.3%" instead of "Brl p85" (percentile).
-STATCAST_URL = ("https://baseballsavant.mlb.com/leaderboard/statcast"
-                "?type=batter&year={year}&player_type=resp_batter_id&min=q"
-                "&csv=true")
-
-# Savant CSV column name → cleaner key we use in JSON
-COLS = {
-    "xwoba":            "xwoba",
-    "xba":              "xba",
-    "xslg":             "xslg",
-    "xiso":             "xiso",
-    "xobp":             "xobp",
-    "brl_percent":      "barrel",
-    "exit_velocity":    "exit_velocity",
-    "max_ev":           "max_ev",
-    "hard_hit_percent": "hard_hit",
-    "k_percent":        "k_pct",
-    "bb_percent":       "bb_pct",
-    "whiff_percent":    "whiff",
-    "chase_percent":    "chase",
-    "sprint_speed":     "sprint",
-    "oaa":              "oaa",
-    "arm_strength":     "arm_strength",
-    "bat_speed":        "bat_speed",
-    "squared_up_rate":  "squared_up",
-    "swing_length":     "swing_length",
-}
-
-
-def norm_name(s: str) -> str:
+def norm_name(s):
     if not s: return ""
-    s = unicodedata.normalize("NFKD", s)
-    s = "".join(c for c in s if not unicodedata.combining(c))
-    s = s.lower()
-    for suf in [" jr.", " jr", " sr.", " sr", " iii", " ii"]:
-        if s.endswith(suf):
-            s = s[: -len(suf)]
+    s = unicodedata.normalize("NFKD", s); s = "".join(c for c in s if not unicodedata.combining(c)); s = s.lower()
+    for suf in [" jr.", " jr", " sr.", " sr", " iii", " ii", " iv"]:
+        if s.endswith(suf): s = s[:-len(suf)]
     return s.replace(".", "").strip()
 
-
+def _f(v):
+    if v in (None, ""): return None
+    try: return float(v)
+    except ValueError: return None
 def _i(v):
-    if v is None or v == "": return None
-    try: return int(v)
-    except (TypeError, ValueError): return None
+    if v in (None, ""): return None
+    try: return int(float(v))
+    except ValueError: return None
 
+def fetch_csv(url):
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return list(csv.DictReader(io.StringIO(r.read().decode("utf-8","replace").lstrip("﻿"))))
+
+def std_name(row):
+    raw = row.get("last_name, first_name") or row.get("player_name") or ""
+    if "," in raw:
+        last, first = [p.strip() for p in raw.split(",", 1)]; return f"{first} {last}"
+    return raw.strip()
+
+Y = YEAR
+# (url, {savant_col: our_raw_key})  — every board pulled at min=1
+BOARDS = [
+    (f"https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=batter&year={Y}&position=&team=&filterType=bip&min=1&csv=true",
+     {"pa":"pa","est_woba":"xwoba","est_ba":"xba","est_slg":"xslg"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/statcast?type=batter&year={Y}&min=1&csv=true",
+     {"brl_percent":"barrel","ev95percent":"hard_hit"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/custom?year={Y}&type=batter&filter=&min=1&selections=pa,k_percent,bb_percent,whiff_percent,exit_velocity_avg,xiso,avg_swing_speed,squared_up_swing&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&csv=true",
+     {"pa":"pa","k_percent":"k_pct","bb_percent":"bb_pct","whiff_percent":"whiff","exit_velocity_avg":"exit_velocity","xiso":"xiso","avg_swing_speed":"bat_speed","squared_up_swing":"squared_up"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/custom?year={Y}&type=batter&filter=&min=1&selections=pa,oz_swing_percent&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&csv=true",
+     {"oz_swing_percent":"chase"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/arm-strength?type=player&year={Y}&min=1&csv=true",
+     {"arm_overall":"arm_strength"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/sprint_speed?type=batter&year={Y}&min=0&csv=true",
+     {"sprint_speed":"sprint"}),
+    (f"https://baseballsavant.mlb.com/leaderboard/outs_above_average?type=Fielder&year={Y}&min=1&csv=true",
+     {"outs_above_average":"oaa"}),
+]
+# stats where LOWER raw is better (invert the percentile)
+INVERT = {"k_pct", "whiff", "chase"}
 
 def main():
-    year = int(os.environ.get("SAVANT_YEAR", datetime.date.today().year))
-    url = URL.format(year=year)
-    print(f"[percentiles] fetching {url}", file=sys.stderr)
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        text = r.read().decode("utf-8", errors="replace").lstrip("\ufeff")
-
-    reader = csv.DictReader(io.StringIO(text))
-    hitters = {}
-    for row in reader:
-        raw = row.get("player_name") or ""
-        if "," in raw:
-            last, first = [p.strip() for p in raw.split(",", 1)]
-            name = f"{first} {last}"
-        else:
-            name = raw.strip()
-        if not name: continue
-        pid = _i(row.get("player_id"))
-        entry = {"name": name, "mlbam_id": pid}
-        any_pct = False
-        for src, dest in COLS.items():
-            v = _i(row.get(src))
-            if v is not None:
-                entry[dest] = v
-                any_pct = True
-        # Keep even entries that have some data (early season empties are
-        # fine — the UI shows "—" for missing metrics). Skip only the
-        # completely empty rows.
-        if any_pct:
-            hitters[norm_name(name)] = entry
-
-    # Try prior year as a fallback pool when current-season row is blank.
-    if year > 2020:
-        prior_url = URL.format(year=year - 1)
+    players = {}   # pid -> {name, raw:{key:val}}
+    for url, cols in BOARDS:
         try:
-            req = urllib.request.Request(prior_url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                prior_text = r.read().decode("utf-8", errors="replace").lstrip("\ufeff")
-            prior = {}
-            for row in csv.DictReader(io.StringIO(prior_text)):
-                raw = row.get("player_name") or ""
-                if "," in raw:
-                    last, first = [p.strip() for p in raw.split(",", 1)]
-                    nm = f"{first} {last}"
-                else:
-                    nm = raw.strip()
-                if not nm: continue
-                d = {}
-                for src, dest in COLS.items():
-                    v = _i(row.get(src))
-                    if v is not None: d[dest] = v
-                if d:
-                    prior[norm_name(nm)] = d
-            backfilled = added = 0
-            # Pass 1: fill missing cells in hitters who DO have a current-year row
-            for k, e in hitters.items():
-                pc = prior.get(k)
-                if not pc: continue
-                for dest in COLS.values():
-                    if dest not in e and dest in pc:
-                        e[dest] = pc[dest]
-                        e["_backfilled"] = True
-                        backfilled += 1
-            # Pass 2: add hitters who have a prior-year row but NO current-year
-            # row at all (rookies returning from IL, traded-in mid-season, etc.)
-            # Without this, those players never appear in HITTER_PCT so the
-            # frontend can't render their PWR/EYE grades. Carry the prior-year
-            # name forward and mark the whole entry _backfilled.
-            # Re-parse prior CSV once more to get player names + IDs (the
-            # earlier prior loop dropped them).
-            for row in csv.DictReader(io.StringIO(prior_text)):
-                raw = row.get("player_name") or ""
-                if "," in raw:
-                    last, first = [p.strip() for p in raw.split(",", 1)]
-                    nm = f"{first} {last}"
-                else:
-                    nm = raw.strip()
-                if not nm: continue
-                k = norm_name(nm)
-                if k in hitters: continue   # already covered by pass 1
-                pc = prior.get(k)
-                if not pc: continue          # no usable data
-                entry = {"name": nm, "mlbam_id": _i(row.get("player_id")),
-                         "_backfilled": True}
-                for dest in COLS.values():
-                    if dest in pc:
-                        entry[dest] = pc[dest]
-                hitters[k] = entry
-                added += 1
-            print(f"[percentiles] backfilled {backfilled} cells "
-                  f"+ added {added} prior-year-only hitters from {year-1}",
-                  file=sys.stderr)
+            rows = fetch_csv(url)
         except Exception as e:
-            print(f"[percentiles] prior-year backfill failed: {e}",
-                  file=sys.stderr)
-
-    # ── 2nd pass: enrich with raw rates from Savant's statcast leaderboard ──
-    try:
-        req = urllib.request.Request(STATCAST_URL.format(year=year), headers={"User-Agent": UA})
-        with urllib.request.urlopen(req, timeout=45) as r:
-            raw_text = r.read().decode("utf-8", errors="replace").lstrip("\ufeff")
-        by_id = {}
-        by_norm = {}
-        for row in csv.DictReader(io.StringIO(raw_text)):
+            print(f"[percentiles] board failed {url[:70]}… ({e})", file=sys.stderr); continue
+        for row in rows:
             pid = _i(row.get("player_id"))
-            raw_name = row.get("last_name, first_name") or row.get("player_name") or ""
-            if "," in raw_name:
-                last, first = [p.strip() for p in raw_name.split(",", 1)]
-                nm_std = f"{first} {last}"
-            else:
-                nm_std = raw_name.strip()
-            # Verified Savant column names (statcast leaderboard 2026):
-            # barrel %  → "brl_percent"   (barrels per batted-ball event)
-            # barrel/PA → "brl_pa"        (barrels per PA — includes Ks in denom)
-            # hard-hit  → "ev95percent"   (% of BBE with EV ≥ 95 mph)
-            # whiff %   → not on this endpoint; lives on percentile-rankings only
-            raw_barrel    = row.get("brl_percent")
-            raw_barrel_pa = row.get("brl_pa")
-            raw_hh        = row.get("ev95percent")
-            def _f(v):
-                if v in (None, ""): return None
-                try: return float(v)
-                except ValueError: return None
-            entry = {}
-            if _f(raw_barrel)    is not None: entry["barrel_pct"]    = _f(raw_barrel)
-            if _f(raw_barrel_pa) is not None: entry["barrel_per_pa"] = _f(raw_barrel_pa)
-            if _f(raw_hh)        is not None: entry["hard_hit_pct"]  = _f(raw_hh)
-            if not entry: continue
-            if pid is not None: by_id[pid] = entry
-            if nm_std: by_norm[norm_name(nm_std)] = entry
-        merged = 0
-        for k, e in hitters.items():
-            extra = None
-            if e.get("mlbam_id") is not None and e["mlbam_id"] in by_id:
-                extra = by_id[e["mlbam_id"]]
-            elif k in by_norm:
-                extra = by_norm[k]
-            if extra:
-                e.update(extra)
-                merged += 1
-        print(f"[percentiles] merged raw rates into {merged} hitters",
-              file=sys.stderr)
-    except Exception as e:
-        print(f"[percentiles] raw-rate merge failed (non-fatal): {e}",
-              file=sys.stderr)
+            if pid is None: continue
+            p = players.setdefault(pid, {"name": std_name(row), "raw": {}})
+            if not p["name"]: p["name"] = std_name(row)
+            for sc, key in cols.items():
+                v = _f(row.get(sc))
+                if v is None: continue
+                if key == "pa": p["raw"]["pa"] = max(p["raw"].get("pa", 0), v)
+                else: p["raw"][key] = v
+        print(f"[percentiles] {url.split('/leaderboard/')[1][:22]}… {len(rows)} rows", file=sys.stderr)
 
-    payload = {
-        "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
-        "year": year,
-        "source": f"Savant percentile-rankings + statcast leaderboard {year}" + (
-            f" (+ {year-1} percentile backfill)" if year > 2020 else ""),
-        "note": "0–100 percentiles + raw rates (barrel_pct, barrel_per_pa, hard_hit_pct).",
-        "hitters": hitters,
-    }
+    # qualified bar: ~Savant's rate-stat qualification (2.1 PA per team game).
+    # Approx team games from the busiest bat's PA (~4.6 PA/game for a full-time
+    # leadoff), giving threshold ~= 0.45 * max PA. Scales through the season.
+    max_pa = max((p["raw"].get("pa", 0) or 0) for p in players.values()) if players else 0
+    QUAL_PA = 0.45 * max_pa
+    def is_qual(p): return (p["raw"].get("pa") or 0) >= QUAL_PA
+
+    STAT_KEYS = ["xwoba","xba","xslg","xiso","barrel","hard_hit","exit_velocity","bat_speed","squared_up",
+                 "k_pct","bb_pct","whiff","chase","sprint","oaa","arm_strength"]
+    # percentile-rank each stat across everyone who has it
+    def pctl_map(key):
+        vals = sorted(p["raw"][key] for p in players.values() if key in p["raw"])
+        n = len(vals)
+        if n < 2: return {}, n
+        import bisect
+        out = {}
+        for pid, p in players.items():
+            if key not in p["raw"]: continue
+            v = p["raw"][key]
+            pct = 100.0 * bisect.bisect_right(vals, v) / n
+            if key in INVERT: pct = 100.0 - pct
+            out[pid] = max(1, min(99, round(pct)))
+        return out, n
+    pmaps = {k: pctl_map(k)[0] for k in STAT_KEYS}
+
+    hitters = {}
+    for pid, p in players.items():
+        nm = p["name"]
+        if not nm: continue
+        pa = p["raw"].get("pa")
+        entry = {"name": nm, "mlbam_id": pid,
+                 "pa": int(pa) if pa is not None else None,
+                 "qualified": is_qual(p)}
+        for k in STAT_KEYS:
+            if pid in pmaps[k]: entry[k] = pmaps[k][pid]
+        # keep a few raw rates for modal displays
+        if "barrel" in p["raw"]: entry["barrel_pct"] = round(p["raw"]["barrel"], 1)
+        if "hard_hit" in p["raw"]: entry["hard_hit_pct"] = round(p["raw"]["hard_hit"], 1)
+        if "exit_velocity" in p["raw"]: entry["exit_velocity_avg"] = round(p["raw"]["exit_velocity"], 1)
+        if len(entry) > 4: hitters[norm_name(nm)] = entry
+
+    payload = {"generated_at": datetime.datetime.utcnow().isoformat() + "Z", "year": YEAR,
+               "source": f"Savant min=1 leaderboards, percentiles computed over full pool {YEAR}",
+               "note": "0-100 percentiles vs the min=1 population. 'qualified'= PA >= ~0.45*max (Savant rate-stat bar); UI asterisks the rest.",
+               "hitters": hitters}
     json.dump(payload, sys.stdout, indent=2)
-    print(f"[percentiles] wrote {len(hitters)} hitters", file=sys.stderr)
-
+    nq = sum(1 for h in hitters.values() if h.get("qualified"))
+    print(f"[percentiles] wrote {len(hitters)} hitters ({nq} qualified)", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
