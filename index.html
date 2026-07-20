@@ -8037,7 +8037,7 @@ function renderMovers(){
 }
 
 // ===== Hitter Ranks tab: overall grade table (sortable + position filter) + hitter movers =====
-let HRANK_POS='ALL', HRANK_SORT={key:'ovr',dir:-1}, HRM_WIN='30';
+let HRANK_POS='ALL', HRANK_SORT={key:'ovr',dir:-1}, HRM_WIN='30', HRANK_MIN={};
 const HR_POS_GROUPS=['ALL','C','1B','2B','3B','SS','OF','DH'];
 const HR_COLS=[{k:'nm',l:'Hitter',t:'l'},{k:'pos',l:'Pos',t:'l'},{k:'pa',l:'PA'},{k:'pow',l:'POW'},{k:'con',l:'CON'},{k:'eye',l:'EYE'},{k:'xw',l:'xwOBA'},{k:'wrc',l:'wRC+'},{k:'bsr',l:'BSR'},{k:'fld',l:'DEF'},{k:'ovr',l:'OVR'}];
 function _posGroup(p){ if(!p) return '?'; p=(''+p).toUpperCase(); if(['LF','CF','RF','OF'].includes(p)) return 'OF'; if(p==='TWP') return 'DH'; if(['P','SP','RP'].includes(p)) return 'P'; return p; }
@@ -8063,6 +8063,10 @@ function renderHitterGrades(){
   const body=document.getElementById('hr-grade-body'); if(!body) return;
   let rows=hitterGradeRows();
   if(HRANK_POS!=='ALL') rows=rows.filter(r=>r.posg===HRANK_POS);
+  const _totalPre=rows.length;
+  const _mins=Object.entries(HRANK_MIN);
+  if(_mins.length) rows=rows.filter(r=>_mins.every(([k,thr])=>typeof r[k]==='number'&&r[k]>=thr));
+  const _cntEl=document.getElementById('hr-filter-count'); if(_cntEl) _cntEl.textContent=_mins.length?('▸ '+rows.length+' of '+_totalPre):'';
   const st=HRANK_SORT;
   rows.sort((a,b)=>{ let av=a[st.key],bv=b[st.key]; if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; if(typeof av==='string')return st.dir*av.localeCompare(bv); return st.dir*(av-bv); });
   if(!rows.length){ body.innerHTML='<div class="rk-empty">No hitters loaded yet — open after the slate finishes loading.</div>'; return; }
@@ -8096,12 +8100,21 @@ function renderHitterRanksTab(){
   Promise.resolve(typeof fetchAllTeams==='function'?fetchAllTeams():null).then(async ts=>{
     try{ if(ts) await Promise.all(ts.map(t=>getTeamRoster(t.id).catch(()=>null))); }catch(e){}
     root.dataset.built='1'; root.classList.remove('loading');
+    const HRF_METRICS=[['pow','POW'],['con','CON'],['eye','EYE'],['xw','xwOBA'],['wrc','wRC+'],['bsr','BSR'],['fld','DEF'],['ovr','OVR']];
+    const _hrfOpts='<option value="">–</option>'+GRADE_LADDER.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('');
+    const hrFilterBar='<div id="hr-filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;margin:0 0 9px;font-size:12px;">'
+      +'<span style="color:var(--muted);font-weight:700;letter-spacing:.02em;">MIN&nbsp;GRADE</span>'
+      +HRF_METRICS.map(function(m){return '<label style="display:inline-flex;align-items:center;gap:3px;color:var(--muted);">'+m[1]+' <select data-fk="'+m[0]+'" style="font-size:12px;padding:1px 3px;border-radius:4px;">'+_hrfOpts+'</select></label>';}).join('')
+      +'<button id="hr-filter-clear" style="font-size:11px;padding:2px 9px;border-radius:5px;cursor:pointer;border:1px solid var(--border,#ccc);background:transparent;color:inherit;">Clear</button>'
+      +'<span id="hr-filter-count" style="color:var(--muted);font-weight:600;"></span>'
+      +'</div>';
     root.innerHTML=`
       <div class="rk-box rk-box-full">
         <h3>Hitter Grades (Overall)
           <span class="rk-mode-toggle" id="hr-pos" style="margin-left:6px;flex-wrap:wrap;">`+HR_POS_GROUPS.map(pp=>'<button data-pos="'+pp+'"'+(pp==='ALL'?' class="active"':'')+'>'+pp+'</button>').join('')+`</span>
-          <span class="rk-sub">POW/CON/EYE/BSR/DEF percentile grades averaged into OVR · click a column to sort · filter by position</span>
+          <span class="rk-sub">POW/CON/EYE/BSR/DEF percentile grades averaged into OVR · click a column to sort · filter by position · set a per-column MIN GRADE to filter (all conditions ANDed)</span>
         </h3>
+        ${hrFilterBar}
         <div id="hr-grade-body" class="rk-sp-wrap" style="overflow-x:auto;"></div>
       </div>
       <div class="rk-box rk-box-full" style="margin-top:1rem;">
@@ -8112,6 +8125,9 @@ function renderHitterRanksTab(){
         <div id="hrm-body" class="rk-sp-wrap" style="overflow-x:auto;"><div class="loading">Loading movers…</div></div>
       </div>`;
     document.getElementById('hr-pos').querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRANK_POS=b.dataset.pos; b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterGrades(); renderHitterMovers(); });
+    const _hrf=document.getElementById('hr-filters');
+    if(_hrf){ _hrf.addEventListener('change',e=>{ const sel=e.target.closest('select[data-fk]'); if(!sel)return; const k=sel.dataset.fk; if(sel.value==='') delete HRANK_MIN[k]; else HRANK_MIN[k]=+sel.value; renderHitterGrades(); });
+      const _clr=document.getElementById('hr-filter-clear'); if(_clr) _clr.onclick=()=>{ HRANK_MIN={}; _hrf.querySelectorAll('select[data-fk]').forEach(sel=>sel.value=''); renderHitterGrades(); }; }
     document.getElementById('hr-grade-body').addEventListener('click',e=>{ const th=e.target.closest('th[data-hk]'); if(!th)return; const k=th.dataset.hk; if(HRANK_SORT.key===k)HRANK_SORT.dir*=-1; else{HRANK_SORT.key=k; HRANK_SORT.dir=(k==='nm'||k==='pos')?1:-1;} renderHitterGrades(); });
     const wt=document.getElementById('hrm-win'); wt.querySelectorAll('button').forEach(b=>b.onclick=()=>{ HRM_WIN=b.dataset.win; wt.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); renderHitterMovers(); });
     (typeof loadMovers==='function'?loadMovers():Promise.resolve()).then(()=>{ renderHitterGrades(); renderHitterMovers(); });
