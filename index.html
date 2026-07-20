@@ -1716,6 +1716,27 @@
   .sp-sparks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
   @media (max-width: 560px) { .sp-sparks { grid-template-columns:1fr 1fr; } }
   .sp-sparks.spp { grid-template-columns:repeat(2,1fr); }
+  /* Team Compare */
+  .tcmp-chips { display:flex; flex-wrap:wrap; gap:5px; margin:2px 0 10px; }
+  .tcmp-chip { font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; cursor:pointer;
+    border:1px solid var(--border,#d4d8dd); background:transparent; color:var(--muted,#6b7280); }
+  .tcmp-chip.on { color:#fff; }
+  .tcmp-legend { display:flex; gap:10px; margin:0 0 12px; flex-wrap:wrap; }
+  .tcmp-leg { display:inline-flex; align-items:center; }
+  .tcmp-dot { width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    color:#fff; font-size:9.5px; font-weight:800; }
+  .tcmp-sec { font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted,#9099a6);
+    margin:15px 0 8px; border-bottom:1px solid var(--border,#e3e6ea); padding-bottom:4px; }
+  .tcmp-row { display:grid; grid-template-columns:74px 1fr; align-items:center; gap:10px; margin:0 0 10px; }
+  .tcmp-lbl { font-size:11.5px; font-weight:650; text-align:right; }
+  .tcmp-track { position:relative; height:22px; border-radius:11px;
+    background:linear-gradient(90deg,#3b6bc4 0%,#9db4d6 27%,#eceff3 50%,#e6a99f 73%,#d42d49 100%); opacity:.92; }
+  .tcmp-tick { position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.5); }
+  .tcmp-bub { position:absolute; top:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800;
+    border:2px solid var(--card,#fff); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .tcmp-scale { display:grid; grid-template-columns:74px 1fr; gap:10px; margin-top:4px; }
+  .tcmp-scalebar { display:flex; justify-content:space-between; font-size:9px; color:var(--muted,#9099a6); padding:0 2px; }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -2377,6 +2398,7 @@
     <button class="tab" data-tab="rankings" role="tab">Pitcher Ranks</button>
     <button class="tab" data-tab="hitter-ranks" role="tab">Hitter Ranks</button>
     <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
+    <button class="tab" data-tab="team-compare" role="tab">Team Compare</button>
     <span class="tab-sep" aria-hidden="true"></span>
     <button class="tab" data-tab="proj" role="tab">Projections</button>
     <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
@@ -2443,6 +2465,10 @@
 
   <section id="tab-team-rankings" class="tab-content" hidden>
     <div id="team-rankings-root" class="loading">Loading team rankings…</div>
+  </section>
+
+  <section id="tab-team-compare" class="tab-content" hidden>
+    <div id="team-compare-root" class="loading">Loading team comparison…</div>
   </section>
 
   <section id="tab-proj" class="tab-content" hidden>
@@ -4531,6 +4557,7 @@ async function loadForDate(date) {
     if (id === 'rankings' && typeof renderRankingsTab === 'function') renderRankingsTab();
     else if (id === 'hitter-ranks' && typeof renderHitterRanksTab === 'function') renderHitterRanksTab();
     else if (id === 'team-rankings' && typeof renderTeamRankingsTab === 'function') renderTeamRankingsTab();
+    else if (id === 'team-compare' && typeof renderTeamCompareTab === 'function') renderTeamCompareTab();
     else if (id === 'winprob' && typeof renderWinprobTab === 'function') renderWinprobTab();
     else if (id === 'luck' && typeof renderLuckTab === 'function') renderLuckTab();
     else if (id === 'pitchers' && typeof renderPitchersTab === 'function') renderPitchersTab();
@@ -8486,6 +8513,124 @@ function _allTeamsLineupHittersByTeam(hitters, teams) {
     });
   });
   return byTeam;
+}
+
+// ============================================================================
+// TEAM COMPARE — Savant-style percentile comparison across clubs.
+// Offense + baserunning are slot-PA-weighted by batting order; fielding is a
+// plain non-DH team average. Each stat is then ranked across all 30 clubs so a
+// team's bar reads as its percentile vs the league of teams (Savant look).
+// ============================================================================
+var TEAM_COMPARE_SEL = null;   // Set of team ids currently selected
+// stat defs: [key, label, source, weightMode]  source: 'pct'(HITTER_PCT) | 'g2'(grades_v2)
+//            weightMode: 'slot' (offense+bsr) | 'def' (team avg, non-DH)
+const TCMP_SECTIONS = [
+  { name:'Value', stats:[
+    ['xwoba','xwOBA','pct','slot'], ['xba','xBA','pct','slot'], ['xslg','xSLG','pct','slot'] ]},
+  { name:'Quality of Contact', stats:[
+    ['power_pct','Power','g2','slot'], ['exit_velocity','Exit Velo','pct','slot'],
+    ['barrel','Barrel%','pct','slot'], ['hard_hit','Hard-Hit%','pct','slot'] ]},
+  { name:'Plate Discipline', stats:[
+    ['eye_pct','Eye','g2','slot'], ['con_pct','Contact','g2','slot'],
+    ['chase','Chase','pct','slot'], ['whiff','Whiff','pct','slot'],
+    ['k_pct','K%','pct','slot'], ['bb_pct','BB%','pct','slot'] ]},
+  { name:'Speed / Baserunning', stats:[
+    ['bsr_pct','Baserun','g2','slot'], ['sprint','Sprint','pct','slot'] ]},
+  { name:'Fielding (team avg, non-DH)', stats:[
+    ['fld_pct','Defense','g2','def'], ['oaa','OAA','pct','def'], ['arm_strength','Arm','pct','def'] ]},
+];
+function _tcmpVal(name, key, src){
+  const nm = normName(name||'');
+  if (src==='g2'){ const r = GRADES_V2?.by_name?.[nm]; return (r && typeof r[key]==='number') ? r[key] : null; }
+  const pc = HITTER_PCT?.hitters?.[nm]; return (pc && typeof pc[key]==='number') ? pc[key] : null;
+}
+// Build {teamId:{abbr,name, pct:{statKey:0-100}}} for all clubs, ranked per stat.
+function _tcmpBuildTeams(){
+  if (typeof _allTeamsLineupHittersByTeam!=='function' || !HITTERS || !Array.isArray(ALL_TEAMS_CACHE)) return null;
+  const byTeam = _allTeamsLineupHittersByTeam(HITTERS.hitters||{}, ALL_TEAMS_CACHE||[]);
+  const allStats = [];
+  TCMP_SECTIONS.forEach(s=>s.stats.forEach(st=>allStats.push(st)));
+  const teams = Object.values(byTeam).filter(tb=>tb && tb.team && tb.list && tb.list.length).map(tb=>{
+    const raw = {};
+    allStats.forEach(([key,,src,mode])=>{
+      let wsum=0, tw=0;
+      tb.list.forEach((x,i)=>{
+        const v = _tcmpVal(x.name, key, src);
+        if (v==null) return;
+        if (mode==='def'){
+          const pos = (PLAYER_INFO?.[normName(x.name||'')]?.pos || '');
+          if ((''+pos).toUpperCase()==='DH') return;   // exclude DH from fielding
+          wsum += v; tw += 1;
+        } else {
+          const d = (i>=0 && i<SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[i] : 0;
+          const w = SLOT_BASE_PA + d; wsum += v*w; tw += w;
+        }
+      });
+      raw[key] = tw>0 ? wsum/tw : null;
+    });
+    return { id: tb.team.id, abbr: tb.team.abbr, name: tb.team.name, raw, pct:{} };
+  });
+  // Rank each stat across teams -> team percentile (higher raw = better, since
+  // all source percentiles are pre-oriented higher=good).
+  const N = teams.length || 30;
+  allStats.forEach(([key])=>{
+    const ranked = teams.filter(t=>t.raw[key]!=null).sort((a,b)=>b.raw[key]-a.raw[key]);
+    ranked.forEach((t,i)=>{ t.pct[key] = Math.round((1-(i+0.5)/ranked.length)*100); });
+  });
+  return teams.sort((a,b)=>a.abbr.localeCompare(b.abbr));
+}
+const TCMP_COLORS = ['#005A9C','#C8102E','#0C7C59','#7A3E9D'];  // up to 4 selected
+function renderTeamCompareTab(){
+  const root = document.getElementById('team-compare-root'); if(!root) return;
+  Promise.resolve(typeof fetchAllTeams==='function'?fetchAllTeams():null).then(async ts=>{
+    try{ if(ts) await Promise.all(ts.map(t=>getTeamRoster(t.id).catch(()=>null))); }catch(e){}
+    const teams = _tcmpBuildTeams();
+    root.classList.remove('loading');
+    if(!teams || !teams.length){ root.innerHTML='<div class="rk-empty">Team data still loading — reopen in a moment.</div>'; return; }
+    if(!TEAM_COMPARE_SEL){
+      // default: two clubs with the best + worst overall (avg of all pct) for contrast
+      const score=t=>{const v=Object.values(t.pct);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+      const byScore=[...teams].sort((a,b)=>score(b)-score(a));
+      TEAM_COMPARE_SEL=new Set([byScore[0].id, byScore[byScore.length-1].id]);
+    }
+    _tcmpRender(root, teams);
+  });
+}
+function _tcmpRender(root, teams){
+  const sel = teams.filter(t=>TEAM_COMPARE_SEL.has(t.id)).slice(0,4);
+  const colorOf = {}; sel.forEach((t,i)=>colorOf[t.id]=TCMP_COLORS[i]);
+  const chips = teams.map(t=>{
+    const on = TEAM_COMPARE_SEL.has(t.id);
+    const c = on ? (colorOf[t.id]||'#888') : 'transparent';
+    return `<button class="tcmp-chip${on?' on':''}" data-tid="${t.id}" style="${on?`background:${c};border-color:${c};color:#fff;`:''}">${t.abbr}</button>`;
+  }).join('');
+  const legend = sel.map(t=>`<span class="tcmp-leg"><span class="tcmp-dot" style="background:${colorOf[t.id]}">${t.abbr}</span></span>`).join('');
+  const secs = TCMP_SECTIONS.map(sec=>{
+    const rows = sec.stats.map(([key,lbl])=>{
+      const bubbles = sel.map(t=>{
+        const p = t.pct[key]; if(p==null) return '';
+        return `<div class="tcmp-bub" title="${t.abbr} ${lbl} — ${p}th pct among teams" style="left:${p}%;background:${colorOf[t.id]}">${p}</div>`;
+      }).join('');
+      return `<div class="tcmp-row"><div class="tcmp-lbl">${lbl}</div><div class="tcmp-track">
+        <span class="tcmp-tick" style="left:25%"></span><span class="tcmp-tick" style="left:50%"></span><span class="tcmp-tick" style="left:75%"></span>
+        ${bubbles}</div></div>`;
+    }).join('');
+    return `<div class="tcmp-sec">${sec.name}</div>${rows}`;
+  }).join('');
+  root.innerHTML = `<div class="tcmp-wrap">
+    <div class="rk-box rk-box-full">
+      <h3>Team Statcast Compare <span class="rk-sub">percentile vs the 30 clubs · offense + baserunning slot-PA-weighted · fielding = non-DH team avg · click teams to add/remove (max 4)</span></h3>
+      <div class="tcmp-chips">${chips}</div>
+      <div class="tcmp-legend">${legend}</div>
+      ${secs}
+      <div class="tcmp-scale"><div></div><div class="tcmp-scalebar"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div>
+    </div></div>`;
+  root.querySelectorAll('.tcmp-chip').forEach(b=>b.onclick=()=>{
+    const id = +b.dataset.tid;
+    if(TEAM_COMPARE_SEL.has(id)) TEAM_COMPARE_SEL.delete(id);
+    else { if(TEAM_COMPARE_SEL.size>=4) return; TEAM_COMPARE_SEL.add(id); }
+    _tcmpRender(root, teams);
+  });
 }
 
 // Lineup rankings — uses TODAY's posted lineup when available, else cascades
