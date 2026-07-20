@@ -8554,23 +8554,42 @@ var TCMP_VIEW = 'cards';      // 'cards' (lineup cards side by side) | 'charts' 
 //            weightMode: 'slot' (offense+bsr) | 'def' (team avg, non-DH)
 const TCMP_SECTIONS = [
   { name:'Value', stats:[
-    ['xwoba','xwOBA','pct','slot'], ['xba','xBA','pct','slot'], ['xslg','xSLG','pct','slot'] ]},
+    ['wrc','wRC+','fb','slot',{f:'wrc'}], ['xwoba','xwOBA','pct','slot',{f:'woba'}] ]},
   { name:'Quality of Contact', stats:[
-    ['power_pct','Power','g2','slot'], ['exit_velocity','Exit Velo','pct','slot'],
-    ['barrel','Barrel%','pct','slot'], ['hard_hit','Hard-Hit%','pct','slot'] ]},
+    ['power_pct','Power','g2','slot'], ['barrel','Barrel%','pct','slot'], ['hard_hit','Hard-Hit%','pct','slot'] ]},
   { name:'Plate Discipline', stats:[
-    ['eye_pct','Eye','g2','slot'], ['con_pct','Contact','g2','slot'],
-    ['chase','Chase','pct','slot'], ['whiff','Whiff','pct','slot'],
-    ['k_pct','K%','pct','slot'], ['bb_pct','BB%','pct','slot'] ]},
+    ['con_pct','Contact','g2','slot'], ['eye_pct','Eye','g2','slot'],
+    ['k_pct','K%','pct','slot',{f:'k_pct',inv:true}], ['bb_pct','BB%','pct','slot',{f:'bb_pct'}],
+    ['chase','Chase','pct','slot'], ['whiff','Whiff','pct','slot'] ]},
   { name:'Speed / Baserunning', stats:[
     ['bsr_pct','Baserun','g2','slot'], ['sprint','Sprint','pct','slot'] ]},
   { name:'Fielding (team avg, non-DH)', stats:[
     ['fld_pct','Defense','g2','def'], ['oaa','OAA','pct','def'], ['arm_strength','Arm','pct','def'] ]},
 ];
-function _tcmpVal(name, key, src){
+// Client-side percentile fallback from hitters.json (fills players Savant's
+// qualified leaderboard omits). Memoized sorted distributions per field.
+var _TCMP_FBDIST = {};
+function _tcmpFbPct(nm, fb){
+  if(!fb || typeof HITTERS==='undefined' || !HITTERS || !HITTERS.hitters) return null;
+  const field = fb.f;
+  const getv = (h)=>{ if(field==='wrc'){ const r=h.wrc_vs_r, l=h.wrc_vs_l; if(typeof r==='number'&&typeof l==='number') return (r+l)/2; return (typeof r==='number')?r:(typeof l==='number'?l:null); } return (typeof h[field]==='number')?h[field]:null; };
+  if(!_TCMP_FBDIST[field]){
+    const arr=[]; for(const k in HITTERS.hitters){ const v=getv(HITTERS.hitters[k]); if(v!=null) arr.push(v); }
+    arr.sort((a,b)=>a-b); _TCMP_FBDIST[field]=arr;
+  }
+  const arr=_TCMP_FBDIST[field]; if(!arr.length) return null;
+  const h=HITTERS.hitters[nm]; if(!h) return null; const v=getv(h); if(v==null) return null;
+  let lo=0,hi=arr.length; while(lo<hi){const m=(lo+hi)>>1; if(arr[m]<=v)lo=m+1; else hi=m;}
+  let pct=100*lo/arr.length; if(fb.inv) pct=100-pct;
+  return Math.max(1,Math.min(99,Math.round(pct)));
+}
+function _tcmpVal(name, key, src, fb){
   const nm = normName(name||'');
   if (src==='g2'){ const r = GRADES_V2?.by_name?.[nm]; return (r && typeof r[key]==='number') ? r[key] : null; }
-  const pc = HITTER_PCT?.hitters?.[nm]; return (pc && typeof pc[key]==='number') ? pc[key] : null;
+  if (src==='fb'){ return _tcmpFbPct(nm, fb); }
+  const pc = HITTER_PCT?.hitters?.[nm];
+  if (pc && typeof pc[key]==='number') return pc[key];
+  return fb ? _tcmpFbPct(nm, fb) : null;   // fill players Savant's qualified board omits
 }
 // Build {teamId:{abbr,name, pct:{statKey:0-100}}} for all clubs, ranked per stat.
 function _tcmpBuildTeams(){
@@ -8583,7 +8602,7 @@ function _tcmpBuildTeams(){
     const hitters = tb.list.map((x,i)=>{
       const pos = (PLAYER_INFO?.[normName(x.name||'')]?.pos || '');
       const vals = {};
-      allStats.forEach(([key,,src])=>{ vals[key] = _tcmpVal(x.name, key, src); });
+      allStats.forEach(([key,,src,mode,fb])=>{ vals[key] = _tcmpVal(x.name, key, src, fb); });
       return { name: x.name, order: x.order||i+1, pos, isDH: (''+pos).toUpperCase()==='DH', vals };
     });
     const raw = {};
