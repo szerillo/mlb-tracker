@@ -248,29 +248,11 @@ def load_contact(min_sw=50, k=120.0, pseudo=50.0):
         pl={}
         for pid,side,pc,xb,zb,c in rows:
             a=pl.setdefault(pid,[0,0,0.0]); a[0]+=c; a[1]+=1; a[2]+=prob[(side,pc,xb,zb)]
-        coe={pid: 100.0*(C-E)/(N+k) for pid,(C,N,E) in pl.items()}
-        nsw={pid: N for pid,(C,N,E) in pl.items()}
-        # Frozen-cut design ladder: derive CoE thresholds at the design percentiles
-        # from a STABLE pool (>=300 swings) so low-sample hitters graded off fixed
-        # cuts don't distort the tails; then grade everyone with >=min_sw swings.
-        DESIGN=[(98,"A+"),(94,"A"),(89,"A-"),(81,"B+"),(70,"B"),(57,"B-"),
-                (43,"C+"),(30,"C"),(19,"C-"),(10,"D+"),(4,"D")]
-        stable=sorted(coe[pid] for pid in coe if nsw[pid]>=300)
-        if len(stable)<40:
-            stable=sorted(coe[pid] for pid in coe if nsw[pid]>=min_sw)
-        def pctl(a,q):
-            if not a: return 0.0
-            i=(len(a)-1)*q/100.0; lo=int(i); hi=min(lo+1,len(a)-1)
-            return a[lo]+(a[hi]-a[lo])*(i-lo)
-        cuts=[(pctl(stable,q),l) for q,l in DESIGN]
-        def letter_for(v):
-            for c,l in cuts:
-                if v>=c: return l
-            return "D-"
-        for pid in coe:
-            if nsw[pid]<min_sw: continue
-            letter=letter_for(coe[pid]); lo,hi=BANDS[letter]
-            con[norm(id2name.get(pid,pid))]=round((lo+hi)/2.0,1)
+        # Return RAW CoE values; main() grades them with the shared bell ladder
+        # (same allocation as every other stat).
+        for pid,(C,N,E) in pl.items():
+            if N<min_sw: continue
+            con[norm(id2name.get(pid,pid))]=round(100.0*(C-E)/(N+k),3)
         print(f"[grades_v2] contact CoE: {len(con)} hitters ({len(rows)} swings)", file=sys.stderr)
     except Exception as e:
         print(f"[grades_v2] contact CoE failed ({e})", file=sys.stderr)
@@ -289,6 +271,23 @@ def synth(items):
             out[k]=round(min(hi-0.01,max(lo, lo+(rank+0.5)/n*(hi-lo))),2)
     return out
 
+def bell_letters(value_map):
+    """Grade a metric by within-pool percentile onto the design ladder (bell).
+    Returns {key: (letter, band_mid_pct)}. The cut VALUES float with the live
+    data every run; only the percentile breakpoints (the SHAPE) are fixed, so
+    POW/CON/EYE/BSR/DEF all share one distribution derived from the actual data."""
+    items=[(k,v) for k,v in value_map.items() if isinstance(v,(int,float))]
+    if not items: return {}
+    vals=sorted(v for _,v in items); n=len(vals)
+    DESIGN=[(98,"A+"),(94,"A"),(89,"A-"),(81,"B+"),(70,"B"),(57,"B-"),
+            (43,"C+"),(30,"C"),(19,"C-"),(10,"D+"),(4,"D")]
+    out={}
+    for k,v in items:
+        pctile=100.0*bisect.bisect_right(vals,v)/n
+        letter=next((l for c,l in DESIGN if pctile>=c),"D-")
+        lo,hi=BANDS[letter]; out[k]=(letter, round((lo+hi)/2.0,1))
+    return out
+
 def main():
     dmg=compute_damage();  print(f"[grades_v2] Damage: {len(dmg)}", file=sys.stderr)
     eye=compute_eye();     print(f"[grades_v2] Eye: {len(eye)}", file=sys.stderr)
@@ -296,26 +295,28 @@ def main():
     con=load_contact();    print(f"[grades_v2] Contact: {len(con)}", file=sys.stderr)
 
     keys=set(dmg)|set(eye)|set(fb)|set(con)
-    # synthetic pcts per metric
-    p_pow=synth([(k,dmg[k]["power"],dmg[k]["power_grade"]) for k in dmg])
-    p_eye=synth([(k,eye[k]["eye"],eye[k]["eye_grade"]) for k in eye])
-    p_fld=synth([(k,fb[k]["fld"],fb[k]["fld_grade"]) for k in fb if "fld" in fb[k]])
-    p_bsr=synth([(k,fb[k]["bsr"],fb[k]["bsr_grade"]) for k in fb if "bsr" in fb[k]])
+    # ONE bell ladder for every stat -> consistent shape across POW/CON/EYE/BSR/DEF,
+    # cut values derived from the live data (not a fixed quota).
+    b_pow=bell_letters({k:dmg[k]["power"] for k in dmg})
+    b_eye=bell_letters({k:eye[k]["eye"] for k in eye})
+    b_fld=bell_letters({k:fb[k]["fld"] for k in fb if "fld" in fb[k]})
+    b_bsr=bell_letters({k:fb[k]["bsr"] for k in fb if "bsr" in fb[k]})
+    b_con=bell_letters(con)   # con is {key: raw CoE value}
 
     out={}
     for k in keys:
         rec={"name": (dmg.get(k) or eye.get(k) or fb.get(k) or {}).get("name","")}
-        if k in dmg and k in p_pow: rec.update(power=dmg[k]["power"], power_pct=p_pow[k], power_grade=dmg[k]["power_grade"])
-        if k in eye and k in p_eye: rec.update(eye=eye[k]["eye"], eye_pct=p_eye[k], eye_grade=eye[k]["eye_grade"])
-        if k in fb and k in p_fld:  rec.update(fld=fb[k]["fld"], fld_pct=p_fld[k], fld_grade=fb[k]["fld_grade"])
-        if k in fb and k in p_bsr:  rec.update(bsr=fb[k]["bsr"], bsr_pct=p_bsr[k], bsr_grade=fb[k]["bsr_grade"])
-        if k in con: rec.update(con_pct=con[k], con_grade=grade_from_pct(con[k]))
+        if k in b_pow: rec.update(power=dmg[k]["power"], power_pct=b_pow[k][1], power_grade=b_pow[k][0])
+        if k in b_eye: rec.update(eye=eye[k]["eye"], eye_pct=b_eye[k][1], eye_grade=b_eye[k][0])
+        if k in b_fld: rec.update(fld=fb[k]["fld"], fld_pct=b_fld[k][1], fld_grade=b_fld[k][0])
+        if k in b_bsr: rec.update(bsr=fb[k]["bsr"], bsr_pct=b_bsr[k][1], bsr_grade=b_bsr[k][0])
+        if k in b_con: rec.update(con=con[k], con_pct=b_con[k][1], con_grade=b_con[k][0])
         if len(rec)>1: out[k]=rec
 
     payload={"generated_at":datetime.datetime.utcnow().isoformat(timespec="seconds")+"Z",
              "n_players":len(out),
-             "source":"AUTO v2.0: Damage(Savant EV+shrink+frozen cutoffs), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + SABR SDI (fielding) + Savant runner_runs (baserunning)), Contact(pitch-level CoE: contact-over-expected).",
-             "methodology_version":"2.0-auto","by_name":out}
+             "source":"AUTO v2.1 (unified bell grading — all stats percentile-ranked to one design ladder): Damage(Savant EV+shrink), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + SABR SDI (fielding) + Savant runner_runs (baserunning)), Contact(pitch-level CoE: contact-over-expected).",
+             "methodology_version":"2.1-auto","by_name":out}
     OUT.write_text(json.dumps(payload,indent=2))
     have=lambda f: sum(1 for v in out.values() if f in v)
     print(f"[grades_v2] wrote {len(out)} players -> power:{have('power_grade')} eye:{have('eye_grade')} "
