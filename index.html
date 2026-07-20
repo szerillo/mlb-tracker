@@ -1734,7 +1734,7 @@
   .tcmp-tick { position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.5); }
   .tcmp-bub { position:absolute; top:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800;
-    border:2px solid var(--card,#fff); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+    border:2px solid var(--panel,#fff); box-shadow:0 1px 4px rgba(0,0,0,.3); }
   .tcmp-scale { display:grid; grid-template-columns:74px 1fr; gap:10px; margin-top:4px; }
   .tcmp-scalebar { display:flex; justify-content:space-between; font-size:9px; color:var(--muted,#9099a6); padding:0 2px; }
   /* Team Compare / Card — Savant grid */
@@ -1743,16 +1743,20 @@
   .tcmp-grid { border-collapse:separate; border-spacing:2px; font-size:11px; }
   .tcmp-grid th, .tcmp-grid td { padding:0; }
   .tcmp-th { font-size:10px; font-weight:750; text-align:center; padding:3px 5px !important; white-space:nowrap;
-    color:var(--text-primary,#1a1a1a); vertical-align:bottom; }
+    color:var(--text,#1a1a1a); vertical-align:bottom; }
   .tcmp-th.tcmp-avg { border-left:2px solid var(--border,#c9ced4); }
   .tcmp-cat { width:74px; }
   .tcmp-rl { font-size:11px; font-weight:650; text-align:right; padding:0 8px 0 0 !important; white-space:nowrap;
-    color:var(--text-primary,#1a1a1a); }
+    color:var(--text,#1a1a1a); }
   .tcmp-cell { width:38px; height:24px; text-align:center; font-size:10.5px; font-weight:750; border-radius:4px; }
   .tcmp-cell.tcmp-avg { border-left:2px solid var(--border,#c9ced4); font-weight:800; }
   .tcmp-secrow td { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
     color:var(--muted,#9099a6); padding:9px 0 3px !important; text-align:left; }
   .tcmp-note { font-size:10px; color:var(--muted,#9099a6); margin-top:8px; line-height:1.5; max-width:640px; }
+  .tcmp-unq { color:#d42d49; font-weight:800; }
+  .tcmp-unqcol { font-style:italic; opacity:.85; }
+  .tcmp-cell.tcmp-unqcell { opacity:.62; }
+  .tcmp-cell sup { font-size:7px; opacity:.85; }
   .tcmp-viewtog { display:inline-flex; gap:0; margin-left:8px; vertical-align:middle; }
   .tcmp-viewtog button { font-size:10.5px; font-weight:700; padding:2px 9px; cursor:pointer; border:1px solid var(--border,#d4d8dd);
     background:transparent; color:var(--muted,#6b7280); }
@@ -8603,7 +8607,9 @@ function _tcmpBuildTeams(){
       const pos = (PLAYER_INFO?.[normName(x.name||'')]?.pos || '');
       const vals = {};
       allStats.forEach(([key,,src,mode,fb])=>{ vals[key] = _tcmpVal(x.name, key, src, fb); });
-      return { name: x.name, order: x.order||i+1, pos, isDH: (''+pos).toUpperCase()==='DH', vals };
+      const _pcq = HITTER_PCT?.hitters?.[normName(x.name||'')];
+      return { name: x.name, order: x.order||i+1, pos, isDH: (''+pos).toUpperCase()==='DH',
+               qualified: !!(_pcq && _pcq.qualified), pa: _pcq?_pcq.pa:null, vals };
     });
     const raw = {};
     allStats.forEach(([key,,src,mode])=>{
@@ -8651,7 +8657,7 @@ function renderTeamCompareTab(){
 }
 // Savant diverging color for a 0-100 percentile: blue (low) -> light (mid) -> red (high).
 function _tcmpColor(p){
-  if (p==null || isNaN(p)) return 'var(--card,#f2f3f5)';
+  if (p==null || isNaN(p)) return 'var(--panel,#f2f3f5)';
   const t = Math.max(0,Math.min(100,p))/100; let r,g,b;
   if (t<0.5){ const k=t/0.5; r=Math.round(54+(236-54)*k); g=Math.round(97+(238-97)*k); b=Math.round(173+(241-173)*k); }
   else { const k=(t-0.5)/0.5; r=Math.round(236+(212-236)*k); g=Math.round(238+(45-238)*k); b=Math.round(241+(73-241)*k); }
@@ -8696,7 +8702,7 @@ function _tcmpCardsGrid(sel){
   const cols = sel.length<=2 ? sel.length : 2;
   const panels = sel.map(t=>`<div class="tcmp-panel">${_tcmpCard(t, {panel:true})}</div>`).join('');
   return `<div class="tcmp-cardsgrid" style="grid-template-columns:repeat(${cols},minmax(0,1fr));">${panels}</div>
-    <div class="tcmp-note">Player cells = that hitter's MLB percentile (vs all hitters). TEAM col = club percentile among the 30 teams. Blue low -> red high.</div>`;
+    <div class="tcmp-note">Player cells = percentile vs the full min=1 MLB pool. TEAM col = club percentile among the 30 teams. <span class="tcmp-unq">*</span> = below Savant's qualified-PA bar. Blue low -> red high.</div>`;
 }
 // Charts view: one small lollipop panel PER CATEGORY, laid out side by side.
 function _tcmpCharts(sel){
@@ -8736,13 +8742,14 @@ function _tcmpCard(team, opts){
   opts = opts || {};
   const hs = (team.hitters||[]).slice(0,9);
   const short = nm => { const parts=(nm||'').trim().split(' '); const last=parts[parts.length-1]||nm; return last.charAt(0).toUpperCase()+last.slice(1); };
-  const head = `<tr><th class="tcmp-cat"></th>${hs.map((h,i)=>`<th class="tcmp-th" title="${h.name}">${i+1}. ${short(h.name)}${h.isDH?' (DH)':''}</th>`).join('')}<th class="tcmp-th tcmp-avg">TEAM</th></tr>`;
+  const anyUnq = hs.some(h=>!h.qualified);
+  const head = `<tr><th class="tcmp-cat"></th>${hs.map((h,i)=>`<th class="tcmp-th${h.qualified?'':' tcmp-unqcol'}" title="${h.name}${h.qualified?'':' — below qualified PA'+(h.pa!=null?' ('+h.pa+' PA)':'')}">${i+1}. ${short(h.name)}${h.isDH?' (DH)':''}${h.qualified?'':'<span class="tcmp-unq">*</span>'}</th>`).join('')}<th class="tcmp-th tcmp-avg">TEAM</th></tr>`;
   const secs = TCMP_SECTIONS.map(sec=>{
     const rows = sec.stats.map(([key,lbl,,mode])=>{
       const cells = hs.map(h=>{ let p = h.vals[key];
         if (mode==='def' && h.isDH) p=null;
         p = (p==null)?null:Math.round(p);
-        return `<td class="tcmp-cell" style="background:${_tcmpColor(p)};color:${_tcmpTextOn(p)}">${p==null?'·':p}</td>`;
+        return `<td class="tcmp-cell${h.qualified?'':' tcmp-unqcell'}" style="background:${_tcmpColor(p)};color:${_tcmpTextOn(p)}">${p==null?'·':p}${(p!=null&&!h.qualified)?'<sup>*</sup>':''}</td>`;
       }).join('');
       const ap = team.pct[key];
       const avg = `<td class="tcmp-cell tcmp-avg" style="background:${_tcmpColor(ap)};color:${_tcmpTextOn(ap)}" title="Team ${lbl} — ${ap==null?'—':ap+'th pct among teams'}">${ap==null?'—':ap}</td>`;
@@ -8752,7 +8759,7 @@ function _tcmpCard(team, opts){
   }).join('');
   const hdr = opts.panel ? `<div class="tcmp-cardhdr">${team.abbr} · ${team.name}</div>`
                          : `<div class="tcmp-cardhdr">${team.name} — lineup Statcast card</div>`;
-  const note = opts.panel ? '' : `<div class="tcmp-note">Player cells = that hitter's MLB percentile (vs all hitters). TEAM column = the club's percentile among the 30 teams (offense slot-PA-weighted, fielding non-DH avg). Blue low -> red high.</div>`;
+  const note = opts.panel ? '' : `<div class="tcmp-note">Player cells = percentile vs the full min=1 MLB pool. TEAM column = the club's percentile among the 30 teams (offense slot-PA-weighted, fielding non-DH avg). Blue low -> red high.${anyUnq?' <span class="tcmp-unq">*</span> below Savant\'s qualified-PA bar (small sample).':''}</div>`;
   return `${hdr}<div class="tcmp-scroll"><table class="tcmp-grid tcmp-cardgrid"><thead>${head}</thead><tbody>${secs}</tbody></table></div>${note}`;
 }
 
