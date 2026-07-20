@@ -1737,6 +1737,22 @@
     border:2px solid var(--card,#fff); box-shadow:0 1px 4px rgba(0,0,0,.3); }
   .tcmp-scale { display:grid; grid-template-columns:74px 1fr; gap:10px; margin-top:4px; }
   .tcmp-scalebar { display:flex; justify-content:space-between; font-size:9px; color:var(--muted,#9099a6); padding:0 2px; }
+  /* Team Compare / Card — Savant grid */
+  .tcmp-scroll { overflow-x:auto; }
+  .tcmp-cardhdr { font-size:13px; font-weight:750; margin:4px 0 8px; }
+  .tcmp-grid { border-collapse:separate; border-spacing:2px; font-size:11px; }
+  .tcmp-grid th, .tcmp-grid td { padding:0; }
+  .tcmp-th { font-size:10px; font-weight:750; text-align:center; padding:3px 5px !important; white-space:nowrap;
+    color:var(--text-primary,#1a1a1a); vertical-align:bottom; }
+  .tcmp-th.tcmp-avg { border-left:2px solid var(--border,#c9ced4); }
+  .tcmp-cat { width:74px; }
+  .tcmp-rl { font-size:11px; font-weight:650; text-align:right; padding:0 8px 0 0 !important; white-space:nowrap;
+    color:var(--text-primary,#1a1a1a); }
+  .tcmp-cell { width:38px; height:24px; text-align:center; font-size:10.5px; font-weight:750; border-radius:4px; }
+  .tcmp-cell.tcmp-avg { border-left:2px solid var(--border,#c9ced4); font-weight:800; }
+  .tcmp-secrow td { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted,#9099a6); padding:9px 0 3px !important; text-align:left; }
+  .tcmp-note { font-size:10px; color:var(--muted,#9099a6); margin-top:8px; line-height:1.5; max-width:640px; }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -8551,15 +8567,21 @@ function _tcmpBuildTeams(){
   const allStats = [];
   TCMP_SECTIONS.forEach(s=>s.stats.forEach(st=>allStats.push(st)));
   const teams = Object.values(byTeam).filter(tb=>tb && tb.team && tb.list && tb.list.length).map(tb=>{
+    // per-hitter percentile values (for the single-team lineup card)
+    const hitters = tb.list.map((x,i)=>{
+      const pos = (PLAYER_INFO?.[normName(x.name||'')]?.pos || '');
+      const vals = {};
+      allStats.forEach(([key,,src])=>{ vals[key] = _tcmpVal(x.name, key, src); });
+      return { name: x.name, order: x.order||i+1, pos, isDH: (''+pos).toUpperCase()==='DH', vals };
+    });
     const raw = {};
     allStats.forEach(([key,,src,mode])=>{
       let wsum=0, tw=0;
-      tb.list.forEach((x,i)=>{
-        const v = _tcmpVal(x.name, key, src);
+      hitters.forEach((h,i)=>{
+        const v = h.vals[key];
         if (v==null) return;
         if (mode==='def'){
-          const pos = (PLAYER_INFO?.[normName(x.name||'')]?.pos || '');
-          if ((''+pos).toUpperCase()==='DH') return;   // exclude DH from fielding
+          if (h.isDH) return;                            // exclude DH from fielding
           wsum += v; tw += 1;
         } else {
           const d = (i>=0 && i<SLOT_PA_DELTA.length) ? SLOT_PA_DELTA[i] : 0;
@@ -8568,7 +8590,7 @@ function _tcmpBuildTeams(){
       });
       raw[key] = tw>0 ? wsum/tw : null;
     });
-    return { id: tb.team.id, abbr: tb.team.abbr, name: tb.team.name, raw, pct:{} };
+    return { id: tb.team.id, abbr: tb.team.abbr, name: tb.team.name, raw, pct:{}, hitters };
   });
   // Rank each stat across teams -> team percentile (higher raw = better, since
   // all source percentiles are pre-oriented higher=good).
@@ -8591,46 +8613,83 @@ function renderTeamCompareTab(){
       // default: two clubs with the best + worst overall (avg of all pct) for contrast
       const score=t=>{const v=Object.values(t.pct);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
       const byScore=[...teams].sort((a,b)=>score(b)-score(a));
-      TEAM_COMPARE_SEL=new Set([byScore[0].id, byScore[byScore.length-1].id]);
+      TEAM_COMPARE_SEL=new Set([byScore[0].id]);   // land on the top club's lineup card
     }
     _tcmpRender(root, teams);
   });
 }
-function _tcmpRender(root, teams){
-  const sel = teams.filter(t=>TEAM_COMPARE_SEL.has(t.id)).slice(0,4);
-  const colorOf = {}; sel.forEach((t,i)=>colorOf[t.id]=TCMP_COLORS[i]);
-  const chips = teams.map(t=>{
+// Savant diverging color for a 0-100 percentile: blue (low) -> light (mid) -> red (high).
+function _tcmpColor(p){
+  if (p==null || isNaN(p)) return 'var(--card,#f2f3f5)';
+  const t = Math.max(0,Math.min(100,p))/100; let r,g,b;
+  if (t<0.5){ const k=t/0.5; r=Math.round(54+(236-54)*k); g=Math.round(97+(238-97)*k); b=Math.round(173+(241-173)*k); }
+  else { const k=(t-0.5)/0.5; r=Math.round(236+(212-236)*k); g=Math.round(238+(45-238)*k); b=Math.round(241+(73-241)*k); }
+  return `rgb(${r},${g},${b})`;
+}
+function _tcmpTextOn(p){ return (p!=null && (p>=68 || p<=24)) ? '#fff' : '#1a1a1a'; }
+function _tcmpChips(teams){
+  const colorOf = {}; teams.filter(t=>TEAM_COMPARE_SEL.has(t.id)).slice(0,4).forEach((t,i)=>colorOf[t.id]=TCMP_COLORS[i]);
+  return teams.map(t=>{
     const on = TEAM_COMPARE_SEL.has(t.id);
     const c = on ? (colorOf[t.id]||'#888') : 'transparent';
     return `<button class="tcmp-chip${on?' on':''}" data-tid="${t.id}" style="${on?`background:${c};border-color:${c};color:#fff;`:''}">${t.abbr}</button>`;
   }).join('');
-  const legend = sel.map(t=>`<span class="tcmp-leg"><span class="tcmp-dot" style="background:${colorOf[t.id]}">${t.abbr}</span></span>`).join('');
-  const secs = TCMP_SECTIONS.map(sec=>{
-    const rows = sec.stats.map(([key,lbl])=>{
-      const bubbles = sel.map(t=>{
-        const p = t.pct[key]; if(p==null) return '';
-        return `<div class="tcmp-bub" title="${t.abbr} ${lbl} — ${p}th pct among teams" style="left:${p}%;background:${colorOf[t.id]}">${p}</div>`;
-      }).join('');
-      return `<div class="tcmp-row"><div class="tcmp-lbl">${lbl}</div><div class="tcmp-track">
-        <span class="tcmp-tick" style="left:25%"></span><span class="tcmp-tick" style="left:50%"></span><span class="tcmp-tick" style="left:75%"></span>
-        ${bubbles}</div></div>`;
-    }).join('');
-    return `<div class="tcmp-sec">${sec.name}</div>${rows}`;
-  }).join('');
-  root.innerHTML = `<div class="tcmp-wrap">
-    <div class="rk-box rk-box-full">
-      <h3>Team Statcast Compare <span class="rk-sub">percentile vs the 30 clubs · offense + baserunning slot-PA-weighted · fielding = non-DH team avg · click teams to add/remove (max 4)</span></h3>
-      <div class="tcmp-chips">${chips}</div>
-      <div class="tcmp-legend">${legend}</div>
-      ${secs}
-      <div class="tcmp-scale"><div></div><div class="tcmp-scalebar"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div>
+}
+function _tcmpRender(root, teams){
+  const sel = teams.filter(t=>TEAM_COMPARE_SEL.has(t.id)).slice(0,4);
+  const body = (sel.length===1) ? _tcmpCard(sel[0]) : _tcmpCompareCols(sel);
+  const hint = (sel.length===1)
+    ? 'one club selected -> lineup card · add another to compare'
+    : 'percentile vs the 30 clubs · offense + baserunning slot-PA-weighted · fielding = non-DH team avg · pick 1 club for its lineup card, up to 4 to compare';
+  root.innerHTML = `<div class="tcmp-wrap"><div class="rk-box rk-box-full">
+      <h3>Team Statcast ${sel.length===1?'Card':'Compare'} <span class="rk-sub">${hint}</span></h3>
+      <div class="tcmp-chips">${_tcmpChips(teams)}</div>
+      ${body}
     </div></div>`;
   root.querySelectorAll('.tcmp-chip').forEach(b=>b.onclick=()=>{
     const id = +b.dataset.tid;
-    if(TEAM_COMPARE_SEL.has(id)) TEAM_COMPARE_SEL.delete(id);
-    else { if(TEAM_COMPARE_SEL.size>=4) return; TEAM_COMPARE_SEL.add(id); }
+    if(TEAM_COMPARE_SEL.has(id)){ if(TEAM_COMPARE_SEL.size>1) TEAM_COMPARE_SEL.delete(id); }
+    else { if(TEAM_COMPARE_SEL.size>=4){ TEAM_COMPARE_SEL.delete([...TEAM_COMPARE_SEL][0]); } TEAM_COMPARE_SEL.add(id); }
     _tcmpRender(root, teams);
   });
+}
+// Multi-team: teams as COLUMNS, stats as rows grouped by category, cells = colored percentile.
+function _tcmpCompareCols(sel){
+  if(!sel.length) return '<div class="rk-empty">Select at least one club.</div>';
+  const head = `<tr><th class="tcmp-cat"></th>${sel.map(t=>`<th class="tcmp-th">${t.abbr}</th>`).join('')}</tr>`;
+  const secs = TCMP_SECTIONS.map(sec=>{
+    const rows = sec.stats.map(([key,lbl])=>{
+      const cells = sel.map(t=>{ const p=t.pct[key];
+        return `<td class="tcmp-cell" style="background:${_tcmpColor(p)};color:${_tcmpTextOn(p)}" title="${t.abbr} ${lbl} — ${p==null?'—':p+'th pct among teams'}">${p==null?'—':p}</td>`;
+      }).join('');
+      return `<tr><td class="tcmp-rl">${lbl}</td>${cells}</tr>`;
+    }).join('');
+    return `<tr class="tcmp-secrow"><td colspan="${sel.length+1}">${sec.name}</td></tr>${rows}`;
+  }).join('');
+  return `<table class="tcmp-grid"><thead>${head}</thead><tbody>${secs}</tbody></table>
+    <div class="tcmp-note">Cells = team percentile among the 30 clubs (blue low -> red high).</div>`;
+}
+// Single team: HITTERS as columns (batting order) + team avg, stats as rows by category.
+function _tcmpCard(team){
+  const hs = (team.hitters||[]).slice(0,9);
+  const short = nm => { const parts=(nm||'').trim().split(' '); const last=parts[parts.length-1]||nm; return last.charAt(0).toUpperCase()+last.slice(1); };
+  const head = `<tr><th class="tcmp-cat"></th>${hs.map((h,i)=>`<th class="tcmp-th" title="${h.name}">${i+1}. ${short(h.name)}${h.isDH?' (DH)':''}</th>`).join('')}<th class="tcmp-th tcmp-avg">TEAM</th></tr>`;
+  const secs = TCMP_SECTIONS.map(sec=>{
+    const rows = sec.stats.map(([key,lbl,,mode])=>{
+      const cells = hs.map(h=>{ let p = h.vals[key];
+        if (mode==='def' && h.isDH) p=null;
+        p = (p==null)?null:Math.round(p);
+        return `<td class="tcmp-cell" style="background:${_tcmpColor(p)};color:${_tcmpTextOn(p)}">${p==null?'·':p}</td>`;
+      }).join('');
+      const ap = team.pct[key];
+      const avg = `<td class="tcmp-cell tcmp-avg" style="background:${_tcmpColor(ap)};color:${_tcmpTextOn(ap)}" title="Team ${lbl} — ${ap==null?'—':ap+'th pct among teams'}">${ap==null?'—':ap}</td>`;
+      return `<tr><td class="tcmp-rl">${lbl}</td>${cells}${avg}</tr>`;
+    }).join('');
+    return `<tr class="tcmp-secrow"><td colspan="${hs.length+2}">${sec.name}</td></tr>${rows}`;
+  }).join('');
+  return `<div class="tcmp-cardhdr">${team.name} — lineup Statcast card</div>
+    <div class="tcmp-scroll"><table class="tcmp-grid tcmp-cardgrid"><thead>${head}</thead><tbody>${secs}</tbody></table></div>
+    <div class="tcmp-note">Player cells = that hitter's MLB percentile (vs all hitters). TEAM column = the club's percentile among the 30 teams (offense slot-PA-weighted, fielding non-DH avg). Blue low -> red high.</div>`;
 }
 
 // Lineup rankings — uses TODAY's posted lineup when available, else cascades
