@@ -177,25 +177,94 @@ def compute_fld_bsr():
         out[k]=rec
     return out
 
-# ---------------------------------------------------------------- CONTACT (Savant K% placeholder; CoE model next)
-def load_contact():
+# ---------------------------------------------------------------- CONTACT (CoE: pitch-level contact-over-expected)
+# Methodology v2.0 sec.4. Pulls the full season of pitch-level Statcast, fits a
+# league contact surface P(contact|swing) over normalized location x pitch-class
+# x batter-side, then scores each hitter's actual-minus-expected contact rate
+# (shrunk). Validated vs Orr CoE truth: Kwan +10.8 (truth +11.4), Yordan +5.5
+# (+5.1), Arraez top, Gallo/Schwarber/Judge bottom.
+_CONTACT_DESC={"hit_into_play","foul","foul_tip","foul_bunt"}
+_WHIFF_DESC={"swinging_strike","swinging_strike_blocked","missed_bunt","swinging_pitchout"}
+_FB={"FF","FA","FT","SI","FC"}; _BR={"SL","CU","KC","SV","ST","CS","SC","KN"}; _OS={"CH","FS","FO","EP"}
+_XED=[0.5,1.0,1.5,2.0]; _ZED=[0.5,1.0,1.5,2.0]
+def _pclass(pt):
+    if pt in _FB: return "FB"
+    if pt in _BR: return "BR"
+    if pt in _OS: return "OS"
+    return None
+def _lbin(v,ed):
+    for i,e in enumerate(ed):
+        if v<e: return i
+    return len(ed)
+def load_contact(min_sw=150, k=120.0, pseudo=50.0):
+    """Return {norm_name: percentile(1-99)} from the pitch-level CoE model."""
     con={}
     try:
-        url=(f"https://baseballsavant.mlb.com/leaderboard/custom?year={YEAR}&type=batter&filter="
-             f"&min=10&selections=pa,k_percent&chart=false&x=pa&y=pa&r=no&csv=true")
-        data=list(csv.reader(io.StringIO(fetch(url))))
-        hdr=[h.strip() for h in data[0]]; ix={h:i for i,h in enumerate(hdr)}
-        ncol=[h for h in hdr if "last_name" in h][0]
-        kvals,tmp=[],{}
-        for r in data[1:]:
-            k=_f(r[ix["k_percent"]]) if "k_percent" in ix else None
-            if k is None: continue
-            tmp[norm(r[ix[ncol]])]=k; kvals.append(k)
-        kvals.sort(); n=len(kvals)
-        for nm,k in tmp.items():
-            con[nm]=round(max(1.0,min(99.0,100.0*(1-bisect.bisect_right(kvals,k)/n)+100.0/n)),1)
+        start=datetime.date(YEAR,3,15); today=datetime.date.today()
+        cellC={}; cellN={}; margC={}; margN={}; rows=[]; id2name={}
+        d=start
+        while d<=today:
+            d2=min(d+datetime.timedelta(days=3), today)
+            url=("https://baseballsavant.mlb.com/statcast_search/csv?all=true&type=details"
+                 f"&player_type=batter&hfSea={YEAR}%7C&game_date_gt={d.isoformat()}"
+                 f"&game_date_lt={d2.isoformat()}&min_pitches=0")
+            d=d2+datetime.timedelta(days=1)
+            try:
+                data=list(csv.reader(io.StringIO(fetch(url, timeout=120))))
+            except Exception as e:
+                print(f"[grades_v2] contact window {url[-30:]} failed ({e})", file=sys.stderr); continue
+            if not data or len(data)<2: continue
+            hdr=[h.strip() for h in data[0]]; ix={h:i for i,h in enumerate(hdr)}
+            need=("description","pitch_type","plate_x","plate_z","sz_top","sz_bot","stand","batter","player_name")
+            if any(c not in ix for c in need): continue
+            for r in data[1:]:
+                try:
+                    dsc=r[ix["description"]]
+                    if dsc in _CONTACT_DESC: c=1
+                    elif dsc in _WHIFF_DESC: c=0
+                    else: continue
+                    pc=_pclass(r[ix["pitch_type"]])
+                    if not pc: continue
+                    px=float(r[ix["plate_x"]]); pz=float(r[ix["plate_z"]])
+                    st=float(r[ix["sz_top"]]); sb=float(r[ix["sz_bot"]])
+                    half=(st-sb)/2.0
+                    if half<=0: continue
+                    side=r[ix["stand"]]; pid=r[ix["batter"]]
+                    if side not in ("R","L") or not pid: continue
+                except Exception:
+                    continue
+                xb=_lbin(abs(px)/0.83,_XED); zb=_lbin(abs(pz-(st+sb)/2.0)/half,_ZED)
+                key=(side,pc,xb,zb); mk=(side,pc)
+                cellC[key]=cellC.get(key,0)+c; cellN[key]=cellN.get(key,0)+1
+                margC[mk]=margC.get(mk,0)+c; margN[mk]=margN.get(mk,0)+1
+                rows.append((pid,side,pc,xb,zb,c))
+                if pid not in id2name: id2name[pid]=r[ix["player_name"]]
+        if not rows:
+            print("[grades_v2] contact: no pitch rows pulled", file=sys.stderr); return con
+        prob={}
+        for key in cellN:
+            side,pc,xb,zb=key; mrate=margC[(side,pc)]/margN[(side,pc)]
+            prob[key]=(cellC[key]+pseudo*mrate)/(cellN[key]+pseudo)
+        pl={}
+        for pid,side,pc,xb,zb,c in rows:
+            a=pl.setdefault(pid,[0,0,0.0]); a[0]+=c; a[1]+=1; a[2]+=prob[(side,pc,xb,zb)]
+        recs=[(pid, 100.0*(C-E)/(N+k)) for pid,(C,N,E) in pl.items() if N>=min_sw]
+        if not recs:
+            print("[grades_v2] contact: no players >= min_sw", file=sys.stderr); return con
+        # Bell-shaped design ladder (same allocation as Eye): rank CoE, map to
+        # letter via design percentiles, emit the band-midpoint pct so the
+        # frontend's grade_from_pct recovers the intended letter.
+        DESIGN=[(98,"A+"),(94,"A"),(89,"A-"),(81,"B+"),(70,"B"),(57,"B-"),
+                (43,"C+"),(30,"C"),(19,"C-"),(10,"D+"),(4,"D"),(0,"D-")]
+        vals=sorted(v for _,v in recs); n=len(vals)
+        for pid,coe in recs:
+            p=100.0*bisect.bisect_right(vals,coe)/n
+            letter=next(l for c,l in DESIGN if p>=c)
+            lo,hi=BANDS[letter]
+            con[norm(id2name.get(pid,pid))]=round((lo+hi)/2.0,1)
+        print(f"[grades_v2] contact CoE: {len(con)} hitters ({len(rows)} swings)", file=sys.stderr)
     except Exception as e:
-        print(f"[grades_v2] K% pull failed ({e})", file=sys.stderr)
+        print(f"[grades_v2] contact CoE failed ({e})", file=sys.stderr)
     return con
 
 # ---------------------------------------------------------------- synthetic pcts
@@ -236,7 +305,7 @@ def main():
 
     payload={"generated_at":datetime.datetime.utcnow().isoformat(timespec="seconds")+"Z",
              "n_players":len(out),
-             "source":"AUTO v2.0: Damage(Savant EV+shrink+frozen cutoffs), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + SABR SDI (fielding) + Savant runner_runs (baserunning)), Contact(Savant K%).",
+             "source":"AUTO v2.0: Damage(Savant EV+shrink+frozen cutoffs), Eye(Savant zone/count composite -> ladder), FLD/BSR(proj baseline + SABR SDI (fielding) + Savant runner_runs (baserunning)), Contact(pitch-level CoE: contact-over-expected).",
              "methodology_version":"2.0-auto","by_name":out}
     OUT.write_text(json.dumps(payload,indent=2))
     have=lambda f: sum(1 for v in out.values() if f in v)
