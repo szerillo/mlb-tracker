@@ -552,6 +552,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A data/ scripts/ || true
+          git add -f hitter_splits.json || true
           [ -f scripts/bartolo/bartolo_model.pkl ] && git add scripts/bartolo/bartolo_model.pkl || true
           [ -d data/archive ] && git add data/archive || true
           git add -u .train-now 2>/dev/null || true
