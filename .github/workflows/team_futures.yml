@@ -52,7 +52,6 @@ jobs:
       - name: Refresh win totals + playoff Y/N from BettingPros consensus
         run: python scripts/refresh_team_futures_bp.py
         continue-on-error: true
-        continue-on-error: true
 
       - name: Compute sean team projections (player-data ROS + playoff sim)
         run: python scripts/compute_sean_team_projections.py
