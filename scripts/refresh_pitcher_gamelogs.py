@@ -300,6 +300,7 @@ def mlb_starts_fallback(mlbam_id, season):
         starts.append({
             "date": s.get("date"),
             "opp": opp,
+            "is_home": s.get("isHome"),
             "ip": _f(st.get("inningsPitched")),
             "outs": ip_to_outs(st.get("inningsPitched")),
             "h": _f(st.get("hits")), "r": _f(st.get("runs")),
@@ -324,6 +325,27 @@ _SC_CSW = {"called_strike", "swinging_strike", "swinging_strike_blocked"}
 _SC_WHIFF = {"swinging_strike", "swinging_strike_blocked", "missed_bunt"}
 _SC_BALL = {"ball", "blocked_ball", "pitchout", "hit_by_pitch"}
 _FB_TYPES = {"FF", "SI", "FT", "FC"}   # fastball family for per-start velo
+
+# Full MLB team name -> Baseball-Reference-style 3-letter abbreviation, for the
+# per-start game-log "Opp" column. Away games get an "@" prefix.
+NAME2ABBR = {
+    "Arizona Diamondbacks":"ARI","Athletics":"ATH","Atlanta Braves":"ATL",
+    "Baltimore Orioles":"BAL","Boston Red Sox":"BOS","Chicago Cubs":"CHC",
+    "Chicago White Sox":"CHW","Cincinnati Reds":"CIN","Cleveland Guardians":"CLE",
+    "Colorado Rockies":"COL","Detroit Tigers":"DET","Houston Astros":"HOU",
+    "Kansas City Royals":"KCR","Los Angeles Angels":"LAA","Los Angeles Dodgers":"LAD",
+    "Miami Marlins":"MIA","Milwaukee Brewers":"MIL","Minnesota Twins":"MIN",
+    "New York Mets":"NYM","New York Yankees":"NYY","Philadelphia Phillies":"PHI",
+    "Pittsburgh Pirates":"PIT","San Diego Padres":"SDP","San Francisco Giants":"SFG",
+    "Seattle Mariners":"SEA","St. Louis Cardinals":"STL","Tampa Bay Rays":"TBR",
+    "Texas Rangers":"TEX","Toronto Blue Jays":"TOR","Washington Nationals":"WSN",
+}
+def fmt_opp(name, is_home):
+    """'Kansas City Royals', is_home=False -> '@KCR'. Unknown home/away -> no @."""
+    if not name:
+        return name
+    ab = NAME2ABBR.get(name, name)
+    return ("@" + ab) if is_home is False else ab
 
 
 def statcast_discipline(mlbam_id, season):
@@ -357,6 +379,11 @@ def statcast_discipline(mlbam_id, season):
                          if len(fb) and fb.mean() == fb.mean() else None)(
                     g.loc[g["pitch_type"].astype(str).isin(_FB_TYPES), "release_speed"]
                     if ("pitch_type" in g.columns and "release_speed" in g.columns)
+                    else g["description"].iloc[0:0]),
+                "fb_spin": (lambda fb: round(float(fb.mean()))
+                            if len(fb) and fb.mean() == fb.mean() else None)(
+                    g.loc[g["pitch_type"].astype(str).isin(_FB_TYPES), "release_spin_rate"]
+                    if ("pitch_type" in g.columns and "release_spin_rate" in g.columns)
                     else g["description"].iloc[0:0]),
                 # raw component counts for self-computed xFIP / SIERA
                 "comp": {
@@ -394,6 +421,7 @@ def merge_discipline(starts, disc):
         s["ball_pct"] = d["ball_pct"] if d else None
         if d and d.get("velo") is not None:
             s["velo"] = d["velo"]   # Statcast FB velo (ground truth; overrides FG FBv)
+        s["fb_spin"] = d.get("fb_spin") if d else None
         s["_comp"] = d.get("comp") if d else None
         if d and d.get("mix"):
             s["mix"] = d["mix"]
@@ -500,6 +528,7 @@ def aggregate(starts):
         "csw": pitch_weighted("csw", 3),
         "whiff": pitch_weighted("whiff", 3),
         "ball_pct": pitch_weighted("ball_pct", 3),
+        "fb_spin": pitch_weighted("fb_spin", 0),
     }
 
 
@@ -639,6 +668,7 @@ def main():
     fg_ok = fg_fail = mlb_fb = 0
     for i, (mlbam_id, full_name) in enumerate(universe):
         starts = None
+        full = None
         fg_id = fg_map.get(mlbam_id)
         if fg_id:
             starts = fg_starts(fg_id, season)
@@ -670,6 +700,21 @@ def main():
                 continue
         if not starts:
             continue
+        # Opponent -> 3-letter abbr with @ for away. Home/away comes from the MLB
+        # gameLog (isHome), fetched for every arm regardless of primary source.
+        _home = {}
+        for _src in (full, starts):
+            if not _src:
+                continue
+            for _s in _src:
+                if _s.get("date") and _s.get("is_home") is not None:
+                    _home[_s["date"]] = _s["is_home"]
+        for _s in starts:
+            ih = _s.get("is_home")
+            if ih is None:
+                ih = _home.get(_s.get("date"))
+            _s["opp"] = fmt_opp(_s.get("opp"), ih)
+            _s.pop("is_home", None)
         # Enrich each start with Statcast CSW% / whiff% / ball% / pitch mix
         # (one Savant call per arm; degrades to nulls if Savant is unavailable).
         merge_discipline(starts, statcast_discipline(mlbam_id, season))
