@@ -67,7 +67,7 @@ def by_cuts(cuts, v):
 # ---------------------------------------------------------------- DAMAGE
 def compute_damage():
     url=(f"https://baseballsavant.mlb.com/leaderboard/statcast?type=batter&year={YEAR}"
-         f"&min=50&csv=true")
+         f"&min=1&csv=true")
     rows=list(csv.DictReader(io.StringIO(fetch(url))))
     nk=[k for k in rows[0] if "last_name" in k][0]
     out={}
@@ -94,10 +94,10 @@ def compute_eye():
     heart=harv(Z([1,2,3,4,5,6,7,8,9])+C(["10","20","21","30","31","00","11"]))
     comp={}
     for pid,(tp,tt,nm) in tot.items():
-        if tp<600: continue
+        if tp<400: continue
         cp=chase.get(pid,(0,0))[0]+waste.get(pid,(0,0))[0]; ctk=chase.get(pid,(0,0))[1]+waste.get(pid,(0,0))[1]
         sp,stk=sh2k.get(pid,(0,0))[:2]; hp,htk=heart.get(pid,(0,0))[:2]
-        if cp<150 or sp<40 or hp<100: continue
+        if cp<90 or sp<25 or hp<60: continue
         comp[pid]={"name":nm,"ct":ctk/cp,"ed":stk/sp,"ha":1-htk/hp}
     if not comp: return {}
     for key in ("ct","ed","ha"):
@@ -196,7 +196,7 @@ def _lbin(v,ed):
     for i,e in enumerate(ed):
         if v<e: return i
     return len(ed)
-def load_contact(min_sw=150, k=120.0, pseudo=50.0):
+def load_contact(min_sw=50, k=120.0, pseudo=50.0):
     """Return {norm_name: percentile(1-99)} from the pitch-level CoE model."""
     con={}
     try:
@@ -248,19 +248,28 @@ def load_contact(min_sw=150, k=120.0, pseudo=50.0):
         pl={}
         for pid,side,pc,xb,zb,c in rows:
             a=pl.setdefault(pid,[0,0,0.0]); a[0]+=c; a[1]+=1; a[2]+=prob[(side,pc,xb,zb)]
-        recs=[(pid, 100.0*(C-E)/(N+k)) for pid,(C,N,E) in pl.items() if N>=min_sw]
-        if not recs:
-            print("[grades_v2] contact: no players >= min_sw", file=sys.stderr); return con
-        # Bell-shaped design ladder (same allocation as Eye): rank CoE, map to
-        # letter via design percentiles, emit the band-midpoint pct so the
-        # frontend's grade_from_pct recovers the intended letter.
+        coe={pid: 100.0*(C-E)/(N+k) for pid,(C,N,E) in pl.items()}
+        nsw={pid: N for pid,(C,N,E) in pl.items()}
+        # Frozen-cut design ladder: derive CoE thresholds at the design percentiles
+        # from a STABLE pool (>=300 swings) so low-sample hitters graded off fixed
+        # cuts don't distort the tails; then grade everyone with >=min_sw swings.
         DESIGN=[(98,"A+"),(94,"A"),(89,"A-"),(81,"B+"),(70,"B"),(57,"B-"),
-                (43,"C+"),(30,"C"),(19,"C-"),(10,"D+"),(4,"D"),(0,"D-")]
-        vals=sorted(v for _,v in recs); n=len(vals)
-        for pid,coe in recs:
-            p=100.0*bisect.bisect_right(vals,coe)/n
-            letter=next(l for c,l in DESIGN if p>=c)
-            lo,hi=BANDS[letter]
+                (43,"C+"),(30,"C"),(19,"C-"),(10,"D+"),(4,"D")]
+        stable=sorted(coe[pid] for pid in coe if nsw[pid]>=300)
+        if len(stable)<40:
+            stable=sorted(coe[pid] for pid in coe if nsw[pid]>=min_sw)
+        def pctl(a,q):
+            if not a: return 0.0
+            i=(len(a)-1)*q/100.0; lo=int(i); hi=min(lo+1,len(a)-1)
+            return a[lo]+(a[hi]-a[lo])*(i-lo)
+        cuts=[(pctl(stable,q),l) for q,l in DESIGN]
+        def letter_for(v):
+            for c,l in cuts:
+                if v>=c: return l
+            return "D-"
+        for pid in coe:
+            if nsw[pid]<min_sw: continue
+            letter=letter_for(coe[pid]); lo,hi=BANDS[letter]
             con[norm(id2name.get(pid,pid))]=round((lo+hi)/2.0,1)
         print(f"[grades_v2] contact CoE: {len(con)} hitters ({len(rows)} swings)", file=sys.stderr)
     except Exception as e:
