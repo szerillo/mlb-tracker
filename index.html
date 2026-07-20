@@ -1715,8 +1715,7 @@
   .sp-ls td:first-child, .sp-ls td:nth-child(2) { text-align:left; color:var(--muted); }
   .sp-sparks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
   @media (max-width: 560px) { .sp-sparks { grid-template-columns:1fr 1fr; } }
-  .sp-sparks.spp { grid-template-columns:repeat(3,1fr); }
-  @media (max-width: 420px) { .sp-sparks.spp { grid-template-columns:repeat(2,1fr); } }
+  .sp-sparks.spp { grid-template-columns:repeat(2,1fr); }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -6853,21 +6852,21 @@ function renderSPTrendsHTML(gl) {
   const _kbbS = _kS.map((v, i) => (v != null && _bbS[i] != null) ? (v - _bbS[i]) : null);
   const _kbbL5 = (l5.k_pct != null && l5.bb_pct != null) ? (l5.k_pct - l5.bb_pct)
                : (l5.k_bb_pct != null ? l5.k_bb_pct : null);
+  // Paired rows (2-col grid): K-BB% + xFIP (best predictors), then CSW% + Ball%,
+  // then Velo + FB Spin. Each pair sits side-by-side on its own line.
+  const pctFmt = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
   const metrics = [
-    { key: 'velo', label: 'Velo',   series: starts.map(s => s.velo),       l5: l5.velo,  fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' },
     { key: 'kbb',  label: 'K-BB%',  series: _kbbS, l5: _kbbL5, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
     { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
   ];
-  // CSW% (Statcast, fraction 0–1 → shown as %). Rolling 3-start window like the
-  // other rate metrics. Only surfaced once the gamelog pull has populated it.
-  const pctFmt = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
   if (starts.some(s => s.csw != null)) {
     metrics.push({ key: 'csw', label: 'CSW%', series: rollingSeries(starts, 'csw'), l5: l5.csw, fmt: pctFmt, mode: 'rolling' });
   }
   if (starts.some(s => s.ball_pct != null)) {
     metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling' });
   }
-  // Fastball spin (Statcast release_spin_rate, rpm) — rolling stuff trend.
+  metrics.push({ key: 'velo', label: 'Velo', series: starts.map(s => s.velo), l5: l5.velo, fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' });
+  // Fastball spin (Statcast release_spin_rate, rpm) — pairs next to Velo.
   if (starts.some(s => s.fb_spin != null)) {
     metrics.push({ key: 'spin', label: 'FB Spin', series: rollingSeries(starts, 'fb_spin'), l5: l5.fb_spin, fmt: v => v != null ? Math.round(v) + '' : '—', mode: 'rolling' });
   }
