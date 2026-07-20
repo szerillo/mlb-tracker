@@ -5138,8 +5138,13 @@ function xwobaPct(h){ return xwToPct(_seasonXw(h)); }
 function conPct(h, lookupName) {
   const v2 = _gradesV2Lookup(lookupName);
   if (v2 && typeof v2.con_pct === 'number') return v2.con_pct;   // prefer grades_v2 Contact (Savant K% pctile)
-  if (!h) return null;
-  const k = h.k_pct_actual != null ? h.k_pct_actual : h.k_pct;
+  let k = h ? (h.k_pct_actual != null ? h.k_pct_actual : h.k_pct) : null;
+  // Last-resort: Savant percentile file carries a K% percentile for players not
+  // in hitters.json (fresh call-ups) — convert it to a contact pct so no blanks.
+  if (k == null && lookupName && typeof HITTER_PCT !== 'undefined' && HITTER_PCT && HITTER_PCT.hitters) {
+    const pc = HITTER_PCT.hitters[normName(lookupName)];
+    if (pc && typeof pc.k_pct === 'number') return pc.k_pct;     // already a 1-100 pctile (higher=better)
+  }
   if (k == null || k < 0 || k > 80) return null;  // sanity guard against corrupt entries
   return Math.max(1, Math.min(99, 99 - (k - 10) / (35 - 10) * 98));
 }
