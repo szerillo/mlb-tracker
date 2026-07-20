@@ -1716,7 +1716,7 @@
   .sp-sparks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
   @media (max-width: 560px) { .sp-sparks { grid-template-columns:1fr 1fr; } }
   .sp-sparks.spp { grid-template-columns:repeat(3,1fr); }
-  @media (min-width: 640px) { .sp-sparks.spp { grid-template-columns:repeat(6,1fr); } }
+  @media (max-width: 420px) { .sp-sparks.spp { grid-template-columns:repeat(2,1fr); } }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -6811,6 +6811,11 @@ function toggleSPChart(id) {
 
 // Opponent display: backend now ships "@KCR"/"KCR"; map any legacy full names.
 const _OPP_ABBR = {"Arizona Diamondbacks":"ARI","Athletics":"ATH","Atlanta Braves":"ATL","Baltimore Orioles":"BAL","Boston Red Sox":"BOS","Chicago Cubs":"CHC","Chicago White Sox":"CHW","Cincinnati Reds":"CIN","Cleveland Guardians":"CLE","Colorado Rockies":"COL","Detroit Tigers":"DET","Houston Astros":"HOU","Kansas City Royals":"KCR","Los Angeles Angels":"LAA","Los Angeles Dodgers":"LAD","Miami Marlins":"MIA","Milwaukee Brewers":"MIL","Minnesota Twins":"MIN","New York Mets":"NYM","New York Yankees":"NYY","Philadelphia Phillies":"PHI","Pittsburgh Pirates":"PIT","San Diego Padres":"SDP","San Francisco Giants":"SFG","Seattle Mariners":"SEA","St. Louis Cardinals":"STL","Tampa Bay Rays":"TBR","Texas Rangers":"TEX","Toronto Blue Jays":"TOR","Washington Nationals":"WSN"};
+function fmtDateMD(d) {
+  if (!d) return '—';
+  const m = /(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  return m ? `${+m[2]}/${+m[3]}` : d;   // 2026-07-12 -> 7/12
+}
 function fmtOppDisp(o) {
   if (!o) return '—';
   const at = o[0] === '@'; const nm = at ? o.slice(1) : o;
@@ -6834,7 +6839,7 @@ function renderSPTrendsHTML(gl) {
     : `<td class="${tier(v * 100, thr, hib)}">${(v * 100).toFixed(0)}%</td>`;
 
   const lsRows = recent.map(s => `<tr>
-      <td>${s.date ? fmtDateShort(s.date) : '—'}</td>
+      <td>${fmtDateMD(s.date)}</td>
       <td>${fmtOppDisp(s.opp)}</td>
       <td>${s.ip != null ? s.ip : '—'}</td>
       <td>${s.h ?? '—'}</td><td>${s.r ?? '—'}</td><td>${s.er ?? '—'}</td>
@@ -6891,7 +6896,7 @@ function renderSPTrendsHTML(gl) {
     <div class="sp-trends-hdr">Recent starts
       <span class="sp-trends-sub">last ${recent.length} · L5 SIERA ${sieraTxt}${fbNote}</span></div>
     <table class="sp-ls"><thead><tr>
-      <th>Date</th><th>Opp</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th title="Pitch count">P</th><th>xFIP</th><th title="Called Strikes + Whiffs per pitch (higher=better)">CSW%</th><th title="Balls per pitch (lower=better)">Ball%</th>
+      <th>Date</th><th>Opp</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th title="Pitch count">PC</th><th>xFIP</th><th title="Called Strikes + Whiffs per pitch (higher=better)">CSW%</th><th title="Balls per pitch (lower=better)">Ball%</th>
     </tr></thead><tbody>${lsRows}</tbody></table>
     <div class="sp-sparks spp">${sparkCells}</div>
     ${bigCharts}
