@@ -6934,6 +6934,7 @@ function hitWindowValue(w, field) {
   if (field === 'bb_pct') { const d = sum('pa');        return d ? +(sum('bb')        / d * 100).toFixed(1) : null; }
   if (field === 'whiff')  { const d = sum('swings');    return d ? +(sum('whiffs')    / d * 100).toFixed(1) : null; }
   if (field === 'barrel') { const d = sum('bip');       return d ? +(sum('barrels')   / d * 100).toFixed(1) : null; }
+  if (field === 'chase')  { const d = sum('chase_pit'); return d ? +(sum('chase_sw')  / d * 100).toFixed(1) : null; }
   if (field === 'xwoba')  { const d = sum('xwoba_den'); return d ? +(sum('xwoba_num') / d).toFixed(3)       : null; }
   return null;
 }
@@ -6974,7 +6975,7 @@ function renderHitterTrendsHTML(gl) {
   // Box-score + Statcast game log (most recent 10). Box cols come from MLB game
   // logs (show — until the nightly pull repopulates them).
   const lsRows = recent.map(g => `<tr>
-      <td>${g.date ? fmtDateShort(g.date) : '—'}</td>
+      <td>${g.date ? fmtDateMD(g.date) : '—'}</td>
       <td>${g.opp || '—'}</td>
       <td>${iv(g.ab)}</td><td>${iv(g.r)}</td><td>${iv(g.h)}</td><td>${iv(g.hr)}</td>
       <td>${iv(g.rbi)}</td><td>${iv(g.bb)}</td><td>${iv(g.k)}</td><td>${iv(g.sb)}</td>
@@ -6988,8 +6989,9 @@ function renderHitterTrendsHTML(gl) {
     { key: 'k',      label: 'K%',     field: 'k_pct',  fmt: pct1 },
     { key: 'bb',     label: 'BB%',    field: 'bb_pct', fmt: pct1 },
     { key: 'whiff',  label: 'Whiff%', field: 'whiff',  fmt: pct1 },
-    { key: 'barrel', label: 'Brl%',   field: 'barrel', fmt: pct1 },
+    { key: 'chase',  label: 'Chase%', field: 'chase',  fmt: pct1 },
     { key: 'xwoba',  label: 'xwOBA',  field: 'xwoba',  fmt: w3   },
+    { key: 'barrel', label: 'Brl%',   field: 'barrel', fmt: pct1 },
   ].map(m => {
     const series = hitRollingSeriesPA(games, m.field, HIT_PA_WIN);
     const sv = series.filter(v => v != null && isFinite(v));
@@ -7036,7 +7038,7 @@ function renderHitterTrendsHTML(gl) {
       <th>Date</th><th>Opp</th><th>AB</th><th>R</th><th>H</th><th>HR</th><th>RBI</th><th>BB</th><th>K</th><th>SB</th><th>Whiff%</th><th>Brl%</th>
     </tr></thead><tbody>${lsRows}</tbody></table>
     <div class="hit-roll-hdr">Rolling rates ${paToggle}</div>
-    <div class="sp-sparks">${sparkCells}</div>
+    <div class="sp-sparks spp">${sparkCells}</div>
     ${bigCharts}
     <div class="hit-vp-hdr">vs Pitch Type — season</div>
     <table class="sp-ls hit-vp"><thead><tr>
