@@ -114,6 +114,14 @@ def per_game(df):
         desc = g["description"].astype(str)
         swings = int(desc.isin(_SWING).sum())
         whiffs = int(desc.isin(_WHIFF).sum())
+        # Chase (O-Swing): swings at out-of-zone pitches / out-of-zone pitches.
+        # Statcast zone 11-14 = the four out-of-zone quadrants (>=10).
+        if "zone" in g.columns:
+            oz = g[g["zone"].fillna(0) >= 10]
+            chase_pit = int(len(oz))
+            chase_sw = int(oz["description"].astype(str).isin(_SWING).sum())
+        else:
+            chase_pit = 0; chase_sw = 0
         bip = g[g["type"] == "X"]
         nbb = len(bip)
         barrels = int((bip["launch_speed_angle"] == 6).sum()) if "launch_speed_angle" in bip else 0
@@ -143,6 +151,8 @@ def per_game(df):
             "date": str(gd)[:10], "opp": opp, "pa": pa,
             "k": int(ev.isin(_K).sum()), "bb": int(ev.isin(_BB).sum()),
             "swings": swings, "whiffs": whiffs, "bip": nbb, "barrels": barrels,
+            "chase_sw": chase_sw, "chase_pit": chase_pit,
+            "chase": _ratio(chase_sw, chase_pit),
             "xwoba_num": round(xwoba_num, 5), "xwoba_den": round(xwoba_den, 3),
             "xwoba": round(xwoba_num / xwoba_den, 3) if xwoba_den else None,
             "k_pct": _ratio(int(ev.isin(_K).sum()), pa),
@@ -327,7 +337,7 @@ def main():
                 season_agg[fld] = sum(g.get(fld) or 0 for g in games)
         hitters[norm_name(name)] = {
             "name": name, "mlbam_id": mid,
-            "games": [{k: g.get(k) for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "xwoba_num", "xwoba_den", "xwoba", "k_pct", "bb_pct", "whiff", "barrel", "ab", "r", "h", "hr", "rbi", "sb")} for g in games],
+            "games": [{k: g.get(k) for k in ("date", "opp", "pa", "k", "bb", "swings", "whiffs", "bip", "barrels", "chase_sw", "chase_pit", "chase", "xwoba_num", "xwoba_den", "xwoba", "k_pct", "bb_pct", "whiff", "barrel", "ab", "r", "h", "hr", "rbi", "sb")} for g in games],
             "l5": agg(games[-LOOKBACK_L5:]),
             "l10": agg(games[-LOOKBACK_L10:]),
             "season": season_agg,
