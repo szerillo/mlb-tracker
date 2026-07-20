@@ -1715,6 +1715,8 @@
   .sp-ls td:first-child, .sp-ls td:nth-child(2) { text-align:left; color:var(--muted); }
   .sp-sparks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
   @media (max-width: 560px) { .sp-sparks { grid-template-columns:1fr 1fr; } }
+  .sp-sparks.spp { grid-template-columns:repeat(3,1fr); }
+  @media (min-width: 640px) { .sp-sparks.spp { grid-template-columns:repeat(6,1fr); } }
   .sp-spark-cell { flex:1 1 88px; min-width:84px; background:rgba(255,255,255,0.03);
     border:1px solid var(--border); border-radius:6px; padding:4px 5px; cursor:pointer; transition:background .12s; }
   .sp-spark-cell:hover { background:var(--panel-hover); }
@@ -6807,6 +6809,14 @@ function toggleSPChart(id) {
   el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
 }
 
+// Opponent display: backend now ships "@KCR"/"KCR"; map any legacy full names.
+const _OPP_ABBR = {"Arizona Diamondbacks":"ARI","Athletics":"ATH","Atlanta Braves":"ATL","Baltimore Orioles":"BAL","Boston Red Sox":"BOS","Chicago Cubs":"CHC","Chicago White Sox":"CHW","Cincinnati Reds":"CIN","Cleveland Guardians":"CLE","Colorado Rockies":"COL","Detroit Tigers":"DET","Houston Astros":"HOU","Kansas City Royals":"KCR","Los Angeles Angels":"LAA","Los Angeles Dodgers":"LAD","Miami Marlins":"MIA","Milwaukee Brewers":"MIL","Minnesota Twins":"MIN","New York Mets":"NYM","New York Yankees":"NYY","Philadelphia Phillies":"PHI","Pittsburgh Pirates":"PIT","San Diego Padres":"SDP","San Francisco Giants":"SFG","Seattle Mariners":"SEA","St. Louis Cardinals":"STL","Tampa Bay Rays":"TBR","Texas Rangers":"TEX","Toronto Blue Jays":"TOR","Washington Nationals":"WSN"};
+function fmtOppDisp(o) {
+  if (!o) return '—';
+  const at = o[0] === '@'; const nm = at ? o.slice(1) : o;
+  if (nm.length <= 4) return o;          // already an abbreviation
+  return (at ? '@' : '') + (_OPP_ABBR[nm] || nm);
+}
 // Core renderer — takes a gamelogs pitcher object.
 function renderSPTrendsHTML(gl) {
   if (!gl || !gl.starts || !gl.starts.length) return "";
@@ -6825,10 +6835,11 @@ function renderSPTrendsHTML(gl) {
 
   const lsRows = recent.map(s => `<tr>
       <td>${s.date ? fmtDateShort(s.date) : '—'}</td>
-      <td>${s.opp || '—'}</td>
+      <td>${fmtOppDisp(s.opp)}</td>
       <td>${s.ip != null ? s.ip : '—'}</td>
       <td>${s.h ?? '—'}</td><td>${s.r ?? '—'}</td><td>${s.er ?? '—'}</td>
       <td>${s.bb ?? '—'}</td><td>${s.k ?? '—'}</td><td>${s.hr ?? '—'}</td>
+      <td>${s.pitches != null ? Math.round(s.pitches) : '—'}</td>
       <td class="${s.xfip != null ? tier(s.xfip, xfipB, false) : ''}">${s.xfip != null ? s.xfip.toFixed(2) : '—'}</td>
       ${_pctCell(s.csw, cswB, true)}${_pctCell(s.ball_pct, ballB, false)}
     </tr>`).join("");
@@ -6850,6 +6861,10 @@ function renderSPTrendsHTML(gl) {
   }
   if (starts.some(s => s.ball_pct != null)) {
     metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling' });
+  }
+  // Fastball spin (Statcast release_spin_rate, rpm) — rolling stuff trend.
+  if (starts.some(s => s.fb_spin != null)) {
+    metrics.push({ key: 'spin', label: 'FB Spin', series: rollingSeries(starts, 'fb_spin'), l5: l5.fb_spin, fmt: v => v != null ? Math.round(v) + '' : '—', mode: 'rolling' });
   }
   const dateSeries = starts.map(s => s.date);
   const sparkCells = metrics.map(m => {
@@ -6876,9 +6891,9 @@ function renderSPTrendsHTML(gl) {
     <div class="sp-trends-hdr">Recent starts
       <span class="sp-trends-sub">last ${recent.length} · L5 SIERA ${sieraTxt}${fbNote}</span></div>
     <table class="sp-ls"><thead><tr>
-      <th>Date</th><th>Opp</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th>xFIP</th><th title="Called Strikes + Whiffs per pitch (higher=better)">CSW%</th><th title="Balls per pitch (lower=better)">Ball%</th>
+      <th>Date</th><th>Opp</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th title="Pitch count">P</th><th>xFIP</th><th title="Called Strikes + Whiffs per pitch (higher=better)">CSW%</th><th title="Balls per pitch (lower=better)">Ball%</th>
     </tr></thead><tbody>${lsRows}</tbody></table>
-    <div class="sp-sparks">${sparkCells}</div>
+    <div class="sp-sparks spp">${sparkCells}</div>
     ${bigCharts}
   </div>`;
 }
