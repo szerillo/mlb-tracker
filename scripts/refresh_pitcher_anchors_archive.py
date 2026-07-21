@@ -58,18 +58,54 @@ INPUT = DATA_DIR / "pitcher_stats.json"
 # Subset of pitcher_stats fields we want frozen for backtesting. Kept lean so
 # the daily snapshot stays small (~6233 pitchers × ~10 fields).
 SNAPSHOT_FIELDS = [
-    "mlbam_id",
-    "ip",
-    "xera",
-    "bot_era",
-    "fip_proj",
-    "fip_proj_n_sources",
-    "xfip",
-    "siera",
-    "k_bb_pct",
-    "unified_score",
-    "unified_rolling",
+    "mlbam_id", "ip",
+    # incumbent wFIP anchors
+    "xera", "bot_era", "fip_proj", "fip_proj_n_sources",
+    "xfip", "siera", "k_bb_pct", "unified_score", "unified_rolling",
+    # --- pitch-model grades (Fable's #1 ask: previously unfrozen) ---
+    "stuff_plus", "location_plus", "pitching_plus",
+    # --- plate skills ---
+    "whiff_pct", "k_pct", "bb_pct", "edge_pct", "f_strike_pct", "meatball_pct",
+    # --- contact allowed ---
+    "barrel_pct", "hard_hit_pct", "gb_pct", "fb_pct", "hr_per_9", "xwoba_savant",
 ]
+
+# Rolling velo/spin/CSW trend + season baseline, pulled from pitcher_gamelogs.json
+# (l5/season aggregates). Frozen so the Sept re-run can test velo/health trends.
+GAMELOGS = DATA_DIR / "pitcher_gamelogs.json"
+TREND_KEYS = ["velo", "fb_spin", "csw", "whiff", "stuff"]
+
+def _load_trends():
+    """key -> {l5_velo, l5_spin, l5_csw, l5_whiff, l5_stuff, velo_season,
+              spin_season, velo_delta, spin_delta, csw_delta, stuff_delta}."""
+    out = {}
+    if not GAMELOGS.exists():
+        return out
+    try:
+        gd = json.loads(GAMELOGS.read_text()).get("pitchers") or {}
+    except Exception as e:
+        print(f"[anchors] gamelogs read failed: {e}", file=sys.stderr); return out
+    for key, rec in gd.items():
+        l5 = rec.get("l5") or {}; se = rec.get("season") or {}
+        d = {}
+        if l5.get("velo") is not None:    d["l5_velo"]  = l5["velo"]
+        if l5.get("fb_spin") is not None: d["l5_spin"]  = l5["fb_spin"]
+        if l5.get("csw") is not None:     d["l5_csw"]   = l5["csw"]
+        if l5.get("whiff") is not None:   d["l5_whiff"] = l5["whiff"]
+        if l5.get("stuff") is not None:   d["l5_stuff"] = round(l5["stuff"], 1)
+        if se.get("velo") is not None:    d["velo_season"] = se["velo"]
+        if se.get("fb_spin") is not None: d["spin_season"] = se["fb_spin"]
+        # deltas (recent minus season baseline) — the health/decline signal
+        if l5.get("velo") is not None and se.get("velo") is not None:
+            d["velo_delta"] = round(l5["velo"] - se["velo"], 2)
+        if l5.get("fb_spin") is not None and se.get("fb_spin") is not None:
+            d["spin_delta"] = round(l5["fb_spin"] - se["fb_spin"], 0)
+        if l5.get("csw") is not None and se.get("csw") is not None:
+            d["csw_delta"] = round(l5["csw"] - se["csw"], 3)
+        if l5.get("stuff") is not None and se.get("stuff") is not None:
+            d["stuff_delta"] = round(l5["stuff"] - se["stuff"], 1)
+        if d: out[key] = d
+    return out
 
 # Only snapshot pitchers with at least this much IP. Below 5 IP the metrics
 # are too noisy / sparse to be useful in a backtest predictor pool, and most
@@ -97,6 +133,7 @@ def main():
         return 1
 
     pitchers = data.get("pitchers") or {}
+    trends = _load_trends()
     today = _et_today()
 
     out = {}
@@ -120,6 +157,9 @@ def main():
             v = p.get(f)
             if v is not None:
                 rec[f] = v
+        t = trends.get(key)
+        if t:
+            rec.update(t)
         out[key] = rec
 
     archive_dir = ARCHIVE_DIR / today.isoformat()
@@ -132,7 +172,7 @@ def main():
         "source": "pitcher_stats.json snapshot — leakage-free anchors for future wFIP weight backtests",
         "n_pitchers": len(out),
         "min_ip": MIN_IP_TO_SNAPSHOT,
-        "fields": SNAPSHOT_FIELDS,
+        "fields": SNAPSHOT_FIELDS + ["l5_velo","l5_spin","l5_csw","l5_whiff","l5_stuff","velo_season","spin_season","velo_delta","spin_delta","csw_delta","stuff_delta"],
         "skipped_low_ip": n_skipped_no_ip,
         "skipped_no_anchor": n_skipped_no_anchor,
         "pitchers": out,
