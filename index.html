@@ -2955,9 +2955,11 @@ function _pgStaff(spName, team, oppLineupKbb) {
   const bpRArested = _pgTeamBullpenRA(team) ?? 4.20;
   // Bullpen fatigue multiplier (spec): bullpen_comp × (1 + 0.015 · #fatigued).
   // Implemented as RA inflation so the downstream blend math stays identical.
+  // Fatigue is now baked into the combined bullpen average (teamAvailRelievers),
+  // so no separate multiplier here — avoids double-counting depletion.
   const nFatigued = _pgCountFatigued(team);
-  const fatigueMul = 1 + 0.015 * nFatigued;
-  const bpRA = bpRArested * fatigueMul;
+  const fatigueMul = 1;
+  const bpRA = bpRArested;
   const ekbb = kbb + ((oppLineupKbb ?? 0.128) - 0.128) * 0.5;
   const pw = _pgClamp(0.55 + (ekbb - 0.128) * 2, 0.5, 0.8);
   return {
@@ -5538,7 +5540,7 @@ function renderASGStaff(game, side) {
   return `<table class="asg-staff-table">
     <thead><tr>
       <th class="l">T</th><th class="l">Pitcher</th><th class="l">Role</th>
-      <th class="mixed" title="Weighted FIP — rolling xFIP/SIERA/xERA/botERA/projection blend (lower = better)">wFIP</th>
+      <th class="mixed" title="Weighted FIP — lower is better">wFIP</th>
       <th title="K% minus BB%">K-BB</th>
       <th title="Stuff+ (100 = league average)">Stuff+</th>
     </tr></thead>
@@ -6018,12 +6020,14 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
   // i.e. genuinely fresh, excluding FATIGUED and OUT (so it reflects who can
   // actually be leaned on tonight). wFIP blends Steamer FIP + xFIP + SIERA +
   // xERA + botERA, robust even when a reliever has no qualified xFIP.
-  const _availArms = avail;
-  const _availWfips = _availArms
-    .map(p => lookupPitcherStats(p.name)?.unified_score)
-    .filter(v => v != null && v < 10);
-  const availWfip = _availWfips.length
-    ? _availWfips.reduce((a, b) => a + b, 0) / _availWfips.length : null;
+  // Combined-pen quality: rested arms at full wFIP + the best (n-1) tired/out
+  // arms penalized (+0.40), worst dropped — mirrors teamAvailRelievers.
+  const _restW = avail.map(p => lookupPitcherStats(p.name)?.unified_score).filter(v => v != null && v < 10);
+  const _compW = [...ftg, ...out].map(p => lookupPitcherStats(p.name)?.unified_score)
+    .filter(v => v != null && v < 10).sort((a, b) => a - b);
+  const _incW = _compW.slice(0, Math.max(0, _compW.length - 1)).map(v => v + 0.40);
+  const _combW = _restW.concat(_incW);
+  const availWfip = _combW.length ? _combW.reduce((a, b) => a + b, 0) / _combW.length : null;
 
   const fmt = (v, suf="") => v != null ? `${v.toFixed(v % 1 === 0 ? 0 : 2)}${suf}` : "—";
 
@@ -6047,7 +6051,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
     const reasonsAttr = f?.reasons ? ` title="${String(f.reasons).replace(/"/g,'&quot;')}"` : "";
     const nameShown = cleanName(p.name);
     const fipSrc = useW ? 'w' : (useXfip ? 'x' : 'p');
-    const fipLbl = useW ? "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)"
+    const fipLbl = useW ? "Weighted FIP — lower is better"
                  : (useXfip ? "xFIP — season actual (≥10 IP)" : "pFIP — projection (no qualified xFIP yet)");
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
@@ -6094,7 +6098,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       ${out.length ? `<span class="bpt-hot out">${out.length} OUT</span>` : ''}
       ${ftg.length ? `<span class="bpt-hot ftg">${ftg.length} FTG</span>` : ''}
       ${!out.length && !ftg.length ? `<span>all available</span>` : ''}
-      ${availWfip != null ? `<span class="bpt-availpen" title="Average weighted FIP across the ${_availWfips.length} RESTED (fresh, non-fatigued) arms — lower is better. wFIP = rolling xFIP 28 / rolling SIERA 22 / xERA 18 / botERA 17 / projection 15.">Rested pen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
+      ${availWfip != null ? `<span class="bpt-availpen" title="Combined bullpen weighted FIP — lower is better. Tired/out arms are weighted in with a penalty as depth thins.">Bullpen <b>${availWfip.toFixed(2)}</b> wFIP</span>` : ''}
       ${thruPill}
     </div>
     <table class="bpt-table ${compact ? 'bpt-compact' : ''}">
@@ -6108,7 +6112,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
       </colgroup>
       <thead><tr>
         <th>B</th><th>Pitcher</th>
-        <th class="r" title="Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (same blend as SPs). Falls back to season xFIP, then pFIP; hover each value.">wFIP</th>
+        <th class="r" title="Weighted FIP — lower is better. Falls back to season xFIP, then projection.">wFIP</th>
         <th class="r bpt-kbb" title="K% minus BB%">K-BB%</th>
         <th class="r bpt-stf" title="Stuff+ — Statcast-derived pitch-quality grade (100 = league avg, higher = better)">STF+</th>
         <th title="Pitches thrown in the last 5 days">L5 Days</th>
@@ -6776,7 +6780,7 @@ function renderSPStatRows(s, thr) {
   if (wfip != null && wfip < 10) {
     var wfipBands = thr.wfip || {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75};
     var wfipCls = tier(wfip, wfipBands, false);
-    var wfipTitle = "Weighted FIP — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15. Lower = better.";
+    var wfipTitle = "Weighted FIP — lower is better.";
     wfipPill = '<span class="plus-chip ' + wfipCls + '" style="font-size:0.9rem;font-weight:600;" title="' + wfipTitle.replace(/"/g,'&quot;') + '">wFIP <b>' + n2(wfip) + '</b></span>';
   }
   var wfipRow = wfipPill ? '<div class="m-sp-row"><div class="m-sp-row-label">Score</div><div class="m-sp-row-pills">' + wfipPill + '</div></div>' : '';
@@ -7942,22 +7946,38 @@ function rollComp(s, kind) {
 // active roster, minus starters (Steamer classifier), minus LIKELY-OUT arms.
 // Returns the pitcher_stats objects. Falls back to all active non-starters when
 // the team has no fatigue slice (off-day teams outside today's fatigue window).
+// Per-arm penalty applied to tired/out relievers weighted into the combined
+// bullpen: +0.40 to that arm's wFIP and -4pp to its K-BB% (fraction -0.04).
+const PEN_FIP_PENALTY = 0.40, PEN_KBB_PENALTY = 0.04;
+// COMBINED bullpen: rested arms at full value + the best (n-1) of the tired/out
+// ("compromised") arms, each penalized; the single most-disregardable arm is
+// dropped. 1 down -> disregard; 2 -> weight in 1; 3 -> weight in 2; etc. This
+// replaces the old rested-only pool + the separate fatigue RA multiplier.
 function teamAvailRelievers(team) {
   const roster = (typeof ROSTERS_CACHE !== 'undefined' && ROSTERS_CACHE[team.id]) || [];
   const slice = (typeof activeFatigue === 'function') ? activeFatigue() : null;
   const byName = {};
   const rows = (slice && slice.teams && slice.teams[team.name]) || [];
   for (const r of rows) byName[normName(r.name)] = r;
-  const arms = [];
+  const rested = [], comp = [];
   for (const p of roster) {
     const k = normName(p.name);
     if (isStarter(k)) continue;            // exclude SPs (classifier)
-    const f = byName[k];
-    if (f && f.tier === 'LIKELY OUT') continue;  // exclude likely-out, keep rested+fatigued
     const s = lookupPitcherStats(p.name);
-    if (s) arms.push(s);
+    if (!s) continue;
+    const f = byName[k];
+    const tier = f ? f.tier : null;
+    if (tier === 'LIKELY OUT' || tier === 'FATIGUED') comp.push(s);
+    else rested.push(s);
   }
-  return arms;
+  comp.sort((a, b) => (a.unified_score ?? 9) - (b.unified_score ?? 9));  // best first
+  const nInc = Math.max(0, comp.length - 1);       // drop the single worst compromised arm
+  const included = comp.slice(0, nInc).map(s => Object.assign({}, s, {
+    unified_score: (s.unified_score != null ? s.unified_score + PEN_FIP_PENALTY : s.unified_score),
+    k_bb_pct: (s.k_bb_pct != null ? s.k_bb_pct - PEN_KBB_PENALTY : s.k_bb_pct),
+    _penalized: true,
+  }));
+  return rested.concat(included);
 }
 
 function computeBullpenRanks() {
@@ -8022,7 +8042,7 @@ function unifiedScoreChip(entry, opts={}) {
   const tightCls = opts.tight ? " tight" : "";
   const label = (opts.label !== undefined) ? opts.label : (isFip ? "wFIP" : "wRC+");
   const title = isFip
-    ? `wFIP (weighted FIP projection) ${text} — lower = better · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% FG ROS proj`
+    ? `wFIP (weighted FIP projection) ${text} — lower = better · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''}`
     : `Unified hitter rating ${text} (wRC+ scale, 100 = avg) · ${tierLabel}${cov != null ? ` · ${cov}% weight covered` : ''} · 45% wOBA proj + 25% xwOBA + 10% barrel% + 10% hard-hit% + 10% bat-speed`;
   return `<span class="uni-chip ${cls}${tightCls}" title="${title}">${label ? label + ' ' : ''}<b>${text}</b></span>`;
 }
@@ -8277,8 +8297,8 @@ function renderSPRankings(pitchers, nameToTeam) {
       <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
-      <td title="Rolling xFIP — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP) — the figure the wFIP weights at 28%">${fmt(p.metrics.xfip)}</td>
-      <td title="Rolling SIERA — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP) — the figure the wFIP weights at 22%">${fmt(p.metrics.siera)}</td>
+      <td title="Rolling xFIP — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP)">${fmt(p.metrics.xfip)}</td>
+      <td title="Rolling SIERA — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP)">${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
       <td title="Rest-of-season FIP projection — live blend of FG's ATC / BatX / OOPSY / ZiPS, updated nightly. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
@@ -8288,7 +8308,7 @@ function renderSPRankings(pitchers, nameToTeam) {
 
   const wfipTitle = mode === 'rolling30'
     ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% over starts in the last 30 days. xERA/botERA/Proj shown for context but not blended (season-only). Lower = better.'
-    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% ROS projection. The rolling components are themselves 60% recent (≥20 IP window) + 40% season-to-date — so the formula blends recent form with season anchor and rest-of-season projection. Lower = better.';
+    : 'Weighted FIP — a blended pitcher-quality metric. Lower = better.';
   const emptyMsg = mode === 'rolling30'
     ? 'No starters with ≥10 IP in the last 30 days.'
     : 'No starters matched filter.';
@@ -8297,11 +8317,11 @@ function renderSPRankings(pitchers, nameToTeam) {
     <thead><tr>
       <th>#</th><th class="left">Pitcher</th><th class="left">Team</th>
       <th title="${wfipTitle}">wFIP</th>
-      <th title="Rolling xFIP — IP-anchored window (≥20 IP) — 28% of the wFIP">xFIP</th>
-      <th title="Rolling SIERA — IP-anchored window (≥20 IP) — 22% of the wFIP">SIERA</th>
-      <th title="Statcast xERA — season-to-date, 18% of the wFIP">xERA</th>
-      <th title="FG Pitcher Bot ERA — season-to-date, 17% of the wFIP">botERA</th>
-      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly) — 15% of the wFIP">Proj</th>
+      <th title="Rolling xFIP — IP-anchored window (≥20 IP)">xFIP</th>
+      <th title="Rolling SIERA — IP-anchored window (≥20 IP)">SIERA</th>
+      <th title="Statcast xERA — season-to-date">xERA</th>
+      <th title="FG Pitcher Bot ERA — season-to-date">botERA</th>
+      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly)">Proj</th>
       <th title="Strikeout rate minus walk rate — best single forward indicator (shown for context, not in wFIP)">K-BB%</th>
     </tr></thead>
     <tbody>${rows || `<tr><td colspan="10" class="rk-empty">${emptyMsg}</td></tr>`}</tbody>
@@ -8376,8 +8396,8 @@ function renderReliverRankings(pitchers, nameToTeam) {
       <td class="name sp-clickable" data-spkey="${p.key}" title="Tap for full data — metrics, splits, arsenal, recent starts">${p.name}</td>
       <td class="team">${t ? t.abbr : '<span style="color:var(--muted);">—</span>'}</td>
       <td class="comp ${wcls}">${fmt(p.wfip)}</td>
-      <td title="Rolling xFIP — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP) — the figure the wFIP weights at 28%">${fmt(p.metrics.xfip)}</td>
-      <td title="Rolling SIERA — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP) — the figure the wFIP weights at 22%">${fmt(p.metrics.siera)}</td>
+      <td title="Rolling xFIP — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP)">${fmt(p.metrics.xfip)}</td>
+      <td title="Rolling SIERA — IP-anchored window (≥20 IP / ≈5 starts SP, more appearances for RP)">${fmt(p.metrics.siera)}</td>
       <td>${fmt(p.metrics.xera)}</td>
       <td>${fmt(p.metrics.bot)}</td>
       <td title="Rest-of-season FIP projection — live blend of FG's ATC / BatX / OOPSY / ZiPS, updated nightly. Anchors against small-sample noise.">${fmt(p.metrics.proj)}</td>
@@ -8387,7 +8407,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
 
   const rpWfipTitle = mode === 'rolling30'
     ? 'Rolling 30-day wFIP — blended xFIP 56% / SIERA 44% over appearances in the last 30 days. xERA/botERA/Proj shown for context but not blended (season-only). Lower = better.'
-    : 'wFIP = 28% rolling xFIP + 22% rolling SIERA + 18% xERA + 17% botERA + 15% ROS projection. The rolling components are themselves 60% recent (≥20 IP window) + 40% season-to-date — so the formula blends recent form with season anchor and rest-of-season projection. Lower = better.';
+    : 'Weighted FIP — a blended pitcher-quality metric. Lower = better.';
   const rpEmptyMsg = mode === 'rolling30'
     ? 'No relievers with ≥10 IP in the last 30 days.'
     : 'No relievers matched filter.';
@@ -8396,11 +8416,11 @@ function renderReliverRankings(pitchers, nameToTeam) {
     <thead><tr>
       <th>#</th><th class="left">Reliever</th><th class="left">Team</th>
       <th title="${rpWfipTitle}">wFIP</th>
-      <th title="Rolling xFIP — IP-anchored window (≥20 IP) — 28% of the wFIP">xFIP</th>
-      <th title="Rolling SIERA — IP-anchored window (≥20 IP) — 22% of the wFIP">SIERA</th>
-      <th title="Statcast xERA — season-to-date, 18% of the wFIP">xERA</th>
-      <th title="FG Pitcher Bot ERA — season-to-date, 17% of the wFIP">botERA</th>
-      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly) — 15% of the wFIP">Proj</th>
+      <th title="Rolling xFIP — IP-anchored window (≥20 IP)">xFIP</th>
+      <th title="Rolling SIERA — IP-anchored window (≥20 IP)">SIERA</th>
+      <th title="Statcast xERA — season-to-date">xERA</th>
+      <th title="FG Pitcher Bot ERA — season-to-date">botERA</th>
+      <th title="Rest-of-season FIP projection (FG ATC / BatX / OOPSY / ZiPS blend, updated nightly)">Proj</th>
       <th title="Strikeout rate minus walk rate — best single forward indicator (shown for context, not in wFIP)">K-BB%</th>
     </tr></thead>
     <tbody>${rows || `<tr><td colspan="10" class="rk-empty">${rpEmptyMsg}</td></tr>`}</tbody>
@@ -8475,7 +8495,7 @@ function renderBullpenRankings(pitchers, nameToTeam, teams) {
   }).join("");
 
   body.innerHTML = `<table class="rk-table">
-    <thead><tr><th>#</th><th class="left">Team</th><th title="Avg weighted FIP across the bullpen — rolling xFIP 28 / SIERA 22 / xERA 18 / botERA 17 / proj 15 (lower = better)">wFIP</th><th title="z-score composite across the components (reference)">Comp</th><th title="rolling xFIP (≥20 IP window) — the figure the wFIP weights">xFIP</th><th title="rolling SIERA (≥20 IP window) — the figure the wFIP weights">SIERA</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
+    <thead><tr><th>#</th><th class="left">Team</th><th title="Avg bullpen weighted FIP — lower is better">wFIP</th><th title="z-score composite across the components (reference)">Comp</th><th title="rolling xFIP (≥20 IP window) — the figure the wFIP weights">xFIP</th><th title="rolling SIERA (≥20 IP window) — the figure the wFIP weights">SIERA</th><th>xERA</th><th>bot</th><th>K-BB%</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="9" class="rk-empty">No bullpen data.</td></tr>'}</tbody>
   </table>`;
 }
