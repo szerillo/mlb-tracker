@@ -58,8 +58,11 @@ ROLES     = os.path.join(HERE, "..", "pitcher_roles.json")  # SP/RP classificati
 OUTPUT    = INPUT  # in-place enrichment
 
 # Stabilized-rolling blend for xFIP/SIERA: 0.6·L5 + 0.4·season-to-date.
-ROLL_L5_WEIGHT     = 0.6
-ROLL_SEASON_WEIGHT = 0.4
+# Historical panel (2023-26, purged monthly walk-forward): recency SUBTRACTS
+# skill info — season-weighting beats 0.6/0.4 monotonically across the whole
+# grid and every season. Was 0.6/0.4.
+ROLL_L5_WEIGHT     = 0.2
+ROLL_SEASON_WEIGHT = 0.8
 
 # IN-SEASON CORE = these four, in their relative proportions (renormalized among
 # whichever are available). Rolling xFIP/SIERA lead; xERA/botERA add independent
@@ -92,6 +95,14 @@ DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
 KBB_TILT_SLOPE = 0.03   # FIP per point of (L5 - season) K-BB%; sign: better K-BB -> lower FIP
 KBB_TILT_CAP   = 0.20   # max |tilt| in FIP units
 KBB_TILT_MIN_L5 = 3     # need at least this many recent starts/appearances
+
+# Velo + CSW LEVEL adjustment (historical panel): xFIP UNDER-weights fastball
+# velocity and CSW level. Each ~0.049 FIP per unit vs the league mean (per mph;
+# per CSW percentage-point). Sign: higher velo / higher CSW -> lower FIP. Applied
+# as a post-core level correction, scaled by the in-season weight and capped.
+VELOCSW_SLOPE = 0.049
+VELOCSW_CAP   = 0.40    # max |combined adj| in FIP units
+VELOCSW_MIN_IP = 20.0   # only for arms with a stabilized velo/CSW sample
 
 MIN_CORE_WEIGHT = 40.0  # need ~half of the 85-pt core (or a projection) to score
 
@@ -193,7 +204,7 @@ def load_roll():
         return {}
 
 
-def stabilized_roll(stat_key, p, g, r=None):
+def stabilized_roll(stat_key, p, g, r=None, l5w=ROLL_L5_WEIGHT, sew=ROLL_SEASON_WEIGHT):
     """Stabilized rolling value = 0.6·recent + 0.4·season-to-date.
     Source priority for the recent term: (1) gamelog L5 (per-start, preferred),
     (2) the committed recent-window dump _fg_roll.json (used when FG's game-log
@@ -205,14 +216,14 @@ def stabilized_roll(stat_key, p, g, r=None):
         l5 = _f((g.get("l5") or {}).get(stat_key))
         se = _f((g.get("season") or {}).get(stat_key))
         if l5 is not None and se is not None:
-            return ROLL_L5_WEIGHT * l5 + ROLL_SEASON_WEIGHT * se
+            return l5w * l5 + sew * se
         if l5 is not None:
             return l5
     # 2. recent-window dump (FG game-log blocked) blended with season
     if r is not None and (_f(r.get("ip")) or 0) >= ROLL_MIN_IP:
         rv = _f(r.get(stat_key))
         if rv is not None and se_stats is not None:
-            return ROLL_L5_WEIGHT * rv + ROLL_SEASON_WEIGHT * se_stats
+            return l5w * rv + sew * se_stats
         if rv is not None:
             return rv
     # 3. season fallbacks
@@ -240,6 +251,23 @@ def main() -> int:
     rolesby = load_roles()
     print(f"[score] loaded {len(pitchers)} pitchers, {len(glby)} gamelog arms, "
           f"{len(rollby)} recent-window arms, {len(rolesby)} role tags", file=sys.stderr)
+
+    # League means for the velo/CSW level adjustment — computed from established
+    # arms (>=30 IP) so the reference is stable and auto-updates through the year.
+    _vv, _cc = [], []
+    for _k, _p in pitchers.items():
+        if not isinstance(_p, dict):
+            continue
+        if (_f(_p.get("ip")) or 0) < 30:
+            continue
+        _g = glby.get(_k) or glby.get(_norm(_p.get("name", "")))
+        _se = (_g or {}).get("season") or {}
+        _sv, _sc = _f(_se.get("velo")), _f(_se.get("csw"))
+        if _sv is not None: _vv.append(_sv)
+        if _sc is not None: _cc.append(_sc)
+    LG_VELO = sum(_vv) / len(_vv) if _vv else 93.5
+    LG_CSW  = sum(_cc) / len(_cc) if _cc else 0.28
+    print(f"[score] velo/CSW league means: {LG_VELO:.1f} mph / {LG_CSW*100:.1f}% (n={len(_vv)}/{len(_cc)})", file=sys.stderr)
 
     n_scored = n_sparse = n_rolling = 0
     tier_counts = {label: 0 for _, label in TIERS}
@@ -309,6 +337,42 @@ def main() -> int:
             kbb_tilt = raw * w_season                          # informs established arms most
             score += kbb_tilt
 
+        # --- velo + CSW LEVEL adjustment (historical panel): xFIP underweights
+        # fastball velocity + CSW level. Scaled by in-season weight, capped. ---
+        velocsw_adj = 0.0
+        if core is not None and g and (_f(p.get("ip")) or 0) >= VELOCSW_MIN_IP:
+            _se = g.get("season") or {}
+            _sv, _sc = _f(_se.get("velo")), _f(_se.get("csw"))
+            a = 0.0
+            if _sv is not None: a += -VELOCSW_SLOPE * (_sv - LG_VELO)
+            if _sc is not None: a += -VELOCSW_SLOPE * (_sc * 100.0 - LG_CSW * 100.0)
+            a = max(-VELOCSW_CAP, min(VELOCSW_CAP, a))
+            velocsw_adj = a * w_season
+            score += velocsw_adj
+
+        # --- legacy score (old 0.6/0.4 blend, no velo/CSW adj) kept visible so the
+        # shift from this recalibration can be eyeballed for a few days. ---
+        core_leg = None
+        _cs = _cw = 0.0
+        _valsL = {"roll_xfip": stabilized_roll("xfip", p, g, r, 0.6, 0.4),
+                  "roll_siera": stabilized_roll("siera", p, g, r, 0.6, 0.4),
+                  "xera": vals["xera"], "bot_era": vals["bot_era"]}
+        for field, weight in COMPONENTS:
+            v = _valsL[field]
+            if v is None: continue
+            _cs += weight * v; _cw += weight
+        core_leg = _cs / _cw if _cw else None
+        if core_leg is None and proj is None:
+            score_legacy = None
+        elif core_leg is None:
+            score_legacy = proj
+        elif proj is None:
+            score_legacy = core_leg
+        else:
+            score_legacy = w_season * core_leg + w_proj * proj
+        if score_legacy is not None and kbb_tilt:
+            score_legacy += kbb_tilt
+
         # keep the projection visible in the component breakdown
         if proj is not None:
             components["fip_proj"] = round(proj, 3)
@@ -337,6 +401,14 @@ def main() -> int:
             p["unified_kbb_tilt"] = round(kbb_tilt, 3)
         else:
             p.pop("unified_kbb_tilt", None)
+        if velocsw_adj:
+            p["unified_velocsw_adj"] = round(velocsw_adj, 3)
+        else:
+            p.pop("unified_velocsw_adj", None)
+        if score_legacy is not None:
+            p["unified_score_legacy"] = round(score_legacy, 2)   # old 0.6/0.4, no velo/CSW
+        else:
+            p.pop("unified_score_legacy", None)
         n_scored += 1
         tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
@@ -348,13 +420,17 @@ def main() -> int:
                    "xFIP/SIERA + xERA/botERA), blended vs projection with a "
                    "DYNAMIC weight w_season = IP/(IP+K) that grows with innings "
                    f"(K_SP={K_SP:g}, K_RP={K_RP:g}); plus a small rolling K-BB% "
-                   "trend nudge."),
+                   "trend nudge; plus a velo+CSW LEVEL adjustment (historical-panel recalibration)."),
         "core_weights": {f: w for f, w in COMPONENTS},
         "dynamic_projection": {"K_SP": K_SP, "K_RP": K_RP,
                                "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
         "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
                      "min_l5": KBB_TILT_MIN_L5, "scaled_by": "w_season"},
-        "rolling_blend": {"l5": ROLL_L5_WEIGHT, "season": ROLL_SEASON_WEIGHT},
+        "rolling_blend": {"l5": ROLL_L5_WEIGHT, "season": ROLL_SEASON_WEIGHT,
+                          "note": "was 0.6/0.4; recalibrated on the 2023-26 historical panel (purged CV)"},
+        "velocsw_adj": {"slope_fip_per_unit": VELOCSW_SLOPE, "cap": VELOCSW_CAP,
+                        "min_ip": VELOCSW_MIN_IP, "lg_velo": round(LG_VELO,1), "lg_csw_pct": round(LG_CSW*100,1),
+                        "scaled_by": "w_season", "form": "-slope*(velo-lg) -slope*(CSW%-lg)"},
         "tier_thresholds": [{"max_val": t, "label": l}
                             for t, l in TIERS if t < float("inf")],
         "n_scored": n_scored,
