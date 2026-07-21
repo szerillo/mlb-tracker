@@ -1,0 +1,39 @@
+name: Historical pitcher panel (manual)
+
+# One-off / occasional heavy build: reconstructs the leakage-free multi-year
+# pitcher-start panel for the wFIP backtest. Pulls Savant per-pitch (pitcher
+# side) chunked by window for each season, reduces to per-start count sums,
+# then assembles the as-of panel with forward-30d targets. Commits ONLY the
+# final data/historical_pitcher_panel.csv (intermediate starts_*.csv stay on
+# the runner). Trigger manually; not scheduled.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Comma-separated seasons to build"
+        default: "2023,2024,2025,2026"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.11" }
+      - name: Build panel
+        run: python scripts/build_historical_pitcher_panel.py --seasons "${{ github.event.inputs.seasons }}"
+      - name: Commit panel
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data/historical_pitcher_panel.csv 2>/dev/null || true
+          if git diff --cached --quiet; then echo "no change"; else
+            git commit -m "Historical pitcher panel build $(date -u +'%Y-%m-%dT%H:%MZ')"
+            for i in 1 2 3; do git push && break; git pull --rebase --autostash || true; done
+          fi
