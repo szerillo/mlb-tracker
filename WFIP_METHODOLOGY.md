@@ -20,8 +20,9 @@ Adjustments (scaled by w_season, capped):
 `unified_score_legacy` (old 0.6/0.4, no velo/CSW) is stored alongside for comparison.
 
 ## Bullpen (combined average)
-`teamAvailRelievers` returns rested arms at full wFIP + the best (n−1) tired/out
-("compromised") arms, each penalized **+0.40 wFIP / −4pp K-BB%**; the single
-most-disregardable compromised arm is dropped. 1 down → disregard; 2 → weight in 1;
-3 → weight in 2; etc. Replaces the old rested-only pool + the ×(1+0.015·n_fatigued)
-RA multiplier (which is now retired to avoid double-counting).
+`teamAvailRelievers` returns EVERY active-roster reliever (non-starters). Tired/out
+arms (fatigue tier FATIGUED or LIKELY OUT) get their own line penalized **+0.40 wFIP
+/ −4pp K-BB%**; nothing is dropped. The bullpen number is the straight average of all
+of them — matching the maintainer sheet (all arms in, tired ones bumped). Replaces
+the old rested-only pool (which dropped OUT arms and made depleted pens look *better*)
+and the ×(1+0.015·n_fatigued) RA multiplier (retired to avoid double-counting).
