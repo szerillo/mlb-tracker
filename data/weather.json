@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-21T15:03:35.040756Z",
-  "model_version": "v9",
+  "generated_at": "2026-07-21T19:00:25.434241Z",
+  "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
-  "method_note": "V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
+  "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
   "games": [
     {
       "game_pk": 824409,
@@ -14,41 +14,41 @@
       "roof_state": null,
       "weather": {
         "temp_f": 80,
-        "humidity_pct": 73,
-        "wind_speed_mph": 12,
+        "humidity_pct": 71,
+        "wind_speed_mph": 10,
         "wind_dir": "W",
-        "precip_pct": 37,
+        "precip_pct": 27,
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-21T19:00:00-04:00",
-        "game_window_temp_f": 77.5,
-        "game_window_humidity_pct": 76.1,
+        "game_window_temp_f": 77.8,
+        "game_window_humidity_pct": 74.1,
         "first_pitch_temp_f": 80,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 5.9,
+        "run_adj_pct": 4.9,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 7.5,
-          "t_adj_pct": 2.5,
+          "temp_delta": 7.8,
+          "t_adj_pct": 2.6,
           "w_adj_pct": 0.0,
           "dp_adj_pct": 1.6,
           "p_adj_pct": 3.9,
-          "precip_adj_pct": -1.2,
+          "precip_adj_pct": -0.2,
           "carry_pct": -0.4,
           "wind": {
             "out_component": 0.0,
             "dir_rarity": 0.85,
-            "spd_rarity": 0.4
+            "spd_rarity": 0.04
           }
         },
-        "model_pct": 5.9,
+        "model_pct": 4.9,
         "pressure_source": "BP",
-        "bp_pct": 11,
+        "bp_pct": 12,
         "bp_blended": false,
         "blend_weight": 0.0,
-        "bp_temp_f": 90
+        "bp_temp_f": 80
       },
       "note": null
     },
@@ -63,8 +63,8 @@
       "weather": {
         "temp_f": 81,
         "humidity_pct": 82,
-        "wind_speed_mph": 10,
-        "wind_dir": "SW",
+        "wind_speed_mph": 11,
+        "wind_dir": "SSW",
         "precip_pct": 92,
         "short_forecast": "Showers And Thunderstorms",
         "start_time": "2026-07-21T19:00:00-04:00",
@@ -74,29 +74,595 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 5.4,
+        "run_adj_pct": 4.6,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 2.3,
           "t_adj_pct": 0.8,
-          "w_adj_pct": 3.1,
+          "w_adj_pct": 3.9,
           "dp_adj_pct": 2.1,
           "p_adj_pct": 3.0,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 8.09,
+            "out_component": 10.07,
             "dir_rarity": 0.05,
             "spd_rarity": 0
           }
         },
-        "model_pct": 5.4,
+        "model_pct": 4.6,
         "pressure_source": "BP",
-        "bp_pct": 11,
+        "bp_pct": 12,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 81
+      },
+      "note": null
+    },
+    {
+      "game_pk": 822787,
+      "matchup": "Tampa Bay Rays @ Toronto Blue Jays",
+      "venue": "Rogers Centre",
+      "game_time": "2026-07-21T23:07:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 73.2,
+        "humidity_pct": 82,
+        "wind_speed_mph": 4,
+        "wind_dir": "W",
+        "precip_pct": 40,
+        "short_forecast": "",
+        "start_time": "2026-07-21T23:00Z",
+        "game_window_temp_f": 71.1,
+        "game_window_humidity_pct": 86.9,
+        "first_pitch_temp_f": 73.2
+      },
+      "open_v8": {
+        "run_adj_pct": -1.0,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": -1.9,
+          "t_adj_pct": -0.8,
+          "w_adj_pct": -0.2,
+          "dp_adj_pct": 1.3,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -1.5,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -1.04,
+            "dir_rarity": 0.65,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": -1.0,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 824735,
+      "matchup": "Baltimore Orioles @ Boston Red Sox",
+      "venue": "Fenway Park",
+      "game_time": "2026-07-21T23:10:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 76,
+        "humidity_pct": 82,
+        "wind_speed_mph": 10,
+        "wind_dir": "SSE",
+        "precip_pct": 73,
+        "short_forecast": "Showers And Thunderstorms Likely",
+        "start_time": "2026-07-21T19:00:00-04:00",
+        "game_window_temp_f": 73.5,
+        "game_window_humidity_pct": 90.5,
+        "first_pitch_temp_f": 76,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 4.0,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 3.5,
+          "t_adj_pct": 1.3,
+          "w_adj_pct": 3.1,
+          "dp_adj_pct": 2.1,
+          "p_adj_pct": 1.8,
+          "precip_adj_pct": -3.5,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 4.37,
+            "dir_rarity": 0.05,
+            "spd_rarity": 0.07
+          }
+        },
+        "model_pct": 4.0,
+        "pressure_source": "BP",
+        "bp_pct": -7,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 72
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824895,
+      "matchup": "San Diego Padres @ Atlanta Braves",
+      "venue": "Truist Park",
+      "game_time": "2026-07-21T23:15:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 88,
+        "humidity_pct": 62,
+        "wind_speed_mph": 12,
+        "wind_dir": "S",
+        "precip_pct": 4,
+        "short_forecast": "Partly Cloudy",
+        "start_time": "2026-07-21T19:00:00-04:00",
+        "game_window_temp_f": 84.8,
+        "game_window_humidity_pct": 69.3,
+        "first_pitch_temp_f": 88,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 2.1,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 2.8,
+          "t_adj_pct": 0.9,
+          "w_adj_pct": -1.0,
+          "dp_adj_pct": 1.7,
+          "p_adj_pct": 1.2,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.2,
+          "wind": {
+            "out_component": -9.83,
+            "dir_rarity": 0.3,
+            "spd_rarity": 0.82
+          }
+        },
+        "model_pct": 2.1,
+        "pressure_source": "BP",
+        "bp_pct": 2,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 88
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824085,
+      "matchup": "San Francisco Giants @ Kansas City Royals",
+      "venue": "Kauffman Stadium",
+      "game_time": "2026-07-21T23:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 86,
+        "humidity_pct": 51,
+        "wind_speed_mph": 11,
+        "wind_dir": "N",
+        "precip_pct": 0,
+        "short_forecast": "Patchy Smoke",
+        "start_time": "2026-07-21T19:00:00-05:00",
+        "game_window_temp_f": 83.5,
+        "game_window_humidity_pct": 54.2,
+        "first_pitch_temp_f": 86,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 0.4,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 5.5,
+          "t_adj_pct": 1.7,
+          "w_adj_pct": -2.7,
+          "dp_adj_pct": 0.6,
+          "p_adj_pct": 0.6,
+          "precip_adj_pct": 0,
+          "carry_pct": 0.1,
+          "wind": {
+            "out_component": -7.64,
+            "dir_rarity": 0.5,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 0.4,
+        "pressure_source": "BP",
+        "bp_pct": 2,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 84
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823760,
+      "matchup": "New York Mets @ Milwaukee Brewers",
+      "venue": "American Family Field",
+      "game_time": "2026-07-21T23:40:00Z",
+      "is_dome": false,
+      "roof_open": true,
+      "roof_state": "likely-open (weather)",
+      "weather": {
+        "temp_f": 74,
+        "humidity_pct": 59,
+        "wind_speed_mph": 12,
+        "wind_dir": "N",
+        "precip_pct": 23,
+        "short_forecast": "Slight Chance Rain Showers",
+        "start_time": "2026-07-21T19:00:00-05:00",
+        "game_window_temp_f": 70.8,
+        "game_window_humidity_pct": 63.6,
+        "first_pitch_temp_f": 74,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": -1.9,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": -5.2,
+          "t_adj_pct": -2.3,
+          "w_adj_pct": 0.3,
+          "dp_adj_pct": -0.5,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 6.01,
+            "dir_rarity": 0.9,
+            "spd_rarity": 0.46
+          }
+        },
+        "model_pct": -1.9,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824652,
+      "matchup": "Detroit Tigers @ Chicago Cubs",
+      "venue": "Wrigley Field",
+      "game_time": "2026-07-22T00:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 77,
+        "humidity_pct": 69,
+        "wind_speed_mph": 14,
+        "wind_dir": "N",
+        "precip_pct": 41,
+        "short_forecast": "Scattered Rain Showers",
+        "start_time": "2026-07-21T19:00:00-05:00",
+        "game_window_temp_f": 73.5,
+        "game_window_humidity_pct": 74.9,
+        "first_pitch_temp_f": 77,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": -14.6,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 3.5,
+          "t_adj_pct": 1.1,
+          "w_adj_pct": -16.6,
+          "dp_adj_pct": 1.2,
+          "p_adj_pct": 2.1,
+          "precip_adj_pct": -1.6,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -12.52,
+            "dir_rarity": 0.1,
+            "spd_rarity": 0.22
+          }
+        },
+        "model_pct": -14.6,
+        "pressure_source": "BP",
+        "bp_pct": -5,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 77
+      },
+      "note": null
+    },
+    {
+      "game_pk": 822871,
+      "matchup": "Chicago White Sox @ Texas Rangers",
+      "venue": "Globe Life Field",
+      "game_time": "2026-07-22T00:05:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 104,
+        "humidity_pct": 31,
+        "wind_speed_mph": 5,
+        "wind_dir": "ENE",
+        "precip_pct": 0,
+        "short_forecast": "Mostly Clear",
+        "start_time": "2026-07-21T19:00:00-05:00",
+        "game_window_temp_f": 101.1,
+        "game_window_humidity_pct": 34.4,
+        "first_pitch_temp_f": 104
+      },
+      "open_v8": {
+        "run_adj_pct": 4.7,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": 20.1,
+          "t_adj_pct": 7.6,
+          "w_adj_pct": -0.4,
+          "dp_adj_pct": 1.7,
+          "p_adj_pct": -0.6,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -3.97,
+            "dir_rarity": 0.05,
+            "spd_rarity": 0.22
+          }
+        },
+        "model_pct": 4.7,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 824165,
+      "matchup": "Miami Marlins @ Houston Astros",
+      "venue": "Daikin Park",
+      "game_time": "2026-07-22T00:10:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 98,
+        "humidity_pct": 41,
+        "wind_speed_mph": 5,
+        "wind_dir": "W",
+        "precip_pct": 1,
+        "short_forecast": "Mostly Clear",
+        "start_time": "2026-07-21T19:00:00-05:00",
+        "game_window_temp_f": 94.6,
+        "game_window_humidity_pct": 45.3,
+        "first_pitch_temp_f": 98
+      },
+      "open_v8": {
+        "run_adj_pct": 4.2,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": 14.6,
+          "t_adj_pct": 5.8,
+          "w_adj_pct": -0.7,
+          "dp_adj_pct": 1.6,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -1.46,
+            "dir_rarity": 0.9,
+            "spd_rarity": 0.31
+          }
+        },
+        "model_pct": 4.2,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 824329,
+      "matchup": "Washington Nationals @ Colorado Rockies",
+      "venue": "Coors Field",
+      "game_time": "2026-07-22T00:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 90,
+        "humidity_pct": 27,
+        "wind_speed_mph": 13,
+        "wind_dir": "SSE",
+        "precip_pct": 28,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-07-21T19:00:00-06:00",
+        "game_window_temp_f": 86.9,
+        "game_window_humidity_pct": 30.9,
+        "first_pitch_temp_f": 90,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 5.8,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 11.9,
+          "t_adj_pct": 3.4,
+          "w_adj_pct": 5.9,
+          "dp_adj_pct": 2.1,
+          "p_adj_pct": 1.0,
+          "precip_adj_pct": -0.3,
+          "carry_pct": 0.0,
+          "wind": {
+            "out_component": 11.63,
+            "dir_rarity": 0.4,
+            "spd_rarity": 0.58
+          }
+        },
+        "model_pct": 5.8,
+        "pressure_source": "BP",
+        "bp_pct": 8,
         "bp_blended": false,
         "blend_weight": 0.0,
         "bp_temp_f": 91
+      },
+      "note": null
+    },
+    {
+      "game_pk": 824005,
+      "matchup": "St. Louis Cardinals @ Los Angeles Angels",
+      "venue": "Angel Stadium",
+      "game_time": "2026-07-22T01:38:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 82,
+        "humidity_pct": 51,
+        "wind_speed_mph": 6,
+        "wind_dir": "WSW",
+        "precip_pct": 2,
+        "short_forecast": "Clear",
+        "start_time": "2026-07-21T19:00:00-07:00",
+        "game_window_temp_f": 77.5,
+        "game_window_humidity_pct": 59.4,
+        "first_pitch_temp_f": 82,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 2.3,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 0.5,
+          "t_adj_pct": 0.2,
+          "w_adj_pct": 1.8,
+          "dp_adj_pct": 0.7,
+          "p_adj_pct": 0.6,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.2,
+          "wind": {
+            "out_component": 5.32,
+            "dir_rarity": 0.6,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 2.3,
+        "pressure_source": "BP",
+        "bp_pct": 3,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 86
+      },
+      "note": null
+    },
+    {
+      "game_pk": 825056,
+      "matchup": "Athletics @ Arizona Diamondbacks",
+      "venue": "Chase Field",
+      "game_time": "2026-07-22T01:40:00Z",
+      "is_dome": true,
+      "weather": null,
+      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
+      "retractable": true,
+      "roof_state": "unknown",
+      "open_weather": {
+        "temp_f": 97,
+        "humidity_pct": 34,
+        "wind_speed_mph": 5,
+        "wind_dir": "WNW",
+        "precip_pct": 32,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-07-21T19:00:00-07:00",
+        "game_window_temp_f": 95.0,
+        "game_window_humidity_pct": 36.9,
+        "first_pitch_temp_f": 97
+      },
+      "open_v8": {
+        "run_adj_pct": 3.5,
+        "capped": false,
+        "is_dome": true,
+        "components": {
+          "temp_delta": 7.0,
+          "t_adj_pct": 2.9,
+          "w_adj_pct": -0.2,
+          "dp_adj_pct": 4.3,
+          "p_adj_pct": -1.5,
+          "precip_adj_pct": -0.7,
+          "carry_pct": 0.3,
+          "wind": {
+            "out_component": -1.91,
+            "dir_rarity": 0.9,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 3.5,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      }
+    },
+    {
+      "game_pk": 823114,
+      "matchup": "Cincinnati Reds @ Seattle Mariners",
+      "venue": "T-Mobile Park",
+      "game_time": "2026-07-22T01:40:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 86,
+        "humidity_pct": 42,
+        "wind_speed_mph": 7,
+        "wind_dir": "N",
+        "precip_pct": 1,
+        "short_forecast": "Mostly Clear",
+        "start_time": "2026-07-21T19:00:00-07:00",
+        "game_window_temp_f": 81.4,
+        "game_window_humidity_pct": 47.2,
+        "first_pitch_temp_f": 86,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 3.6,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 10.4,
+          "t_adj_pct": 3.5,
+          "w_adj_pct": -0.6,
+          "dp_adj_pct": 1.0,
+          "p_adj_pct": 1.2,
+          "precip_adj_pct": 0,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": -3.47,
+            "dir_rarity": 0.95,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 3.6,
+        "pressure_source": "BP",
+        "bp_pct": -4,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 86
       },
       "note": null
     },
@@ -149,70 +715,24 @@
       "note": null
     },
     {
-      "game_pk": 822787,
-      "matchup": "Tampa Bay Rays @ Toronto Blue Jays",
-      "venue": "Rogers Centre",
-      "game_time": "2026-07-21T23:07:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 68.8,
-        "humidity_pct": 91,
-        "wind_speed_mph": 11,
-        "wind_dir": "WSW",
-        "precip_pct": 37,
-        "short_forecast": "",
-        "start_time": "2026-07-21T23:00Z",
-        "game_window_temp_f": 67.7,
-        "game_window_humidity_pct": 92.5,
-        "first_pitch_temp_f": 68.8
-      },
-      "open_v8": {
-        "run_adj_pct": -1.8,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": -5.3,
-          "t_adj_pct": -2.2,
-          "w_adj_pct": 0.2,
-          "dp_adj_pct": 1.1,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": -1.2,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 1.44,
-            "dir_rarity": 0.65,
-            "spd_rarity": 0.19
-          }
-        },
-        "model_pct": -1.8,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 824735,
-      "matchup": "Baltimore Orioles @ Boston Red Sox",
-      "venue": "Fenway Park",
-      "game_time": "2026-07-21T23:10:00Z",
+      "game_pk": 823518,
+      "matchup": "Pittsburgh Pirates @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-07-22T17:05:00Z",
       "is_dome": false,
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 77,
-        "humidity_pct": 76,
+        "temp_f": 85,
+        "humidity_pct": 59,
         "wind_speed_mph": 10,
-        "wind_dir": "SSE",
-        "precip_pct": 61,
-        "short_forecast": "Showers And Thunderstorms Likely",
-        "start_time": "2026-07-21T19:00:00-04:00",
-        "game_window_temp_f": 74.5,
-        "game_window_humidity_pct": 86.2,
-        "first_pitch_temp_f": 77,
+        "wind_dir": "WSW",
+        "precip_pct": 25,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-07-22T13:00:00-04:00",
+        "game_window_temp_f": 85.7,
+        "game_window_humidity_pct": 56.5,
+        "first_pitch_temp_f": 85,
         "wind_blended": true
       },
       "v8": {
@@ -220,540 +740,66 @@
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 4.5,
-          "t_adj_pct": 1.7,
-          "w_adj_pct": 3.4,
-          "dp_adj_pct": 2.0,
-          "p_adj_pct": 2.1,
-          "precip_adj_pct": -3.5,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 4.72,
-            "dir_rarity": 0.05,
-            "spd_rarity": 0.07
-          }
-        },
-        "model_pct": 5.6,
-        "pressure_source": "BP",
-        "bp_pct": -3,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 70
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824895,
-      "matchup": "San Diego Padres @ Atlanta Braves",
-      "venue": "Truist Park",
-      "game_time": "2026-07-21T23:15:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 88,
-        "humidity_pct": 62,
-        "wind_speed_mph": 12,
-        "wind_dir": "S",
-        "precip_pct": 2,
-        "short_forecast": "Partly Cloudy",
-        "start_time": "2026-07-21T19:00:00-04:00",
-        "game_window_temp_f": 85.1,
-        "game_window_humidity_pct": 69.0,
-        "first_pitch_temp_f": 88,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 2.3,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 3.1,
-          "t_adj_pct": 1.0,
-          "w_adj_pct": -1.0,
-          "dp_adj_pct": 1.7,
-          "p_adj_pct": 1.2,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.2,
-          "wind": {
-            "out_component": -9.83,
-            "dir_rarity": 0.3,
-            "spd_rarity": 0.82
-          }
-        },
-        "model_pct": 2.3,
-        "pressure_source": "BP",
-        "bp_pct": 3,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 90
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824085,
-      "matchup": "San Francisco Giants @ Kansas City Royals",
-      "venue": "Kauffman Stadium",
-      "game_time": "2026-07-21T23:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 87,
-        "humidity_pct": 45,
-        "wind_speed_mph": 12,
-        "wind_dir": "N",
-        "precip_pct": 0,
-        "short_forecast": "Patchy Smoke",
-        "start_time": "2026-07-21T19:00:00-05:00",
-        "game_window_temp_f": 84.8,
-        "game_window_humidity_pct": 48.2,
-        "first_pitch_temp_f": 87,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": -0.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 6.8,
-          "t_adj_pct": 2.2,
-          "w_adj_pct": -2.9,
-          "dp_adj_pct": 0.3,
-          "p_adj_pct": 0.3,
-          "precip_adj_pct": 0,
-          "carry_pct": 0.1,
-          "wind": {
-            "out_component": -8.34,
-            "dir_rarity": 0.5,
-            "spd_rarity": 0.31
-          }
-        },
-        "model_pct": -0.0,
-        "pressure_source": "BP",
-        "bp_pct": -6,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 86
-      },
-      "note": null
-    },
-    {
-      "game_pk": 823760,
-      "matchup": "New York Mets @ Milwaukee Brewers",
-      "venue": "American Family Field",
-      "game_time": "2026-07-21T23:40:00Z",
-      "is_dome": false,
-      "roof_open": true,
-      "roof_state": "likely-open (weather)",
-      "weather": {
-        "temp_f": 74,
-        "humidity_pct": 59,
-        "wind_speed_mph": 14,
-        "wind_dir": "N",
-        "precip_pct": 6,
-        "short_forecast": "Mostly Cloudy",
-        "start_time": "2026-07-21T19:00:00-05:00",
-        "game_window_temp_f": 70.8,
-        "game_window_humidity_pct": 63.4,
-        "first_pitch_temp_f": 74,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": -1.9,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": -5.2,
-          "t_adj_pct": -2.3,
-          "w_adj_pct": 0.4,
-          "dp_adj_pct": -0.5,
+          "temp_delta": 11.7,
+          "t_adj_pct": 4.7,
+          "w_adj_pct": 4.0,
+          "dp_adj_pct": 1.6,
           "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
+          "precip_adj_pct": -0.0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 6.6,
-            "dir_rarity": 0.9,
-            "spd_rarity": 0.46
-          }
-        },
-        "model_pct": -1.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824652,
-      "matchup": "Detroit Tigers @ Chicago Cubs",
-      "venue": "Wrigley Field",
-      "game_time": "2026-07-22T00:05:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 76,
-        "humidity_pct": 67,
-        "wind_speed_mph": 15,
-        "wind_dir": "N",
-        "precip_pct": 40,
-        "short_forecast": "Scattered Rain Showers",
-        "start_time": "2026-07-21T19:00:00-05:00",
-        "game_window_temp_f": 71.4,
-        "game_window_humidity_pct": 83.4,
-        "first_pitch_temp_f": 76,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": -16.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 1.4,
-          "t_adj_pct": 0.5,
-          "w_adj_pct": -17.3,
-          "dp_adj_pct": 1.3,
-          "p_adj_pct": 1.8,
-          "precip_adj_pct": -1.5,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -13.11,
-            "dir_rarity": 0.1,
-            "spd_rarity": 0.22
-          }
-        },
-        "model_pct": -16.0,
-        "pressure_source": "BP",
-        "bp_pct": -3,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 75
-      },
-      "note": null
-    },
-    {
-      "game_pk": 822871,
-      "matchup": "Chicago White Sox @ Texas Rangers",
-      "venue": "Globe Life Field",
-      "game_time": "2026-07-22T00:05:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 104,
-        "humidity_pct": 31,
-        "wind_speed_mph": 5,
-        "wind_dir": "ESE",
-        "precip_pct": 0,
-        "short_forecast": "Clear",
-        "start_time": "2026-07-21T19:00:00-05:00",
-        "game_window_temp_f": 101.1,
-        "game_window_humidity_pct": 34.1,
-        "first_pitch_temp_f": 104
-      },
-      "open_v8": {
-        "run_adj_pct": 6.6,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": 20.1,
-          "t_adj_pct": 7.6,
-          "w_adj_pct": -0.1,
-          "dp_adj_pct": 1.7,
-          "p_adj_pct": -0.6,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -0.65,
-            "dir_rarity": 0.5,
-            "spd_rarity": 0.22
-          }
-        },
-        "model_pct": 6.6,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 824165,
-      "matchup": "Miami Marlins @ Houston Astros",
-      "venue": "Daikin Park",
-      "game_time": "2026-07-22T00:10:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 98,
-        "humidity_pct": 41,
-        "wind_speed_mph": 5,
-        "wind_dir": "W",
-        "precip_pct": 1,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-07-21T19:00:00-05:00",
-        "game_window_temp_f": 94.1,
-        "game_window_humidity_pct": 47.3,
-        "first_pitch_temp_f": 98
-      },
-      "open_v8": {
-        "run_adj_pct": 5.2,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": 14.1,
-          "t_adj_pct": 5.6,
-          "w_adj_pct": -0.7,
-          "dp_adj_pct": 1.7,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -1.46,
-            "dir_rarity": 0.9,
-            "spd_rarity": 0.31
-          }
-        },
-        "model_pct": 5.2,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 824329,
-      "matchup": "Washington Nationals @ Colorado Rockies",
-      "venue": "Coors Field",
-      "game_time": "2026-07-22T00:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 89,
-        "humidity_pct": 30,
-        "wind_speed_mph": 13,
-        "wind_dir": "SSE",
-        "precip_pct": 32,
-        "short_forecast": "Chance Showers And Thunderstorms",
-        "start_time": "2026-07-21T19:00:00-06:00",
-        "game_window_temp_f": 85.8,
-        "game_window_humidity_pct": 34.5,
-        "first_pitch_temp_f": 89,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 11.6,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 10.8,
-          "t_adj_pct": 3.0,
-          "w_adj_pct": 5.9,
-          "dp_adj_pct": 2.4,
-          "p_adj_pct": 1.4,
-          "precip_adj_pct": -0.7,
-          "carry_pct": 0.0,
-          "wind": {
-            "out_component": 11.63,
-            "dir_rarity": 0.4,
-            "spd_rarity": 0.58
-          }
-        },
-        "model_pct": 11.6,
-        "pressure_source": "BP",
-        "bp_pct": 10,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 93
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824005,
-      "matchup": "St. Louis Cardinals @ Los Angeles Angels",
-      "venue": "Angel Stadium",
-      "game_time": "2026-07-22T01:38:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 82,
-        "humidity_pct": 51,
-        "wind_speed_mph": 6,
-        "wind_dir": "WSW",
-        "precip_pct": 2,
-        "short_forecast": "Clear",
-        "start_time": "2026-07-21T19:00:00-07:00",
-        "game_window_temp_f": 77.5,
-        "game_window_humidity_pct": 59.4,
-        "first_pitch_temp_f": 82,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 1.9,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 0.5,
-          "t_adj_pct": 0.2,
-          "w_adj_pct": 1.8,
-          "dp_adj_pct": 0.7,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.2,
-          "wind": {
-            "out_component": 5.82,
-            "dir_rarity": 0,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 1.9,
-        "pressure_source": "BP",
-        "bp_pct": 5,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 82
-      },
-      "note": null
-    },
-    {
-      "game_pk": 825056,
-      "matchup": "Athletics @ Arizona Diamondbacks",
-      "venue": "Chase Field",
-      "game_time": "2026-07-22T01:40:00Z",
-      "is_dome": true,
-      "weather": null,
-      "note": "Retractable roof \u2014 closed assumed (run adj 0); open-roof model adjustment shown if it opens",
-      "retractable": true,
-      "roof_state": "unknown",
-      "open_weather": {
-        "temp_f": 98,
-        "humidity_pct": 33,
-        "wind_speed_mph": 5,
-        "wind_dir": "N",
-        "precip_pct": 15,
-        "short_forecast": "Slight Chance Showers And Thunderstorms",
-        "start_time": "2026-07-21T19:00:00-07:00",
-        "game_window_temp_f": 95.9,
-        "game_window_humidity_pct": 36.1,
-        "first_pitch_temp_f": 98
-      },
-      "open_v8": {
-        "run_adj_pct": 4.5,
-        "capped": false,
-        "is_dome": true,
-        "components": {
-          "temp_delta": 7.9,
-          "t_adj_pct": 3.2,
-          "w_adj_pct": -0.6,
-          "dp_adj_pct": 4.3,
-          "p_adj_pct": -1.5,
-          "precip_adj_pct": 0,
-          "carry_pct": 0.3,
-          "wind": {
-            "out_component": -5.0,
-            "dir_rarity": 0.95,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 4.5,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      }
-    },
-    {
-      "game_pk": 823114,
-      "matchup": "Cincinnati Reds @ Seattle Mariners",
-      "venue": "T-Mobile Park",
-      "game_time": "2026-07-22T01:40:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 86,
-        "humidity_pct": 39,
-        "wind_speed_mph": 7,
-        "wind_dir": "N",
-        "precip_pct": 2,
-        "short_forecast": "Mostly Clear",
-        "start_time": "2026-07-21T19:00:00-07:00",
-        "game_window_temp_f": 81.8,
-        "game_window_humidity_pct": 46.0,
-        "first_pitch_temp_f": 86,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 4.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 10.8,
-          "t_adj_pct": 3.7,
-          "w_adj_pct": -0.9,
-          "dp_adj_pct": 1.0,
-          "p_adj_pct": 1.2,
-          "precip_adj_pct": 0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -4.59,
-            "dir_rarity": 0.95,
-            "spd_rarity": 0
-          }
-        },
-        "model_pct": 4.0,
-        "pressure_source": "BP",
-        "bp_pct": -4,
-        "bp_blended": false,
-        "blend_weight": 0.0,
-        "bp_temp_f": 86
-      },
-      "note": null
-    },
-    {
-      "game_pk": 823518,
-      "matchup": "Pittsburgh Pirates @ New York Yankees",
-      "venue": "Yankee Stadium",
-      "game_time": "2026-07-22T17:35:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 86,
-        "humidity_pct": 57,
-        "wind_speed_mph": 11,
-        "wind_dir": "WSW",
-        "precip_pct": 37,
-        "short_forecast": "Chance Showers And Thunderstorms",
-        "start_time": "2026-07-22T14:00:00-04:00",
-        "game_window_temp_f": 85.9,
-        "game_window_humidity_pct": 54.8,
-        "first_pitch_temp_f": 86,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": 9.1,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": 11.9,
-          "t_adj_pct": 4.8,
-          "w_adj_pct": 4.4,
-          "dp_adj_pct": 1.5,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": -1.2,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": 10.93,
+            "out_component": 9.96,
             "dir_rarity": 0.35,
             "spd_rarity": 0
           }
         },
-        "model_pct": 9.1,
+        "model_pct": 5.6,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
+      "game_pk": 823519,
+      "matchup": "Pittsburgh Pirates @ New York Yankees",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-07-22T23:05:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 81,
+        "humidity_pct": 56,
+        "wind_speed_mph": 8,
+        "wind_dir": "W",
+        "precip_pct": 37,
+        "short_forecast": "Chance Showers And Thunderstorms",
+        "start_time": "2026-07-22T19:00:00-04:00",
+        "game_window_temp_f": 77.8,
+        "game_window_humidity_pct": 61.4,
+        "first_pitch_temp_f": 81,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": 3.4,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": 3.8,
+          "t_adj_pct": 1.2,
+          "w_adj_pct": 3.1,
+          "dp_adj_pct": 0.9,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": -1.2,
+          "carry_pct": -0.0,
+          "wind": {
+            "out_component": 7.73,
+            "dir_rarity": 0.35,
+            "spd_rarity": 0
+          }
+        },
+        "model_pct": 3.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -770,26 +816,26 @@
       "roof_state": null,
       "weather": {
         "temp_f": 82,
-        "humidity_pct": 43,
+        "humidity_pct": 47,
         "wind_speed_mph": 10,
         "wind_dir": "N",
-        "precip_pct": 0,
-        "short_forecast": "Mostly Sunny",
+        "precip_pct": 2,
+        "short_forecast": "Sunny",
         "start_time": "2026-07-22T13:00:00-05:00",
-        "game_window_temp_f": 83.1,
-        "game_window_humidity_pct": 41.2,
+        "game_window_temp_f": 82.7,
+        "game_window_humidity_pct": 44.9,
         "first_pitch_temp_f": 82,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -1.5,
+        "run_adj_pct": -1.3,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 5.1,
-          "t_adj_pct": 1.9,
+          "temp_delta": 4.7,
+          "t_adj_pct": 1.7,
           "w_adj_pct": -2.8,
-          "dp_adj_pct": -0.6,
+          "dp_adj_pct": -0.3,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": 0.1,
@@ -799,7 +845,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -1.5,
+        "model_pct": -1.3,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -820,7 +866,7 @@
         "wind_speed_mph": 8,
         "wind_dir": "N",
         "precip_pct": 0,
-        "short_forecast": "Mostly Sunny",
+        "short_forecast": "Sunny",
         "start_time": "2026-07-22T13:00:00-05:00",
         "game_window_temp_f": 72.6,
         "game_window_humidity_pct": 40.4,
@@ -869,12 +915,12 @@
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-22T13:00:00-06:00",
         "game_window_temp_f": 91.1,
-        "game_window_humidity_pct": 27.9,
+        "game_window_humidity_pct": 27.8,
         "first_pitch_temp_f": 91,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.8,
+        "run_adj_pct": 4.0,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -891,7 +937,7 @@
             "spd_rarity": 0.34
           }
         },
-        "model_pct": 4.8,
+        "model_pct": 4.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -913,15 +959,15 @@
         "humidity_pct": 32,
         "wind_speed_mph": 0,
         "wind_dir": "",
-        "precip_pct": 0,
+        "precip_pct": 6,
         "short_forecast": "Sunny",
         "start_time": "2026-07-22T13:00:00-07:00",
         "game_window_temp_f": 102.3,
-        "game_window_humidity_pct": 29.9,
+        "game_window_humidity_pct": 29.6,
         "first_pitch_temp_f": 101
       },
       "open_v8": {
-        "run_adj_pct": 7.5,
+        "run_adj_pct": 5.1,
         "capped": false,
         "is_dome": true,
         "components": {
@@ -934,7 +980,7 @@
           "carry_pct": 0.3,
           "wind": null
         },
-        "model_pct": 7.5,
+        "model_pct": 5.1,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -949,37 +995,37 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 82,
-        "humidity_pct": 42,
-        "wind_speed_mph": 6,
+        "temp_f": 83,
+        "humidity_pct": 47,
+        "wind_speed_mph": 8,
         "wind_dir": "NW",
-        "precip_pct": 0,
+        "precip_pct": 1,
         "short_forecast": "Sunny",
         "start_time": "2026-07-22T13:00:00-07:00",
-        "game_window_temp_f": 85.1,
-        "game_window_humidity_pct": 37.9,
-        "first_pitch_temp_f": 82,
+        "game_window_temp_f": 85.9,
+        "game_window_humidity_pct": 43.2,
+        "first_pitch_temp_f": 83,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 5.7,
+        "run_adj_pct": 4.8,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 14.1,
-          "t_adj_pct": 6.2,
-          "w_adj_pct": -0.1,
-          "dp_adj_pct": 0.6,
+          "temp_delta": 14.9,
+          "t_adj_pct": 6.6,
+          "w_adj_pct": 0.2,
+          "dp_adj_pct": 1.3,
           "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -0.67,
+            "out_component": 0.56,
             "dir_rarity": 0.9,
-            "spd_rarity": 0
+            "spd_rarity": 0.64
           }
         },
-        "model_pct": 5.7,
+        "model_pct": 4.8,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1008,7 +1054,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.8,
+        "run_adj_pct": 4.0,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -1025,7 +1071,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 4.8,
+        "model_pct": 4.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1041,37 +1087,37 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 70,
+        "temp_f": 69,
         "humidity_pct": 54,
         "wind_speed_mph": 6,
         "wind_dir": "NW",
-        "precip_pct": 20,
+        "precip_pct": 15,
         "short_forecast": "Slight Chance Rain Showers",
         "start_time": "2026-07-22T19:00:00-04:00",
-        "game_window_temp_f": 67.9,
-        "game_window_humidity_pct": 58.0,
-        "first_pitch_temp_f": 70,
+        "game_window_temp_f": 67.6,
+        "game_window_humidity_pct": 57.8,
+        "first_pitch_temp_f": 69,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -1.7,
+        "run_adj_pct": -1.9,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -2.1,
-          "t_adj_pct": -0.9,
+          "temp_delta": -2.4,
+          "t_adj_pct": -1.0,
           "w_adj_pct": -0.2,
-          "dp_adj_pct": -0.7,
+          "dp_adj_pct": -0.8,
           "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.4,
           "wind": {
-            "out_component": -3.56,
+            "out_component": -3.5,
             "dir_rarity": 0.15,
             "spd_rarity": 0
           }
         },
-        "model_pct": -1.7,
+        "model_pct": -1.9,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1089,8 +1135,8 @@
       "weather": {
         "temp_f": 81,
         "humidity_pct": 63,
-        "wind_speed_mph": 5,
-        "wind_dir": "WSW",
+        "wind_speed_mph": 3,
+        "wind_dir": "SW",
         "precip_pct": 43,
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-22T19:00:00-04:00",
@@ -1112,9 +1158,9 @@
           "precip_adj_pct": -1.8,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 2.69,
+            "out_component": 2.48,
             "dir_rarity": 0.05,
-            "spd_rarity": 0
+            "spd_rarity": 0.79
           }
         },
         "model_pct": 0.8,
@@ -1179,37 +1225,37 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 80,
-        "humidity_pct": 72,
+        "temp_f": 81,
+        "humidity_pct": 67,
         "wind_speed_mph": 12,
         "wind_dir": "WSW",
-        "precip_pct": 25,
-        "short_forecast": "Chance Rain Showers",
+        "precip_pct": 37,
+        "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-22T19:00:00-04:00",
-        "game_window_temp_f": 76.8,
-        "game_window_humidity_pct": 74.8,
-        "first_pitch_temp_f": 80,
+        "game_window_temp_f": 77.1,
+        "game_window_humidity_pct": 69.8,
+        "first_pitch_temp_f": 81,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 11.6,
+        "run_adj_pct": 5.7,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 6.8,
-          "t_adj_pct": 2.2,
-          "w_adj_pct": 7.8,
-          "dp_adj_pct": 1.8,
+          "temp_delta": 7.1,
+          "t_adj_pct": 2.3,
+          "w_adj_pct": 8.8,
+          "dp_adj_pct": 1.5,
           "p_adj_pct": 0.0,
-          "precip_adj_pct": -0.0,
+          "precip_adj_pct": -1.2,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 10.33,
-            "dir_rarity": 0.2,
+            "out_component": 11.62,
+            "dir_rarity": 0.1,
             "spd_rarity": 0.67
           }
         },
-        "model_pct": 11.6,
+        "model_pct": 5.7,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1226,19 +1272,19 @@
       "roof_state": null,
       "weather": {
         "temp_f": 84,
-        "humidity_pct": 76,
-        "wind_speed_mph": 7,
-        "wind_dir": "SSW",
-        "precip_pct": 40,
+        "humidity_pct": 75,
+        "wind_speed_mph": 10,
+        "wind_dir": "SW",
+        "precip_pct": 35,
         "short_forecast": "Chance Showers And Thunderstorms",
         "start_time": "2026-07-22T19:00:00-04:00",
         "game_window_temp_f": 81.6,
-        "game_window_humidity_pct": 82.6,
+        "game_window_humidity_pct": 82.4,
         "first_pitch_temp_f": 84,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -0.2,
+        "run_adj_pct": 0.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -1247,15 +1293,15 @@
           "w_adj_pct": -0.4,
           "dp_adj_pct": 2.0,
           "p_adj_pct": 0.0,
-          "precip_adj_pct": -1.5,
+          "precip_adj_pct": -1.0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": -4.5,
-            "dir_rarity": 0.3,
-            "spd_rarity": 0
+            "out_component": -3.62,
+            "dir_rarity": 0.55,
+            "spd_rarity": 0.01
           }
         },
-        "model_pct": -0.2,
+        "model_pct": 0.2,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1274,25 +1320,25 @@
       "roof_state": "unknown",
       "open_weather": {
         "temp_f": 102,
-        "humidity_pct": 34,
+        "humidity_pct": 36,
         "wind_speed_mph": 10,
         "wind_dir": "ENE",
-        "precip_pct": 1,
-        "short_forecast": "Clear",
+        "precip_pct": 3,
+        "short_forecast": "Mostly Clear",
         "start_time": "2026-07-22T19:00:00-05:00",
-        "game_window_temp_f": 99.6,
-        "game_window_humidity_pct": 35.7,
+        "game_window_temp_f": 99.1,
+        "game_window_humidity_pct": 38.4,
         "first_pitch_temp_f": 102
       },
       "open_v8": {
-        "run_adj_pct": 5.6,
+        "run_adj_pct": 4.4,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 18.6,
-          "t_adj_pct": 7.1,
+          "temp_delta": 18.1,
+          "t_adj_pct": 6.9,
           "w_adj_pct": -0.8,
-          "dp_adj_pct": 1.7,
+          "dp_adj_pct": 1.9,
           "p_adj_pct": -0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -1302,7 +1348,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 5.6,
+        "model_pct": 4.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1317,27 +1363,27 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 69,
-        "humidity_pct": 51,
+        "temp_f": 72,
+        "humidity_pct": 49,
         "wind_speed_mph": 10,
         "wind_dir": "NNE",
         "precip_pct": 0,
         "short_forecast": "Mostly Clear",
         "start_time": "2026-07-22T19:00:00-05:00",
-        "game_window_temp_f": 67.7,
-        "game_window_humidity_pct": 53.7,
-        "first_pitch_temp_f": 69,
+        "game_window_temp_f": 69.5,
+        "game_window_humidity_pct": 52.8,
+        "first_pitch_temp_f": 72,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -15.5,
+        "run_adj_pct": -14.5,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -2.3,
-          "t_adj_pct": -1.0,
+          "temp_delta": -0.5,
+          "t_adj_pct": -0.2,
           "w_adj_pct": -12.8,
-          "dp_adj_pct": -0.9,
+          "dp_adj_pct": -0.7,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -1347,7 +1393,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -15.5,
+        "model_pct": -14.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1365,36 +1411,36 @@
       "retractable": true,
       "roof_state": "unknown",
       "open_weather": {
-        "temp_f": 100,
-        "humidity_pct": 44,
+        "temp_f": 101,
+        "humidity_pct": 43,
         "wind_speed_mph": 5,
-        "wind_dir": "W",
-        "precip_pct": 14,
-        "short_forecast": "Mostly Clear",
+        "wind_dir": "NW",
+        "precip_pct": 13,
+        "short_forecast": "Partly Cloudy",
         "start_time": "2026-07-22T19:00:00-05:00",
-        "game_window_temp_f": 96.6,
-        "game_window_humidity_pct": 50.2,
-        "first_pitch_temp_f": 100
+        "game_window_temp_f": 97.4,
+        "game_window_humidity_pct": 49.0,
+        "first_pitch_temp_f": 101
       },
       "open_v8": {
-        "run_adj_pct": 6.4,
+        "run_adj_pct": 4.4,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 16.6,
-          "t_adj_pct": 6.6,
-          "w_adj_pct": -0.7,
+          "temp_delta": 17.4,
+          "t_adj_pct": 6.9,
+          "w_adj_pct": -2.0,
           "dp_adj_pct": 2.3,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -1.46,
-            "dir_rarity": 0.9,
+            "out_component": -4.41,
+            "dir_rarity": 0.8,
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 6.4,
+        "model_pct": 4.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
