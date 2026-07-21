@@ -539,6 +539,25 @@ def compute_v8(park, wx, treat_as_open=False):
     EMPIRICAL_SCALE = 0.85
     run_adj_pct = total * 100 * EMPIRICAL_SCALE
 
+    # ── V10 HR→runs damper (2026-07-21) ───────────────────────────────────
+    # Validated on 1,127 station-obs 2026 games (park-year-demeaned, LOWO CV):
+    # the published % tracks BallparkPal's HR number, not its RUNS number.
+    # Per-side realized_x: suppression 1.14 (real, untouched), boosts 0.11 —
+    # warm/wind-out boosts saturate ~+6% in realized runs and the big ones are
+    # ~90% phantom. So ONLY the positive side is damped, via 6·tanh(raw/6).
+    # WRIGLEY (CHC) is EXEMPT: its wind genuinely plays (2026 realized_x 0.86;
+    # BP runs +30 = our +30 on 7/20). Applied to the published % (already
+    # inclusive of WIND_SOFT + EMPIRICAL_SCALE — do not re-tune those).
+    DAMPER_A = 6.0
+    if run_adj_pct > 0 and park != "CHC":
+        run_adj_pct = DAMPER_A * _m.tanh(run_adj_pct / DAMPER_A)
+    # Wrigley is exempt from the damper (its wind realizes), but a positive
+    # safety cap keeps a forecast-bust from running past BP's observed range
+    # (+30 on 7/20); binds only above ~18mph wind-out. Tunable.
+    WRIGLEY_MAX = 40.0
+    if park == "CHC" and run_adj_pct > WRIGLEY_MAX:
+        run_adj_pct = WRIGLEY_MAX
+
     # Apply V8.1 cold cap for most parks.
     # For extreme cold (<42°F) at non-dome parks, let it go deeper (BP has shown larger penalties).
     capped = False

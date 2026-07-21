@@ -76,7 +76,7 @@ def _wx_override_for(game_pk, game_date_et):
 #      So: weight 0. We still SCRAPE BP (pressure input below + we keep logging
 #      bp_pct and bp_temp_f to keep scoring them), we just don't publish their view.
 BP_BLEND_WEIGHT = 0.0
-MODEL_VERSION = "v9"
+MODEL_VERSION = "v10"
 
 
 def load_bp_weather():
@@ -782,7 +782,7 @@ def main():
         "generated_at": now,
         "model_version": MODEL_VERSION,
         "source": "NWS (api.weather.gov) hourly forecast",
-        "method_note": ("V9: recalibrated per-park weather model on NWS temp/wind/dew/precip, "
+        "method_note": ("V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, "
                         "with BallparkPal barometric pressure fed in as the air-density input and "
                         f"the published number weighted {int(BP_BLEND_WEIGHT*100)}% toward BP's "
                         "weather-only runs on games BP covers (v8.run_adj_pct = blended; "
