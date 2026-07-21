@@ -108,13 +108,14 @@ def _hand_of_pitcher(name, pitcher_stats):
 
 # ── offense ───────────────────────────────────────────────────────────────
 def _pg_team_offense(players, opp_hand, hitters, hitter_pct):
-    """Mirrors _pgTeamOffense — returns ~runs/game.
+    """Mirrors _pgTeamOffense — returns (~runs/game, per-slot detail).
 
     Per spec: rv = (blended_wOBA / 0.317)^2 · 4.5 × √(wRC+ split/100)
                 × spot_weight × (1 + (Power−22)/22·0.12) × (1 + (Eye−10)/10·0.12)
     blended_wOBA = avg(projection, actual-or-xwOBA).
     """
     sum_, n = 0.0, 0
+    _detail = []
     for i, p in enumerate((players or [])[:9]):
         nm = p.get("name") if isinstance(p, dict) else p
         h = (hitters.get("hitters") or {}).get(norm_name(nm or ""))
@@ -145,10 +146,12 @@ def _pg_team_offense(players, opp_hand, hitters, hitter_pct):
             if len(eye_vals) >= 1:
                 pEye = sum(eye_vals) / len(eye_vals)
                 rv *= (1 + ((10 + (pEye - 50) / 50 * 5.14) - 10) / 10 * 0.12)
-        rv *= (PG_SPOT_WT[i] if i < len(PG_SPOT_WT) else 1)
+        wt = (PG_SPOT_WT[i] if i < len(PG_SPOT_WT) else 1)
+        _detail.append({"slot": i + 1, "name": nm, "rv": round(rv, 3), "spot_wt": wt})
+        rv *= wt
         sum_ += rv
         n += 1
-    return (sum_ / n) if n else None
+    return ((sum_ / n) if n else None), _detail
 
 
 def _pg_lineup_kbb(players, hitters):
@@ -251,8 +254,8 @@ def compute_pregame(game, hitters, hitter_pct, pitcher_stats, park_factors, fati
         return None
     away_hand = _hand_of_pitcher(away_sp, pitcher_stats) or "R"
     home_hand = _hand_of_pitcher(home_sp, pitcher_stats) or "R"
-    away_off = _pg_team_offense(ap, home_hand, hitters, hitter_pct)
-    home_off = _pg_team_offense(hp, away_hand, hitters, hitter_pct)
+    away_off, away_lineup = _pg_team_offense(ap, home_hand, hitters, hitter_pct)
+    home_off, home_lineup = _pg_team_offense(hp, away_hand, hitters, hitter_pct)
     if away_off is None or home_off is None:
         return None
     home_staff = _pg_staff(home_sp, game["teams"]["home"]["team"]["name"], _pg_lineup_kbb(ap, hitters),
@@ -299,6 +302,7 @@ def compute_pregame(game, hitters, hitter_pct, pitcher_stats, park_factors, fati
         "components": {
             "away": {
                 "offense": round(away_off, 3),
+                "lineup": away_lineup,
                 "staff": {k: round(v, 4) if isinstance(v, float) else v for k, v in home_staff.items()},
                 "BSR": round(away_bsr, 2),
                 "DEF": round(away_def, 2),
@@ -307,6 +311,7 @@ def compute_pregame(game, hitters, hitter_pct, pitcher_stats, park_factors, fati
             },
             "home": {
                 "offense": round(home_off, 3),
+                "lineup": home_lineup,
                 "staff": {k: round(v, 4) if isinstance(v, float) else v for k, v in away_staff.items()},
                 "BSR": round(home_bsr, 2),
                 "DEF": round(home_def, 2),
