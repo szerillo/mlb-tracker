@@ -550,7 +550,7 @@ def compute_v8(park, wx, treat_as_open=False):
     # inclusive of WIND_SOFT + EMPIRICAL_SCALE — do not re-tune those).
     DAMPER_A = 6.0
     if run_adj_pct > 0 and park != "CHC":
-        run_adj_pct = DAMPER_A * _m.tanh(run_adj_pct / DAMPER_A)
+        run_adj_pct = DAMPER_A * math.tanh(run_adj_pct / DAMPER_A)
     # Wrigley is exempt from the damper (its wind realizes), but a positive
     # safety cap keeps a forecast-bust from running past BP's observed range
     # (+30 on 7/20); binds only above ~18mph wind-out. Tunable.
