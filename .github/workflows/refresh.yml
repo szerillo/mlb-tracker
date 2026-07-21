@@ -539,6 +539,12 @@ jobs:
         run: python scripts/refresh_propfinder_weather.py
         continue-on-error: true
 
+      - name: Archive pitcher strikeout props (PropFinder /mlb/props)
+        # data/kprops.json + daily data/archive/{date}/kprops.json + append-only
+        # data/kprops_archive.csv. The pitcher-pure market for the Sept wFIP re-run.
+        run: python scripts/refresh_kprops.py
+        continue-on-error: true
+
       - name: Weather forecast accuracy backtest (ours vs BP vs observed)
         # Joins our NWS forecast + BP (cal log) to PropFinder observed actuals and
         # actual runs -> data/weather_forecast_accuracy.json: forecast-input MAE
