@@ -1,10 +1,18 @@
 {
-  "generated_at": "2026-07-22T20:53:03.108474Z",
+  "generated_at": "2026-07-22T21:54:08.032920Z",
   "sources": [
     "MLB Stats API (confirmed)",
     "Rotowire (projected)"
   ],
   "catcher_dan_flags": {
+    "Pittsburgh Pirates": {
+      "yesterday_catcher": "Rafael Flores Jr.",
+      "note": "Played night game yesterday \u2014 Rafael Flores Jr. may sit today"
+    },
+    "New York Yankees": {
+      "yesterday_catcher": "Ali S\u00e1nchez",
+      "note": "Played night game yesterday \u2014 Ali S\u00e1nchez may sit today"
+    },
     "Baltimore Orioles": {
       "yesterday_catcher": "Chadwick Tromp",
       "note": "Played night game yesterday \u2014 Chadwick Tromp may sit today"
@@ -127,7 +135,8 @@
               "name": "Rafael Flores Jr.",
               "pos": "C",
               "bats": "R",
-              "status": "confirmed"
+              "status": "confirmed",
+              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
             },
             {
               "order": 5,
@@ -170,7 +179,8 @@
               "status": "confirmed"
             }
           ],
-          "source": "MLB Stats API"
+          "source": "MLB Stats API",
+          "dan_note": "Day game after Rafael Flores Jr. caught last night"
         },
         "home": {
           "status": "confirmed",
@@ -189,7 +199,8 @@
               "name": "Ali S\u00e1nchez",
               "pos": "C",
               "bats": "R",
-              "status": "confirmed"
+              "status": "confirmed",
+              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
             },
             {
               "order": 3,
@@ -248,7 +259,8 @@
               "status": "confirmed"
             }
           ],
-          "source": "MLB Stats API"
+          "source": "MLB Stats API",
+          "dan_note": "Day game after Ali S\u00e1nchez caught last night"
         }
       }
     },
@@ -264,6 +276,7 @@
           "players": [
             {
               "order": 1,
+              "person_id": 663968,
               "name": "Jake Mangum",
               "pos": "CF",
               "bats": "S",
@@ -271,13 +284,15 @@
             },
             {
               "order": 2,
-              "name": "Brandon Lowe",
-              "pos": "2B",
-              "bats": "L",
+              "person_id": 693304,
+              "name": "Nick Gonzales",
+              "pos": "3B",
+              "bats": "R",
               "status": "confirmed"
             },
             {
               "order": 3,
+              "person_id": 668804,
               "name": "Bryan Reynolds",
               "pos": "LF",
               "bats": "S",
@@ -285,6 +300,7 @@
             },
             {
               "order": 4,
+              "person_id": 699013,
               "name": "Esmerlyn Valdez",
               "pos": "RF",
               "bats": "R",
@@ -292,47 +308,55 @@
             },
             {
               "order": 5,
+              "person_id": 656811,
               "name": "Ryan O'Hearn",
-              "pos": "DH",
+              "pos": "1B",
               "bats": "L",
               "status": "confirmed"
             },
             {
               "order": 6,
-              "name": "Nick Gonzales",
-              "pos": "3B",
+              "person_id": 542303,
+              "name": "Marcell Ozuna",
+              "pos": "DH",
               "bats": "R",
               "status": "confirmed"
             },
             {
               "order": 7,
-              "name": "Jacob Gonzalez",
-              "pos": "SS",
+              "person_id": 664040,
+              "name": "Brandon Lowe",
+              "pos": "2B",
               "bats": "L",
               "status": "confirmed"
             },
             {
               "order": 8,
-              "name": "Henry Davis",
+              "person_id": 804668,
+              "name": "Rafael Flores Jr.",
               "pos": "C",
               "bats": "R",
-              "status": "confirmed"
+              "status": "confirmed",
+              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
             },
             {
               "order": 9,
-              "name": "Tyler Callihan",
-              "pos": "1B",
-              "bats": "L",
+              "person_id": 669707,
+              "name": "Jared Triolo",
+              "pos": "SS",
+              "bats": "R",
               "status": "confirmed"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API",
+          "dan_note": "Day game after Rafael Flores Jr. caught last night"
         },
         "home": {
           "status": "confirmed",
           "players": [
             {
               "order": 1,
+              "person_id": 663757,
               "name": "Trent Grisham",
               "pos": "CF",
               "bats": "L",
@@ -340,20 +364,23 @@
             },
             {
               "order": 2,
+              "person_id": 700250,
               "name": "Ben Rice",
-              "pos": "1B",
-              "bats": "L",
-              "status": "confirmed"
-            },
-            {
-              "order": 3,
-              "name": "Spencer Jones",
               "pos": "DH",
               "bats": "L",
               "status": "confirmed"
             },
             {
+              "order": 3,
+              "person_id": 502671,
+              "name": "Paul Goldschmidt",
+              "pos": "1B",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
               "order": 4,
+              "person_id": 641355,
               "name": "Cody Bellinger",
               "pos": "LF",
               "bats": "L",
@@ -361,27 +388,31 @@
             },
             {
               "order": 5,
-              "name": "Jasson Dominguez",
-              "pos": "RF",
-              "bats": "S",
-              "status": "confirmed"
-            },
-            {
-              "order": 6,
-              "name": "Jazz Chisholm",
+              "person_id": 665862,
+              "name": "Jazz Chisholm Jr.",
               "pos": "2B",
               "bats": "L",
               "status": "confirmed"
             },
             {
+              "order": 6,
+              "person_id": 691176,
+              "name": "Jasson Dom\u00ednguez",
+              "pos": "RF",
+              "bats": "S",
+              "status": "confirmed"
+            },
+            {
               "order": 7,
-              "name": "Jose Caballero",
+              "person_id": 683011,
+              "name": "Anthony Volpe",
               "pos": "SS",
               "bats": "R",
               "status": "confirmed"
             },
             {
               "order": 8,
+              "person_id": 641857,
               "name": "Ryan McMahon",
               "pos": "3B",
               "bats": "L",
@@ -389,13 +420,16 @@
             },
             {
               "order": 9,
-              "name": "Austin Wells",
+              "person_id": 645305,
+              "name": "Ali S\u00e1nchez",
               "pos": "C",
-              "bats": "L",
-              "status": "confirmed"
+              "bats": "R",
+              "status": "confirmed",
+              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API",
+          "dan_note": "Day game after Ali S\u00e1nchez caught last night"
         }
       }
     },
@@ -580,6 +614,7 @@
           "players": [
             {
               "order": 1,
+              "person_id": 621493,
               "name": "Taylor Ward",
               "pos": "LF",
               "bats": "R",
@@ -587,6 +622,7 @@
             },
             {
               "order": 2,
+              "person_id": 624413,
               "name": "Pete Alonso",
               "pos": "1B",
               "bats": "R",
@@ -594,6 +630,7 @@
             },
             {
               "order": 3,
+              "person_id": 683002,
               "name": "Gunnar Henderson",
               "pos": "SS",
               "bats": "L",
@@ -601,6 +638,7 @@
             },
             {
               "order": 4,
+              "person_id": 641933,
               "name": "Tyler O'Neill",
               "pos": "RF",
               "bats": "R",
@@ -608,27 +646,31 @@
             },
             {
               "order": 5,
-              "name": "Coby Mayo",
-              "pos": "DH",
-              "bats": "R",
-              "status": "confirmed"
-            },
-            {
-              "order": 6,
-              "name": "Leody Taveras",
-              "pos": "CF",
-              "bats": "S",
-              "status": "confirmed"
-            },
-            {
-              "order": 7,
+              "person_id": 687952,
               "name": "Christian Encarnacion-Strand",
               "pos": "3B",
               "bats": "R",
               "status": "confirmed"
             },
             {
+              "order": 6,
+              "person_id": 687637,
+              "name": "Dylan Beavers",
+              "pos": "CF",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 7,
+              "person_id": 671286,
+              "name": "Johnathan Rodr\u00edguez",
+              "pos": "DH",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
               "order": 8,
+              "person_id": 702616,
               "name": "Jackson Holliday",
               "pos": "2B",
               "bats": "L",
@@ -636,26 +678,31 @@
             },
             {
               "order": 9,
-              "name": "Sam Huff",
+              "person_id": 644433,
+              "name": "Chadwick Tromp",
               "pos": "C",
               "bats": "R",
-              "status": "confirmed"
+              "status": "confirmed",
+              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API",
+          "dan_note": "Day game after Chadwick Tromp caught last night"
         },
         "home": {
           "status": "confirmed",
           "players": [
             {
               "order": 1,
-              "name": "Masataka Yoshida",
-              "pos": "DH",
-              "bats": "L",
+              "person_id": 678011,
+              "name": "Anthony Seigler",
+              "pos": "2B",
+              "bats": "S",
               "status": "confirmed"
             },
             {
               "order": 2,
+              "person_id": 678882,
               "name": "Ceddanne Rafaela",
               "pos": "CF",
               "bats": "R",
@@ -663,6 +710,7 @@
             },
             {
               "order": 3,
+              "person_id": 677800,
               "name": "Wilyer Abreu",
               "pos": "RF",
               "bats": "L",
@@ -670,6 +718,7 @@
             },
             {
               "order": 4,
+              "person_id": 575929,
               "name": "Willson Contreras",
               "pos": "1B",
               "bats": "R",
@@ -677,20 +726,23 @@
             },
             {
               "order": 5,
+              "person_id": 807799,
+              "name": "Masataka Yoshida",
+              "pos": "DH",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 6,
+              "person_id": 702332,
               "name": "Caleb Durbin",
               "pos": "3B",
               "bats": "R",
               "status": "confirmed"
             },
             {
-              "order": 6,
-              "name": "Romy Gonzalez",
-              "pos": "2B",
-              "bats": "R",
-              "status": "confirmed"
-            },
-            {
               "order": 7,
+              "person_id": 680776,
               "name": "Jarren Duran",
               "pos": "LF",
               "bats": "L",
@@ -698,22 +750,22 @@
             },
             {
               "order": 8,
-              "name": "Connor Wong",
-              "pos": "C",
+              "person_id": 655316,
+              "name": "Andruw Monasterio",
+              "pos": "SS",
               "bats": "R",
-              "status": "confirmed",
-              "flag": "\ud83d\udfe1 day after night \u2014 may sit"
+              "status": "confirmed"
             },
             {
               "order": 9,
-              "name": "Tsung-Che Cheng",
-              "pos": "SS",
-              "bats": "L",
+              "person_id": 665966,
+              "name": "Carlos Narv\u00e1ez",
+              "pos": "C",
+              "bats": "R",
               "status": "confirmed"
             }
           ],
-          "source": "Rotowire",
-          "dan_note": "Day game after Connor Wong caught last night"
+          "source": "MLB Stats API"
         }
       }
     },
@@ -1061,10 +1113,10 @@
           "players": [
             {
               "order": 1,
-              "person_id": 695578,
-              "name": "James Wood",
-              "pos": "RF",
-              "bats": "L",
+              "person_id": 696285,
+              "name": "Jacob Young",
+              "pos": "CF",
+              "bats": "R",
               "status": "confirmed"
             },
             {
@@ -1095,7 +1147,7 @@
               "order": 5,
               "person_id": 686611,
               "name": "Dylan Crews",
-              "pos": "CF",
+              "pos": "RF",
               "bats": "R",
               "status": "confirmed"
             },
@@ -2129,73 +2181,82 @@
           "source": "MLB Stats API"
         },
         "home": {
-          "status": "expected",
+          "status": "confirmed",
           "players": [
             {
               "order": 1,
-              "name": "Nathan Lukes",
-              "pos": "RF",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 2,
-              "name": "Vladimir Guerrero",
-              "pos": "1B",
-              "bats": "R",
-              "status": "expected"
-            },
-            {
-              "order": 3,
+              "person_id": 676391,
               "name": "Ernie Clement",
               "pos": "2B",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
+            },
+            {
+              "order": 2,
+              "person_id": 664770,
+              "name": "Nathan Lukes",
+              "pos": "RF",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 3,
+              "person_id": 665489,
+              "name": "Vladimir Guerrero Jr.",
+              "pos": "1B",
+              "bats": "R",
+              "status": "confirmed"
             },
             {
               "order": 4,
+              "person_id": 543807,
               "name": "George Springer",
               "pos": "DH",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 5,
-              "name": "Daulton Varsho",
-              "pos": "CF",
+              "person_id": 682818,
+              "name": "Yohendrick Pi\u00f1ango",
+              "pos": "LF",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 6,
-              "name": "Kazuma Okamoto",
-              "pos": "3B",
-              "bats": "R",
-              "status": "expected"
-            },
-            {
-              "order": 7,
+              "person_id": 672386,
               "name": "Alejandro Kirk",
               "pos": "C",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
+            },
+            {
+              "order": 7,
+              "person_id": 662139,
+              "name": "Daulton Varsho",
+              "pos": "CF",
+              "bats": "L",
+              "status": "confirmed"
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
-              "pos": "SS",
+              "person_id": 815873,
+              "name": "Sean Keys",
+              "pos": "3B",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 9,
-              "name": "Myles Straw",
-              "pos": "LF",
-              "bats": "R",
-              "status": "expected"
+              "person_id": 665926,
+              "name": "Andr\u00e9s Gim\u00e9nez",
+              "pos": "SS",
+              "bats": "L",
+              "status": "confirmed"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API"
         }
       }
     },
@@ -2541,142 +2602,160 @@
       "game_time": "2026-07-23T00:10:00Z",
       "lineups": {
         "away": {
-          "status": "expected",
+          "status": "confirmed",
           "players": [
             {
               "order": 1,
+              "person_id": 805808,
               "name": "Kevin McGonigle",
               "pos": "SS",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 2,
-              "name": "Gleyber Torres",
-              "pos": "2B",
-              "bats": "R",
-              "status": "expected"
-            },
-            {
-              "order": 3,
-              "name": "Colt Keith",
-              "pos": "3B",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 4,
-              "name": "Riley Greene",
-              "pos": "LF",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 5,
+              "person_id": 693307,
               "name": "Dillon Dingler",
               "pos": "C",
               "bats": "R",
-              "status": "expected"
-            },
-            {
-              "order": 6,
-              "name": "Kerry Carpenter",
-              "pos": "DH",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 7,
-              "name": "Spencer Torkelson",
-              "pos": "1B",
-              "bats": "R",
-              "status": "expected"
-            },
-            {
-              "order": 8,
-              "name": "Zach McKinstry",
-              "pos": "RF",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 9,
-              "name": "James Outman",
-              "pos": "CF",
-              "bats": "L",
-              "status": "expected"
-            }
-          ],
-          "source": "Rotowire"
-        },
-        "home": {
-          "status": "expected",
-          "players": [
-            {
-              "order": 1,
-              "name": "Pete Crow-Armstrong",
-              "pos": "CF",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 2,
-              "name": "Seiya Suzuki",
-              "pos": "RF",
-              "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 3,
-              "name": "Michael Busch",
-              "pos": "1B",
+              "person_id": 690993,
+              "name": "Colt Keith",
+              "pos": "3B",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 4,
-              "name": "Alex Bregman",
-              "pos": "3B",
-              "bats": "R",
-              "status": "expected"
+              "person_id": 682985,
+              "name": "Riley Greene",
+              "pos": "LF",
+              "bats": "L",
+              "status": "confirmed"
             },
             {
               "order": 5,
-              "name": "Ian Happ",
-              "pos": "LF",
-              "bats": "S",
-              "status": "expected"
+              "person_id": 679529,
+              "name": "Spencer Torkelson",
+              "pos": "1B",
+              "bats": "R",
+              "status": "confirmed"
             },
             {
               "order": 6,
-              "name": "Nico Hoerner",
-              "pos": "2B",
-              "bats": "R",
-              "status": "expected"
+              "person_id": 681481,
+              "name": "Kerry Carpenter",
+              "pos": "DH",
+              "bats": "L",
+              "status": "confirmed"
             },
             {
               "order": 7,
-              "name": "Pedro Ramirez",
-              "pos": "DH",
-              "bats": "S",
-              "status": "expected"
+              "person_id": 656716,
+              "name": "Zach McKinstry",
+              "pos": "RF",
+              "bats": "L",
+              "status": "confirmed"
             },
             {
               "order": 8,
-              "name": "Carson Kelly",
-              "pos": "C",
+              "person_id": 701678,
+              "name": "Hao-Yu Lee",
+              "pos": "2B",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 9,
+              "person_id": 681546,
+              "name": "James Outman",
+              "pos": "CF",
+              "bats": "L",
+              "status": "confirmed"
+            }
+          ],
+          "source": "MLB Stats API"
+        },
+        "home": {
+          "status": "confirmed",
+          "players": [
+            {
+              "order": 1,
+              "person_id": 691718,
+              "name": "Pete Crow-Armstrong",
+              "pos": "CF",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 2,
+              "person_id": 673548,
+              "name": "Seiya Suzuki",
+              "pos": "RF",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
+              "order": 3,
+              "person_id": 683737,
+              "name": "Michael Busch",
+              "pos": "1B",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 4,
+              "person_id": 608324,
+              "name": "Alex Bregman",
+              "pos": "3B",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
+              "order": 5,
+              "person_id": 664023,
+              "name": "Ian Happ",
+              "pos": "LF",
+              "bats": "S",
+              "status": "confirmed"
+            },
+            {
+              "order": 6,
+              "person_id": 663538,
+              "name": "Nico Hoerner",
+              "pos": "2B",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
+              "order": 7,
+              "person_id": 624424,
+              "name": "Michael Conforto",
+              "pos": "DH",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 8,
+              "person_id": 608348,
+              "name": "Carson Kelly",
+              "pos": "C",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
+              "order": 9,
+              "person_id": 621020,
               "name": "Dansby Swanson",
               "pos": "SS",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API"
         }
       }
     },
@@ -2688,73 +2767,82 @@
       "game_time": "2026-07-23T00:10:00Z",
       "lineups": {
         "away": {
-          "status": "expected",
+          "status": "confirmed",
           "players": [
             {
               "order": 1,
-              "name": "Liam Hicks",
-              "pos": "DH",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 2,
+              "person_id": 672640,
               "name": "Otto Lopez",
               "pos": "SS",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
-              "order": 3,
-              "name": "Xavier Edwards",
-              "pos": "2B",
-              "bats": "S",
-              "status": "expected"
-            },
-            {
-              "order": 4,
+              "order": 2,
+              "person_id": 669065,
               "name": "Kyle Stowers",
               "pos": "1B",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
+            },
+            {
+              "order": 3,
+              "person_id": 681715,
+              "name": "Heriberto Hern\u00e1ndez",
+              "pos": "LF",
+              "bats": "R",
+              "status": "confirmed"
+            },
+            {
+              "order": 4,
+              "person_id": 669364,
+              "name": "Xavier Edwards",
+              "pos": "2B",
+              "bats": "S",
+              "status": "confirmed"
             },
             {
               "order": 5,
-              "name": "Heriberto Hernandez",
-              "pos": "LF",
-              "bats": "R",
-              "status": "expected"
+              "person_id": 689414,
+              "name": "Liam Hicks",
+              "pos": "DH",
+              "bats": "L",
+              "status": "confirmed"
             },
             {
               "order": 6,
+              "person_id": 665052,
               "name": "Griffin Conine",
               "pos": "RF",
               "bats": "L",
-              "status": "expected"
+              "status": "confirmed"
             },
             {
               "order": 7,
-              "name": "Jakob Marsee",
-              "pos": "CF",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 8,
-              "name": "Joe Mack",
-              "pos": "C",
-              "bats": "L",
-              "status": "expected"
-            },
-            {
-              "order": 9,
+              "person_id": 691594,
               "name": "Javier Sanoja",
               "pos": "3B",
               "bats": "R",
-              "status": "expected"
+              "status": "confirmed"
+            },
+            {
+              "order": 8,
+              "person_id": 691788,
+              "name": "Joe Mack",
+              "pos": "C",
+              "bats": "L",
+              "status": "confirmed"
+            },
+            {
+              "order": 9,
+              "person_id": 665923,
+              "name": "Esteury Ruiz",
+              "pos": "CF",
+              "bats": "R",
+              "status": "confirmed"
             }
           ],
-          "source": "Rotowire"
+          "source": "MLB Stats API"
         },
         "home": {
           "status": "confirmed",
@@ -3227,7 +3315,7 @@
             },
             {
               "order": 7,
-              "name": "Richie Palacios",
+              "name": "Taylor Walls",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -3235,7 +3323,7 @@
             },
             {
               "order": 8,
-              "name": "Taylor Walls",
+              "name": "Richie Palacios",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -3252,73 +3340,82 @@
           ]
         },
         "home": {
-          "status": "expected",
+          "status": "projected",
+          "source": "Rotowire platoon vs. LHP",
           "players": [
             {
               "order": 1,
-              "name": "Nathan Lukes",
-              "pos": "RF",
-              "bats": "L",
-              "status": "expected"
+              "name": "Ernie Clement",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 2,
               "name": "Vladimir Guerrero",
-              "pos": "1B",
-              "bats": "R",
-              "status": "expected"
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 3,
-              "name": "Ernie Clement",
-              "pos": "2B",
-              "bats": "R",
-              "status": "expected"
+              "name": "Kazuma Okamoto",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 4,
               "name": "George Springer",
-              "pos": "DH",
-              "bats": "R",
-              "status": "expected"
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 5,
-              "name": "Daulton Varsho",
-              "pos": "CF",
-              "bats": "L",
-              "status": "expected"
+              "name": "Alejandro Kirk",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 6,
-              "name": "Kazuma Okamoto",
-              "pos": "3B",
-              "bats": "R",
-              "status": "expected"
+              "name": "Daulton Varsho",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 7,
-              "name": "Alejandro Kirk",
-              "pos": "C",
-              "bats": "R",
-              "status": "expected"
+              "name": "Luis Urias",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
-              "pos": "SS",
-              "bats": "L",
-              "status": "expected"
+              "name": "Nathan Lukes",
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             },
             {
               "order": 9,
               "name": "Myles Straw",
-              "pos": "LF",
-              "bats": "R",
-              "status": "expected"
+              "pos": "",
+              "bats": "",
+              "status": "projected",
+              "flag": null
             }
-          ],
-          "source": "Rotowire"
+          ]
         }
       }
     },
@@ -3574,7 +3671,7 @@
         },
         "home": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -4321,11 +4418,11 @@
       "lineups": {
         "away": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. LHP",
           "players": [
             {
               "order": 1,
-              "name": "Trent Grisham",
+              "name": "Amed Rosario",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4341,7 +4438,7 @@
             },
             {
               "order": 3,
-              "name": "Paul Goldschmidt",
+              "name": "Trent Grisham",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4349,7 +4446,7 @@
             },
             {
               "order": 4,
-              "name": "Cody Bellinger",
+              "name": "Paul Goldschmidt",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4357,7 +4454,7 @@
             },
             {
               "order": 5,
-              "name": "Jazz Chisholm",
+              "name": "Cody Bellinger",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4373,7 +4470,7 @@
             },
             {
               "order": 7,
-              "name": "Ryan McMahon",
+              "name": "Jazz Chisholm",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4381,7 +4478,7 @@
             },
             {
               "order": 8,
-              "name": "Austin Wells",
+              "name": "Jose Caballero",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4389,7 +4486,7 @@
             },
             {
               "order": 9,
-              "name": "Jose Caballero",
+              "name": "Ali Sanchez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -4729,7 +4826,7 @@
         },
         "home": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -5198,7 +5295,7 @@
             },
             {
               "order": 7,
-              "name": "Alejandro Kirk",
+              "name": "Yohendrick Pinango",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -5206,7 +5303,7 @@
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
+              "name": "Alejandro Kirk",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -5214,7 +5311,7 @@
             },
             {
               "order": 9,
-              "name": "Jonatan Clase",
+              "name": "Andres Gimenez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -5425,7 +5522,7 @@
             },
             {
               "order": 5,
-              "name": "Andrew Benintendi",
+              "name": "Braden Montgomery",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -5433,7 +5530,7 @@
             },
             {
               "order": 6,
-              "name": "Braden Montgomery",
+              "name": "Andrew Benintendi",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -5641,7 +5738,7 @@
       "lineups": {
         "away": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -6683,7 +6780,7 @@
             },
             {
               "order": 7,
-              "name": "Alejandro Kirk",
+              "name": "Yohendrick Pinango",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -6691,7 +6788,7 @@
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
+              "name": "Alejandro Kirk",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -6699,7 +6796,7 @@
             },
             {
               "order": 9,
-              "name": "Jonatan Clase",
+              "name": "Andres Gimenez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -7256,7 +7353,7 @@
             },
             {
               "order": 7,
-              "name": "Richie Palacios",
+              "name": "Taylor Walls",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -7264,7 +7361,7 @@
             },
             {
               "order": 8,
-              "name": "Taylor Walls",
+              "name": "Richie Palacios",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -7900,7 +7997,7 @@
             },
             {
               "order": 5,
-              "name": "Andrew Benintendi",
+              "name": "Braden Montgomery",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -7908,7 +8005,7 @@
             },
             {
               "order": 6,
-              "name": "Braden Montgomery",
+              "name": "Andrew Benintendi",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -8194,7 +8291,7 @@
         },
         "home": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -8689,7 +8786,7 @@
         },
         "home": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. LHP",
           "players": [
             {
               "order": 1,
@@ -8717,7 +8814,7 @@
             },
             {
               "order": 4,
-              "name": "Cedric Mullins",
+              "name": "Ryan Vilade",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -8725,7 +8822,7 @@
             },
             {
               "order": 5,
-              "name": "Chandler Simpson",
+              "name": "Jonny DeLuca",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -8733,7 +8830,7 @@
             },
             {
               "order": 6,
-              "name": "Victor Mesa",
+              "name": "Chandler Simpson",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -8741,7 +8838,7 @@
             },
             {
               "order": 7,
-              "name": "Richie Palacios",
+              "name": "Ben Williamson",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -8757,7 +8854,7 @@
             },
             {
               "order": 9,
-              "name": "Hunter Feduccia",
+              "name": "Nick Fortes",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -9158,7 +9255,7 @@
             },
             {
               "order": 7,
-              "name": "Alejandro Kirk",
+              "name": "Yohendrick Pinango",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -9166,7 +9263,7 @@
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
+              "name": "Alejandro Kirk",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -9174,7 +9271,7 @@
             },
             {
               "order": 9,
-              "name": "Jonatan Clase",
+              "name": "Andres Gimenez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -9679,7 +9776,7 @@
         },
         "home": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -9931,7 +10028,7 @@
       "lineups": {
         "away": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. RHP",
           "players": [
             {
               "order": 1,
@@ -10210,7 +10307,7 @@
             },
             {
               "order": 5,
-              "name": "Andrew Benintendi",
+              "name": "Braden Montgomery",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10218,7 +10315,7 @@
             },
             {
               "order": 6,
-              "name": "Braden Montgomery",
+              "name": "Andrew Benintendi",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10921,11 +11018,11 @@
       "lineups": {
         "away": {
           "status": "projected",
-          "source": "Rotowire vs. RHP (opp SP TBD)",
+          "source": "Rotowire platoon vs. LHP",
           "players": [
             {
               "order": 1,
-              "name": "Trent Grisham",
+              "name": "Amed Rosario",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10941,7 +11038,7 @@
             },
             {
               "order": 3,
-              "name": "Paul Goldschmidt",
+              "name": "Trent Grisham",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10949,7 +11046,7 @@
             },
             {
               "order": 4,
-              "name": "Cody Bellinger",
+              "name": "Paul Goldschmidt",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10957,7 +11054,7 @@
             },
             {
               "order": 5,
-              "name": "Jazz Chisholm",
+              "name": "Cody Bellinger",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10973,7 +11070,7 @@
             },
             {
               "order": 7,
-              "name": "Ryan McMahon",
+              "name": "Jazz Chisholm",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10981,7 +11078,7 @@
             },
             {
               "order": 8,
-              "name": "Austin Wells",
+              "name": "Jose Caballero",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -10989,7 +11086,7 @@
             },
             {
               "order": 9,
-              "name": "Jose Caballero",
+              "name": "Ali Sanchez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -11798,7 +11895,7 @@
             },
             {
               "order": 7,
-              "name": "Alejandro Kirk",
+              "name": "Yohendrick Pinango",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -11806,7 +11903,7 @@
             },
             {
               "order": 8,
-              "name": "Andres Gimenez",
+              "name": "Alejandro Kirk",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -11814,7 +11911,7 @@
             },
             {
               "order": 9,
-              "name": "Jonatan Clase",
+              "name": "Andres Gimenez",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -12355,7 +12452,7 @@
             },
             {
               "order": 5,
-              "name": "Andrew Benintendi",
+              "name": "Braden Montgomery",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -12363,7 +12460,7 @@
             },
             {
               "order": 6,
-              "name": "Braden Montgomery",
+              "name": "Andrew Benintendi",
               "pos": "",
               "bats": "",
               "status": "projected",
@@ -13058,6 +13155,6 @@
       }
     }
   ],
-  "rotowire_platoon_at": "2026-07-22T20:54:16.774031+00:00",
-  "rotowire_platoon_filled": 123
+  "rotowire_platoon_at": "2026-07-22T21:54:41.499654+00:00",
+  "rotowire_platoon_filled": 124
 }
