@@ -1,0 +1,67 @@
+name: Bullpens only
+
+# Fast, standalone bullpen refresh: fatigue + Roster Resource bullpens ONLY.
+# Runs in ~1 min (no pip install, no Savant/FG/odds/BARTOLO steps) so you can
+# get fresh bullpen rest without waiting on the full ~10-15 min Data refresh.
+# The full "Data refresh" workflow is unchanged and keeps its own schedule.
+
+on:
+  workflow_dispatch:      # the "Run workflow" button — trigger any time, any hour
+  # Optional: also run on a schedule. Uncomment + edit the cron (UTC) if wanted.
+  # schedule:
+  #   - cron: "0 16 * * *"   # 12:00 PM ET
+
+concurrency:
+  # Separate group from the full refresh (group: refresh) so this NEVER cancels
+  # a running Data refresh, and overlapping bullpen dispatches queue instead of
+  # clobbering each other.
+  group: bullpens
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bullpens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      # Both scripts are pure Python stdlib (urllib) — no dependencies to install.
+
+      - name: Compute bullpen fatigue (MLB StatsAPI box scores)
+        run: python scripts/compute_fatigue.py
+        env:
+          FORCE_RUN: "1"   # bypass the game-window gate so it runs on demand
+
+      - name: Refresh official bullpens (FanGraphs Roster Resource + fatigue flag)
+        run: python scripts/refresh_bullpens_rr.py
+        env:
+          FORCE_RUN: "1"
+
+      - name: Commit bullpen data (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fatigue.json data/bullpens_rr.csv data/bullpens_rr.json || true
+          if git diff --cached --quiet; then
+            echo "No bullpen changes to commit."
+          else
+            git commit -m "Bullpen-only refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            # Rebase-on-reject retry: this can race with the full Data refresh's
+            # commits, so retry the push onto the latest origin/main a few times.
+            for attempt in 1 2 3; do
+              if git push; then break; fi
+              echo "push attempt $attempt rejected; rebasing onto origin/main"
+              git fetch origin main
+              git rebase --autostash origin/main || { git rebase --abort; exit 1; }
+            done
+          fi
