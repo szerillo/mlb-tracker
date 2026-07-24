@@ -1,35 +1,35 @@
 {
-  "generated_at": "2026-07-23T23:54:23Z",
+  "generated_at": "2026-07-24T01:19:41Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-07-22"
+    "2026-07-23"
   ],
   "forecast_input_accuracy": {
-    "n_games": 158,
-    "our_temp_MAE_f": 2.74,
-    "our_wind_MAE_mph": 2.58,
-    "our_winddir_MAE_deg": 31.2,
+    "n_games": 163,
+    "our_temp_MAE_f": 2.7,
+    "our_wind_MAE_mph": 2.59,
+    "our_winddir_MAE_deg": 30.9,
     "temp_head_to_head": {
-      "n": 54,
-      "our_temp_MAE_f": 2.32,
-      "bp_temp_MAE_f": 4.33
+      "n": 59,
+      "our_temp_MAE_f": 2.22,
+      "bp_temp_MAE_f": 4.48
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 158,
-    "calibrated_slope_runs_per_pct": 0.0936,
+    "n_played": 162,
+    "calibrated_slope_runs_per_pct": 0.0935,
     "ours": {
-      "slope": 0.071,
-      "r": 0.082,
-      "n": 158,
-      "realized_x": 0.76
+      "slope": 0.0758,
+      "r": 0.087,
+      "n": 162,
+      "realized_x": 0.81
     },
     "bp": {
-      "slope": 0.0116,
-      "r": 0.016,
-      "n": 127,
-      "realized_x": 0.12
+      "slope": 0.0167,
+      "r": 0.023,
+      "n": 131,
+      "realized_x": 0.18
     }
   },
   "games": [
@@ -3192,6 +3192,106 @@
       "total": 13,
       "our_adj": 1.8,
       "bp_adj": 6.0
+    },
+    {
+      "date": "2026-07-23",
+      "pk": 822785,
+      "venue": "Rogers Centre",
+      "obs_temp": 69.8,
+      "obs_wind": 12.7,
+      "obs_dir": 191.0,
+      "obs_src": "obs",
+      "our_temp": 69.3,
+      "our_wind": 10.0,
+      "our_dir": 180,
+      "bp_temp": 77.0,
+      "our_temp_err": 0.5,
+      "bp_temp_err": 7.200000000000003,
+      "our_wind_err": 2.6999999999999993,
+      "our_dir_err": 11.0,
+      "total": 4,
+      "our_adj": -2.1,
+      "bp_adj": -4.0
+    },
+    {
+      "date": "2026-07-23",
+      "pk": 823042,
+      "venue": "Busch Stadium",
+      "obs_temp": 80.0,
+      "obs_wind": 6.7,
+      "obs_dir": 51.0,
+      "obs_src": "obs",
+      "our_temp": 81.0,
+      "our_wind": 4.0,
+      "our_dir": 45,
+      "bp_temp": 88.0,
+      "our_temp_err": 1.0,
+      "bp_temp_err": 8.0,
+      "our_wind_err": 2.7,
+      "our_dir_err": 6.0,
+      "total": 16,
+      "our_adj": -2.3,
+      "bp_adj": -6.0
+    },
+    {
+      "date": "2026-07-23",
+      "pk": 824247,
+      "venue": "Comerica Park",
+      "obs_temp": 75.0,
+      "obs_wind": 8.8,
+      "obs_dir": 116.0,
+      "obs_src": "obs",
+      "our_temp": 76.0,
+      "our_wind": 6.0,
+      "our_dir": 135,
+      "bp_temp": 84.0,
+      "our_temp_err": 1.0,
+      "bp_temp_err": 9.0,
+      "our_wind_err": 2.8000000000000007,
+      "our_dir_err": 19.0,
+      "total": null,
+      "our_adj": -4.4,
+      "bp_adj": -8.0
+    },
+    {
+      "date": "2026-07-23",
+      "pk": 824406,
+      "venue": "Progressive Field",
+      "obs_temp": 73.1,
+      "obs_wind": 10.0,
+      "obs_dir": 10.0,
+      "obs_src": "obs",
+      "our_temp": 74.0,
+      "our_wind": 6.0,
+      "our_dir": 0,
+      "bp_temp": 75.0,
+      "our_temp_err": 0.9000000000000057,
+      "bp_temp_err": 1.9000000000000057,
+      "our_wind_err": 4.0,
+      "our_dir_err": 10.0,
+      "total": 4,
+      "our_adj": -1.1,
+      "bp_adj": -2.0
+    },
+    {
+      "date": "2026-07-23",
+      "pk": 824893,
+      "venue": "Truist Park",
+      "obs_temp": 83.8,
+      "obs_wind": 7.3,
+      "obs_dir": 208.0,
+      "obs_src": "obs",
+      "our_temp": 86.0,
+      "our_wind": 9.0,
+      "our_dir": 270,
+      "bp_temp": 88.0,
+      "our_temp_err": 2.200000000000003,
+      "bp_temp_err": 4.200000000000003,
+      "our_wind_err": 1.7000000000000002,
+      "our_dir_err": 62.0,
+      "total": 11,
+      "our_adj": 3.3,
+      "bp_adj": -1.0
     }
   ]
 }
