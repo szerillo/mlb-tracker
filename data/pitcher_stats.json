@@ -138685,25 +138685,25 @@
       "unified_score_legacy": 5.47
     }
   },
-  "enriched_at": "2026-07-24T13:48:06.326219+00:00",
+  "enriched_at": "2026-07-24T15:27:02.257152+00:00",
   "enriched_count": 757,
   "enriched_source": "browser-dump",
-  "projections_enriched_at": "2026-07-24T13:48:08.249497Z",
+  "projections_enriched_at": "2026-07-24T15:27:03.021042Z",
   "projections_counts": {
     "fip_atc": 748,
     "fip_batx": 719,
     "fip_oopsy": 3605,
     "fip_zips": 748
   },
-  "bot_era_enriched_at": "2026-07-24T13:48:09.750816Z",
+  "bot_era_enriched_at": "2026-07-24T15:27:04.681366Z",
   "bot_era_count": 537,
-  "savant_enriched_at": "2026-07-24T13:48:10.261130+00:00",
+  "savant_enriched_at": "2026-07-24T15:27:05.323366+00:00",
   "savant_enriched_count": 720,
   "gamelogs_backfill_at": "2026-07-24T10:03:19.135019Z",
   "gamelogs_backfill_count": 445,
   "scoring": {
     "unified_score": {
-      "computed_at": "2026-07-24T13:48:31.855913Z",
+      "computed_at": "2026-07-24T15:27:27.633807Z",
       "scale": "FIP (weighted average \u2014 lower = better)",
       "method": "rolling-led in-season core (stabilized 0.6*L5 + 0.4*season xFIP/SIERA + xERA/botERA), blended vs projection with a DYNAMIC weight w_season = IP/(IP+K) that grows with innings (K_SP=14, K_RP=20); plus a small rolling K-BB% trend nudge; plus a velo+CSW LEVEL adjustment (historical-panel recalibration).",
       "core_weights": {
