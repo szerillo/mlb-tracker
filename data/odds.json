@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T22:34:41.214679Z",
+  "generated_at": "2026-07-25T23:36:17.251608Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260725&periods=event",
   "date": "2026-07-25",
@@ -54,7 +54,7 @@
       "an_event_id": 292166,
       "matchup": "Arizona Diamondbacks @ Washington Nationals",
       "start_time": "2026-07-25T20:05:00.000Z",
-      "status": "Bot 8th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 118,
@@ -98,7 +98,7 @@
       "an_event_id": 292165,
       "matchup": "Los Angeles Angels @ San Francisco Giants",
       "start_time": "2026-07-25T20:05:00.000Z",
-      "status": "Top 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 115,
@@ -142,7 +142,7 @@
       "an_event_id": 292168,
       "matchup": "San Diego Padres @ Miami Marlins",
       "start_time": "2026-07-25T20:10:00.000Z",
-      "status": "Bot 7th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 125,
@@ -186,7 +186,7 @@
       "an_event_id": 292167,
       "matchup": "Toronto Blue Jays @ Boston Red Sox",
       "start_time": "2026-07-25T20:10:00.000Z",
-      "status": "Bot 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 100,
@@ -230,7 +230,7 @@
       "an_event_id": 292169,
       "matchup": "New York Yankees @ Philadelphia Phillies",
       "start_time": "2026-07-25T22:05:00.000Z",
-      "status": "Bot 2nd",
+      "status": "Top 6th",
       "moneyline": {
         "away": {
           "odds": -113,
@@ -274,7 +274,7 @@
       "an_event_id": 292170,
       "matchup": "Cleveland Guardians @ Tampa Bay Rays",
       "start_time": "2026-07-25T22:10:00.000Z",
-      "status": "Bot 2nd",
+      "status": "Bot 5th",
       "moneyline": {
         "away": {
           "odds": 105,
@@ -318,7 +318,7 @@
       "an_event_id": 292171,
       "matchup": "Chicago Cubs @ Pittsburgh Pirates",
       "start_time": "2026-07-25T22:40:00.000Z",
-      "status": "scheduled",
+      "status": "Top 4th",
       "moneyline": {
         "away": {
           "odds": 107,
@@ -354,14 +354,15 @@
           "line": 7.5,
           "book": "BetRivers"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824811,
       "an_event_id": 292172,
       "matchup": "Atlanta Braves @ Baltimore Orioles",
       "start_time": "2026-07-25T23:05:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 2nd",
       "moneyline": {
         "away": {
           "odds": -102,
@@ -397,57 +398,15 @@
           "line": 9,
           "book": "BetMGM"
         }
-      }
-    },
-    {
-      "game_pk": 824571,
-      "an_event_id": 292173,
-      "matchup": "Houston Astros @ Chicago White Sox",
-      "start_time": "2026-07-25T23:10:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 106,
-          "line": 0,
-          "book": "BetRivers"
-        },
-        "home": {
-          "odds": -120,
-          "line": 0,
-          "book": "FanDuel"
-        }
       },
-      "run_line": {
-        "away": {
-          "odds": 160,
-          "line": -1.5,
-          "book": "Fanatics"
-        },
-        "home": {
-          "odds": 168,
-          "line": -1.5,
-          "book": "FanDuel"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": -110,
-          "line": 8.5,
-          "book": "bet365"
-        },
-        "under": {
-          "odds": -103,
-          "line": 8.5,
-          "book": "BetRivers"
-        }
-      }
+      "odds_locked": true
     },
     {
       "game_pk": 823758,
       "an_event_id": 292174,
       "matchup": "Colorado Rockies @ Milwaukee Brewers",
       "start_time": "2026-07-25T23:10:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 2nd",
       "moneyline": {
         "away": {
           "odds": 205,
@@ -483,14 +442,59 @@
           "line": 9,
           "book": "BetMGM"
         }
-      }
+      },
+      "odds_locked": true
+    },
+    {
+      "game_pk": 824571,
+      "an_event_id": 292173,
+      "matchup": "Houston Astros @ Chicago White Sox",
+      "start_time": "2026-07-25T23:10:00.000Z",
+      "status": "Bot 2nd",
+      "moneyline": {
+        "away": {
+          "odds": 106,
+          "line": 0,
+          "book": "BetRivers"
+        },
+        "home": {
+          "odds": -120,
+          "line": 0,
+          "book": "FanDuel"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": 160,
+          "line": -1.5,
+          "book": "Fanatics"
+        },
+        "home": {
+          "odds": 168,
+          "line": -1.5,
+          "book": "FanDuel"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": -110,
+          "line": 8.5,
+          "book": "bet365"
+        },
+        "under": {
+          "odds": -103,
+          "line": 8.5,
+          "book": "BetRivers"
+        }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823679,
       "an_event_id": 292175,
       "matchup": "Athletics @ Minnesota Twins",
       "start_time": "2026-07-25T23:10:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 1st",
       "moneyline": {
         "away": {
           "odds": 125,
@@ -526,14 +530,15 @@
           "line": 10,
           "book": "BetRivers"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823600,
       "an_event_id": 292177,
       "matchup": "Los Angeles Dodgers @ New York Mets",
       "start_time": "2026-07-25T23:15:00.000Z",
-      "status": "scheduled",
+      "status": "Top 2nd",
       "moneyline": {
         "away": {
           "odds": -154,
@@ -569,14 +574,15 @@
           "line": 7,
           "book": "DraftKings"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823027,
       "an_event_id": 292178,
       "matchup": "Cincinnati Reds @ St. Louis Cardinals",
       "start_time": "2026-07-25T23:15:00.000Z",
-      "status": "scheduled",
+      "status": "Top 2nd",
       "moneyline": {
         "away": {
           "odds": -104,
@@ -612,14 +618,15 @@
           "line": 8,
           "book": "BetRivers"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 822869,
       "an_event_id": 292176,
       "matchup": "Seattle Mariners @ Texas Rangers",
       "start_time": "2026-07-25T23:15:00.000Z",
-      "status": "scheduled",
+      "status": "End 1st",
       "moneyline": {
         "away": {
           "odds": -110,
@@ -655,7 +662,8 @@
           "line": 7.5,
           "book": "BetMGM"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 822950,
@@ -670,16 +678,16 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": -134,
+          "odds": -130,
           "line": 0,
-          "book": "FanDuel"
+          "book": "BetRivers"
         }
       },
       "run_line": {
         "away": {
-          "odds": -185,
+          "odds": -190,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "BetMGM"
         },
         "home": {
           "odds": 172,
@@ -713,9 +721,9 @@
           "book": "BetMGM"
         },
         "home": {
-          "odds": -122,
+          "odds": -120,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Fanatics"
         }
       },
       "run_line": {
@@ -727,19 +735,19 @@
         "home": {
           "odds": 165,
           "line": -1.5,
-          "book": "bet365"
+          "book": "BetMGM"
         }
       },
       "total": {
         "over": {
-          "odds": -105,
+          "odds": 100,
           "line": 9,
-          "book": "FanDuel"
+          "book": "Fanatics"
         },
         "under": {
           "odds": 100,
           "line": 8.5,
-          "book": "Fanatics"
+          "book": "BetMGM"
         }
       }
     },
@@ -751,21 +759,21 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 120,
-          "line": 0,
-          "book": "BetMGM"
-        },
-        "home": {
-          "odds": -136,
+          "odds": 116,
           "line": 0,
           "book": "FanDuel"
+        },
+        "home": {
+          "odds": -130,
+          "line": 0,
+          "book": "bet365"
         }
       },
       "run_line": {
         "away": {
           "odds": -185,
           "line": 1.5,
-          "book": "BetMGM"
+          "book": "Fanatics"
         },
         "home": {
           "odds": 165,
@@ -780,9 +788,9 @@
           "book": "bet365"
         },
         "under": {
-          "odds": -105,
+          "odds": -102,
           "line": 8,
-          "book": "DraftKings"
+          "book": "BetMGM"
         }
       }
     },
@@ -818,9 +826,9 @@
       },
       "total": {
         "over": {
-          "odds": 100,
-          "line": 9,
-          "book": "BetMGM"
+          "odds": -118,
+          "line": 8.5,
+          "book": "FanDuel"
         },
         "under": {
           "odds": 102,
@@ -842,9 +850,9 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": 105,
+          "odds": 103,
           "line": 0,
-          "book": "BetMGM"
+          "book": "DraftKings"
         }
       },
       "run_line": {
@@ -885,14 +893,14 @@
           "book": "BetMGM"
         },
         "home": {
-          "odds": -126,
+          "odds": -125,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Fanatics"
         }
       },
       "run_line": {
         "away": {
-          "odds": -185,
+          "odds": -180,
           "line": 1.5,
           "book": "Fanatics"
         },
@@ -909,9 +917,9 @@
           "book": "FanDuel"
         },
         "under": {
-          "odds": -104,
+          "odds": 100,
           "line": 8.5,
-          "book": "DraftKings"
+          "book": "Fanatics"
         }
       }
     },
@@ -935,9 +943,9 @@
       },
       "run_line": {
         "away": {
-          "odds": 112,
+          "odds": 110,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "Fanatics"
         },
         "home": {
           "odds": -115,
@@ -971,9 +979,9 @@
           "book": "Fanatics"
         },
         "home": {
-          "odds": -190,
+          "odds": -184,
           "line": 0,
-          "book": "Fanatics"
+          "book": "FanDuel"
         }
       },
       "run_line": {
@@ -983,9 +991,9 @@
           "book": "Fanatics"
         },
         "home": {
-          "odds": 110,
+          "odds": 116,
           "line": -1.5,
-          "book": "Fanatics"
+          "book": "FanDuel"
         }
       },
       "total": {
@@ -997,7 +1005,7 @@
         "under": {
           "odds": -120,
           "line": 9.5,
-          "book": "Fanatics"
+          "book": "FanDuel"
         }
       }
     },
@@ -1011,7 +1019,7 @@
         "away": {
           "odds": 100,
           "line": 0,
-          "book": "bet365"
+          "book": "Caesars"
         },
         "home": {
           "odds": -108,
@@ -1023,7 +1031,7 @@
         "away": {
           "odds": 150,
           "line": -1.5,
-          "book": "Fanatics"
+          "book": "BetMGM"
         },
         "home": {
           "odds": 155,
@@ -1038,9 +1046,9 @@
           "book": "FanDuel"
         },
         "under": {
-          "odds": -115,
-          "line": 9.5,
-          "book": "BetMGM"
+          "odds": 101,
+          "line": 9,
+          "book": "DraftKings"
         }
       }
     },
@@ -1066,10 +1074,10 @@
         "away": {
           "odds": 110,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "BetMGM"
         },
         "home": {
-          "odds": -118,
+          "odds": -120,
           "line": -1.5,
           "book": "FanDuel"
         }
@@ -1095,7 +1103,7 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 136,
+          "odds": 124,
           "line": 0,
           "book": "FanDuel"
         },
@@ -1107,7 +1115,7 @@
       },
       "run_line": {
         "away": {
-          "odds": -152,
+          "odds": -162,
           "line": 1.5,
           "book": "FanDuel"
         },
@@ -1124,9 +1132,9 @@
           "book": "BetMGM"
         },
         "under": {
-          "odds": -100,
+          "odds": -105,
           "line": 10,
-          "book": "FanDuel"
+          "book": "Fanatics"
         }
       }
     },
@@ -1150,12 +1158,12 @@
       },
       "run_line": {
         "away": {
-          "odds": -180,
+          "odds": -185,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "bet365"
         },
         "home": {
-          "odds": 162,
+          "odds": 158,
           "line": -1.5,
           "book": "FanDuel"
         }
@@ -1183,7 +1191,7 @@
         "away": {
           "odds": -108,
           "line": 0,
-          "book": "DraftKings"
+          "book": "FanDuel"
         },
         "home": {
           "odds": -108,
@@ -1210,9 +1218,9 @@
           "book": "Fanatics"
         },
         "under": {
-          "odds": 100,
+          "odds": 103,
           "line": 7,
-          "book": "BetMGM"
+          "book": "DraftKings"
         }
       }
     },
@@ -1236,7 +1244,7 @@
       },
       "run_line": {
         "away": {
-          "odds": 160,
+          "odds": 165,
           "line": -1.5,
           "book": "Fanatics"
         },
@@ -1249,7 +1257,7 @@
       "total": {
         "over": {
           "odds": 100,
-          "line": 8.5,
+          "line": 8,
           "book": "Caesars"
         },
         "under": {
@@ -1279,21 +1287,21 @@
       },
       "run_line": {
         "away": {
-          "odds": -145,
+          "odds": -160,
           "line": 1.5,
           "book": "Fanatics"
         },
         "home": {
           "odds": 140,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "bet365"
         }
       },
       "total": {
         "over": {
-          "odds": 100,
-          "line": 8.5,
-          "book": "BetMGM"
+          "odds": -110,
+          "line": 8,
+          "book": "Fanatics"
         },
         "under": {
           "odds": -100,
