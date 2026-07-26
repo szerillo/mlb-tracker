@@ -3217,7 +3217,7 @@ function _apxEdgeBarF5(g){
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   let tot='<span class="apx-pill">No F5 total edge</span>';
-  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
+  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.53);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
@@ -3249,8 +3249,8 @@ function renderSheetEdgesHTML(game){
   const iA=ip(aO), iH=ip(hO);
   const eA=(sp.away_wp!=null&&iA!=null)?(sp.away_wp-iA)*100:null;
   const eH=(sp.home_wp!=null&&iH!=null)?(sp.home_wp-iH)*100:null;
-  const pOv=(sp.total!=null&&ovL!=null)?_pOverAt(sp.total,ovL):null;
-  const pUn=(sp.total!=null&&unL!=null)?(1-_pOverAt(sp.total,unL)):null;
+  const pOv=(sp.total!=null&&ovL!=null)?_pOverAt(sp.total,ovL,F5?1.53:1.50):null;
+  const pUn=(sp.total!=null&&unL!=null)?(1-_pOverAt(sp.total,unL,F5?1.53:1.50)):null;
   const iOv=ip(ovO), iUn=ip(unO);
   const eOv=(pOv!=null&&iOv!=null)?(pOv-iOv)*100:null;
   const eUn=(pUn!=null&&iUn!=null)?(pUn-iUn)*100:null;
@@ -3304,12 +3304,12 @@ const _TOT_SLOPE=[[4.5,6.0],[5,5.6],[5.5,5.4],[6,5.2],[6.5,5.0],[7,4.8],[7.5,4.7
 function _halfRunPct(L){if(L==null)return 4.6;const t=_TOT_SLOPE;if(L<=t[0][0])return t[0][1];if(L>=t[t.length-1][0])return t[t.length-1][1];for(let i=0;i<t.length-1;i++){if(L>=t[i][0]&&L<=t[i+1][0]){const f=(L-t[i][0])/(t[i+1][0]-t[i][0]);return t[i][1]+f*(t[i+1][1]-t[i][1]);}}return 4.6;}
 function _impliedFromOdds(o){ return o<0?(-o)/((-o)+100):100/(o+100); }
 function _breakeven(odds){ return odds==null?null:_impliedFromOdds(odds); }
-function _pOverAt(projTotal,line){ const v=_halfRunPct(line); let p=0.5+(projTotal-line)*(v/0.5)/100; return Math.max(0.02,Math.min(0.98,p)); }
-function totalEdgeInfo(projTotal,overLine,overOdds,underLine,underOdds){
+function _pOverAt(projTotal,line,k){ const p=pgPOver(line,projTotal,k||1.50); return (p==null)?null:Math.max(0.02,Math.min(0.98,p)); }
+function totalEdgeInfo(projTotal,overLine,overOdds,underLine,underOdds,k){
   if(projTotal==null) return null;
   let eO=null, oL=overLine, eU=null, uL=underLine;
-  if(overLine!=null&&overOdds!=null){ eO=(_pOverAt(projTotal,overLine)-_breakeven(overOdds))*100; }
-  if(underLine!=null&&underOdds!=null){ const pU=1-_pOverAt(projTotal,underLine); eU=(pU-_breakeven(underOdds))*100; }
+  if(overLine!=null&&overOdds!=null){ eO=(_pOverAt(projTotal,overLine,k)-_breakeven(overOdds))*100; }
+  if(underLine!=null&&underOdds!=null){ const pU=1-_pOverAt(projTotal,underLine,k); eU=(pU-_breakeven(underOdds))*100; }
   if(eO==null&&eU==null) return null;
   if(eU==null||(eO!=null&&eO>=eU)) return {lean:'Over',line:oL,edge:eO};
   return {lean:'Under',line:uL,edge:eU};
