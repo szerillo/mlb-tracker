@@ -76,6 +76,42 @@ def best_market(game: dict, market_type: str, side: str | None = None):
                 best = {"odds": odds, "value": e.get("value"), "book_id": bid}
     return best
 
+def best_total(game: dict):
+    """Best F5 over/under pinned to ONE consensus line so the juice pair is
+    always consistent (avoids over@7.5 / under@7.0 middles -> impossible pairs)."""
+    from collections import defaultdict
+    rows = []
+    for mkt_id, mkt in (game.get("markets") or {}).items():
+        try:
+            bid = int(mkt_id)
+        except (TypeError, ValueError):
+            continue
+        if bid not in REAL_BOOKS:
+            continue
+        for e in (mkt.get(PERIOD) or {}).get("total") or []:
+            sd = e.get("side"); ln = e.get("value"); od = e.get("odds")
+            if sd in ("over", "under") and ln is not None and od is not None:
+                rows.append((bid, sd, ln, od))
+    if not rows:
+        return None, None
+    both = defaultdict(set); allc = defaultdict(int); perbook = defaultdict(set)
+    for bid, sd, ln, od in rows:
+        perbook[(bid, ln)].add(sd); allc[ln] += 1
+    for (bid, ln), sides in perbook.items():
+        if "over" in sides and "under" in sides:
+            both[ln].add(bid)
+    L = max(both, key=lambda k: (len(both[k]), allc[k])) if both else max(allc, key=lambda k: allc[k])
+    bo = bu = None
+    for bid, sd, ln, od in rows:
+        if ln != L:
+            continue
+        if sd == "over" and (bo is None or is_better(od, bo["odds"])):
+            bo = {"odds": od, "value": L, "book_id": bid}
+        elif sd == "under" and (bu is None or is_better(od, bu["odds"])):
+            bu = {"odds": od, "value": L, "book_id": bid}
+    return bo, bu
+
+
 
 def _fmt(m):
     if not m:
@@ -134,8 +170,7 @@ def _pull(date):
 
         ml_away = best_market(g, "moneyline", side="away")
         ml_home = best_market(g, "moneyline", side="home")
-        tot_over = best_market(g, "total", side="over")
-        tot_under = best_market(g, "total", side="under")
+        tot_over, tot_under = best_total(g)
         # skip games with no F5 markets at all
         if not any([ml_away, ml_home, tot_over, tot_under]):
             continue

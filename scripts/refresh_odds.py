@@ -93,6 +93,46 @@ def best_market(game: dict, market_type: str, side: str | None = None) -> dict |
                 best = {"odds": odds, "value": e.get("value"), "book_id": bid}
     return best
 
+def best_total(game: dict):
+    """Best over/under for the totals market, PINNED TO ONE (consensus) line so
+    the juice pair is always internally consistent. Shopping over and under
+    independently could pull the best over at 7.5 and the best under at 7.0 on a
+    middled game -> impossible pairs like +105/+103 and miscalculated edges.
+    Pick the line the most books offer (both sides), then best price per side AT
+    THAT line."""
+    from collections import defaultdict
+    rows = []
+    for mkt_id, mkt in (game.get("markets") or {}).items():
+        try:
+            bid = int(mkt_id)
+        except (TypeError, ValueError):
+            continue
+        if bid not in REAL_BOOKS:
+            continue
+        for e in (mkt.get("event") or {}).get("total") or []:
+            s = e.get("side"); ln = e.get("value"); od = e.get("odds")
+            if s in ("over", "under") and ln is not None and od is not None:
+                rows.append((bid, s, ln, od))
+    if not rows:
+        return None, None
+    both = defaultdict(set); allc = defaultdict(int); perbook = defaultdict(set)
+    for bid, s, ln, od in rows:
+        perbook[(bid, ln)].add(s); allc[ln] += 1
+    for (bid, ln), sides in perbook.items():
+        if "over" in sides and "under" in sides:
+            both[ln].add(bid)
+    L = max(both, key=lambda k: (len(both[k]), allc[k])) if both else max(allc, key=lambda k: allc[k])
+    best_o = best_u = None
+    for bid, s, ln, od in rows:
+        if ln != L:
+            continue
+        if s == "over" and (best_o is None or is_better(od, best_o["odds"])):
+            best_o = {"odds": od, "value": L, "book_id": bid}
+        elif s == "under" and (best_u is None or is_better(od, best_u["odds"])):
+            best_u = {"odds": od, "value": L, "book_id": bid}
+    return best_o, best_u
+
+
 
 def _odds_should_run():
     """Odds refresh schedule. Runs at three fixed ET anchors — 8:00 PM,
@@ -189,8 +229,7 @@ def _pull_slate(date):
         ml_home = best_market(g, "moneyline", side="home")
         sp_away = best_market(g, "spread",    side="away")
         sp_home = best_market(g, "spread",    side="home")
-        tot_over  = best_market(g, "total", side="over")
-        tot_under = best_market(g, "total", side="under")
+        tot_over, tot_under = best_total(g)
 
         def _fmt(m):
             if not m: return None
