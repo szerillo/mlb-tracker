@@ -10206,6 +10206,9 @@ async function renderPlayerFuturesTab(){
       if(document.body.classList.contains('embed-mode') && _mk){
         document.querySelectorAll('#tab-player-futures .pf-section').forEach(s=>{ s.style.display=(s.id==='pf-'+_mk)?'':'none'; });
         const _note=document.querySelector('#tab-player-futures .pf-filter-note'); if(_note) _note.style.display='none';
+        // Single-market embed: give the one visible market the full width so
+        // longer names + Model/Market/Edge don't wrap in the half-width column.
+        const _grid=document.querySelector('#tab-player-futures .pf-grid'); if(_grid) _grid.style.gridTemplateColumns='1fr';
       }
     }catch(e){}
     PLAYER_FUTURES_RENDERED=true;
