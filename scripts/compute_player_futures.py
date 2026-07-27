@@ -856,6 +856,24 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
         for v in _name_variants(rec["name"]):
             if v not in odds_idx:
                 odds_idx[v] = rec
+    # Surname-fallback index. VegasInsider lists some players under a legal or
+    # alternate first name the model doesn't carry (e.g. "Francis Dingler" vs
+    # "Dillon Dingler", "Paul Abrams" vs "CJ Abrams", "Todd Early" vs "Connelly
+    # Early"), so the first-name variant map misses them and they lose their
+    # market line. When a candidate has no variant match, fall back to SURNAME —
+    # but only if that surname is unambiguous (exactly one such odds row AND one
+    # such scored candidate in this market), so we can never join two different
+    # players who happen to share a last name (e.g. the three "Bennett"s).
+    def _surname(n):
+        parts = _norm_name(n).split()
+        return parts[-1] if parts else ""
+    odds_by_surname = {}
+    for rec in merged.values():
+        odds_by_surname.setdefault(_surname(rec["name"]), []).append(rec)
+    scored_surname_n = {}
+    for x in scored:
+        sn = _surname(x["player"].get("name") or "")
+        scored_surname_n[sn] = scored_surname_n.get(sn, 0) + 1
     enriched = []
     for x in scored:
         nm = (x["player"].get("name") or "")
@@ -864,6 +882,11 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
             if v in odds_idx:
                 odds_rec = odds_idx[v]
                 break
+        if odds_rec is None:
+            sn = _surname(nm)
+            recs = odds_by_surname.get(sn, [])
+            if len(recs) == 1 and scored_surname_n.get(sn, 0) == 1:
+                odds_rec = recs[0]
         x["best_odds"]    = (odds_rec or {}).get("best_odds")
         x["best_book"]    = (odds_rec or {}).get("best_book")
         x["all_book_odds"]= (odds_rec or {}).get("all_book_odds", {})
@@ -965,7 +988,10 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
         _disp_mkt  = (_amer_to_prob(x.get("best_odds"))
                       if x.get("best_odds") is not None else market_p)
         _disp_edge = (p_mod - _disp_mkt) if _disp_mkt is not None else None
-        keep = (p_mod >= 0.01) or (_disp_edge is not None and _disp_edge >= 0.0005)
+        # Always surface at least the model's TOP 5 per market (ballot view —
+        # the user wants T-5 populated even when #4/#5 sit under 1%), plus
+        # anyone >=1%, plus sub-1% longshots the best price makes +EV.
+        keep = ((_rk + 1) <= 5) or (p_mod >= 0.01) or (_disp_edge is not None and _disp_edge >= 0.0005)
         if not keep:
             continue
         results.append({
