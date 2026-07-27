@@ -349,31 +349,53 @@ def main():
 
             ytd_stats = ytd_e.get("stats", {})
 
-            # EOS — additive for counting stats, weighted avg for rate stats
-            #       (weight = playing-time proxy = PA for hitters, IP for pitchers).
+            # EOS — additive for counting stats, PT-weighted for rate stats, with
+            # a validated ACTUAL-LEAN (Fable T1, 2015-24 LOSO panel): trust the
+            # player's in-season line over the regressed ROS projection, scaled by
+            # how much they've actually played. The sample-size stabilizer
+            #     e = LEAN_MAX * ytd_PT / (ytd_PT + K)
+            # self-scales with TIME OF YEAR — ~0 in April (tiny PT), ~full by
+            # August — and resets every season with PT, so future years auto-adjust
+            # with no calendar logic. Rate: shrink ROS toward YTD. Counting:
+            # re-project the ROS remainder from YTD pace. LEAN_MAX 0.6 (below
+            # Fable's proxy-ROS 0.75 — our 5-system ROS is sharper, earns a touch
+            # more trust). K = 250 PA / 70 IP.
             eos = {}
             pt_key = "pa" if side == "bat" else "ip"
             ytd_pt = ytd_stats.get(pt_key) or 0
             ros_pt = ros_blend.get(pt_key) or 0
             tot_pt = (ytd_pt or 0) + (ros_pt or 0)
             counting = {"r","hr","rbi","sb","pa","h","k","bb","w","sv","ip","qs","war"}
+            LEAN_MAX = 0.6
+            K_STAB   = 250.0 if side == "bat" else 70.0
+            lean = LEAN_MAX * (ytd_pt / (ytd_pt + K_STAB)) if ytd_pt else 0.0
             for stat in stat_map.keys():
                 y = ytd_stats.get(stat); r = ros_blend.get(stat)
-                if stat in counting:
-                    s = (y or 0) + (r or 0) if (y is not None or r is not None) else None
+                if stat == pt_key:
+                    eos[stat] = round((ytd_pt or 0) + (ros_pt or 0), 3)
+                elif stat in counting:
+                    # WAR stays additive (YTD + ROS): pace-extrapolating WAR would
+                    # over-trust unsustainable defensive/positional value (Fable T6:
+                    # the lean must NOT manufacture a defense bonus). Other counting
+                    # stats re-project their ROS remainder from YTD pace.
+                    if stat != "war" and lean and y is not None and r is not None and ytd_pt:
+                        r_eff = (1 - lean) * r + lean * ((y / ytd_pt) * ros_pt)
+                        s = y + r_eff
+                    else:
+                        s = (y or 0) + (r or 0) if (y is not None or r is not None) else None
                     eos[stat] = round(s, 3) if isinstance(s, float) else s
                 else:
-                    # PT-weighted rate
+                    # PT-weighted rate, ROS shrunk toward YTD by the effective lean
                     if y is None and r is None:
                         eos[stat] = None
                     elif y is None:
                         eos[stat] = r
                     elif r is None:
                         eos[stat] = y
-                    elif tot_pt:
-                        eos[stat] = round((y * (ytd_pt or 0) + r * (ros_pt or 0)) / tot_pt, 4)
                     else:
-                        eos[stat] = round((y + r) / 2, 4)
+                        r_eff = (1 - lean) * r + lean * y
+                        eos[stat] = (round((y * (ytd_pt or 0) + r_eff * (ros_pt or 0)) / tot_pt, 4)
+                                     if tot_pt else round((y + r_eff) / 2, 4))
 
             merged[k] = {
                 "name": name, "team_abbr": team_abbr, "league": league,
