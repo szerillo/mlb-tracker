@@ -73,6 +73,9 @@
 
   <div id="games"><div class="empty">Loading games…</div></div>
 
+  <div class="note">🏆 Player Futures — award models (one embed per market)</div>
+  <div id="pfCards"></div>
+
   <div class="note">Optional — only needed for the <b>Auto-grow w/ script</b> layout if you prefer one shared listener instead of the per-embed one.</div>
   <pre id="listener"></pre>
   <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
@@ -102,13 +105,14 @@ window.addEventListener('message', function(e){
 <\/script>`;
 $("#listener").textContent = LISTENER;
 
-function iframeFor(kind, g){
+function iframeFor(kind, g, mkt){
   const mode = $("#mode").value;
   const date = $("#date").value;
   const hIn = parseInt($("#height").value,10);
-  const h = (hIn && hIn>=300) ? hIn : (kind==='slate'?1200:900);
+  const h = (hIn && hIn>=300) ? hIn : (kind==='slate'?1200:kind==='pf'?820:900);
   let src, title, id;
   if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
+  else if(kind==='pf'){ src = BASE+`?embed=player-futures&market=${mkt}`; title="BARTOLO "+mkt+" model"; id="bartolo-pf-"+mkt; }
   else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
 
   // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
@@ -132,7 +136,7 @@ function iframeFor(kind, g){
   // can't render over it or force it into a fixed aspect-ratio box.
   const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
   const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
-  const initH = kind==='slate' ? 1900 : 1150;
+  const initH = kind==='slate' ? 1900 : kind==='pf' ? 1050 : 1150;
   const wid = id+"-wrap";
   return `<div class="bartolo-embed" id="${wid}" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">
   <iframe id="${id}" src="${src}" scrolling="no" title="${title}" style="${IF(initH)}"></iframe>
@@ -194,6 +198,21 @@ function render(){
     </div>
   </div>`).join('');
 }
+const PF_MARKETS = [
+  ['AL_MVP','AL MVP'], ['NL_MVP','NL MVP'],
+  ['AL_CY','AL Cy Young'], ['NL_CY','NL Cy Young'],
+  ['AL_ROY','AL Rookie of the Year'], ['NL_ROY','NL Rookie of the Year'],
+];
+function renderPF(){
+  const box=document.getElementById('pfCards'); if(!box) return;
+  box.innerHTML = PF_MARKETS.map(function(m){ return `<div class="card">
+    <div><div class="m">🏆 ${m[1]}</div><div class="meta">award model · model % · market · edge</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${BASE}?embed=player-futures&market=${m[0]}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="pf" data-mkt="${m[0]}">Copy</button>
+    </div>
+  </div>`; }).join('');
+}
 let SHOT_PK=null;
 function renderShotGames(){
   const box=document.getElementById('shotGames'); if(!box) return;
@@ -226,12 +245,13 @@ document.addEventListener('click', e=>{
   if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
   const kind=b.dataset.kind; if(!kind) return;
   const g = kind==='game' ? GAMES[+b.dataset.i] : null;
-  copyText(iframeFor(kind,g), b);
+  copyText(iframeFor(kind,g,b.dataset.mkt), b);
 });
 $("#date").value=todayISO();
 $("#date").addEventListener('change',load);
 $("#mode").addEventListener('change',()=>{}); // affects next copy
 $("#reload").addEventListener('click',load);
+renderPF();
 load();
 </script>
 </body>
