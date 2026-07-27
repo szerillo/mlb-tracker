@@ -221,6 +221,24 @@ def _resolve_player_team(name, cache, season=None):
 
 
 # ── Main ────────────────────────────────────────────────────────────────────
+def _dedupe_market(players):
+    """Collapse duplicate rows for the same normalized name, keeping the row with
+    the most book prices (best consensus). CY markets legitimately carry a
+    consensus row + a stray single-book row per pitcher; MVP/ROY do not.
+    Returns (deduped_list, n_removed)."""
+    best = {}; order = []
+    for p in players:
+        k = _norm_name(p.get("name"))
+        if not k:
+            continue
+        if k not in best:
+            best[k] = p; order.append(k)
+        elif len(p.get("all_book_odds") or {}) > len(best[k].get("all_book_odds") or {}):
+            best[k] = p
+    deduped = [best[k] for k in order]
+    return deduped, len(players) - len(deduped)
+
+
 def main():
     cache = _load_cache()
     markets_out = {}
@@ -263,13 +281,35 @@ def main():
 
     _save_cache(cache)
 
-    # PRESERVE-ON-EMPTY: don't wipe a good file with an empty scrape.
-    has_any = any(m.get("n_players", 0) for m in markets_out.values())
-    if not has_any:
+    # ── GUARD 1: de-dupe every market (keep the most-books row per player). ──
+    WIN_MARKETS = ("AL_MVP", "NL_MVP", "AL_ROY", "NL_ROY")
+    win_raw = win_removed = 0
+    for key, m in markets_out.items():
+        raw = m.get("players") or []
+        deduped, removed = _dedupe_market(raw)
+        m["players"] = deduped
+        m["n_players"] = len(deduped)
+        if key in WIN_MARKETS:
+            win_raw += len(raw); win_removed += removed
+
+    # ── GUARD 2: reject-on-corrupt. MVP/ROY list each player exactly once on a
+    #    healthy page; duplicates there mean a doubled/cached page carrying stale
+    #    lines (CY's consensus+single-book rows are excluded from this test).
+    #    Don't overwrite a good file — leave the prior file untouched. ──
+    win_dup_ratio = (win_removed / win_raw) if win_raw else 0.0
+    reject = None
+    if not any(m.get("n_players", 0) for m in markets_out.values()):
+        reject = "scrape empty"
+    elif win_dup_ratio > 0.10:
+        reject = (f"{win_removed} duplicate MVP/ROY rows "
+                  f"({win_dup_ratio:.0%}) — doubled/cached page")
+    if reject:
         if OUTPUT.exists():
-            print("[player-futures-odds] scrape empty — leaving prior file untouched",
+            print(f"[player-futures-odds] REJECT ({reject}) — leaving prior file untouched",
                   file=sys.stderr)
             return 0
+        print(f"[player-futures-odds] WARN ({reject}) but no prior file — writing anyway",
+              file=sys.stderr)
 
     # Distinct books across the whole pull
     books_seen = sorted({
