@@ -942,7 +942,7 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
                          for i in range(len(pool))]
 
     results = []
-    for x, p_mod in zip(pool, model_p):
+    for _rk, (x, p_mod) in enumerate(zip(pool, model_p)):
         market_p = x.get("consensus_prob")
         edge = (p_mod - market_p) if market_p is not None else None
         if   edge is None:       stars = ""
@@ -956,10 +956,20 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
         # (good +EV value) — important for ROY where value rookies sit at long
         # odds. The edge floor (0.0005) keeps a +0.0%-rounding edge from
         # sneaking in.
-        keep = (p_mod >= 0.01) or (edge is not None and edge >= 0.0005)
+        # Sub-1% inclusion uses the DISPLAYED edge — model_p vs the best
+        # available price's raw implied prob — so the value section matches
+        # exactly what the card shows (everyone >=1%, plus any longshot the best
+        # price makes +EV). The consensus `edge` above is stricter (best price
+        # is the longest, so its implied prob <= consensus), which was dropping
+        # genuine +EV longshots the reader would see as value.
+        _disp_mkt  = (_amer_to_prob(x.get("best_odds"))
+                      if x.get("best_odds") is not None else market_p)
+        _disp_edge = (p_mod - _disp_mkt) if _disp_mkt is not None else None
+        keep = (p_mod >= 0.01) or (_disp_edge is not None and _disp_edge >= 0.0005)
         if not keep:
             continue
         results.append({
+            "rank":         _rk + 1,   # true rank within the full scored pool
             "name":         x["player"].get("name"),
             "team_abbr":    x["player"].get("team_abbr"),
             "league":       x["player"].get("league"),
@@ -987,6 +997,107 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
         "calibrated_against_n_books": len(cal_pool),
         "candidates":   results,
     }
+
+
+
+# ── Display enrichment: per-category current/projected values + league %ile ─
+# Adds a `cats` list to every rendered candidate carrying the MODEL-WEIGHTED
+# award categories, each with its current (YTD) and projected (EOS) value plus
+# a percentile vs the season's qualified cohort (hitters proj PA>=400 /
+# pitchers proj IP>=120), computed for BOTH phases so the frontend can re-grade
+# when the user flips Current<->Projected. Two-way players (Ohtani) get their
+# WAR split into Bat WAR + Pit WAR bars. Purely additive — no existing field is
+# touched, so the change is backward compatible with any current consumer.
+_DISP_MVP_CATS = [("war","WAR",False),("ops","OPS",False),("hr","HR",False),
+                  ("r","R",False),("rbi","RBI",False),("sb","SB",False)]
+_DISP_CY_CATS  = [("war","WAR",False),("era","ERA",True),("k","K",False),
+                  ("k_bb_pct","K-BB%",False),("w","W",False),("whip","WHIP",True),
+                  ("ip","IP",False)]
+_DISP_ROY_HIT  = [("war","WAR",False),("r","R",False),("rbi","RBI",False),
+                  ("h","H",False),("hr","HR",False),("ops","OPS",False)]
+_DISP_ROY_PIT  = [("war","WAR",False),("w","W",False),("k","K",False),
+                  ("ip","IP",False),("era","ERA",True)]
+
+
+def _phase_val(player, phase, stat):
+    d = (player or {}).get(phase) or {}
+    return d.get(stat)
+
+
+def _pctile(val, pool, lower_better):
+    vals = [v for v in pool
+            if isinstance(v, (int, float)) and not (isinstance(v, float) and math.isnan(v))]
+    if val is None or not vals:
+        return None
+    if lower_better:
+        c = sum(1 for v in vals if v > val)   # lower value -> more of pool above -> higher %ile
+    else:
+        c = sum(1 for v in vals if v < val)
+    return round(100.0 * c / len(vals))
+
+
+def _enrich_display(out_markets, hitters, pitchers):
+    def projpa(pl): return _phase_val(pl, "eos", "pa") or _phase_val(pl, "ytd", "pa") or 0
+    def projip(pl): return _phase_val(pl, "eos", "ip") or _phase_val(pl, "ytd", "ip") or 0
+    hit_cohort = [h for h in hitters.values() if (projpa(h) or 0) >= 400]
+    pit_cohort = [p for p in pitchers.values() if (projip(p) or 0) >= 120]
+
+    def _pool(cohort, stat):
+        proj = [(_phase_val(x, "eos", stat) if _phase_val(x, "eos", stat) is not None
+                 else _phase_val(x, "ytd", stat)) for x in cohort]
+        cur  = [_phase_val(x, "ytd", stat) for x in cohort]
+        return proj, cur
+
+    HSTATS = {"war", "ops", "hr", "r", "rbi", "sb", "h"}
+    PSTATS = {"war", "era", "k", "k_bb_pct", "w", "whip", "ip"}
+    HP = {s: _pool(hit_cohort, s) for s in HSTATS}
+    PP = {s: _pool(pit_cohort, s) for s in PSTATS}
+
+    hidx, pidx = {}, {}
+    for h in hitters.values():
+        hidx[(_norm_name(h.get("name") or ""), h.get("league"))] = h
+    for p in pitchers.values():
+        pidx[(_norm_name(p.get("name") or ""), p.get("league"))] = p
+
+    def _cell(stat, label, lower, rec, side):
+        cur  = _phase_val(rec, "ytd", stat)
+        proj = _phase_val(rec, "eos", stat)
+        if proj is None:
+            proj = cur
+        proj_pool, cur_pool = (HP.get(stat) if side == "hit" else PP.get(stat)) or (None, None)
+        return {
+            "key": stat, "label": label,
+            "cur": round(cur, 4) if isinstance(cur, float) else cur,
+            "proj": round(proj, 4) if isinstance(proj, float) else proj,
+            "cur_pct":  _pctile(cur,  cur_pool,  lower) if cur_pool  else None,
+            "proj_pct": _pctile(proj, proj_pool, lower) if proj_pool else None,
+            "lower_better": lower,
+        }
+
+    for mkt, payload in out_markets.items():
+        is_mvp = mkt.endswith("_MVP"); is_cy = mkt.endswith("_CY"); is_roy = mkt.endswith("_ROY")
+        for cand in payload.get("candidates", []):
+            nm = _norm_name(cand.get("name") or ""); lg = cand.get("league")
+            side = "pit" if cand.get("p_fip") is not None else "hit"
+            hrec = hidx.get((nm, lg)); prec = pidx.get((nm, lg))
+            twoway = bool(is_mvp and hrec and prec and (_phase_val(prec, "eos", "ip") or 0) >= 50)
+            rec = (hrec if side == "hit" else prec) or hrec or prec
+            if is_mvp:
+                spec = _DISP_MVP_CATS if side == "hit" else _DISP_CY_CATS
+            elif is_cy:
+                spec = _DISP_CY_CATS
+            else:
+                spec = _DISP_ROY_PIT if side == "pit" else _DISP_ROY_HIT
+            cats = []
+            for stat, label, lower in spec:
+                if stat == "war" and twoway:
+                    cats.append(_cell("war", "Bat WAR", False, hrec, "hit"))
+                    cats.append(_cell("war", "Pit WAR", False, prec, "pit"))
+                else:
+                    cats.append(_cell(stat, label, lower, rec, side))
+            cand["twoway"] = twoway
+            cand["cats"] = cats
+    return
 
 
 # ── Main ───────────────────────────────────────────────────────────────────
@@ -1062,6 +1173,8 @@ def main():
         out_markets[roy_key] = _render_market(
             roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
             top_n=50, alpha=1.35, sharpen=0.75)
+
+    _enrich_display(out_markets, hitters, pitchers)
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
