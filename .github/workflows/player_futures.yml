@@ -48,10 +48,14 @@ jobs:
       - name: Refresh player WAR projections (FG 5-system ROS + YTD)
         run: python scripts/refresh_player_war_projections.py
         continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
 
       - name: Compute player futures awards model
         run: python scripts/compute_player_futures.py
         continue-on-error: true
+        env:
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
 
       - name: Commit changed data (if any)
         run: |
