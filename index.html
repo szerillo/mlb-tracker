@@ -1872,7 +1872,8 @@
   .pfx-name { font-weight:700; font-size:0.9rem; color:var(--text); }
   .pfx-tw { background:rgba(90,150,255,0.16); color:#8fb4ff; font-size:0.58rem; font-weight:700; border-radius:4px; padding:1px 4px; letter-spacing:0.03em; margin-left:6px; vertical-align:middle; }
   .pfx-mets { display:flex; align-items:center; gap:14px; margin-left:auto; }
-  .pfx-met { display:flex; flex-direction:column; align-items:flex-end; line-height:1.1; }
+  .pfx-met { display:flex; flex-direction:column; align-items:flex-end; line-height:1.1; min-width:54px; }
+  .pfx-met.edge { min-width:60px; }
   .pfx-met .pfx-k { color:var(--muted); font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em; }
   .pfx-met .pfx-p { font-weight:700; font-variant-numeric:tabular-nums; font-size:0.86rem; color:var(--text); font-family:var(--mono,monospace); }
   .pfx-met.mk .pfx-p { color:var(--muted); }
@@ -1881,7 +1882,12 @@
   .pfx-edge.pos { color:var(--tier-good,#3fb950); background:rgba(63,185,80,0.13); }
   .pfx-edge.neg { color:var(--tier-worst,#e5534b); background:rgba(229,83,75,0.13); }
   .pfx-edge.neu { color:var(--muted); }
-  .pfx-prof { padding:2px 10px 10px; border-top:1px solid var(--border); }
+  .pfx-prof { display:none; padding:2px 10px 10px; border-top:1px solid var(--border); }
+  .pfx-card.open .pfx-prof { display:block; }
+  .pfx-card.has-prof .pfx-top { cursor:pointer; }
+  .pfx-chev { color:var(--muted); font-size:0.72rem; margin-left:3px; flex:none; align-self:center; transition:transform .15s; }
+  .pfx-card.open .pfx-chev { transform:rotate(90deg); color:var(--text); }
+  .pfx-chev-off { visibility:hidden; }
   .pfx-scale { display:flex; align-items:center; font-size:0.52rem; font-weight:700; letter-spacing:0.03em; color:var(--muted); margin:7px 0 2px; padding-right:46px; }
   .pfx-scale .pfx-sp { width:58px; }
   .pfx-scale .pfx-mid { flex:1; display:flex; justify-content:space-between; }
@@ -10122,7 +10128,10 @@ function _pfCard(cand, rankTxt, isVal){
   const eTxt = edge==null ? '—' : (edge>=0?'+':'')+_pfPc(edge);
   const logo = (typeof teamLogoByAbbr==='function') ? teamLogoByAbbr(cand.team_abbr,18) : '';
   const tw = cand.twoway ? '<span class="pfx-tw">2-WAY</span>' : '';
-  let h = '<div class="pfx-card'+(isVal?' val':'')+'">'
+  const hasCats = (cand.cats||[]).length>0;
+  const open = PF_DETAIL==='detailed';
+  const chev = '<span class="pfx-chev'+(hasCats?'':' pfx-chev-off')+'">\u25B8</span>';
+  let h = '<div class="pfx-card'+(isVal?' val':'')+(hasCats?' has-prof':'')+(open?' open':'')+'">'
     + '<div class="pfx-top">'
     +   '<span class="pfx-rk">'+rankTxt+'</span>'
     +   '<span class="pfx-logo">'+logo+'</span>'
@@ -10130,10 +10139,11 @@ function _pfCard(cand, rankTxt, isVal){
     +   '<div class="pfx-mets">'
     +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(mp)+'</span><span class="pfx-o">'+_pfP2Odds(mp)+'</span></div>'
     +     '<div class="pfx-met mk"><span class="pfx-k">Market</span><span class="pfx-p">'+_pfPc(mktP)+'</span><span class="pfx-o">'+_pfOddsStr(mktOdds)+'</span></div>'
-    +     '<div class="pfx-met"><span class="pfx-k">Edge</span><span class="pfx-edge '+eCls+'">'+eTxt+'</span></div>'
+    +     '<div class="pfx-met edge"><span class="pfx-k">Edge</span><span class="pfx-edge '+eCls+'">'+eTxt+'</span></div>'
     +   '</div>'
+    +   chev
     + '</div>';
-  if(PF_DETAIL==='detailed' && (cand.cats||[]).length){
+  if(hasCats){
     h += '<div class="pfx-prof"><div class="pfx-scale"><span class="pfx-sp"></span>'
       + '<span class="pfx-mid"><span class="poor">POOR</span><span>AVG</span><span class="great">GREAT</span></span></div>'
       + cand.cats.map(_pfBar).join('') + '</div>';
@@ -10146,14 +10156,20 @@ function _pfRenderCards(){
     const host = document.querySelector('.pfx-cards[data-mkt="'+mkt+'"]');
     if(!host) continue;
     const cands = payload.candidates||[];
-    const cont = cands.filter(c=>c.model_p>=0.01);
-    const val  = cands.filter(c=>c.model_p<0.01);
+    const inMain = c => c.model_p>=0.01 || (c.rank!=null && c.rank<=5);
+    const cont = cands.filter(inMain);
+    const val  = cands.filter(c=>!inMain(c));
     let h = cont.map((c,i)=>_pfCard(c, '#'+(c.rank!=null?c.rank:(i+1)), false)).join('');
     if(val.length){
       h += '<div class="pfx-vsec">Value · under 1% but +edge</div>';
       h += val.map(c=>_pfCard(c, '#'+(c.rank!=null?c.rank:'?'), true)).join('');
     }
     host.innerHTML = h || '<div class="pfx-empty">No qualifying candidates.</div>';
+    host.onclick = function(e){
+      const top = e.target.closest('.pfx-top'); if(!top) return;
+      const card = top.parentElement;
+      if(card && card.classList.contains('has-prof')) card.classList.toggle('open');
+    };
     const sub = document.getElementById('pf-'+mkt+'-sub');
     if(sub){
       const poolTxt = mkt.endsWith('_CY') ? 'qualified starters (IP≥120)'
