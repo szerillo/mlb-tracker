@@ -1052,11 +1052,7 @@ def main():
         cy_scored = _score_cy(cy_pool)
         out_markets[cy_key] = _render_market(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            # Fable T3 (2015-24 panel): CY favorites are upset often enough that
-            # alpha=1.85 was systematically OVER-confident. Softened to the least-
-            # sharp of the three markets (< MVP 1.28, ROY 1.35), per the validated
-            # ordering. Re-fit once a full season of (alpha, date) odds is logged.
-            top_n=70, alpha=1.25)
+            top_n=70, alpha=1.85)
 
         # ROY
         roy_key = f"{league}_ROY"

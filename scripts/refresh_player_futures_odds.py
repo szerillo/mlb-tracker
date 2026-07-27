@@ -325,23 +325,6 @@ def main():
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(payload, indent=2))
-
-    # ── Append-only odds HISTORY (unblocks the entry-vs-close CLV test, Fable T4).
-    #    One compact line per accepted snapshot: {ts, market -> {norm_name: best}}.
-    #    Only reached on a clean (de-duped, non-rejected) scrape, so the archive
-    #    never ingests a corrupt page. ──
-    try:
-        snap = {"ts": payload["generated_at"], "markets": {
-            k: {_norm_name(pl["name"]): pl.get("best_odds")
-                for pl in (m.get("players") or []) if pl.get("best_odds") is not None}
-            for k, m in markets_out.items()}}
-        HISTORY = REPO_ROOT / "data" / "futures_odds_history.jsonl"
-        with open(HISTORY, "a") as fh:
-            fh.write(json.dumps(snap, separators=(",", ":")) + "\n")
-        print(f"[player-futures-odds] archived snapshot -> {HISTORY.name}", file=sys.stderr)
-    except Exception as e:
-        print(f"[player-futures-odds] archive skipped ({e})", file=sys.stderr)
-
     print(f"[player-futures-odds] wrote {len(markets_out)} markets → {OUTPUT}",
           file=sys.stderr)
     return 0
