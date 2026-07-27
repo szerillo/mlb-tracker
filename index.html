@@ -1853,6 +1853,48 @@
   /* Edge value + stars never wrap to two lines on narrow PF columns. */
   .pf-edge-row { white-space: nowrap; }
 
+  /* ── Player Futures cards (redesign) ── */
+  .pfx-controls { display:flex; gap:10px; margin:6px 0; flex-wrap:wrap; }
+  .pfx-seg { display:inline-flex; background:var(--panel); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .pfx-seg button { background:none; border:0; color:var(--muted); padding:5px 12px; font-size:0.74rem; font-weight:600; cursor:pointer; }
+  .pfx-seg button.on { background:rgba(255,255,255,0.08); color:var(--text); }
+  .pfx-cards { display:flex; flex-direction:column; gap:6px; }
+  .pfx-vsec { color:var(--muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.05em; margin:8px 2px 3px; display:flex; align-items:center; gap:8px; }
+  .pfx-vsec::after { content:""; flex:1; height:1px; background:var(--border); }
+  .pfx-empty { color:var(--muted); font-size:0.8rem; padding:8px 2px; }
+  .pfx-card { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+  .pfx-card.val { background:rgba(47,191,106,0.05); border-color:rgba(47,191,106,0.22); }
+  .pfx-top { display:flex; align-items:center; gap:7px; padding:8px 10px; flex-wrap:wrap; }
+  .pfx-rk { color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums; min-width:26px; font-size:0.82rem; font-family:var(--mono,monospace); }
+  .pfx-card.val .pfx-rk { color:#6f9f78; }
+  .pfx-logo { display:inline-flex; align-items:center; }
+  .pfx-logo img { vertical-align:middle; }
+  .pfx-name { font-weight:700; font-size:0.9rem; color:var(--text); }
+  .pfx-tw { background:rgba(90,150,255,0.16); color:#8fb4ff; font-size:0.58rem; font-weight:700; border-radius:4px; padding:1px 4px; letter-spacing:0.03em; margin-left:6px; vertical-align:middle; }
+  .pfx-mets { display:flex; align-items:center; gap:14px; margin-left:auto; }
+  .pfx-met { display:flex; flex-direction:column; align-items:flex-end; line-height:1.1; }
+  .pfx-met .pfx-k { color:var(--muted); font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .pfx-met .pfx-p { font-weight:700; font-variant-numeric:tabular-nums; font-size:0.86rem; color:var(--text); font-family:var(--mono,monospace); }
+  .pfx-met.mk .pfx-p { color:var(--muted); }
+  .pfx-met .pfx-o { color:var(--muted); font-size:0.64rem; font-variant-numeric:tabular-nums; font-family:var(--mono,monospace); }
+  .pfx-edge { font-weight:700; font-variant-numeric:tabular-nums; border-radius:5px; padding:3px 6px; font-size:0.82rem; font-family:var(--mono,monospace); }
+  .pfx-edge.pos { color:var(--tier-good,#3fb950); background:rgba(63,185,80,0.13); }
+  .pfx-edge.neg { color:var(--tier-worst,#e5534b); background:rgba(229,83,75,0.13); }
+  .pfx-edge.neu { color:var(--muted); }
+  .pfx-prof { padding:2px 10px 10px; border-top:1px solid var(--border); }
+  .pfx-scale { display:flex; align-items:center; font-size:0.52rem; font-weight:700; letter-spacing:0.03em; color:var(--muted); margin:7px 0 2px; padding-right:46px; }
+  .pfx-scale .pfx-sp { width:58px; }
+  .pfx-scale .pfx-mid { flex:1; display:flex; justify-content:space-between; }
+  .pfx-scale .poor { color:#5f7fce; } .pfx-scale .great { color:#e0574f; }
+  .pfx-brow { display:flex; align-items:center; gap:7px; margin:2px 0; }
+  .pfx-blab { width:58px; text-align:right; color:var(--muted); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.02em; flex:none; }
+  .pfx-trk { position:relative; flex:1; height:12px; background:rgba(255,255,255,0.06); border-radius:6px; }
+  .pfx-tick { position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:rgba(255,255,255,0.18); }
+  .pfx-fill { position:absolute; left:0; top:0; bottom:0; border-radius:6px; }
+  .pfx-dot { position:absolute; top:50%; transform:translate(-50%,-50%); width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.56rem; font-weight:800; font-variant-numeric:tabular-nums; box-shadow:0 0 0 2px var(--panel); }
+  .pfx-bval { width:44px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; font-size:0.76rem; flex:none; font-family:var(--mono,monospace); color:var(--text); }
+  @media (max-width:520px){ .pfx-mets{ gap:9px; width:100%; justify-content:space-between; margin-left:0; margin-top:3px; } .pfx-name{ flex:1; } .pfx-blab{ width:48px; } .pfx-bval{ width:38px; } }
+
   /* ────────── Luck Ratings tab ────────── */
   .luck-header { padding: 0 1rem; }
   .luck-header h2 { margin: 1rem 0 0.25rem; font-size: 1.4rem; font-weight: 700; }
@@ -2517,38 +2559,42 @@
   <section id="tab-player-futures" class="tab-content" hidden>
     <div class="pf-toolbar">
       <span class="muted" id="pf-updated">Loading…</span>
-      <div class="pf-filter-note">Showing candidates with a <b>&ge;1% model chance</b> to win, plus longshots with a <b>positive EV edge</b> vs. the market.</div>
+      <div class="pfx-controls">
+        <div class="pfx-seg" id="pfx-detail"><button data-v="compact" class="on">Compact</button><button data-v="detailed">Detailed</button></div>
+        <div class="pfx-seg" id="pfx-phase"><button data-v="proj" class="on">Projected</button><button data-v="cur">Current</button></div>
+      </div>
+      <div class="pf-filter-note">Everyone with a <b>&ge;1% model chance</b>, plus sub-1% names carrying a <b>+EV edge</b> shown at their true model rank. Detailed adds percentile bars for the categories the model weights.</div>
     </div>
     <div class="pf-grid">
       <div class="pf-section" id="pf-AL_MVP">
         <h3>AL MVP</h3>
         <div class="pf-sub" id="pf-AL_MVP-sub"></div>
-        <table class="pf-table" data-mkt="AL_MVP"></table>
+        <div class="pfx-cards" data-mkt="AL_MVP"></div>
       </div>
       <div class="pf-section" id="pf-NL_MVP">
         <h3>NL MVP</h3>
         <div class="pf-sub" id="pf-NL_MVP-sub"></div>
-        <table class="pf-table" data-mkt="NL_MVP"></table>
+        <div class="pfx-cards" data-mkt="NL_MVP"></div>
       </div>
       <div class="pf-section" id="pf-AL_CY">
         <h3>AL Cy Young</h3>
         <div class="pf-sub" id="pf-AL_CY-sub"></div>
-        <table class="pf-table" data-mkt="AL_CY"></table>
+        <div class="pfx-cards" data-mkt="AL_CY"></div>
       </div>
       <div class="pf-section" id="pf-NL_CY">
         <h3>NL Cy Young</h3>
         <div class="pf-sub" id="pf-NL_CY-sub"></div>
-        <table class="pf-table" data-mkt="NL_CY"></table>
+        <div class="pfx-cards" data-mkt="NL_CY"></div>
       </div>
       <div class="pf-section" id="pf-AL_ROY">
         <h3>AL Rookie of the Year</h3>
         <div class="pf-sub" id="pf-AL_ROY-sub"></div>
-        <table class="pf-table" data-mkt="AL_ROY"></table>
+        <div class="pfx-cards" data-mkt="AL_ROY"></div>
       </div>
       <div class="pf-section" id="pf-NL_ROY">
         <h3>NL Rookie of the Year</h3>
         <div class="pf-sub" id="pf-NL_ROY-sub"></div>
-        <table class="pf-table" data-mkt="NL_ROY"></table>
+        <div class="pfx-cards" data-mkt="NL_ROY"></div>
       </div>
     </div>
   </section>
@@ -10024,122 +10070,132 @@ function _renderLuckTable(root) {
     });
   });
 }
-// Module-level odds helpers so PF_COLS (defined at module scope) can render
-// stacked Fair % / Market % cells showing both percentage and American odds —
-// mirrors Team Futures. Fair % → projected American via implied-prob inversion
-// clamped to [0.2, 99.8] to avoid divide-by-zero at the extremes.
-function _pfPctToAmer(p) {
-  if (p == null) return null;
-  const q = Math.max(0.2, Math.min(99.8, p));
-  if (q === 50) return 100;
-  if (q > 50)   return Math.round(-(q / (100 - q)) * 100);
-  return Math.round(((100 - q) / q) * 100);
+// ============================================================================
+// PLAYER FUTURES — card layout: contenders (>=1% model) ranked by win prob,
+// then sub-1% names carrying a +EV edge shown at their TRUE model rank. Compact
+// shows just the header (player · model · market · edge); Detailed drops in
+// Savant-style percentile bars for the categories the award model weights.
+// Current<->Projected re-grades the bars against the same qualified cohort.
+// ============================================================================
+let PF_DATA = null;
+let PF_DETAIL = 'compact';   // 'compact' | 'detailed'
+let PF_PHASE  = 'proj';      // 'proj' | 'cur'
+
+function _pfImp(o){ if(o==null) return null; o=+o; return o>0 ? 100/(o+100) : (-o)/((-o)+100); }
+function _pfP2Odds(p){ if(p==null||p<=0||p>=1) return '—'; return p>=0.5 ? ''+Math.round(-100*p/(1-p)) : '+'+Math.round(100*(1-p)/p); }
+function _pfOddsStr(o){ return o==null ? '—' : (o>0 ? '+'+o : ''+o); }
+function _pfPc(x){ return x==null ? '—' : (x*100).toFixed(1)+'%'; }
+function _pfFmtStat(key,v){
+  if(v==null) return '—';
+  if(key==='ops') return (+v).toFixed(3).replace(/^0/,'');
+  if(key==='era'||key==='whip'||key==='fip') return (+v).toFixed(2);
+  if(key==='k_bb_pct') return Math.round(v*100)+'%';
+  if(key==='war') return (+v).toFixed(1);
+  return Math.round(v);
 }
-function _pfFmtAm(o) { return o == null ? '—' : (o > 0 ? '+' + o : String(o)); }
-// 3rd arg (primary=true) makes the top row use .primary — bigger font +
-// heavier weight so the bettable American odds read first.
-function _pfStack(top, sec, primary) {
-  const topCls = primary ? 'ft-stack-row primary' : 'ft-stack-row';
-  return `<div class="ft-stack"><span class="${topCls}">${top}</span><span class="ft-stack-row sec">${sec}</span></div>`;
+function _pfLerp(a,b,t){ return a.map((x,i)=>Math.round(x+(b[i]-x)*t)); }
+function _pfBarCol(p){
+  const c = p>=50 ? _pfLerp([124,134,147],[224,52,47],(p-50)/50)
+                  : _pfLerp([70,110,200],[124,134,147],p/50);
+  return 'rgb('+c[0]+','+c[1]+','+c[2]+')';
 }
-// Flipped per user spec: projected American on TOP (primary — the price
-// you'd bet), model % beneath as muted secondary. Same for Market cell.
-function _pfFairCell(p) {
-  if (p.model_p == null) return '—';
-  const pct = p.model_p * 100;
-  return _pfStack(_pfFmtAm(_pfPctToAmer(pct)), pct.toFixed(1) + '%', true);
+function _pfBar(cat){
+  const cur = PF_PHASE==='cur';
+  const v   = cur ? cat.cur : cat.proj;
+  const p   = cur ? cat.cur_pct : cat.proj_pct;
+  const val = '<span class="pfx-bval">'+_pfFmtStat(cat.key,v)+'</span>';
+  if(p==null){
+    return '<div class="pfx-brow"><span class="pfx-blab">'+cat.label+'</span><div class="pfx-trk"></div>'+val+'</div>';
+  }
+  const col=_pfBarCol(p);
+  return '<div class="pfx-brow"><span class="pfx-blab">'+cat.label+'</span>'
+    + '<div class="pfx-trk"><div class="pfx-tick"></div>'
+    + '<div class="pfx-fill" style="width:'+p+'%;background:'+col+'"></div>'
+    + '<div class="pfx-dot" style="left:'+p+'%;background:'+col+'">'+p+'</div></div>'+val+'</div>';
 }
-function _pfMktCell(p) {
-  if (p.market_p == null && p.best_odds == null) return '—';
-  const pct = p.market_p != null ? (p.market_p * 100).toFixed(1) + '%' : '—';
-  return _pfStack(_pfFmtAm(p.best_odds), pct, true);
+function _pfCard(cand, rankTxt, isVal){
+  const mp = cand.model_p;
+  const mktP = cand.best_odds!=null ? _pfImp(cand.best_odds) : cand.market_p;
+  const mktOdds = cand.best_odds!=null ? cand.best_odds : (cand.market_p!=null ? _pfP2Odds(cand.market_p) : null);
+  const edge = (mp!=null && mktP!=null) ? mp - mktP : null;
+  const eCls = edge==null ? 'neu' : (edge>=0 ? 'pos':'neg');
+  const eTxt = edge==null ? '—' : (edge>=0?'+':'')+_pfPc(edge);
+  const logo = (typeof teamLogoByAbbr==='function') ? teamLogoByAbbr(cand.team_abbr,18) : '';
+  const tw = cand.twoway ? '<span class="pfx-tw">2-WAY</span>' : '';
+  let h = '<div class="pfx-card'+(isVal?' val':'')+'">'
+    + '<div class="pfx-top">'
+    +   '<span class="pfx-rk">'+rankTxt+'</span>'
+    +   '<span class="pfx-logo">'+logo+'</span>'
+    +   '<span class="pfx-name">'+cand.name+tw+'</span>'
+    +   '<div class="pfx-mets">'
+    +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(mp)+'</span><span class="pfx-o">'+_pfP2Odds(mp)+'</span></div>'
+    +     '<div class="pfx-met mk"><span class="pfx-k">Market</span><span class="pfx-p">'+_pfPc(mktP)+'</span><span class="pfx-o">'+_pfOddsStr(mktOdds)+'</span></div>'
+    +     '<div class="pfx-met"><span class="pfx-k">Edge</span><span class="pfx-edge '+eCls+'">'+eTxt+'</span></div>'
+    +   '</div>'
+    + '</div>';
+  if(PF_DETAIL==='detailed' && (cand.cats||[]).length){
+    h += '<div class="pfx-prof"><div class="pfx-scale"><span class="pfx-sp"></span>'
+      + '<span class="pfx-mid"><span class="poor">POOR</span><span>AVG</span><span class="great">GREAT</span></span></div>'
+      + cand.cats.map(_pfBar).join('') + '</div>';
+  }
+  return h + '</div>';
 }
-const PF_COLS = {
-  MVP: [
-    {key:"name",  label:"Player",   lhs:true,
-      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span>`},
-    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war  != null ? p.p_war.toFixed(1) : "—"},
-    {key:"pops",  label:"pOPS",     fmt:p => p.p_ops  != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—"},
-    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
-    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
-    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
-  ],
-  CY: [
-    {key:"name",  label:"Pitcher",  lhs:true,
-      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span>`},
-    {key:"pfip",  label:"wFIP",     fmt:p => p.p_fip != null ? p.p_fip.toFixed(2) : "—"},
-    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
-    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
-    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
-    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
-  ],
-  ROY: [
-    {key:"name",  label:"Rookie",   lhs:true,
-      fmt:p => `<span class="pf-logo">${teamLogoByAbbr(p.team_abbr,20)}</span><span class="pf-pname">${p.name}</span><span class="pf-team">${p.pos?(" · "+p.pos):""}</span>`},
-    {key:"pwar",  label:"pWAR",     fmt:p => p.p_war != null ? p.p_war.toFixed(1) : "—"},
-    {key:"stat2", label:"pOPS / wFIP",
-      fmt:p => (p.pos === "SP" || p.pos === "RP")
-        ? (p.p_fip != null ? p.p_fip.toFixed(2) : "—")
-        : (p.p_ops != null ? p.p_ops.toFixed(3).replace(/^0/, "") : "—")},
-    {key:"fair",  label:"Fair %",   fmt:_pfFairCell},
-    {key:"mkt",   label:"Market %", fmt:_pfMktCell},
-    {key:"edge",  label:"Edge",     fmt:_pfEdgeCell},
-  ],
-};
-function _pfEdgeCell(p) {
-  if (p.edge == null) return '<span class="pf-edge-zero">—</span>';
-  const sign = p.edge >= 0 ? "+" : "";
-  const cls  = p.edge >= 0.005 ? "pf-edge-pos" : p.edge <= -0.005 ? "pf-edge-neg" : "pf-edge-zero";
-  const pct  = (p.edge * 100).toFixed(1);
-  const stars = p.stars ? `<span class="pf-stars">${p.stars}</span>` : "";
-  // Wrap edge + stars in a single nowrap span so they always render on one
-  // line — prior version put them as separate siblings which could wrap.
-  return `<span class="pf-edge-row"><span class="${cls}">${sign}${pct}%</span>${stars}</span>`;
-}
-function _pfMarketKey(mkt) {
-  return mkt.endsWith("_MVP") ? "MVP" : mkt.endsWith("_CY") ? "CY" : "ROY";
-}
-async function renderPlayerFuturesTab() {
-  if (PLAYER_FUTURES_RENDERED) return;
-  const upd = document.getElementById("pf-updated");
-  try {
-    const resp = await fetch("data/player_futures.json", {cache:"no-store"});
-    if (!resp.ok) {
-      if (upd) upd.textContent = "Player futures data not generated yet — the workflow will populate it on the next cron pull.";
-      return;
+function _pfRenderCards(){
+  if(!PF_DATA) return;
+  for(const [mkt,payload] of Object.entries(PF_DATA.markets||{})){
+    const host = document.querySelector('.pfx-cards[data-mkt="'+mkt+'"]');
+    if(!host) continue;
+    const cands = payload.candidates||[];
+    const cont = cands.filter(c=>c.model_p>=0.01);
+    const val  = cands.filter(c=>c.model_p<0.01);
+    let h = cont.map((c,i)=>_pfCard(c, '#'+(c.rank!=null?c.rank:(i+1)), false)).join('');
+    if(val.length){
+      h += '<div class="pfx-vsec">Value · under 1% but +edge</div>';
+      h += val.map(c=>_pfCard(c, '#'+(c.rank!=null?c.rank:'?'), true)).join('');
     }
-    const data = await resp.json();
-    if (upd && data.generated_at) {
-      const dt = new Date(data.generated_at);
-      upd.textContent = "Model · updated " + dt.toLocaleString();
+    host.innerHTML = h || '<div class="pfx-empty">No qualifying candidates.</div>';
+    const sub = document.getElementById('pf-'+mkt+'-sub');
+    if(sub){
+      const poolTxt = mkt.endsWith('_CY') ? 'qualified starters (IP≥120)'
+                    : mkt.endsWith('_MVP') ? 'qualified hitters (PA≥400)'
+                    : 'qualified regulars';
+      sub.textContent = (PF_PHASE==='cur'?'Current (YTD)':'Projected (EOS)')+' · percentiles vs '+poolTxt;
     }
-    for (const [mkt, payload] of Object.entries(data.markets || {})) {
-      const tbl = document.querySelector('.pf-table[data-mkt="' + mkt + '"]');
-      if (!tbl) continue;
-      const cols = PF_COLS[_pfMarketKey(mkt)];
-      const sub  = document.getElementById("pf-" + mkt + "-sub");
-      if (sub) sub.textContent = "";
-      const thead = '<thead><tr>' + cols.map(c => '<th class="' + (c.lhs ? 'lhs' : '') + '">' + c.label + '</th>').join('') + '</tr></thead>';
-      const body  = (payload.candidates || []).map(p =>
-        '<tr>' + cols.map(c => '<td class="' + (c.lhs ? 'lhs' : '') + '">' + c.fmt(p) + '</td>').join('') + '</tr>'
-      ).join('');
-      tbl.innerHTML = thead + '<tbody>' + body + '</tbody>';
-    }
-    // Embed carve-out: ?embed=player-futures&market=AL_MVP -> show just that market.
-    try {
-      const _mk = new URLSearchParams(location.search).get('market');
-      if (document.body.classList.contains('embed-mode') && _mk) {
-        document.querySelectorAll('#tab-player-futures .pf-section').forEach(s => {
-          s.style.display = (s.id === 'pf-' + _mk) ? '' : 'none';
-        });
-        const _note = document.querySelector('#tab-player-futures .pf-filter-note');
-        if (_note) _note.style.display = 'none';
+  }
+}
+let _PF_CTL_WIRED=false;
+function _pfWireControls(){
+  if(_PF_CTL_WIRED) return;
+  const d=document.getElementById('pfx-detail'), ph=document.getElementById('pfx-phase');
+  if(d) d.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    PF_DETAIL=b.dataset.v; d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); _pfRenderCards();
+  }));
+  if(ph) ph.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    PF_PHASE=b.dataset.v; ph.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); _pfRenderCards();
+  }));
+  _PF_CTL_WIRED=true;
+}
+async function renderPlayerFuturesTab(){
+  if(PLAYER_FUTURES_RENDERED){ return; }
+  const upd = document.getElementById('pf-updated');
+  try{
+    const resp = await fetch('data/player_futures.json',{cache:'no-store'});
+    if(!resp.ok){ if(upd) upd.textContent='Player futures data not generated yet — the workflow will populate it on the next cron pull.'; return; }
+    PF_DATA = await resp.json();
+    if(upd && PF_DATA.generated_at){ const dt=new Date(PF_DATA.generated_at); upd.textContent='Model · updated '+dt.toLocaleString(); }
+    _pfRenderCards();
+    _pfWireControls();
+    try{
+      const _mk=new URLSearchParams(location.search).get('market');
+      if(document.body.classList.contains('embed-mode') && _mk){
+        document.querySelectorAll('#tab-player-futures .pf-section').forEach(s=>{ s.style.display=(s.id==='pf-'+_mk)?'':'none'; });
+        const _note=document.querySelector('#tab-player-futures .pf-filter-note'); if(_note) _note.style.display='none';
       }
-    } catch (e) {}
-    PLAYER_FUTURES_RENDERED = true;
-  } catch (e) {
-    console.warn("Player Futures load failed:", e);
-    if (upd) upd.textContent = "Couldn't load player futures: " + e.message;
+    }catch(e){}
+    PLAYER_FUTURES_RENDERED=true;
+  }catch(e){
+    console.warn('Player Futures load failed:',e);
+    if(upd) upd.textContent="Couldn't load player futures: "+e.message;
   }
 }
 
