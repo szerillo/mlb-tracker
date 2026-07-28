@@ -1,0 +1,52 @@
+name: Wind receptivity re-derive (manual)
+
+# Empirically re-fit a park's OUT-wind receptivity (wr_out, %/10mph) from
+# game-time wind + realized runs, to audit v8_weather.py BP_BASE wr_out.
+# Manual only. Writes data/wind_recal_<PARK>.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      park:
+        description: "Park code (e.g. DET)"
+        required: true
+        default: "DET"
+      seasons:
+        description: "Season range inclusive (e.g. 2023-2026)"
+        required: true
+        default: "2023-2026"
+
+permissions:
+  contents: write
+
+jobs:
+  recal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Re-derive wind receptivity
+        run: python scripts/recalibrate_park_wind.py --park "${{ github.event.inputs.park }}" --seasons "${{ github.event.inputs.seasons }}"
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/wind_recal_*.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No result to commit."
+          else
+            git commit -m "Wind re-derive ${{ github.event.inputs.park }} ${{ github.event.inputs.seasons }}"
+            for i in 1 2 3; do
+              if git push; then break; fi
+              git pull --rebase --autostash || true
+            done
+          fi
