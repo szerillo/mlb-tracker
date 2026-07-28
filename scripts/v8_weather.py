@@ -114,6 +114,15 @@ BP_BASE = {
     "SF": {"temp":66,"hum":64,"pres":1014,"carry":-2.30,"wr_out":0.08,"wr_in":0.82,"of":"Variable","cr":"Good","cq":"Poor","var":0.81,"runs":-3,"alt":63},
 }
 
+# Per-park DIRECTIONAL out-wind receptivity (2026-07-27, Fable): a few parks
+# respond to out-wind very differently by field (CF vs corners). Keyed by the
+# _compass_to_bucket_idx arrow (OutCenter / OutLeft / OutRight); missing arrows
+# fall back to BP_BASE[park]["wr_out"]. Single coefficient is fine everywhere else.
+# PIT: CF slope ~0, RF (To-Right) big -> 2 CF / 12 RF (LF kept at the base 7).
+BP_DIR_WR_OUT = {
+    "PIT": {"OutCenter": 2.0, "OutLeft": 7.0, "OutRight": 12.0},
+}
+
 CAL_PARAMS = {
     "ATL":{"t_sens":1.0,"cold_mult":1.0},
     "BAL":{"t_sens":1.0,"cold_mult":4.0},
@@ -214,7 +223,7 @@ BP_DIST = {
 # it without removing the field. Residual error is now dominated by our coarse
 # single-hour NWS wind octant not matching BP's finer wind input — not by the
 # coefficients (park wind term explains R²≈0.02 of BP's post-temp residual).
-TEMP_C = 0.0008
+TEMP_C = 0.0005768   # 2026-07-27: trimmed from 0.0008 so the typical-range temp slope lands ~0.35%/degF (Fable fit 0.333), matching realized runs
 COLD_T = 9
 COLD_A = 0.00012
 WIND_O = 0.0015
@@ -487,7 +496,15 @@ def compute_v8(park, wx, treat_as_open=False):
         # 13mph ENE wind read +10% instead of a penalty; Yankee Stadium with a
         # 14mph E wind read +1.0% vs BallparkPal's -9%.) Using the magnitude of
         # the appropriate wr and letting out_c supply the sign fixes it.
-        wr_mag = abs(base["wr_out"]) if out_c > 0 else abs(base["wr_in"])
+        if out_c > 0:
+            wr_mag = abs(base["wr_out"])
+            _dir = BP_DIR_WR_OUT.get(park)
+            if _dir:
+                _b = _compass_to_bucket_idx(park, wd, ws)
+                if _b and _b[1] in _dir:
+                    wr_mag = abs(_dir[_b[1]])
+        else:
+            wr_mag = abs(base["wr_in"])
         w_adj = out_c * WIND_O * wr_mag * WIND_SCALE
         w_adj *= OF_MULT.get(base["of"], 1.0) * (CR_MULT.get(base["cr"], 1.0) + CQ_MULT.get(base["cq"], 1.0)) / 2
         wd_rarity = _wind_dir_rarity(park, wd, ws)
