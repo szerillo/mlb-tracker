@@ -83,11 +83,11 @@ TEAM_TO_PARK = {
 # ============================================================================
 BP_BASE = {
     "LAA":{"temp":77,"hum":51,"pres":1013,"carry":-48.00,"wr_out":-2.36,"wr_in":3.32,"of":"Small","cr":"Avg","cq":"Good","var":0.79,"runs":-1,"alt":160},
-    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":5.00,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
-    "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":4.58,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
+    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":10.0,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
+    "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":2.0,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
     "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":1.27,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
     "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0.75,"wr_in":0.75,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
-    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":6.50,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
+    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":2.0,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
     "TB": {"temp":72,"hum":44,"pres":1014,"carry":-53.00,"wr_out":0,"wr_in":0,"of":"Medium","cr":"Poor","cq":"Poor","var":0.03,"runs":-7,"alt":0,"dome":True},
     "TOR":{"temp":73,"hum":59,"pres":1015,"carry":-1.67,"wr_out":-1.02,"wr_in":-1.37,"of":"Medium","cr":"Great","cq":"Good","var":0.81,"runs":-3,"alt":247,"dome":True},
     "NYY":{"temp":74,"hum":56,"pres":1015,"carry":-1.50,"wr_out":2.50,"wr_in":3.90,"of":"Variable","cr":"Avg","cq":"Great","var":1.95,"runs":-3,"alt":54},
@@ -95,15 +95,15 @@ BP_BASE = {
     "MIN":{"temp":73,"hum":53,"pres":1014,"carry":-53.00,"wr_out":1.62,"wr_in":-0.11,"of":"Medium","cr":"Avg","cq":"Good","var":0.98,"runs":3,"alt":812},
     "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":1.83,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
     "TEX":{"temp":81,"hum":42,"pres":1013,"carry":-1.18,"wr_out":1.34,"wr_in":0.79,"of":"Medium","cr":"Avg","cq":"Great","var":0.40,"runs":-5,"alt":616,"dome":True},
-    "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":2.32,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
+    "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":0.0,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
     "ATH":{"temp":79,"hum":40,"pres":1012,"carry":-95.00,"wr_out":3.00,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},
     "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":2.61,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
     "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":0.04,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
-    "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":0.16,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
+    "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":3.0,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
     "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":3.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
-    "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":1.19,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
+    "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":5.0,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
     "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":15.00,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
-    "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":2.87,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
+    "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":0.0,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
     "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
     "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":7.00,"wr_in":4.00,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
     "STL":{"temp":79,"hum":58,"pres":1014,"carry":-77.00,"wr_out":2.63,"wr_in":1.28,"of":"Large","cr":"Good","cq":"Avg","var":1.25,"runs":-5,"alt":455},
@@ -317,11 +317,18 @@ def _temp_percentile(park, temp_f):
 # keep gathering sample. wr_out magnitude is the receptivity proxy.
 WR_FULL = 2.4              # |wr_out| at/above which wind keeps full weight (validated tier)
 WIND_SHRINK_FLOOR = 0.60   # least wind-receptive parks keep 60% of the wind adj
+# Parks whose wr_out/wr_in were individually re-fit (2026-07-27, Fable/BetLabs
+# 2005-26 WLS): calibrated at the source, so the blanket low-receptivity shrink
+# must NOT also trim them (it partly existed to compensate the very values now
+# corrected). Exempt them from _wind_receptivity_shrink.
+WIND_SHRINK_EXEMPT = {"SEA", "BAL", "KC", "NYM", "BOS", "WAS", "CIN"}
 
 
 def _wind_receptivity_shrink(park):
     base = BP_BASE.get(park)
     if not base:
+        return 1.0
+    if park in WIND_SHRINK_EXEMPT:
         return 1.0
     wr = abs(base.get("wr_out", 0) or 0)
     if wr >= WR_FULL:
