@@ -96,7 +96,7 @@ BP_BASE = {
     "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":1.83,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
     "TEX":{"temp":81,"hum":42,"pres":1013,"carry":-1.18,"wr_out":1.34,"wr_in":0.79,"of":"Medium","cr":"Avg","cq":"Great","var":0.40,"runs":-5,"alt":616,"dome":True},
     "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":0.0,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
-    "ATH":{"temp":79,"hum":40,"pres":1012,"carry":-95.00,"wr_out":3.00,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},
+    "ATH":{"temp":79,"hum":40,"pres":1012,"carry":-95.00,"wr_out":5.0,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},  # 2026-07-27 prior bump wr_out 3.0->5.0 (small-sample + physics: open-air, hot, dry Sacramento = great carry, NOT altitude). Coliseum-era of/carry/runs still stale; cross-wind/orientation (GPS_CF 46) needs a Sutter-specific look. Re-fit at n~150.
     "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":2.61,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
     "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":0.04,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
     "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":3.0,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
