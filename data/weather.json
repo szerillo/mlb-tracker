@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T04:06:59.383863Z",
+  "generated_at": "2026-07-28T06:09:07.320589Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -15,10 +15,10 @@
       "weather": {
         "temp_f": 84,
         "humidity_pct": 70,
-        "wind_speed_mph": 10,
-        "wind_dir": "NNW",
-        "precip_pct": 2,
-        "short_forecast": "Partly Sunny",
+        "wind_speed_mph": 11,
+        "wind_dir": "N",
+        "precip_pct": 0,
+        "short_forecast": "Mostly Sunny",
         "start_time": "2026-07-28T14:00:00-04:00",
         "game_window_temp_f": 84.9,
         "game_window_humidity_pct": 65.9,
@@ -26,24 +26,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 3.6,
+        "run_adj_pct": 3.5,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 8.9,
           "t_adj_pct": 1.9,
-          "w_adj_pct": 1.7,
+          "w_adj_pct": 1.4,
           "dp_adj_pct": 1.5,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": 9.12,
+            "out_component": 7.47,
             "dir_rarity": 0.6,
             "spd_rarity": 0.19
           }
         },
-        "model_pct": 3.6,
+        "model_pct": 3.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -118,7 +118,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 1.9,
+        "run_adj_pct": 3.6,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -126,7 +126,7 @@
           "t_adj_pct": 0.6,
           "w_adj_pct": 0.5,
           "dp_adj_pct": 1.2,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 2.4,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -135,10 +135,12 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": 1.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 3.6,
+        "pressure_source": "BP",
+        "bp_pct": 11,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 79
       },
       "note": null
     },
@@ -164,7 +166,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.9,
+        "run_adj_pct": 5.6,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -172,7 +174,7 @@
           "t_adj_pct": 0.2,
           "w_adj_pct": 6.9,
           "dp_adj_pct": 1.5,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 3.6,
           "precip_adj_pct": -0.0,
           "carry_pct": -0.4,
           "wind": {
@@ -181,10 +183,12 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 4.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 5.6,
+        "pressure_source": "BP",
+        "bp_pct": 7,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 81
       },
       "note": null
     },
@@ -265,7 +269,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -2.2,
+        "run_adj_pct": 1.6,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -273,7 +277,7 @@
           "t_adj_pct": -0.1,
           "w_adj_pct": -0.5,
           "dp_adj_pct": 1.8,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 4.5,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.3,
           "wind": {
@@ -282,10 +286,12 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": -2.2,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 1.6,
+        "pressure_source": "BP",
+        "bp_pct": 0,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 77
       },
       "note": null
     },
@@ -311,7 +317,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -1.1,
+        "run_adj_pct": 2.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -319,7 +325,7 @@
           "t_adj_pct": 0.2,
           "w_adj_pct": 0.2,
           "dp_adj_pct": 1.9,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 3.9,
           "precip_adj_pct": -3.5,
           "carry_pct": -0.0,
           "wind": {
@@ -328,10 +334,12 @@
             "spd_rarity": 0.25
           }
         },
-        "model_pct": -1.1,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 2.2,
+        "pressure_source": "BP",
+        "bp_pct": 12,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 73
       },
       "note": null
     },
@@ -346,38 +354,36 @@
       "weather": {
         "temp_f": 88,
         "humidity_pct": 45,
-        "wind_speed_mph": 1,
+        "wind_speed_mph": 0,
         "wind_dir": "E",
-        "precip_pct": 3,
-        "short_forecast": "Partly Cloudy",
+        "precip_pct": 2,
+        "short_forecast": "Mostly Clear",
         "start_time": "2026-07-28T19:00:00-05:00",
-        "game_window_temp_f": 85.4,
-        "game_window_humidity_pct": 51.7,
+        "game_window_temp_f": 85.1,
+        "game_window_humidity_pct": 50.7,
         "first_pitch_temp_f": 88,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 3.8,
+        "run_adj_pct": 4.5,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 12.4,
-          "t_adj_pct": 4.2,
-          "w_adj_pct": -0.0,
-          "dp_adj_pct": 1.5,
-          "p_adj_pct": -0.3,
+          "temp_delta": 12.1,
+          "t_adj_pct": 4.1,
+          "w_adj_pct": 0.0,
+          "dp_adj_pct": 1.4,
+          "p_adj_pct": 1.5,
           "precip_adj_pct": 0,
           "carry_pct": -0.3,
-          "wind": {
-            "out_component": -0.64,
-            "dir_rarity": 0.15,
-            "spd_rarity": 0.82
-          }
+          "wind": null
         },
-        "model_pct": 3.8,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 4.5,
+        "pressure_source": "BP",
+        "bp_pct": -4,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 93
       },
       "note": null
     },
@@ -403,7 +409,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 2.4,
+        "run_adj_pct": 3.2,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -411,7 +417,7 @@
           "t_adj_pct": 1.0,
           "w_adj_pct": 1.6,
           "dp_adj_pct": 0.3,
-          "p_adj_pct": 0.0,
+          "p_adj_pct": 1.2,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -420,10 +426,12 @@
             "spd_rarity": 0.22
           }
         },
-        "model_pct": 2.4,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 3.2,
+        "pressure_source": "BP",
+        "bp_pct": 3,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 75
       },
       "note": null
     },
@@ -449,7 +457,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 0.9,
+        "run_adj_pct": 2.4,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -457,7 +465,7 @@
           "t_adj_pct": 1.9,
           "w_adj_pct": -1.5,
           "dp_adj_pct": 1.4,
-          "p_adj_pct": -0.3,
+          "p_adj_pct": 1.5,
           "precip_adj_pct": 0,
           "carry_pct": -0.4,
           "wind": {
@@ -466,10 +474,12 @@
             "spd_rarity": 0.04
           }
         },
-        "model_pct": 0.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 2.4,
+        "pressure_source": "BP",
+        "bp_pct": 1,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 84
       },
       "note": null
     },
@@ -495,7 +505,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 1.9,
+        "run_adj_pct": 3.3,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -503,7 +513,7 @@
           "t_adj_pct": 0.4,
           "w_adj_pct": 1.8,
           "dp_adj_pct": 1.0,
-          "p_adj_pct": -0.6,
+          "p_adj_pct": 1.5,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
@@ -512,10 +522,12 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 1.9,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 3.3,
+        "pressure_source": "BP",
+        "bp_pct": 0,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 82
       },
       "note": null
     },
@@ -541,7 +553,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 3.8,
+        "run_adj_pct": 4.8,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -549,7 +561,7 @@
           "t_adj_pct": 1.7,
           "w_adj_pct": 4.0,
           "dp_adj_pct": 0.7,
-          "p_adj_pct": -0.9,
+          "p_adj_pct": 1.5,
           "precip_adj_pct": 0,
           "carry_pct": -0.5,
           "wind": {
@@ -558,10 +570,12 @@
             "spd_rarity": 0.25
           }
         },
-        "model_pct": 3.8,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 4.8,
+        "pressure_source": "BP",
+        "bp_pct": 9,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 95
       },
       "note": null
     },
@@ -587,7 +601,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 0.3,
+        "run_adj_pct": 1.8,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -595,7 +609,7 @@
           "t_adj_pct": -0.2,
           "w_adj_pct": 0.2,
           "dp_adj_pct": 1.0,
-          "p_adj_pct": -0.6,
+          "p_adj_pct": 1.2,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -604,10 +618,12 @@
             "spd_rarity": 0.28
           }
         },
-        "model_pct": 0.3,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 1.8,
+        "pressure_source": "BP",
+        "bp_pct": 0,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 75
       },
       "note": null
     },
@@ -633,7 +649,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -0.6,
+        "run_adj_pct": 0.1,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -641,7 +657,7 @@
           "t_adj_pct": -0.9,
           "w_adj_pct": 0.1,
           "dp_adj_pct": 0.4,
-          "p_adj_pct": -0.3,
+          "p_adj_pct": 0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
@@ -650,10 +666,12 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": -0.6,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
+        "model_pct": 0.1,
+        "pressure_source": "BP",
+        "bp_pct": -2,
+        "bp_blended": false,
+        "blend_weight": 0.0,
+        "bp_temp_f": 64
       },
       "note": null
     },
@@ -1091,13 +1109,13 @@
       "weather": {
         "temp_f": 90,
         "humidity_pct": 47,
-        "wind_speed_mph": 7,
-        "wind_dir": "SSE",
-        "precip_pct": 12,
-        "short_forecast": "Partly Cloudy",
+        "wind_speed_mph": 8,
+        "wind_dir": "S",
+        "precip_pct": 15,
+        "short_forecast": "Slight Chance Showers And Thunderstorms",
         "start_time": "2026-07-29T19:00:00-05:00",
-        "game_window_temp_f": 86.6,
-        "game_window_humidity_pct": 54.1,
+        "game_window_temp_f": 86.5,
+        "game_window_humidity_pct": 53.2,
         "first_pitch_temp_f": 90,
         "wind_blended": true
       },
@@ -1106,17 +1124,17 @@
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 13.6,
-          "t_adj_pct": 4.7,
+          "temp_delta": 13.5,
+          "t_adj_pct": 4.6,
           "w_adj_pct": -0.1,
-          "dp_adj_pct": 1.9,
+          "dp_adj_pct": 1.8,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.3,
           "wind": {
-            "out_component": -6.59,
-            "dir_rarity": 0.5,
-            "spd_rarity": 0.1
+            "out_component": -5.03,
+            "dir_rarity": 0.6,
+            "spd_rarity": 0
           }
         },
         "model_pct": 4.1,
@@ -1137,8 +1155,8 @@
       "weather": {
         "temp_f": 77,
         "humidity_pct": 54,
-        "wind_speed_mph": 5,
-        "wind_dir": "NNE",
+        "wind_speed_mph": 7,
+        "wind_dir": "N",
         "precip_pct": 0,
         "short_forecast": "Clear",
         "start_time": "2026-07-29T19:00:00-05:00",
@@ -1148,24 +1166,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 2.3,
+        "run_adj_pct": 2.6,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 5.7,
           "t_adj_pct": 2.2,
-          "w_adj_pct": 0.2,
+          "w_adj_pct": 0.6,
           "dp_adj_pct": 0.4,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 1.31,
-            "dir_rarity": 0.25,
+            "out_component": 4.21,
+            "dir_rarity": 0.55,
             "spd_rarity": 0.04
           }
         },
-        "model_pct": 2.3,
+        "model_pct": 2.6,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1183,8 +1201,8 @@
       "weather": {
         "temp_f": 85,
         "humidity_pct": 55,
-        "wind_speed_mph": 7,
-        "wind_dir": "ENE",
+        "wind_speed_mph": 8,
+        "wind_dir": "NE",
         "precip_pct": 0,
         "short_forecast": "Clear",
         "start_time": "2026-07-29T19:00:00-05:00",
@@ -1194,24 +1212,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -0.7,
+        "run_adj_pct": -0.9,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 2.6,
           "t_adj_pct": 0.8,
-          "w_adj_pct": -1.6,
+          "w_adj_pct": -1.7,
           "dp_adj_pct": 0.6,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.4,
           "wind": {
-            "out_component": -6.97,
+            "out_component": -7.65,
             "dir_rarity": 0.5,
-            "spd_rarity": 0
+            "spd_rarity": 0.04
           }
         },
-        "model_pct": -0.7,
+        "model_pct": -0.9,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1230,7 +1248,7 @@
         "temp_f": 79,
         "humidity_pct": 61,
         "wind_speed_mph": 7,
-        "wind_dir": "SW",
+        "wind_dir": "SSW",
         "precip_pct": 0,
         "short_forecast": "Clear",
         "start_time": "2026-07-29T19:00:00-07:00",
@@ -1252,7 +1270,7 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": 7.0,
+            "out_component": 6.81,
             "dir_rarity": 0,
             "spd_rarity": 0
           }
