@@ -228,6 +228,34 @@ def main():
     flagged_ct = sum(1 for r in rows if r[7] == "TRUE")
     print(f"[bullpens] wrote {len(rows)} relievers across {len(games)} teams "
           f"({flagged_ct} flagged workload) -> {OUT_CSV}")
+    # 5) Multi-date CSV: workload per (game date, reliever) so the sheet can look
+    #    up bullpen fatigue by each matchup's game date. Sean loads several dates
+    #    into the Model at once; the single-date CSV above can only serve one.
+    #    Keyed 'YYYY-MM-DD|Player' for a direct VLOOKUP from the model's game date.
+    OUT_CSV_MULTI = os.path.join(REPO_ROOT, "data", "bullpens_rr_multi.csv")
+    _inv_nick = {v: k for k, v in NICK.items()}
+    try:
+        _fd = json.load(open(FATIGUE))
+        _fdates = sorted(k for k in (_fd.get("dates") or {}).keys() if _isdate(k))
+    except Exception:
+        _fdates = []
+    _mrows = []
+    for _d in _fdates:
+        _flagged, _ = load_fatigue(_d)
+        for _nick, _arr in games.items():
+            _full = _inv_nick.get(_nick, _nick)
+            for _p in _arr:
+                _name = _p["player"]
+                _wl = (_full, _norm(_name)) in _flagged
+                _mrows.append(["%s|%s" % (_d, _name), _d, _nick, _name,
+                               "TRUE" if _wl else "FALSE"])
+    with open(OUT_CSV_MULTI, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Key", "Date", "Team", "Player", "Workload"])
+        for r in _mrows:
+            w.writerow(r)
+    print("[bullpens] wrote %d rows across %d dates -> %s"
+          % (len(_mrows), len(_fdates), OUT_CSV_MULTI))
     return 0
 
 
