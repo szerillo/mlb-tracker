@@ -572,15 +572,18 @@ def compute_v8(park, wx, treat_as_open=False):
     # WRIGLEY (CHC) is EXEMPT: its wind genuinely plays (2026 realized_x 0.86;
     # BP runs +30 = our +30 on 7/20). Applied to the published % (already
     # inclusive of WIND_SOFT + EMPIRICAL_SCALE — do not re-tune those).
+    # Boost-damper exemptions: parks where wind genuinely realizes in runs get
+    # NO positive damping, only a safety cap (value = the cap). CHC (Wrigley) is
+    # VALIDATED (2026 realized_x 0.86; BP +30 = our +30 on 7/20). ATH (Sutter
+    # Health) is a PRIOR add (2026-07-27) — small, hot, dry Sacramento launching
+    # pad, physically Wrigley-like, but n~82 and UNVALIDATED; lower/conservative
+    # cap. Re-check this exemption (keep/pull) once Sutter has n~150 out-wind games.
+    DAMPER_EXEMPT = {"CHC": 40.0, "ATH": 15.0}
     DAMPER_A = 6.0
-    if run_adj_pct > 0 and park != "CHC":
+    if run_adj_pct > 0 and park not in DAMPER_EXEMPT:
         run_adj_pct = DAMPER_A * math.tanh(run_adj_pct / DAMPER_A)
-    # Wrigley is exempt from the damper (its wind realizes), but a positive
-    # safety cap keeps a forecast-bust from running past BP's observed range
-    # (+30 on 7/20); binds only above ~18mph wind-out. Tunable.
-    WRIGLEY_MAX = 40.0
-    if park == "CHC" and run_adj_pct > WRIGLEY_MAX:
-        run_adj_pct = WRIGLEY_MAX
+    elif park in DAMPER_EXEMPT and run_adj_pct > DAMPER_EXEMPT[park]:
+        run_adj_pct = DAMPER_EXEMPT[park]
 
     # Apply V8.1 cold cap for most parks.
     # For extreme cold (<42°F) at non-dome parks, let it go deeper (BP has shown larger penalties).
