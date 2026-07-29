@@ -81,6 +81,31 @@ def fetch_mlb_kbb_and_hand(person_ids, season):
     return kbb_result, hand_result
 
 
+def fetch_mlb_hand_by_name(seasons):
+    """Bulk pitchHand + id keyed by normalized name from MLB sports/1/players.
+    Covers pitchers with no Savant pid (FG-projection-only, IL, recent call-ups)
+    that the pid-based lookup never sees. Later seasons win (passed first)."""
+    out = {}
+    for season in seasons:
+        url = (f"https://statsapi.mlb.com/api/v1/sports/1/players?season={season}"
+               "&fields=people,id,fullName,pitchHand,code,primaryPosition,abbreviation")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "u/1.0"})
+            with urllib.request.urlopen(req, timeout=45) as r:
+                d = json.load(r)
+        except Exception as e:
+            print(f"  MLB players fetch failed (season {season}): {e}")
+            continue
+        for p in d.get("people", []):
+            if (p.get("primaryPosition") or {}).get("abbreviation") != "P":
+                continue
+            hand = (p.get("pitchHand") or {}).get("code")
+            k = norm_name(p.get("fullName"))
+            if hand and k:
+                out.setdefault(k, (hand, p.get("id")))
+    return out
+
+
 def main():
     if skip_if_not_in_window("refresh_pitcher_stats", overnight_only=True):
         return
@@ -155,6 +180,23 @@ def main():
             "mlbam_id": s.get("mlbam_id"),
         }
         combined[k] = entry
+
+    # Name-based pitchHand fallback: pitchers with no Savant pid never hit the
+    # id-based MLB lookup above, so their hand stayed null (Scherzer-type FG-only
+    # names, IL, call-ups). Fill hand + mlbam_id by normalized name from the bulk
+    # MLB players feed (this + last season).
+    _need = [k for k, v in combined.items() if not v.get("hand")]
+    if _need:
+        _name_hand = fetch_mlb_hand_by_name([year, year - 1])
+        _filled = 0
+        for k in _need:
+            hit = _name_hand.get(k)
+            if hit:
+                combined[k]["hand"] = hit[0]
+                if combined[k].get("mlbam_id") is None:
+                    combined[k]["mlbam_id"] = hit[1]
+                _filled += 1
+        print(f"  pitchHand name-fallback filled: {_filled} of {len(_need)} still-missing")
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
