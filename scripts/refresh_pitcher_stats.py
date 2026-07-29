@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "pitcher_stats.json")
 PITCHERS_JSON = os.path.join(os.path.dirname(__file__), "..", "data", "pitchers.json")
+HAND_CACHE = os.path.join(os.path.dirname(__file__), "..", "data", "_pitcher_hand_cache.json")
 
 SAVANT_URL = "https://baseballsavant.mlb.com/leaderboard/expected_statistics?year={year}&type=pitcher&csv=true"
 
@@ -181,22 +182,40 @@ def main():
         }
         combined[k] = entry
 
-    # Name-based pitchHand fallback: pitchers with no Savant pid never hit the
-    # id-based MLB lookup above, so their hand stayed null (Scherzer-type FG-only
-    # names, IL, call-ups). Fill hand + mlbam_id by normalized name from the bulk
-    # MLB players feed (this + last season).
-    _need = [k for k, v in combined.items() if not v.get("hand")]
-    if _need:
+    # pitchHand fill for pitchers the id-based lookup misses (no Savant pid:
+    # FG-projection-only names, IL, recent call-ups). To NOT pull the MLB players
+    # feed every night, we persist a name->hand cache (value = code, or null if we
+    # looked and it wasn't found) and only hit the API when a name we've NEVER
+    # looked up is still missing hand — i.e. genuinely new guys. Steady state (no
+    # new names) makes ZERO API calls. Cache lives in data/ so the workflow commits
+    # it; new call-ups / new projection names get resolved once, then cached forever.
+    try:
+        hand_cache = json.load(open(HAND_CACHE))
+    except Exception:
+        hand_cache = {}
+    for k, v in combined.items():
+        if not v.get("hand") and hand_cache.get(k):
+            v["hand"] = hand_cache[k]
+    _new = [k for k, v in combined.items() if not v.get("hand") and k not in hand_cache]
+    if _new:
         _name_hand = fetch_mlb_hand_by_name([year, year - 1])
         _filled = 0
-        for k in _need:
+        for k in _new:
             hit = _name_hand.get(k)
             if hit:
                 combined[k]["hand"] = hit[0]
                 if combined[k].get("mlbam_id") is None:
                     combined[k]["mlbam_id"] = hit[1]
-                _filled += 1
-        print(f"  pitchHand name-fallback filled: {_filled} of {len(_need)} still-missing")
+                hand_cache[k] = hit[0]; _filled += 1
+            else:
+                hand_cache[k] = None   # looked up, not in MLB feed -> don't retry nightly
+        try:
+            json.dump(hand_cache, open(HAND_CACHE, "w"))
+        except Exception as e:
+            print(f"  hand cache save failed: {e}")
+        print(f"  pitchHand: {len(_new)} new names -> one MLB fetch, resolved {_filled}; cache now {len(hand_cache)}")
+    else:
+        print(f"  pitchHand: no new names (cache {len(hand_cache)}) -> no MLB fetch")
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
