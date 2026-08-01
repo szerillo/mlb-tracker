@@ -325,6 +325,24 @@ def main():
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(payload, indent=2))
+
+    # --- append immutable history snapshot (never overwrite) ---------
+    HIST = REPO_ROOT / "data" / "futures_odds_history.jsonl"
+    try:
+        snap = {
+            "ts": payload.get("generated_at"),
+            "markets": {
+                mk: [{"name": p["name"], "best_odds": p["best_odds"],
+                      "best_book": p["best_book"],
+                      "books": p.get("all_book_odds")}
+                     for p in mv.get("players", [])]
+                for mk, mv in payload.get("markets", {}).items()
+            },
+        }
+        with HIST.open("a") as fh:
+            fh.write(json.dumps(snap, separators=(",", ":")) + "\n")
+    except Exception as e:
+        print(f"[player-futures-odds] history append failed: {e}", file=sys.stderr)
     print(f"[player-futures-odds] wrote {len(markets_out)} markets → {OUTPUT}",
           file=sys.stderr)
     return 0
