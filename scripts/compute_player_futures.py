@@ -476,6 +476,65 @@ def _proj_pa(player):
 def _proj_ip(player):
     return _eos(player, "ip") or 0
 
+WFIP_LAM = 0.55   # wFIP shrink (Fable panel fit 2023-26, stable ~0.53-0.58)
+WFIP_RPW = 9.7    # runs per win (validated R^2 0.92)
+
+
+def _wfip_war(p):
+    """wFIP-adjusted full-season WAR for CY (Fable calib 2026-08-01 sec 5).
+    Pull ROS projection FIP toward the in-season composite (season xFIP as core;
+    last-5 not in the WAR feed, weight <=0.2 ~zero payoff per Test 2), then
+    re-price the ROS WAR delta at RPW. IP guards: core-only below 60 actual IP,
+    skip below 40 IP."""
+    eos_war = _eos(p, "war")
+    ytd = (p or {}).get("ytd") or {}
+    ros = ((p or {}).get("ros") or {}).get("blend") or {}
+    core, fip_proj = ytd.get("xfip"), ros.get("fip")
+    ros_ip, act_ip = ros.get("ip"), (ytd.get("ip") or 0)
+    if eos_war is None or core is None or fip_proj is None or not ros_ip:
+        return eos_war
+    if act_ip < 40:
+        return eos_war
+    wadj = core if act_ip < 60 else fip_proj + WFIP_LAM * (core - fip_proj)
+    dwar = -(wadj - fip_proj) * ros_ip / 9.0 / WFIP_RPW
+    return eos_war + dwar
+
+
+def _power_devig(probs):
+    """Vig-free market probs via power norm: solve k s.t. sum(p**k)=1, renorm
+    (hold sits in the longshot tail; correct for CY). None if < 2 usable probs.
+    Internal to adaptive concentration only -- display stays raw consensus."""
+    ps = [p for p in probs if p and p > 0]
+    if len(ps) < 2:
+        return None
+    lo, hi = 0.05, 12.0
+    for _ in range(100):
+        k = 0.5 * (lo + hi)
+        if sum(p ** k for p in ps) > 1.0:
+            lo = k
+        else:
+            hi = k
+    d = [p ** (0.5 * (lo + hi)) for p in ps]
+    z = sum(d) or 1.0
+    return [x / z for x in d]
+
+
+def _fit_alpha_to_herf(base_sub, h_target, lo=0.5, hi=8.0):
+    """Concentration exponent alpha s.t. Herfindahl of base_sub**alpha
+    (renormalized) == h_target. Herfindahl monotone in alpha -> bisect."""
+    def _herf(a):
+        w = [p ** a for p in base_sub]
+        z = sum(w) or 1.0
+        return sum((x / z) ** 2 for x in w)
+    for _ in range(100):
+        a = 0.5 * (lo + hi)
+        if _herf(a) < h_target:
+            lo = a
+        else:
+            hi = a
+    return 0.5 * (lo + hi)
+
+
 
 # ── Pool filtering + score computation ─────────────────────────────────────
 # MVP weights — V5.1 RTF baseline (WAR .791 ≈ 24% share). Reverted from the
@@ -589,7 +648,7 @@ def _cy_pool(pitchers, league):
         pool.append({
             "player": p,
             "stats": {
-                "war":      _eos(p, "war"),
+                "war":      _wfip_war(p),
                 "era_inv":  _inv(era),
                 "k_bb_pct": _eos(p, "k_bb_pct"),
                 "k":        _eos(p, "k"),
@@ -775,7 +834,7 @@ MVP_SHARPEN = 0.55  # baseline WAR weight (.791) + mild favorite-sharpening so a
                     # dominant WAR leader (Ohtani ~80%) reads as a clear favorite
 
 
-def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.28):
+def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.28, adaptive_conc=False):
     """Take scored candidates, join with odds, calibrate temp, emit final list.
 
     Name matching tries multiple variants (Bobby ↔ Robert, Cam ↔ Cameron, etc.)
@@ -931,6 +990,18 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
     # right value drifts up as the season's favorites separate); revisit a
     # season-progress curve only once a full season of (alpha, date) data exists.
     # This replaces the old MVP-only runaway-leader bump.
+    # Adaptive concentration (CY): fit ALPHA so the model's spread over the
+    # odds-covered subset matches the market's vig-free (power-devigged)
+    # concentration. Thin boards fall back to the passed alpha. Displayed
+    # market column is untouched (stays raw consensus).
+    if adaptive_conc:
+        _oc = [i for i, x in enumerate(pool)
+               if x.get("consensus_prob") and x["consensus_prob"] > 0]
+        if len(_oc) >= 4:
+            _mdev = _power_devig([pool[i]["consensus_prob"] for i in _oc])
+            _bsub = [base_p[i] for i in _oc]
+            if _mdev and sum(_bsub) > 0:
+                alpha = _fit_alpha_to_herf(_bsub, sum(q * q for q in _mdev))
     ALPHA = alpha  # per-market concentration (was global 1.15)
     if ALPHA != 1.0 and len(base_p) >= 2:
         _w = [p ** ALPHA for p in base_p]; _z = sum(_w) or 1.0
@@ -1189,7 +1260,7 @@ def main():
         cy_scored = _score_cy(cy_pool)
         out_markets[cy_key] = _render_market(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=70, alpha=1.85)
+            top_n=70, alpha=1.85, adaptive_conc=True)
 
         # ROY
         roy_key = f"{league}_ROY"
