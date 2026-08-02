@@ -1,4 +1,4 @@
-name: Odds refresh (frequent)
+name: Odds + projections refresh (frequent)
 
 # Odds-ONLY refresh, decoupled from the heavy data pipeline. GAME-AWARE: the
 # cron fires every 5 min across the active day, but refresh_odds.py only actually
@@ -57,15 +57,49 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Refresh F5 (first-5-innings) odds
+        # Same AN endpoint/best-price logic as full-game odds but the
+        # firstfiveinnings period -> data/f5_odds.json (F5 total + F5 ML).
+        run: python scripts/refresh_f5_odds.py
+        continue-on-error: true
+
+      - name: Import my Action PRO projections (GAME UPLOADER sheet -> sheet_projections.json)
+        # Reads the published GAME UPLOADER tab CSV, maps game_id (AN event id)
+        # -> gamePk, writes data/sheet_projections.json. Falls back to the public
+        # published-CSV URL (the same one index.html reads in-browser) when the
+        # SHEET_CSV_URL secret isn't set — this is a published-to-web link, not a
+        # credential, so the snapshot stays fresh without needing the secret.
+        run: |
+          export SHEET_CSV_URL="${SHEET_CSV_URL:-https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P/pub?gid=580753288&single=true&output=csv}"
+          python scripts/refresh_sheet_projections.py
+        continue-on-error: true
+        env:
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+
+      - name: Import my F5 projections (F5 UPLOADER sheet -> f5_projections.json)
+        # Same as the GAME UPLOADER import but reads the F5 tab. Provide the F5
+        # tab's published-CSV URL via the SHEET_F5_CSV_URL secret (File -> Share
+        # -> Publish to web -> F5 UPLOADER -> CSV), or hardcode the public
+        # published URL here (same doc, F5 tab's gid) like the GAME UPLOADER one.
+        # Skips cleanly until the URL is provided so runs never fail.
+        run: |
+          # Live gviz feed (by tab name) — reflects current formula values; the
+          # /export CSV serves a stale cache that shows blank F5 projections.
+          export SHEET_F5_CSV_URL="${SHEET_F5_CSV_URL:-https://docs.google.com/spreadsheets/d/1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE/gviz/tq?tqx=out:csv&sheet=F5%20UPLOADER}"
+          python scripts/refresh_f5_projections.py
+        continue-on-error: true
+        env:
+          SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
+
       - name: Commit odds (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/odds.json || true
+          git add data/odds.json data/f5_odds.json data/sheet_projections.json data/f5_projections.json || true
           if git diff --cached --quiet; then
             echo "No odds change."
           else
-            git commit -m "Odds refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git commit -m "Feeds refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
             for attempt in 1 2 3; do
               if git push; then break; fi
               echo "push attempt $attempt rejected; rebasing onto origin/main"
