@@ -5,7 +5,7 @@ name: Morning stats refresh (FG + Savant)
 # change once per day (settled overnight), so they do NOT belong in the 15-min
 # live refresh.
 #
-# TIMING BAKE-OFF (temporary): scheduled at 6/7/8/9 AM ET for a few days. Each
+# TIMING BAKE-OFF (temporary): 8 AM provisional + 10/11 AM ET settled window. Each
 # run appends a fingerprint (coverage counts + value-hashes) to
 # data/stats_timing_log.csv. When a source's hash is identical across hours on
 # the same day, it was already settled by the earlier hour. After a few days,
@@ -15,8 +15,8 @@ name: Morning stats refresh (FG + Savant)
 on:
   workflow_dispatch:
   schedule:
-    # 6, 7, 8, 9 AM ET  (EDT = UTC-4)  -> 10,11,12,13 UTC
-    - cron: "0 10,11,12,13 * * *"
+    # 8, 10, 11 AM ET  (EDT = UTC-4)  -> 12,14,15 UTC   (8=provisional, 10+11=settled window/probe)
+    - cron: "0 12,14,15 * * *"
 
 concurrency:
   group: morning-stats
