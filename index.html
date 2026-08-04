@@ -2090,14 +2090,19 @@
   body.embed-mode #tab-luck {
     display: none !important;
   }
-  body.embed-mode:not(.embed-futures):not(.embed-player-futures):not(.embed-game) #tab-scoreboard {
+  body.embed-mode:not(.embed-futures):not(.embed-player-futures):not(.embed-game):not(.embed-al):not(.embed-nl):not(.embed-playoffs) #tab-scoreboard {
     display: block !important;
     padding: 0 0.5rem 0.5rem !important;   /* sit right under the header */
   }
   /* Futures embeds (?embed=futures / ?embed=player-futures): show the requested
      futures section in place of the scoreboard. Higher specificity than the
      generic embed-mode hide rule above, so it wins. */
-  body.embed-mode.embed-futures #tab-futures,
+  @media (max-width:680px){.po-grid{grid-template-columns:1fr !important;}}
+body.force-mobile .po-grid{grid-template-columns:1fr !important;}
+body.embed-mode.embed-futures #tab-futures,
+  body.embed-mode.embed-al #tab-futures,
+  body.embed-mode.embed-nl #tab-futures,
+  body.embed-mode.embed-playoffs #tab-playoffs,
   body.embed-mode.embed-player-futures #tab-player-futures {
     display: block !important;
     padding: 0 0.5rem 0.5rem !important;
@@ -10437,7 +10442,8 @@ function renderFuturesContent(root) {
       Object.keys(divs).forEach(k => { if (k.toLowerCase().replace(/[^a-z]/g, '') !== want) delete divs[k]; });
     }
   } catch (e) {}
-  Object.values(divs).forEach(arr => arr.sort((a, b) => (b.composite?.wins ?? 0) - (a.composite?.wins ?? 0)));
+  try{var _lg=document.body.classList.contains('embed-al')?'AL':(document.body.classList.contains('embed-nl')?'NL':'');if(_lg&&document.body.classList.contains('embed-mode')){Object.keys(divs).forEach(function(k){if(k.slice(0,2)!==_lg)delete divs[k];});}}catch(e){}
+    Object.values(divs).forEach(arr => arr.sort((a, b) => (b.composite?.wins ?? 0) - (a.composite?.wins ?? 0)));
   const genAt = data.generated_at?.slice(0, 16).replace('T', ' ') || '—';
   const oddsAt = data.odds_at?.slice(0, 16).replace('T', ' ') || '—';
   // Always compute a fair-odds number from the composite %, even at the
@@ -10769,8 +10775,9 @@ document.addEventListener("click", hitTrendDelegate);
 
     // Futures embeds: activate the requested futures tab (renders + reveals its
     // section via the .embed-futures / .embed-player-futures CSS above).
-    if (embed === 'futures' || embed === 'player-futures') {
-      const _ftab = document.querySelector('.tab[data-tab="' + embed + '"]');
+    if (embed === 'futures' || embed === 'player-futures' || embed === 'al' || embed === 'nl' || embed === 'playoffs') {
+      const _tabName = (embed === 'al' || embed === 'nl') ? 'futures' : embed;
+      const _ftab = document.querySelector('.tab[data-tab="' + _tabName + '"]');
       if (_ftab) _ftab.click();
       sendHeight();
       return;
