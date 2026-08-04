@@ -1535,7 +1535,7 @@
   .apx-total{font-size:0.78rem;color:var(--muted);margin-top:3px;}
   .apx-proj-num{color:var(--accent);font-weight:700;}
   .apx-noproj{font-size:0.78rem;color:var(--muted);padding:10px 0;}
-  .apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
+  .apx-edgebar .tt-abbr,.apx-edgebar .tt-odds{display:none}.apx-detailed .apx-edgebar .tt-abbr,.apx-detailed .apx-edgebar .tt-odds{display:inline}.apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
   .apx-pill{font-size:0.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-hover);color:var(--muted);}
   .apx-edge-strong{background:rgba(116,217,142,.14);color:var(--tier-good);}
   .apx-edge-mild{color:var(--text);}
@@ -3304,7 +3304,7 @@ function _apxEdgeBarTT(g){
     const over=eO>=eU; const e=over?eO:eU;
     const lean=(over?"o":"u")+tt.line; var _od=over?((tt.over&&tt.over.odds!=null)?tt.over.odds:null):((tt.under&&tt.under.odds!=null)?tt.under.odds:null); var _os=_od!=null?(_od>0?" +"+_od:" "+_od):"";
     const cls=e>0?(e>=3?" apx-edge-strong":" apx-edge-mild"):"";
-    return '<span class="apx-pill'+cls+'">'+ab+' '+lean+_os+' '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
+    return '<span class="apx-pill'+cls+'"><span class="tt-abbr">'+ab+' </span>'+lean+'<span class="tt-odds">'+_os+'</span> '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
   }
   return '<div class="apx-edgebar">'+pill("away", teamAbbr(g.teams.away.team.name), sp.away_runs)+pill("home", teamAbbr(g.teams.home.team.name), sp.home_runs)+'</div>';
 }
