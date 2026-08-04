@@ -242,6 +242,7 @@ def get_forecast(office, x, y):
 # pipeline expects so extract_hour / game_window_avg work unchanged.
 OPENMETEO_PARKS = {
     "Toronto Blue Jays": (43.6414, -79.3894),   # Rogers Centre
+    "Boston Red Sox": (42.3467, -71.0972),   # Fenway Park - NWS hourly gridpoint 500s, use Open-Meteo
 }
 _DEG16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
 def _deg_to_compass(deg):
@@ -622,7 +623,14 @@ def main():
 
     def _load(team):
         if team in NWS_GRIDS:
-            return team, get_forecast(*NWS_GRIDS[team])
+            fc = get_forecast(*NWS_GRIDS[team])
+            if fc:
+                return team, fc
+            # NWS hourly gridpoint can 500 (e.g. BOX/Boston); fall back to Open-Meteo if we have coords
+            ll = OPENMETEO_PARKS.get(team)
+            if ll:
+                return team, get_forecast_openmeteo(*ll)
+            return team, None
         ll = OPENMETEO_PARKS.get(team)
         return team, (get_forecast_openmeteo(*ll) if ll else None)
 
