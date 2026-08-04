@@ -71,6 +71,27 @@
     </div>
   </div>
 
+  <div class="card slate" id="alFutCard">
+    <div><div class="m">AL team futures</div><div class="meta">AL division tables — win total / division / playoffs / WS</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=al&m=1">Mobile</a>
+      <button class="copy" data-kind="al">Copy</button>
+    </div>
+  </div>
+  <div class="card slate" id="nlFutCard">
+    <div><div class="m">NL team futures</div><div class="meta">NL division tables — win total / division / playoffs / WS</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=nl&m=1">Mobile</a>
+      <button class="copy" data-kind="nl">Copy</button>
+    </div>
+  </div>
+  <div class="card slate" id="poCard">
+    <div><div class="m">Playoff picture</div><div class="meta">Playoff odds by league + World Series — stacks on mobile</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=playoffs&m=1">Mobile</a>
+      <button class="copy" data-kind="playoffs">Copy</button>
+    </div>
+  </div>
   <div id="games"><div class="empty">Loading games…</div></div>
 
   <div class="note">🏆 Player Futures — award models (one embed per market)</div>
@@ -113,6 +134,9 @@ function iframeFor(kind, g, mkt){
   let src, title, id;
   if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
   else if(kind==='pf'){ src = BASE+`?embed=player-futures&market=${mkt}`; title="BARTOLO "+mkt+" model"; id="bartolo-pf-"+mkt; }
+  else if(kind==='al'){ src = BASE+'?embed=al'; title='Bartolo — AL team futures'; id='bartolo-al'; }
+  else if(kind==='nl'){ src = BASE+'?embed=nl'; title='Bartolo — NL team futures'; id='bartolo-nl'; }
+  else if(kind==='playoffs'){ src = BASE+'?embed=playoffs'; title='Bartolo — playoff picture'; id='bartolo-playoffs'; }
   else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
 
   // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
