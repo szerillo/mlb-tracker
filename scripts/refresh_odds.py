@@ -102,42 +102,47 @@ def implied_team_totals(ml_away, ml_home, total_line):
     }
 
 
-def best_team_total(game, team_id, ou):
-    """Best-price posted team total (one team's over or under) across REAL_BOOKS.
-    Reads AN core_bet_type_6_team_score entries, matched by team_id + side."""
-    def _payout(o): return o / 100.0 if o > 0 else 100.0 / abs(o)
-    best = None
-    for mkt_id, mkt in (game.get("markets") or {}).items():
-        try:
-            bid = int(mkt_id)
-        except (TypeError, ValueError):
-            continue
-        if bid not in REAL_BOOKS:
-            continue
-        for e in ((mkt.get("event") or {}).get("core_bet_type_6_team_score") or []):
-            if e.get("team_id") != team_id or e.get("side") != ou:
-                continue
-            odds = e.get("odds")
-            if odds is None:
-                continue
-            if best is None or _payout(odds) > _payout(best.get("odds")):
-                best = e
-    return best
-
-
 def posted_team_totals(game, away_id, home_id):
-    """Real posted team totals (best price) for both sides; None if either side
-    lacks a posted line (caller falls back to implied)."""
+    def _payout(o):
+        return o / 100.0 if o > 0 else 100.0 / abs(o)
+    def _entries(tid):
+        out = []
+        for mkt_id, mkt in (game.get("markets") or {}).items():
+            try:
+                bid = int(mkt_id)
+            except (TypeError, ValueError):
+                continue
+            if bid not in REAL_BOOKS:
+                continue
+            for e in ((mkt.get("event") or {}).get("core_bet_type_6_team_score") or []):
+                if e.get("team_id") != tid:
+                    continue
+                if e.get("odds") is None or e.get("value") is None:
+                    continue
+                if e.get("side") not in ("over", "under"):
+                    continue
+                out.append(e)
+        return out
     def _side(tid):
-        ov = best_team_total(game, tid, "over")
-        un = best_team_total(game, tid, "under")
-        line = (ov or un or {}).get("value")
-        if line is None:
+        es = _entries(tid)
+        if not es:
             return None
+        by_line = {}
+        for e in es:
+            slot = by_line.setdefault(e["value"], {"over": [], "under": []})
+            slot[e["side"]].append(e)
+        def rank(val):
+            slot = by_line[val]
+            both = 1 if (slot["over"] and slot["under"]) else 0
+            return (both, len(slot["over"]) + len(slot["under"]), -val)
+        line = max(by_line.keys(), key=rank)
+        slot = by_line[line]
+        bo = max(slot["over"], key=lambda x: _payout(x["odds"])) if slot["over"] else None
+        bu = max(slot["under"], key=lambda x: _payout(x["odds"])) if slot["under"] else None
         return {
             "line": line,
-            "over": {"odds": ov["odds"], "book": BOOK_NAMES.get(ov["book_id"], "Book %s" % ov["book_id"])} if ov else None,
-            "under": {"odds": un["odds"], "book": BOOK_NAMES.get(un["book_id"], "Book %s" % un["book_id"])} if un else None,
+            "over": {"odds": bo["odds"], "book": BOOK_NAMES.get(bo["book_id"], "Book %s" % bo["book_id"])} if bo else None,
+            "under": {"odds": bu["odds"], "book": BOOK_NAMES.get(bu["book_id"], "Book %s" % bu["book_id"])} if bu else None,
             "source": "posted",
         }
     a = _side(away_id)
@@ -145,7 +150,6 @@ def posted_team_totals(game, away_id, home_id):
     if not a or not h:
         return None
     return {"away": a, "home": h}
-
 
 def best_market(game: dict, market_type: str, side: str | None = None) -> dict | None:
     """Find best odds for a market across REAL_BOOKS.
