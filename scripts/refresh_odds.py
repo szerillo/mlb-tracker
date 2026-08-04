@@ -70,6 +70,33 @@ def is_better(cand: int, best: int) -> bool:
     return payout(cand) > payout(best)
 
 
+def _tt_amer_prob(o):
+    if o is None: return None
+    return 100.0 / (o + 100.0) if o > 0 else (-o) / ((-o) + 100.0)
+
+
+def implied_team_totals(ml_away, ml_home, total_line):
+    """Fair per-team totals implied by closing ML + game total. Devig the
+    two-way ML to a home win prob, map win prob -> expected run margin, split
+    the total. PROVISIONAL: the win%->margin slope (8.5) is a placeholder
+    pending Fable calibration (see TEAM_TOTAL_EDGE_CALIBRATION_HANDOFF); the
+    single-team over% dispersion (frontend k=1.54) is likewise provisional.
+    A posted best-price team_total market can override this later."""
+    if not ml_away or not ml_home or total_line is None:
+        return None
+    pa = _tt_amer_prob(ml_away.get("odds")); ph = _tt_amer_prob(ml_home.get("odds"))
+    if pa is None or ph is None or (pa + ph) <= 0:
+        return None
+    ph_dv = ph / (pa + ph)
+    margin = (ph_dv - 0.5) * 8.5
+    home_tt = round((total_line + margin) / 2.0, 2)
+    away_tt = round((total_line - margin) / 2.0, 2)
+    return {
+        "away": {"line": away_tt, "over": None, "under": None, "source": "implied"},
+        "home": {"line": home_tt, "over": None, "under": None, "source": "implied"},
+    }
+
+
 def best_market(game: dict, market_type: str, side: str | None = None) -> dict | None:
     """Find best odds for a market across REAL_BOOKS.
        market_type: 'moneyline' | 'spread' | 'total'
@@ -230,6 +257,8 @@ def _pull_slate(date):
         sp_away = best_market(g, "spread",    side="away")
         sp_home = best_market(g, "spread",    side="home")
         tot_over, tot_under = best_total(g)
+        _tt_line = (tot_over or tot_under or {}).get("value")
+        _team_total = implied_team_totals(ml_away, ml_home, _tt_line)
 
         def _fmt(m):
             if not m: return None
@@ -248,6 +277,7 @@ def _pull_slate(date):
             "moneyline": {"away": _fmt(ml_away), "home": _fmt(ml_home)},
             "run_line":  {"away": _fmt(sp_away), "home": _fmt(sp_home)},
             "total":     {"over": _fmt(tot_over), "under": _fmt(tot_under)},
+            "team_total": _team_total,
         })
     return games_out
 
