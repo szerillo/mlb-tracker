@@ -102,6 +102,51 @@ def implied_team_totals(ml_away, ml_home, total_line):
     }
 
 
+def best_team_total(game, team_id, ou):
+    """Best-price posted team total (one team's over or under) across REAL_BOOKS.
+    Reads AN core_bet_type_6_team_score entries, matched by team_id + side."""
+    def _payout(o): return o / 100.0 if o > 0 else 100.0 / abs(o)
+    best = None
+    for mkt_id, mkt in (game.get("markets") or {}).items():
+        try:
+            bid = int(mkt_id)
+        except (TypeError, ValueError):
+            continue
+        if bid not in REAL_BOOKS:
+            continue
+        for e in ((mkt.get("event") or {}).get("core_bet_type_6_team_score") or []):
+            if e.get("team_id") != team_id or e.get("side") != ou:
+                continue
+            odds = e.get("odds")
+            if odds is None:
+                continue
+            if best is None or _payout(odds) > _payout(best.get("odds")):
+                best = e
+    return best
+
+
+def posted_team_totals(game, away_id, home_id):
+    """Real posted team totals (best price) for both sides; None if either side
+    lacks a posted line (caller falls back to implied)."""
+    def _side(tid):
+        ov = best_team_total(game, tid, "over")
+        un = best_team_total(game, tid, "under")
+        line = (ov or un or {}).get("value")
+        if line is None:
+            return None
+        return {
+            "line": line,
+            "over": {"odds": ov["odds"], "book": BOOK_NAMES.get(ov["book_id"], "Book %s" % ov["book_id"])} if ov else None,
+            "under": {"odds": un["odds"], "book": BOOK_NAMES.get(un["book_id"], "Book %s" % un["book_id"])} if un else None,
+            "source": "posted",
+        }
+    a = _side(away_id)
+    h = _side(home_id)
+    if not a or not h:
+        return None
+    return {"away": a, "home": h}
+
+
 def best_market(game: dict, market_type: str, side: str | None = None) -> dict | None:
     """Find best odds for a market across REAL_BOOKS.
        market_type: 'moneyline' | 'spread' | 'total'
@@ -262,8 +307,10 @@ def _pull_slate(date):
         sp_away = best_market(g, "spread",    side="away")
         sp_home = best_market(g, "spread",    side="home")
         tot_over, tot_under = best_total(g)
-        _tt_line = (tot_over or tot_under or {}).get("value")
-        _team_total = implied_team_totals(ml_away, ml_home, _tt_line)
+        _team_total = posted_team_totals(g, g.get("away_team_id"), g.get("home_team_id"))
+        if _team_total is None:
+            _tt_line = (tot_over or tot_under or {}).get("value")
+            _team_total = implied_team_totals(ml_away, ml_home, _tt_line)
 
         def _fmt(m):
             if not m: return None
