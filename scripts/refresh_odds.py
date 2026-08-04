@@ -70,6 +70,11 @@ def is_better(cand: int, best: int) -> bool:
     return payout(cand) > payout(best)
 
 
+def _snap_half(x):
+    """Snap an implied team total to the nearest posted half-point (3.5/4.5/5.5)."""
+    return round(x - 0.5) + 0.5
+
+
 def _tt_amer_prob(o):
     if o is None: return None
     return 100.0 / (o + 100.0) if o > 0 else (-o) / ((-o) + 100.0)
@@ -89,11 +94,11 @@ def implied_team_totals(ml_away, ml_home, total_line):
         return None
     ph_dv = ph / (pa + ph)
     margin = 0.477 * (2.0 * ph_dv - 1.0) * total_line   # Fable-calibrated total-scaled diff
-    home_tt = round((total_line + margin) / 2.0, 2)
-    away_tt = round((total_line - margin) / 2.0, 2)
+    home_raw = (total_line + margin) / 2.0
+    away_raw = (total_line - margin) / 2.0
     return {
-        "away": {"line": away_tt, "over": None, "under": None, "source": "implied"},
-        "home": {"line": home_tt, "over": None, "under": None, "source": "implied"},
+        "away": {"line": _snap_half(away_raw), "implied": round(away_raw, 2), "over": None, "under": None, "source": "implied"},
+        "home": {"line": _snap_half(home_raw), "implied": round(home_raw, 2), "over": None, "under": None, "source": "implied"},
     }
 
 
