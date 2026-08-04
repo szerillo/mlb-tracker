@@ -7179,7 +7179,7 @@ function hitTrendDelegate(e) {
   const tr = cell.closest('tr');
   if (!tr) return;
   const next = tr.nextElementSibling;
-  if (hitTrendDelegate._k === key && Date.now() - (hitTrendDelegate._t||0) < 350) return; hitTrendDelegate._k = key; hitTrendDelegate._t = Date.now(); if (next && next.classList.contains('hit-trend-detail')) { next.remove(); return; }
+  if (hitTrendDelegate._k === key && Date.now() - (hitTrendDelegate._t||0) < 800) return; hitTrendDelegate._k = key; hitTrendDelegate._t = Date.now(); if (next && next.classList.contains('hit-trend-detail')) { next.remove(); return; }
   const gl = HITTER_GAMELOGS && HITTER_GAMELOGS.hitters ? HITTER_GAMELOGS.hitters[key] : null;
   const html = renderHitterTrendsHTML(gl);
   if (!html) return;
@@ -7200,7 +7200,7 @@ function spTrendDelegate(e) {
   const tr = cell.closest('tr');
   if (!tr) return;
   const next = tr.nextElementSibling;
-  if (spTrendDelegate._k === key && Date.now() - (spTrendDelegate._t||0) < 350) return; spTrendDelegate._k = key; spTrendDelegate._t = Date.now(); if (next && next.classList.contains('sp-trend-detail')) { next.remove(); return; }
+  if (spTrendDelegate._k === key && Date.now() - (spTrendDelegate._t||0) < 800) return; spTrendDelegate._k = key; spTrendDelegate._t = Date.now(); if (next && next.classList.contains('sp-trend-detail')) { next.remove(); return; }
   const name = (cell.textContent || '').trim() || pitcherDisplayName(key);
   const teamCell = tr.querySelector('td.team');
   const teamAbbr = teamCell ? teamCell.textContent.trim() : '';
