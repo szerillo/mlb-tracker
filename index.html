@@ -10613,7 +10613,7 @@ function renderFuturesContent(root) {
     </div>
   `).join("");
   root.innerHTML = `
-    <div class="cf-tabs" role="tablist"><button type="button" data-g="wintotal">Win Total</button><button type="button" data-g="division">Division</button><button type="button" data-g="playoffs" class="active">Playoffs</button><button type="button" data-g="ws">World Series</button></div><div class="ft-header">
+    <div class="cf-tabs" role="tablist"><button type="button" data-g="wintotal">Win Total</button><button type="button" data-g="division" class="active">Division</button><button type="button" data-g="playoffs">Playoffs</button><button type="button" data-g="ws">World Series</button></div><div class="ft-header">
       <div><b>Team Futures · Composite vs Market</b></div>
       <div class="ft-meta">Projections: ${genAt} · Odds: ${oddsAt}</div>
       <div class="ft-legend">
@@ -10623,7 +10623,7 @@ function renderFuturesContent(root) {
     ${divHTML}
   `;
 }
-(function(){function _cfInit(){var fr=document.getElementById('futures-root'); if(fr&&!fr.dataset.cfg) fr.dataset.cfg='playoffs';}if(document.readyState!=='loading')_cfInit();else document.addEventListener('DOMContentLoaded',_cfInit);document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.cf-tabs [data-g]');if(!b)return;var rt=b.closest('[data-cfg]')||document.getElementById('futures-root');if(rt){rt.dataset.cfg=b.dataset.g;rt.querySelectorAll('.cf-tabs [data-g]').forEach(function(x){x.classList.toggle('active',x===b);});}});})();
+(function(){function _cfInit(){var fr=document.getElementById('futures-root'); if(fr&&!fr.dataset.cfg) fr.dataset.cfg='division';}if(document.readyState!=='loading')_cfInit();else document.addEventListener('DOMContentLoaded',_cfInit);document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.cf-tabs [data-g]');if(!b)return;var rt=b.closest('[data-cfg]')||document.getElementById('futures-root');if(rt){rt.dataset.cfg=b.dataset.g;rt.querySelectorAll('.cf-tabs [data-g]').forEach(function(x){x.classList.toggle('active',x===b);});}});})();
 
 // ============================================================================
 // TABS
