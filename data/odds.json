@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T23:58:21.378772Z",
+  "generated_at": "2026-08-04T03:59:27.244164Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260803&periods=event",
   "date": "2026-08-03",
@@ -10,7 +10,7 @@
       "an_event_id": 292431,
       "matchup": "Washington Nationals @ Philadelphia Phillies",
       "start_time": "2026-08-03T22:40:00.000Z",
-      "status": "Bot 5th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 143,
@@ -54,7 +54,7 @@
       "an_event_id": 292432,
       "matchup": "St. Louis Cardinals @ New York Yankees",
       "start_time": "2026-08-03T23:05:00.000Z",
-      "status": "End 2nd",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 215,
@@ -98,7 +98,7 @@
       "an_event_id": 292433,
       "matchup": "Pittsburgh Pirates @ Milwaukee Brewers",
       "start_time": "2026-08-03T23:40:00.000Z",
-      "status": "Top 2nd",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 135,
@@ -142,7 +142,7 @@
       "an_event_id": 292434,
       "matchup": "San Francisco Giants @ Texas Rangers",
       "start_time": "2026-08-04T00:05:00.000Z",
-      "status": "scheduled",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 120,
@@ -178,14 +178,15 @@
           "line": 8,
           "book": "DraftKings"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824647,
       "an_event_id": 292435,
       "matchup": "Los Angeles Dodgers @ Chicago Cubs",
       "start_time": "2026-08-04T00:05:00.000Z",
-      "status": "scheduled",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": -124,
@@ -221,14 +222,15 @@
           "line": 7.5,
           "book": "BetMGM"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824160,
       "an_event_id": 292436,
       "matchup": "Toronto Blue Jays @ Houston Astros",
       "start_time": "2026-08-04T00:10:00.000Z",
-      "status": "scheduled",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 137,
@@ -264,14 +266,15 @@
           "line": 9,
           "book": "DraftKings"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824324,
       "an_event_id": 292437,
       "matchup": "Tampa Bay Rays @ Colorado Rockies",
       "start_time": "2026-08-04T00:40:00.000Z",
-      "status": "scheduled",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": -172,
@@ -307,14 +310,15 @@
           "line": 11.5,
           "book": "DraftKings"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 825095,
       "an_event_id": 292438,
       "matchup": "San Diego Padres @ Arizona Diamondbacks",
       "start_time": "2026-08-04T01:40:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 8th",
       "moneyline": {
         "away": {
           "odds": -100,
@@ -350,7 +354,8 @@
           "line": 9,
           "book": "BetMGM"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824805,
@@ -360,81 +365,109 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 115,
+          "odds": 120,
           "line": 0,
-          "book": "Fanatics"
+          "book": "FanDuel"
         },
         "home": {
-          "odds": -130,
+          "odds": -137,
           "line": 0,
+          "book": "BetRivers"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": -175,
+          "line": 1.5,
+          "book": "DraftKings"
+        },
+        "home": {
+          "odds": 150,
+          "line": -1.5,
+          "book": "FanDuel"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": -115,
+          "line": 8.5,
           "book": "bet365"
+        },
+        "under": {
+          "odds": 100,
+          "line": 8.5,
+          "book": "Fanatics"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.0,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.5,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
+    },
+    {
+      "game_pk": 824403,
+      "an_event_id": 292472,
+      "matchup": "New York Mets @ Cleveland Guardians",
+      "start_time": "2026-08-04T22:40:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": 127,
+          "line": 0,
+          "book": "Caesars"
+        },
+        "home": {
+          "odds": -137,
+          "line": 0,
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
           "odds": -165,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "bet365"
         },
         "home": {
-          "odds": 162,
+          "odds": 148,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "BetRivers"
         }
       },
       "total": {
         "over": {
-          "odds": -112,
-          "line": 8.5,
-          "book": "FanDuel"
-        },
-        "under": {
-          "odds": 100,
-          "line": 8.5,
-          "book": "Fanatics"
-        }
-      }
-    },
-    {
-      "game_pk": 823432,
-      "an_event_id": 292470,
-      "matchup": "Washington Nationals @ Philadelphia Phillies",
-      "start_time": "2026-08-04T22:40:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 198,
-          "line": 0,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": -220,
-          "line": 0,
-          "book": "Fanatics"
-        }
-      },
-      "run_line": {
-        "away": {
-          "odds": -110,
-          "line": 1.5,
-          "book": "BetMGM"
-        },
-        "home": {
-          "odds": -105,
-          "line": -1.5,
-          "book": "FanDuel"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": 100,
-          "line": 9,
+          "odds": -115,
+          "line": 7.5,
           "book": "DraftKings"
         },
         "under": {
-          "odds": -120,
-          "line": 9,
-          "book": "DraftKings"
+          "odds": 102,
+          "line": 7.5,
+          "book": "FanDuel"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.46,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.04,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -458,55 +491,12 @@
       },
       "run_line": {
         "away": {
-          "odds": -170,
-          "line": 1.5,
-          "book": "bet365"
-        },
-        "home": {
-          "odds": 162,
-          "line": -1.5,
-          "book": "FanDuel"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": -110,
-          "line": 9,
-          "book": "BetMGM"
-        },
-        "under": {
-          "odds": -107,
-          "line": 9,
-          "book": "DraftKings"
-        }
-      }
-    },
-    {
-      "game_pk": 824403,
-      "an_event_id": 292472,
-      "matchup": "New York Mets @ Cleveland Guardians",
-      "start_time": "2026-08-04T22:40:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 120,
-          "line": 0,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": -130,
-          "line": 0,
-          "book": "Caesars"
-        }
-      },
-      "run_line": {
-        "away": {
           "odds": -178,
           "line": 1.5,
           "book": "Caesars"
         },
         "home": {
-          "odds": 152,
+          "odds": 160,
           "line": -1.5,
           "book": "FanDuel"
         }
@@ -514,13 +504,84 @@
       "total": {
         "over": {
           "odds": -110,
-          "line": 7.5,
+          "line": 9,
           "book": "BetMGM"
         },
         "under": {
-          "odds": 102,
-          "line": 7.5,
-          "book": "FanDuel"
+          "odds": -103,
+          "line": 9,
+          "book": "BetRivers"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.25,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.75,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
+    },
+    {
+      "game_pk": 823432,
+      "an_event_id": 292470,
+      "matchup": "Washington Nationals @ Philadelphia Phillies",
+      "start_time": "2026-08-04T22:40:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": 215,
+          "line": 0,
+          "book": "BetRivers"
+        },
+        "home": {
+          "odds": -245,
+          "line": 0,
+          "book": "Fanatics"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": 100,
+          "line": 1.5,
+          "book": "DraftKings"
+        },
+        "home": {
+          "odds": -115,
+          "line": -1.5,
+          "book": "Fanatics"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": 100,
+          "line": 9,
+          "book": "Fanatics"
+        },
+        "under": {
+          "odds": -115,
+          "line": 9,
+          "book": "BetMGM"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.69,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 5.31,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -532,9 +593,9 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 140,
+          "odds": 155,
           "line": 0,
-          "book": "FanDuel"
+          "book": "BetRivers"
         },
         "home": {
           "odds": -160,
@@ -544,9 +605,9 @@
       },
       "run_line": {
         "away": {
-          "odds": -152,
+          "odds": -135,
           "line": 1.5,
-          "book": "FanDuel"
+          "book": "Caesars"
         },
         "home": {
           "odds": 130,
@@ -561,9 +622,23 @@
           "book": "FanDuel"
         },
         "under": {
-          "odds": -120,
+          "odds": -117,
           "line": 8.5,
-          "book": "bet365"
+          "book": "BetRivers"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.78,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.72,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -580,33 +655,47 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": -120,
+          "odds": -118,
           "line": 0,
-          "book": "Fanatics"
+          "book": "BetRivers"
         }
       },
       "run_line": {
         "away": {
-          "odds": 160,
-          "line": -1.5,
-          "book": "Fanatics"
-        },
-        "home": {
           "odds": 165,
           "line": -1.5,
-          "book": "bet365"
+          "book": "BetMGM"
+        },
+        "home": {
+          "odds": 168,
+          "line": -1.5,
+          "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": -105,
+          "odds": -108,
           "line": 9,
-          "book": "Fanatics"
+          "book": "DraftKings"
         },
         "under": {
           "odds": -110,
           "line": 9,
           "book": "FanDuel"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.34,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.66,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -618,38 +707,52 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 125,
-          "line": 0,
-          "book": "Fanatics"
-        },
-        "home": {
-          "odds": -135,
+          "odds": 120,
           "line": 0,
           "book": "bet365"
+        },
+        "home": {
+          "odds": -137,
+          "line": 0,
+          "book": "BetRivers"
         }
       },
       "run_line": {
         "away": {
-          "odds": -165,
+          "odds": -175,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "DraftKings"
         },
         "home": {
-          "odds": 155,
+          "odds": 150,
           "line": -1.5,
-          "book": "bet365"
+          "book": "BetMGM"
         }
       },
       "total": {
         "over": {
-          "odds": -105,
+          "odds": -118,
           "line": 9,
-          "book": "Fanatics"
+          "book": "BetRivers"
         },
         "under": {
           "odds": 100,
           "line": 9,
-          "book": "bet365"
+          "book": "DraftKings"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.25,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.75,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -673,26 +776,40 @@
       },
       "run_line": {
         "away": {
-          "odds": -145,
+          "odds": -157,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "BetRivers"
         },
         "home": {
-          "odds": 146,
+          "odds": 150,
           "line": -1.5,
           "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": -115,
+          "odds": -114,
           "line": 7.5,
           "book": "DraftKings"
         },
         "under": {
-          "odds": -100,
+          "odds": 100,
           "line": 7.5,
-          "book": "FanDuel"
+          "book": "BetRivers"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.33,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.17,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -728,57 +845,28 @@
       },
       "total": {
         "over": {
-          "odds": -105,
+          "odds": -115,
           "line": 9,
-          "book": "Fanatics"
+          "book": "DraftKings"
         },
         "under": {
           "odds": 100,
           "line": 9,
-          "book": "bet365"
-        }
-      }
-    },
-    {
-      "game_pk": 822865,
-      "an_event_id": 292478,
-      "matchup": "San Francisco Giants @ Texas Rangers",
-      "start_time": "2026-08-05T00:05:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 166,
-          "line": 0,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": -185,
-          "line": 0,
-          "book": "bet365"
+          "book": "Fanatics"
         }
       },
-      "run_line": {
+      "team_total": {
         "away": {
-          "odds": -140,
-          "line": 1.5,
-          "book": "bet365"
+          "line": 4.81,
+          "over": null,
+          "under": null,
+          "source": "implied"
         },
         "home": {
-          "odds": 120,
-          "line": -1.5,
-          "book": "bet365"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": -122,
-          "line": 7.5,
-          "book": "FanDuel"
-        },
-        "under": {
-          "odds": 105,
-          "line": 7.5,
-          "book": "bet365"
+          "line": 4.19,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -790,24 +878,24 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -190,
+          "odds": -200,
           "line": 0,
-          "book": "Caesars"
+          "book": "bet365"
         },
         "home": {
-          "odds": 176,
+          "odds": 183,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
-          "odds": -115,
+          "odds": -120,
           "line": -1.5,
           "book": "Fanatics"
         },
         "home": {
-          "odds": 106,
+          "odds": 108,
           "line": 1.5,
           "book": "FanDuel"
         }
@@ -823,6 +911,77 @@
           "line": 9,
           "book": "FanDuel"
         }
+      },
+      "team_total": {
+        "away": {
+          "line": 5.15,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 3.85,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
+    },
+    {
+      "game_pk": 822865,
+      "an_event_id": 292478,
+      "matchup": "San Francisco Giants @ Texas Rangers",
+      "start_time": "2026-08-05T00:05:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": 170,
+          "line": 0,
+          "book": "Caesars"
+        },
+        "home": {
+          "odds": -195,
+          "line": 0,
+          "book": "BetRivers"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": -130,
+          "line": 1.5,
+          "book": "bet365"
+        },
+        "home": {
+          "odds": 116,
+          "line": -1.5,
+          "book": "FanDuel"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": -114,
+          "line": 7.5,
+          "book": "BetRivers"
+        },
+        "under": {
+          "odds": -100,
+          "line": 7.5,
+          "book": "FanDuel"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.15,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.35,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
       }
     },
     {
@@ -833,9 +992,9 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 110,
+          "odds": 115,
           "line": 0,
-          "book": "BetMGM"
+          "book": "BetRivers"
         },
         "home": {
           "odds": -126,
@@ -845,26 +1004,40 @@
       },
       "run_line": {
         "away": {
-          "odds": -190,
+          "odds": -185,
           "line": 1.5,
-          "book": "BetMGM"
+          "book": "bet365"
         },
         "home": {
-          "odds": 176,
+          "odds": 168,
           "line": -1.5,
           "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": -105,
-          "line": 8.5,
-          "book": "BetMGM"
-        },
-        "under": {
-          "odds": -110,
+          "odds": -104,
           "line": 8.5,
           "book": "FanDuel"
+        },
+        "under": {
+          "odds": -113,
+          "line": 8.5,
+          "book": "DraftKings"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.06,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.44,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -876,14 +1049,14 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -125,
-          "line": 0,
-          "book": "bet365"
-        },
-        "home": {
-          "odds": 110,
+          "odds": -134,
           "line": 0,
           "book": "FanDuel"
+        },
+        "home": {
+          "odds": 120,
+          "line": 0,
+          "book": "bet365"
         }
       },
       "run_line": {
@@ -893,7 +1066,7 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": -135,
+          "odds": -130,
           "line": 1.5,
           "book": "bet365"
         }
@@ -905,52 +1078,23 @@
           "book": "FanDuel"
         },
         "under": {
-          "odds": -110,
+          "odds": -102,
           "line": 11,
-          "book": "bet365"
-        }
-      }
-    },
-    {
-      "game_pk": 823108,
-      "an_event_id": 292482,
-      "matchup": "Detroit Tigers @ Seattle Mariners",
-      "start_time": "2026-08-05T01:40:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 130,
-          "line": 0,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": -150,
-          "line": 0,
-          "book": "bet365"
+          "book": "BetMGM"
         }
       },
-      "run_line": {
+      "team_total": {
         "away": {
-          "odds": -170,
-          "line": 1.5,
-          "book": "bet365"
+          "line": 5.74,
+          "over": null,
+          "under": null,
+          "source": "implied"
         },
         "home": {
-          "odds": 145,
-          "line": -1.5,
-          "book": "bet365"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": -104,
-          "line": 8.5,
-          "book": "FanDuel"
-        },
-        "under": {
-          "odds": -115,
-          "line": 8.5,
-          "book": "bet365"
+          "line": 5.26,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     },
@@ -962,38 +1106,109 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 112,
+          "odds": 115,
           "line": 0,
-          "book": "FanDuel"
+          "book": "BetMGM"
         },
         "home": {
-          "odds": -122,
+          "odds": -120,
           "line": 0,
-          "book": "FanDuel"
+          "book": "BetRivers"
         }
       },
       "run_line": {
         "away": {
-          "odds": -200,
-          "line": 1.5,
-          "book": "FanDuel"
+          "odds": 160,
+          "line": -1.5,
+          "book": "BetRivers"
         },
         "home": {
-          "odds": 165,
+          "odds": 170,
           "line": -1.5,
+          "book": "BetMGM"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": 100,
+          "line": 8.5,
           "book": "bet365"
+        },
+        "under": {
+          "odds": -104,
+          "line": 8.5,
+          "book": "FanDuel"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 4.08,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.42,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
+    },
+    {
+      "game_pk": 823108,
+      "an_event_id": 292482,
+      "matchup": "Detroit Tigers @ Seattle Mariners",
+      "start_time": "2026-08-05T01:40:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": 132,
+          "line": 0,
+          "book": "BetRivers"
+        },
+        "home": {
+          "odds": -135,
+          "line": 0,
+          "book": "Caesars"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": -165,
+          "line": 1.5,
+          "book": "Fanatics"
+        },
+        "home": {
+          "odds": 146,
+          "line": -1.5,
+          "book": "FanDuel"
         }
       },
       "total": {
         "over": {
           "odds": 102,
-          "line": 9.5,
+          "line": 8.5,
           "book": "FanDuel"
         },
         "under": {
-          "odds": -120,
-          "line": 9.5,
+          "odds": -115,
+          "line": 8.5,
           "book": "bet365"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.95,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.55,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     }
