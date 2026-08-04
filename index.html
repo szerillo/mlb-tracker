@@ -1535,7 +1535,8 @@
   .apx-total{font-size:0.78rem;color:var(--muted);margin-top:3px;}
   .apx-proj-num{color:var(--accent);font-weight:700;}
   .apx-noproj{font-size:0.78rem;color:var(--muted);padding:10px 0;}
-  .apx-edgebar .tt-abbr,.apx-edgebar .tt-odds{display:none}.apx-detailed .apx-edgebar .tt-abbr,.apx-detailed .apx-edgebar .tt-odds{display:inline}@media (max-width:600px){.apx-edgebar .tt-abbr{display:inline}}body.force-mobile .apx-edgebar .tt-abbr{display:inline}.apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
+  .apx-edgebar .tt-abbr,.apx-edgebar .tt-odds{display:none}.apx-detailed .apx-edgebar .tt-abbr,.apx-detailed .apx-edgebar .tt-odds{display:inline}@media (max-width:600px){.apx-edgebar .tt-abbr{display:inline}}body.force-mobile .apx-edgebar .tt-abbr{display:inline}
+.cf-tabs{display:none;gap:6px;flex-wrap:wrap;margin:0 0 8px}.cf-tabs button{flex:1 1 auto;padding:7px 8px;font:600 12px/1 Inter,system-ui,sans-serif;color:var(--muted,#9fb2bf);background:var(--panel,#16232c);border:1px solid var(--border,#2a3b46);border-radius:8px;cursor:pointer}.cf-tabs button.active{color:#0b1418;background:#8fe3c8;border-color:#8fe3c8}@media (max-width:600px){.cf-tabs{display:flex}[data-cfg="wintotal"] col.g-division,[data-cfg="wintotal"] col.g-playoffs,[data-cfg="wintotal"] col.g-ws{visibility:collapse}[data-cfg="division"] col.g-wintotal,[data-cfg="division"] col.g-playoffs,[data-cfg="division"] col.g-ws{visibility:collapse}[data-cfg="playoffs"] col.g-wintotal,[data-cfg="playoffs"] col.g-division,[data-cfg="playoffs"] col.g-ws{visibility:collapse}[data-cfg="ws"] col.g-wintotal,[data-cfg="ws"] col.g-division,[data-cfg="ws"] col.g-playoffs{visibility:collapse}}.apx-edgebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;}
   .apx-pill{font-size:0.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--panel-hover);color:var(--muted);}
   .apx-edge-strong{background:rgba(116,217,142,.14);color:var(--tier-good);}
   .apx-edge-mild{color:var(--text);}
@@ -10575,7 +10576,7 @@ function renderFuturesContent(root) {
     <h3 class="ft-div-hdr">${div}</h3>
     <div class="ft-table-wrap">
     <table class="ft-table ft-table-implied">
-      <colgroup><col style="width:100px"><col style="width:58px"><col style="width:84px"><col style="width:90px"><col style="width:80px"><col style="width:80px"><col style="width:84px"><col style="width:80px"><col style="width:80px"><col style="width:84px"><col style="width:80px"><col style="width:80px"><col style="width:84px"></colgroup>
+      <colgroup><col class="g-team" style="width:100px"><col class="g-wintotal" style="width:58px"><col class="g-wintotal" style="width:84px"><col class="g-wintotal" style="width:90px"><col class="g-division" style="width:80px"><col class="g-division" style="width:80px"><col class="g-division" style="width:84px"><col class="g-playoffs" style="width:80px"><col class="g-playoffs" style="width:80px"><col class="g-playoffs" style="width:84px"><col class="g-ws" style="width:80px"><col class="g-ws" style="width:80px"><col class="g-ws" style="width:84px"></colgroup>
       <thead>
         <tr>
           <th class="ft-grp" rowspan="2" style="text-align:left;border-bottom:1px solid var(--border,#2a3b46);">Team</th>
@@ -10604,7 +10605,7 @@ function renderFuturesContent(root) {
     </div>
   `).join("");
   root.innerHTML = `
-    <div class="ft-header">
+    <div class="cf-tabs" role="tablist"><button type="button" data-g="wintotal">Win Total</button><button type="button" data-g="division">Division</button><button type="button" data-g="playoffs" class="active">Playoffs</button><button type="button" data-g="ws">World Series</button></div><div class="ft-header">
       <div><b>Team Futures · Composite vs Market</b></div>
       <div class="ft-meta">Projections: ${genAt} · Odds: ${oddsAt}</div>
       <div class="ft-legend">
@@ -10614,6 +10615,7 @@ function renderFuturesContent(root) {
     ${divHTML}
   `;
 }
+(function(){function _cfInit(){var fr=document.getElementById('futures-root'); if(fr&&!fr.dataset.cfg) fr.dataset.cfg='playoffs';}if(document.readyState!=='loading')_cfInit();else document.addEventListener('DOMContentLoaded',_cfInit);document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.cf-tabs [data-g]');if(!b)return;var rt=b.closest('[data-cfg]')||document.getElementById('futures-root');if(rt){rt.dataset.cfg=b.dataset.g;rt.querySelectorAll('.cf-tabs [data-g]').forEach(function(x){x.classList.toggle('active',x===b);});}});})();
 
 // ============================================================================
 // TABS
