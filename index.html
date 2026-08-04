@@ -3302,9 +3302,9 @@ function _apxEdgeBarTT(g){
     const unBE=(tt.under&&tt.under.odds!=null)?_breakeven(tt.under.odds):0.5;
     const eO=(pv-ovBE)*100, eU=((1-pv)-unBE)*100;
     const over=eO>=eU; const e=over?eO:eU;
-    const lean=(over?"o":"u")+tt.line;
+    const lean=(over?"o":"u")+tt.line; var _od=over?((tt.over&&tt.over.odds!=null)?tt.over.odds:null):((tt.under&&tt.under.odds!=null)?tt.under.odds:null); var _os=_od!=null?(_od>0?" +"+_od:" "+_od):"";
     const cls=e>0?(e>=3?" apx-edge-strong":" apx-edge-mild"):"";
-    return '<span class="apx-pill'+cls+'">'+ab+' '+lean+' '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
+    return '<span class="apx-pill'+cls+'">'+ab+' '+mu.toFixed(1)+' '+lean+_os+' '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
   }
   return '<div class="apx-edgebar">'+pill("away", teamAbbr(g.teams.away.team.name), sp.away_runs)+pill("home", teamAbbr(g.teams.home.team.name), sp.home_runs)+'</div>';
 }
