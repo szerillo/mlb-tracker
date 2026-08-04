@@ -3100,7 +3100,7 @@ function pgPOver(line, projTotal, k=1.50) {
 // over-states single-team overs ~6pp). Returns P(X > line), line = x.5.
 function pgPOverTeam(line, mu, r){
   if(line==null || mu==null || mu<=0) return null;
-  r = r || 3.5;
+  r = r || 8.0; mu = mu + 0.20;
   const p = r/(r+mu);
   let cdf = Math.pow(p, r), lg = 0;
   const n = Math.floor(line);
@@ -3304,7 +3304,7 @@ function _apxEdgeBarTT(g){
     const over=eO>=eU; const e=over?eO:eU;
     const lean=(over?"o":"u")+tt.line; var _od=over?((tt.over&&tt.over.odds!=null)?tt.over.odds:null):((tt.under&&tt.under.odds!=null)?tt.under.odds:null); var _os=_od!=null?(_od>0?" +"+_od:" "+_od):"";
     const cls=e>0?(e>=3?" apx-edge-strong":" apx-edge-mild"):"";
-    return '<span class="apx-pill'+cls+'">'+ab+' '+mu.toFixed(1)+' '+lean+_os+' '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
+    return '<span class="apx-pill'+cls+'">'+ab+' '+lean+_os+' '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
   }
   return '<div class="apx-edgebar">'+pill("away", teamAbbr(g.teams.away.team.name), sp.away_runs)+pill("home", teamAbbr(g.teams.home.team.name), sp.home_runs)+'</div>';
 }
