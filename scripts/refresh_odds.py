@@ -78,7 +78,7 @@ def _tt_amer_prob(o):
 def implied_team_totals(ml_away, ml_home, total_line):
     """Fair per-team totals implied by closing ML + game total. Devig the
     two-way ML to a home win prob, map win prob -> expected run margin, split
-    the total. PROVISIONAL: the win%->margin slope (8.5) is a placeholder
+    the total. PROVISIONAL: the win%->margin diff is Fable-calibrated 0.477*(2p-1)*total
     pending Fable calibration (see TEAM_TOTAL_EDGE_CALIBRATION_HANDOFF); the
     single-team over% dispersion (frontend k=1.54) is likewise provisional.
     A posted best-price team_total market can override this later."""
@@ -88,7 +88,7 @@ def implied_team_totals(ml_away, ml_home, total_line):
     if pa is None or ph is None or (pa + ph) <= 0:
         return None
     ph_dv = ph / (pa + ph)
-    margin = (ph_dv - 0.5) * 8.5
+    margin = 0.477 * (2.0 * ph_dv - 1.0) * total_line   # Fable-calibrated total-scaled diff
     home_tt = round((total_line + margin) / 2.0, 2)
     away_tt = round((total_line - margin) / 2.0, 2)
     return {
