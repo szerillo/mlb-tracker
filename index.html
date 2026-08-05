@@ -10870,5 +10870,93 @@ document.addEventListener("click", hitTrendDelegate);
   });
 })();
 </script>
+<style id="pm-style">
+body.pm-on .apx-mkt, body.pm-on .apx-fair, body.pm-on .apx-mkttot, body.pm-on .apx-edgebar { display:none !important; }
+.pm-strip { padding:7px 10px; margin:6px 0 2px; line-height:2; }
+.pm-strip .pm-lbl { font-size:10px; color:var(--muted); letter-spacing:.04em; margin-bottom:3px; }
+.pm-pill { display:inline-flex; gap:5px; align-items:center; font-size:11px; margin:0 6px 3px 0; padding:2px 8px; border:0.5px solid var(--border); border-radius:6px; }
+.pm-pill b { font-weight:500; color:var(--text); }
+.pm-pill .pm-mkt { color:var(--muted); }
+#pm-toggle.on, .pm-modal-toggle.on { color:var(--accent); border-color:var(--accent); }
+</style>
+<script>
+(function(){
+  var KAL=null, SHEET=null, loaded=false, loading=false;
+  function base(){ try{ return (location.pathname.indexOf('/embed')>-1)? '' : ''; }catch(e){ return ''; } }
+  function load(cb){
+    if(loaded){ cb&&cb(); return; }
+    if(loading){ return; } loading=true;
+    Promise.all([
+      fetch('data/kalshi.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch('data/sheet_projections.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+    ]).then(function(a){ KAL=a[0]; SHEET=a[1]; loaded=!!(KAL&&SHEET); loading=false; cb&&cb(); });
+  }
+  function cf(p){ return (p==null||isNaN(p))?null:Math.round(p*100); }
+  function feat(arr, proj){ if(!arr||!arr.length) return null; var b=arr[0], bd=1e9; arr.forEach(function(s){ var d=Math.abs(s.strike-proj); if(d<bd){bd=d;b=s;} }); return b; }
+  function nick(nm){ return (nm||'').split(' ').slice(-1)[0]; }
+  function pill(label, fair, mkt){
+    var e=(fair!=null&&mkt!=null)?(fair-mkt):null;
+    var ec=(e==null)?'var(--muted)':(e>0?'#3fb950':(e<0?'#f85149':'var(--muted)'));
+    var es=(e==null)?'':((e>0?'+':'')+e+'¢');
+    return '<span class="pm-pill"><b>'+label+'</b><span class="pm-fair">'+(fair==null?'-':fair+'¢')+'</span>'
+      +'<span class="pm-mkt">mkt '+(mkt==null?'-':mkt+'¢')+'</span>'
+      +'<span style="color:'+ec+';font-weight:500">'+es+'</span></span>';
+  }
+  function stripFor(pk){
+    if(!KAL||!SHEET) return null;
+    var g=SHEET.games&&SHEET.games[pk], k=KAL.games&&KAL.games[pk];
+    if(!g||!k) return null;
+    var awMkt=(k.ml&&k.ml.away)?k.ml.away.mid:null, hoMkt=(k.ml&&k.ml.home)?k.ml.home.mid:null;
+    var fs=feat(k.total, g.total);
+    var tFair=fs?cf(window.pgPOver?window.pgPOver(fs.strike, g.total):null):null, tMkt=fs?fs.over_mid:null;
+    var html='<div class="pm-lbl">PREDICTION MARKET ¢ · fair · mkt · edge</div>'
+      + pill(nick(g.away_team)+' ML', cf(g.away_wp), awMkt)
+      + pill(nick(g.home_team)+' ML', cf(g.home_wp), hoMkt)
+      + (fs? pill('Over '+fs.strike, tFair, tMkt) : '');
+    return html;
+  }
+  function decorate(){
+    if(!document.body.classList.contains('pm-on')){ document.querySelectorAll('.pm-strip').forEach(function(e){e.remove();}); return; }
+    if(!loaded){ load(decorate); return; }
+    document.querySelectorAll('.apx-card[data-pk]').forEach(function(card){
+      var old=card.querySelector('.pm-strip'); if(old) old.remove();
+      var html=stripFor(card.getAttribute('data-pk')); if(!html) return;
+      var strip=document.createElement('div'); strip.className='pm-strip'; strip.innerHTML=html;
+      var eb=card.querySelector('.apx-edgebar');
+      if(eb&&eb.parentNode) eb.parentNode.insertBefore(strip, eb.nextSibling); else card.appendChild(strip);
+    });
+  }
+  function setPM(on){
+    document.body.classList.toggle('pm-on', !!on);
+    document.querySelectorAll('#pm-toggle,.pm-modal-toggle').forEach(function(b){ b.classList.toggle('on', !!on); b.textContent=(on?'¢ Prices ✓':'¢ Prices'); });
+    load(decorate);
+  }
+  function mkBtn(cls){ var b=document.createElement('button'); b.className=cls; b.textContent='¢ Prices'; b.onclick=function(){ setPM(!document.body.classList.contains('pm-on')); }; return b; }
+  function ensureToggles(){
+    if(!document.getElementById('pm-toggle')){
+      var cv=[].slice.call(document.querySelectorAll('button.apx-toggle')).find(function(e){ return /Compact view/.test(e.textContent||''); });
+      if(cv&&cv.parentNode){ var b=mkBtn('apx-toggle'); b.id='pm-toggle'; cv.parentNode.insertBefore(b, cv); }
+    }
+    var modalTabs=[].slice.call(document.querySelectorAll('.apx-modal, [class*="modal"]')).filter(function(m){ return m.querySelector&&m.querySelector('.apx-card[data-pk]'); });
+    modalTabs.forEach(function(m){
+      if(m.querySelector('.pm-modal-toggle')) return;
+      var host=m.querySelector('[class*="tab"], [class*="head"]')||m;
+      var b=mkBtn('apx-toggle pm-modal-toggle'); b.style.cssText='position:absolute;top:10px;right:44px;z-index:5';
+      (host===m? m : host).appendChild(b);
+    });
+    var on=document.body.classList.contains('pm-on');
+    document.querySelectorAll('#pm-toggle,.pm-modal-toggle').forEach(function(b){ b.classList.toggle('on', on); b.textContent=(on?'¢ Prices ✓':'¢ Prices'); });
+  }
+  function init(){
+    ensureToggles();
+    var qp=new URLSearchParams(location.search);
+    if(qp.get('pm')==='1'||qp.get('pm')==='true'){ setPM(true); }
+    var mo=new MutationObserver(function(){ ensureToggles(); if(document.body.classList.contains('pm-on')) decorate(); });
+    mo.observe(document.body, {childList:true, subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init, 300);
+})();
+</script>
+
 </body>
 </html>
