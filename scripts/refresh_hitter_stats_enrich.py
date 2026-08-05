@@ -47,7 +47,7 @@ UA_DESKTOP = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
 
 # Fangraphs ATC projections JSON endpoint (usually Cloudflare-protected).
 FG_URL = ("https://www.fangraphs.com/api/projections"
-          "?type=atc&team=0&lg=all&players=0&pos=all&stats=bat")
+          "?type=ratcdc&team=0&lg=all&players=0&pos=all&stats=bat")
 
 # Savant sprint speed (reliable, no auth)
 SAVANT_URL_TMPL = ("https://baseballsavant.mlb.com/leaderboard/sprint_speed"
