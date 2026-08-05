@@ -69,6 +69,7 @@ def main():
 
     with open(sys.argv[1]) as f:
         payload = json.load(f)
+    _orig_payload = json.loads(json.dumps(payload))
 
     season = datetime.date.today().year
     pitchers = payload.get("pitchers", {})
@@ -106,6 +107,11 @@ def main():
                 # Add a stub so rendering still works if pitcher wasn't in base dump
                 pitchers[k] = pitchers.get(k, {})
                 pitchers[k][field] = round(float(fip), 2)
+
+    if sum(enriched_count.values()) == 0:
+        print("[refresh_projections] all Fangraphs sources returned 0 rows; preserving prior pitcher_stats.json", file=sys.stderr)
+        json.dump(_orig_payload, sys.stdout, indent=2)
+        return
 
     # fip_proj = MEAN of available source projections.
     #
