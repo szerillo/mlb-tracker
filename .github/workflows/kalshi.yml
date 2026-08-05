@@ -9,6 +9,9 @@ concurrency:
   group: kalshi
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   kalshi:
     runs-on: ubuntu-latest
