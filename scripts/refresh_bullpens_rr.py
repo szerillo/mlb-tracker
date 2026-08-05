@@ -63,7 +63,7 @@ def _role_pri(role):
 def _get(url, tries=3, timeout=30):
     for _ in range(tries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json, text/javascript, */*; q=0.01", "Referer": "https://www.fangraphs.com/"})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.load(r)
         except Exception:
