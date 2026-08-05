@@ -57,7 +57,7 @@ def norm_name(s):
 def fetch_projection(proj_type, season):
     url = (f"https://www.fangraphs.com/api/projections"
            f"?pos=all&type={proj_type}&stats=pit&season={season}&players=0")
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json, text/javascript, */*; q=0.01", "Referer": "https://www.fangraphs.com/"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8", errors="replace"))
 
