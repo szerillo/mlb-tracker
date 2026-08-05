@@ -151,35 +151,100 @@ def _isdate(s):
 
 
 def main():
-    # 1) Collect every mlb-bp reliever across all 30 RR team pages (dedup by id).
-    pen = collections.OrderedDict()   # mlbamid -> {player, role, ord}
-    for tid in range(1, 31):
-        d = _get(RR_URL.format(tid=tid))
-        if not d:
-            print(f"[bullpens] teamid {tid} fetch failed; skipping")
-            continue
-        bp = [r for r in d if r.get("type") == "mlb-bp"]
-        for i, r in enumerate(bp):
-            mid = r.get("mlbamid")
-            if mid and mid not in pen:
-                pen[mid] = {"player": r.get("player"), "role": r.get("role"), "ord": i}
-        time.sleep(0.4)
-    if not pen:
-        print("[bullpens] no relievers collected; leaving previous feed intact", file=sys.stderr)
-        return 1
-    print(f"[bullpens] collected {len(pen)} unique relievers from Roster Resource")
+    # 1) Build each team's bullpen from MLB StatsAPI active rosters (FanGraphs
+    #    Roster Resource is Cloudflare-blocked from CI). Season starts classify
+    #    starters vs relievers; the current role (CL/SU/MID/LR) is driven by
+    #    RECENT usage (trailing window) so stale early-season save totals do not
+    #    mislabel a reliever who has lost the closer job.
+    import datetime as _dt
+    _now = _dt.datetime.utcnow() - _dt.timedelta(hours=4)
+    _year = _now.year
+    _end = _now.date()
+    _start = _end - _dt.timedelta(days=21)
 
-    # 2) Resolve each reliever's real team from StatsAPI (mlbamid -> currentTeam).
-    ids = list(pen.keys())
+    def _ipf(ip):
+        try:
+            s = str(ip if ip is not None else "0"); w, _, fr = s.partition(".")
+            return int(w or 0) + (int(fr or 0) / 3.0 if fr else 0.0)
+        except Exception:
+            return 0.0
+
+    def _statline(person):
+        st = person.get("stats") or []
+        sp = (st[0].get("splits") if st else None) or []
+        s = (sp[0].get("stat") if sp else None) or {}
+        return {"g": s.get("gamesPitched") or 0, "gs": s.get("gamesStarted") or 0,
+                "sv": s.get("saves") or 0, "hld": s.get("holds") or 0,
+                "gf": s.get("gamesFinished") or 0, "ip": _ipf(s.get("inningsPitched"))}
+
+    def _roster(tid, kind):
+        base = "https://statsapi.mlb.com/api/v1/teams/%d/roster?rosterType=active&hydrate=person(stats(group=[pitching]," % tid
+        if kind == "season":
+            return _get(base + "type=[season],season=%d))" % _year)
+        return _get(base + "type=[byDateRange],startDate=%s,endDate=%s))" % (_start.isoformat(), _end.isoformat()))
+
+    _tdata = _get("https://statsapi.mlb.com/api/v1/teams?sportId=1&season=%d" % _year) or {}
+    _teams = [(tm.get("id"), tm.get("name")) for tm in _tdata.get("teams", [])
+              if (tm.get("sport") or {}).get("id") == 1 and tm.get("id")]
+
+    pen = collections.OrderedDict()
     team_of = {}
-    name_of = {}   # mlbamid -> canonical StatsAPI fullName (clean common name)
-    for j in range(0, len(ids), 100):
-        chunk = ids[j:j + 100]
-        d = _get(PEOPLE_URL.format(ids=",".join(map(str, chunk))))
-        for p in (d or {}).get("people", []):
-            team_of[p["id"]] = (p.get("currentTeam", {}) or {}).get("name")
-            name_of[p["id"]] = p.get("fullName")
-        time.sleep(0.3)
+    name_of = {}
+    for _tid, _tname in _teams:
+        _sd = _roster(_tid, "season")
+        if not _sd:
+            print("[bullpens] teamid %s fetch failed; skipping" % _tid, file=sys.stderr)
+            continue
+        _rd = _roster(_tid, "recent") or {}
+        _recent = {}
+        for _r in _rd.get("roster", []):
+            _p = _r.get("person") or {}
+            if _p.get("id"):
+                _recent[_p["id"]] = _statline(_p)
+        _rel = []
+        for _r in _sd.get("roster", []):
+            if (_r.get("position") or {}).get("abbreviation") != "P":
+                continue
+            _p = _r.get("person") or {}
+            _mid = _p.get("id")
+            if not _mid:
+                continue
+            _ss = _statline(_p)
+            if _ss["g"] > 0 and _ss["gs"] >= 5 and _ss["gs"] >= 0.5 * _ss["g"]:
+                continue
+            _rc = _recent.get(_mid) or {"g": 0, "gs": 0, "sv": 0, "hld": 0, "gf": 0, "ip": 0.0}
+            _rel.append({"mid": _mid, "name": _p.get("fullName", ""), "s": _ss, "r": _rc})
+        if not _rel:
+            continue
+        _closer = None
+        _best = 0
+        for _x in _rel:
+            _score = _x["r"]["sv"] * 3 + _x["r"]["gf"]
+            if _score > _best and (_x["r"]["sv"] >= 1 or _x["r"]["gf"] >= 2):
+                _best = _score
+                _closer = _x["mid"]
+        for _x in _rel:
+            _s = _x["s"]
+            _r = _x["r"]
+            _ipg = (_s["ip"] / _s["g"]) if _s["g"] else 0.0
+            if _x["mid"] == _closer:
+                _role, _ord = "CL", 0
+            elif _s["gs"] >= 1 or _ipg >= 2.0:
+                _role, _ord = "LR", -int(_s["ip"])
+            elif _r["hld"] >= 1:
+                _role, _ord = "SU", -_r["hld"]
+            else:
+                _role, _ord = "MID", -(_r["g"] * 10 + _s["g"])
+            pen[_x["mid"]] = {"player": _x["name"], "role": _role, "ord": _ord}
+            team_of[_x["mid"]] = _tname
+            name_of[_x["mid"]] = _x["name"]
+        time.sleep(0.2)
+
+    print("[bullpens] collected %d relievers across %d teams (StatsAPI)"
+          % (len(pen), len(set(team_of.values()))), file=sys.stderr)
+    if not pen:
+        print("[bullpens] no relievers collected, leaving previous feed intact.", file=sys.stderr)
+        sys.exit(1)
 
     # 3) Group by team, order by role, number 1..N.
     byteam = collections.defaultdict(list)
