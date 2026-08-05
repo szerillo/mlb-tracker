@@ -10951,7 +10951,9 @@ body.pm-on .apx-mkt, body.pm-on .apx-fair, body.pm-on .apx-mkttot, body.pm-on .a
     ensureToggles();
     var qp=new URLSearchParams(location.search);
     if(qp.get('pm')==='1'||qp.get('pm')==='true'){ setPM(true); }
-    var mo=new MutationObserver(function(){ ensureToggles(); if(document.body.classList.contains('pm-on')) decorate(); });
+    var moT=null, mo;
+    function pmRun(){ if(mo)mo.disconnect(); try{ ensureToggles(); if(document.body.classList.contains('pm-on')) decorate(); }catch(e){} if(mo)mo.observe(document.body, {childList:true, subtree:true}); }
+    mo=new MutationObserver(function(){ if(moT) return; moT=setTimeout(function(){ moT=null; pmRun(); }, 600); });
     mo.observe(document.body, {childList:true, subtree:true});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init, 300);
