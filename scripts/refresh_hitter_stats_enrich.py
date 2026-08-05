@@ -22,6 +22,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import urllib.request
 import os
 import re
 import sys
@@ -75,18 +76,17 @@ def norm_name(s: str) -> str:
 # ----------------------------------------------------------------------------
 
 def fetch_fg_projections():
-    if not REQ_OK:
-        return []
+    # Fangraphs' Cloudflare edge 403s the requests/urllib3 TLS fingerprint from
+    # CI runners but serves stdlib urllib, so fetch via urllib like the pitcher
+    # and player-WAR scripts.
     try:
-        r = requests.get(FG_URL, timeout=30, headers={
+        _req = urllib.request.Request(FG_URL, headers={
             "User-Agent": UA_DESKTOP,
             "Referer": "https://www.fangraphs.com/",
-            "Accept": "application/json, text/javascript, */*",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
         })
-        if not r.ok:
-            print(f"[fg-proj] blocked (HTTP {r.status_code})", file=sys.stderr)
-            return []
-        d = r.json()
+        with urllib.request.urlopen(_req, timeout=30) as _resp:
+            d = json.loads(_resp.read().decode("utf-8", errors="replace"))
         rows = d.get("data", d) if isinstance(d, dict) else d
         return rows if isinstance(rows, list) else []
     except Exception as e:
