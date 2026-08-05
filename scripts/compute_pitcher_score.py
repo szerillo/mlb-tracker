@@ -68,10 +68,10 @@ ROLL_SEASON_WEIGHT = 0.8
 # whichever are available). Rolling xFIP/SIERA lead; xERA/botERA add independent
 # contact/stuff info K-BB% misses.
 COMPONENTS = [
-    ("roll_xfip",  28.0),
-    ("roll_siera", 22.0),
-    ("xera",       18.0),
-    ("bot_era",    17.0),
+    ("roll_xfip",  20.0),
+    ("roll_siera", 40.0),
+    ("xera",       25.0),
+    ("bot_era",    15.0),
 ]
 
 # DYNAMIC in-season vs projection weighting (mid-2026 recalibration).
@@ -81,8 +81,8 @@ COMPONENTS = [
 # innings at which in-season data earns 50% of the weight. Relievers get a larger
 # K (their per-IP rate stats are noisier and role changes matter), so they lean
 # on the projection longer than starters at equal innings.
-K_SP = 14.0   # starter half-weight innings
-K_RP = 20.0   # reliever half-weight innings
+K_SP = 250.0   # starter half-weight innings
+K_RP = 250.0   # reliever half-weight innings
 DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
 
 # Rolling K-BB% TREND tilt. Sean's ask: use the L5-vs-season K-BB% trend as a
@@ -92,7 +92,7 @@ DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
 # rolling core already carries most recent form, so this is only the residual),
 # and SCALED BY THE IN-SEASON WEIGHT so it informs established arms and barely
 # touches tiny-sample/projection-driven ones.
-KBB_TILT_SLOPE = 0.03   # FIP per point of (L5 - season) K-BB%; sign: better K-BB -> lower FIP
+KBB_TILT_SLOPE = 0.0   # FIP per point of (L5 - season) K-BB%; sign: better K-BB -> lower FIP
 KBB_TILT_CAP   = 0.20   # max |tilt| in FIP units
 KBB_TILT_MIN_L5 = 3     # need at least this many recent starts/appearances
 
@@ -100,7 +100,8 @@ KBB_TILT_MIN_L5 = 3     # need at least this many recent starts/appearances
 # velocity and CSW level. Each ~0.049 FIP per unit vs the league mean (per mph;
 # per CSW percentage-point). Sign: higher velo / higher CSW -> lower FIP. Applied
 # as a post-core level correction, scaled by the in-season weight and capped.
-VELOCSW_SLOPE = 0.049
+VELOCSW_SLOPE = 0.11
+CSW_SLOPE     = 0.03
 VELOCSW_CAP   = 0.40    # max |combined adj| in FIP units
 VELOCSW_MIN_IP = 20.0   # only for arms with a stabilized velo/CSW sample
 
@@ -345,7 +346,7 @@ def main() -> int:
             _sv, _sc = _f(_se.get("velo")), _f(_se.get("csw"))
             a = 0.0
             if _sv is not None: a += -VELOCSW_SLOPE * (_sv - LG_VELO)
-            if _sc is not None: a += -VELOCSW_SLOPE * (_sc * 100.0 - LG_CSW * 100.0)
+            if _sc is not None: a += -CSW_SLOPE * (_sc * 100.0 - LG_CSW * 100.0)
             a = max(-VELOCSW_CAP, min(VELOCSW_CAP, a))
             velocsw_adj = a * w_season
             score += velocsw_adj
