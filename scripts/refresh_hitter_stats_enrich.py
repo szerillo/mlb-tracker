@@ -22,6 +22,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import time
 import urllib.request
 import os
 import re
@@ -76,22 +77,25 @@ def norm_name(s: str) -> str:
 # ----------------------------------------------------------------------------
 
 def fetch_fg_projections():
-    # Fangraphs' Cloudflare edge 403s the requests/urllib3 TLS fingerprint from
-    # CI runners but serves stdlib urllib, so fetch via urllib like the pitcher
-    # and player-WAR scripts.
-    try:
-        _req = urllib.request.Request(FG_URL, headers={
-            "User-Agent": UA_DESKTOP,
-            "Referer": "https://www.fangraphs.com/",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-        })
-        with urllib.request.urlopen(_req, timeout=30) as _resp:
-            d = json.loads(_resp.read().decode("utf-8", errors="replace"))
-        rows = d.get("data", d) if isinstance(d, dict) else d
-        return rows if isinstance(rows, list) else []
-    except Exception as e:
-        print(f"[fg-proj] failed: {e}", file=sys.stderr)
-        return []
+    # Fangraphs' Cloudflare edge blocks bot-ish requests and rate-limits CI
+    # runners; fetch via stdlib urllib (like the pitcher/WAR scripts) with a
+    # browser UA and retry/backoff on transient 403/429.
+    _headers = {
+        "User-Agent": UA_DESKTOP,
+        "Referer": "https://www.fangraphs.com/",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+    for _attempt in range(4):
+        try:
+            _req = urllib.request.Request(FG_URL, headers=_headers)
+            with urllib.request.urlopen(_req, timeout=30) as _resp:
+                d = json.loads(_resp.read().decode("utf-8", errors="replace"))
+            rows = d.get("data", d) if isinstance(d, dict) else d
+            return rows if isinstance(rows, list) else []
+        except Exception as e:
+            print(f"[fg-proj] attempt {_attempt+1} failed: {e}", file=sys.stderr)
+            time.sleep(5 * (_attempt + 1))
+    return []
 
 
 def build_projection_enrichment(rows: List[dict]) -> Dict[str, dict]:
