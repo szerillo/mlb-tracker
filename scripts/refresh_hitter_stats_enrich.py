@@ -80,8 +80,8 @@ def fetch_fg_projections():
     try:
         r = requests.get(FG_URL, timeout=30, headers={
             "User-Agent": UA_DESKTOP,
-            "Referer": "https://www.fangraphs.com/projections.aspx",
-            "Accept": "application/json, text/plain, */*",
+            "Referer": "https://www.fangraphs.com/",
+            "Accept": "application/json, text/javascript, */*",
         })
         if not r.ok:
             print(f"[fg-proj] blocked (HTTP {r.status_code})", file=sys.stderr)
