@@ -150,6 +150,60 @@ def _isdate(s):
         return False
 
 
+def _avail_state(days):
+    """Fable availability model: rest state -> (state, avail_mult, use_penalty).
+    days = pitch counts per day, last = yesterday. Fatigue acts through
+    availability (arms get removed), not a performance penalty on back-to-backs."""
+    if not days:
+        return ("FRESH", 1.0, 0.0)
+    d1 = days[-1] or 0
+    d2 = (days[-2] or 0) if len(days) >= 2 else 0
+    apps3 = sum(1 for x in days[-3:] if (x or 0) > 0)
+    if d1 >= 30 or (d1 > 0 and d2 > 0) or apps3 >= 3:
+        return ("LIKELY_OUT", 0.07, 0.55)
+    if 20 <= d1 <= 29:
+        return ("TIRED", 0.52, 0.30)
+    if 0 < d1 < 20:
+        return ("CAUTION", 0.94, 0.0)
+    if apps3 >= 2:
+        return ("CAUTION", 0.57, 0.0)
+    return ("FRESH", 1.0, 0.0)
+
+
+def load_fatigue_days(slate):
+    """(team_fullname, norm_name) -> per-day pitch list for the slate date."""
+    out = {}
+    try:
+        d = json.load(open(FATIGUE))
+        dates = d.get("dates", {})
+        day = dates.get(slate)
+        if not day and dates:
+            keys = sorted(k for k in dates if _isdate(k))
+            earlier = [k for k in keys if k <= slate]
+            day = dates.get(earlier[-1]) if earlier else (dates.get(keys[-1]) if keys else None)
+        for full, relievers in ((day or {}).get("teams") or {}).items():
+            for r in (relievers or []):
+                nm = r.get("name")
+                if nm:
+                    out[(full, _norm(nm))] = r.get("days") or []
+    except Exception:
+        pass
+    return out
+
+
+def load_fipmap():
+    """mlbam_id -> unified_score (unified_v2) from pitcher_stats.json."""
+    out = {}
+    try:
+        ps = json.load(open(os.path.join(REPO_ROOT, "data", "pitcher_stats.json")))
+        for p in (ps.get("pitchers") or {}).values():
+            if isinstance(p, dict) and p.get("mlbam_id") is not None and p.get("unified_score") is not None:
+                out[p["mlbam_id"]] = p["unified_score"]
+    except Exception:
+        pass
+    return out
+
+
 def main():
     # 1) Build each team's bullpen from MLB StatsAPI active rosters (FanGraphs
     #    Roster Resource is Cloudflare-blocked from CI). Season starts classify
@@ -235,7 +289,7 @@ def main():
                 _role, _ord = "SU", -_r["hld"]
             else:
                 _role, _ord = "MID", -(_r["g"] * 10 + _s["g"])
-            pen[_x["mid"]] = {"player": _x["name"], "role": _role, "ord": _ord}
+            pen[_x["mid"]] = {"player": _x["name"], "role": _role, "ord": _ord, "rip": _x["r"]["ip"]}
             team_of[_x["mid"]] = _tname
             name_of[_x["mid"]] = _x["name"]
         time.sleep(0.2)
@@ -256,6 +310,9 @@ def main():
 
     slate = _slate_date()
     flagged, fdate = load_fatigue(slate)
+    fdays = load_fatigue_days(slate)
+    fipmap = load_fipmap()
+    ratings = {}
     print(f"[bullpens] slate {slate}; using fatigue for {fdate} ({len(flagged)} relievers flagged)")
     rows = []       # CSV rows (list of 8)
     games = {}      # json: nickname -> [ {num, player, mlbamid, role, workload} ]
@@ -263,15 +320,32 @@ def main():
         nick = NICK.get(full) or full.split()[-1]
         pen_sorted = sorted(byteam[full], key=lambda x: (_role_pri(x[2]), x[3]))
         arr = []
+        _num_w = _den_w = 0.0
+        _navail = 0
         for num, (mid, rr_player, role, _o) in enumerate(pen_sorted, start=1):
             # canonical name: StatsAPI fullName if we have it, else cleaned RR name
             player = _clean_name(name_of.get(mid) or rr_player)
             workload = (full, _norm(player)) in flagged
+            state, avail, _pen = _avail_state(fdays.get((full, _norm(player))))
+            fip = fipmap.get(mid)
+            rip = (pen.get(mid) or {}).get("rip") or 0.0
+            if fip is not None and rip > 0:
+                _num_w += avail * rip * fip
+                _den_w += avail * rip
+            if avail >= 0.5:
+                _navail += 1
             rows.append([nick, "RP", mid, player, 8, num, f"{nick} {num}",
                          "TRUE" if workload else "FALSE"])
             arr.append({"num": num, "player": player, "mlbamid": mid,
-                        "role": role, "workload": workload})
+                        "role": role, "workload": workload,
+                        "avail": round(avail, 2), "state": state,
+                        "fip": round(fip, 2) if fip is not None else None})
         games[nick] = arr
+        ratings[nick] = {
+            "eff_bullpen_fip": round(_num_w / _den_w, 3) if _den_w else None,
+            "n_available": _navail,
+            "n_relievers": len(arr),
+        }
 
     # 4) Write CSV (header matches Bullpen Dump) + JSON.
     os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
@@ -287,6 +361,7 @@ def main():
         "slate_date": slate, "fatigue_date": fdate,
         "n_teams": len(games), "n_relievers": len(rows),
         "teams": games,
+        "bullpen_ratings": ratings,
     }
     with open(OUT_JSON, "w") as f:
         json.dump(payload, f, indent=2)
