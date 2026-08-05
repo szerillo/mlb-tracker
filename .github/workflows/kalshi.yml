@@ -1,0 +1,29 @@
+name: Kalshi prices
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: kalshi
+  cancel-in-progress: true
+
+jobs:
+  kalshi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh Kalshi prices
+        run: python scripts/refresh_kalshi.py || true
+      - name: Commit kalshi data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/kalshi.json || true
+          git diff --staged --quiet || git commit -m "Update Kalshi prices"
+          git pull --rebase --autostash || true
+          git push || true
