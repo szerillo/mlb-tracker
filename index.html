@@ -10871,7 +10871,8 @@ document.addEventListener("click", hitTrendDelegate);
 })();
 </script>
 <style id="pm-style">
-body.pm-on .apx-mkt, body.pm-on .apx-fair, body.pm-on .apx-mkttot, body.pm-on .apx-edgebar { display:none !important; }
+.pm-card .apx-mkt, .pm-card .apx-fair, .pm-card .apx-mkttot, .pm-card .apx-edgebar { display:none !important; }
+.pm-strip.pm-center { text-align:center; }
 .pm-strip { padding:7px 10px; margin:6px 0 2px; line-height:2; }
 .pm-strip .pm-lbl { font-size:10px; color:var(--muted); letter-spacing:.04em; margin-bottom:3px; }
 .pm-pill { display:inline-flex; gap:5px; align-items:center; font-size:11px; margin:0 6px 3px 0; padding:2px 8px; border:0.5px solid var(--border); border-radius:6px; }
@@ -10915,19 +10916,21 @@ body.pm-on .apx-mkt, body.pm-on .apx-fair, body.pm-on .apx-mkttot, body.pm-on .a
       + (fs? pill('Over '+fs.strike, tFair, tMkt) : '');
     return html;
   }
+  function modeFor(card){ var el=card.parentElement; while(el){ var a=el.querySelector('.apx-modeseg-btn.active'); if(a) return (a.textContent||''); el=el.parentElement; } return 'Full Game'; }
+  function clearAll(){ document.querySelectorAll('.pm-strip').forEach(function(e){e.remove();}); document.querySelectorAll('.pm-card').forEach(function(c){c.classList.remove('pm-card');}); }
   function decorate(){
-    if(!document.body.classList.contains('pm-on')){ document.querySelectorAll('.pm-strip').forEach(function(e){e.remove();}); return; }
+    if(!document.body.classList.contains('pm-on')){ clearAll(); return; }
     if(!loaded){ load(decorate); return; }
     document.querySelectorAll('.apx-card[data-pk]').forEach(function(card){
       var old=card.querySelector('.pm-strip'); if(old) old.remove();
-      var html=stripFor(card.getAttribute('data-pk')); if(!html) return;
-      var strip=document.createElement('div'); strip.className='pm-strip'; strip.innerHTML=html;
+      if(modeFor(card).indexOf('Full Game')!==0){ card.classList.remove('pm-card'); return; } var html=stripFor(card.getAttribute('data-pk')); if(!html){ card.classList.remove('pm-card'); return; } card.classList.add('pm-card');
+      var strip=document.createElement('div'); strip.className='pm-strip'+(card.closest('.apx-modal,[class*="modal"]')?' pm-center':''); strip.innerHTML=html;
       var eb=card.querySelector('.apx-edgebar');
       if(eb&&eb.parentNode) eb.parentNode.insertBefore(strip, eb.nextSibling); else card.appendChild(strip);
     });
   }
   function setPM(on){
-    document.body.classList.toggle('pm-on', !!on);
+    document.body.classList.toggle('pm-on', !!on); if(!on) clearAll();
     document.querySelectorAll('#pm-toggle,.pm-modal-toggle').forEach(function(b){ b.classList.toggle('on', !!on); b.textContent=(on?'¢ Prices ✓':'¢ Prices'); });
     load(decorate);
   }
