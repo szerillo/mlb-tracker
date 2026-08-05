@@ -283,7 +283,7 @@ def main():
             w.writerow(r)
     payload = {
         "generated_at": __import__("datetime").datetime.utcnow().isoformat(timespec="seconds") + "Z",
-        "source": "FanGraphs Roster Resource (mlb-bp) + MLB StatsAPI team + Bartolo fatigue",
+        "source": "MLB StatsAPI active rosters (recent-usage role model) + Bartolo fatigue",
         "slate_date": slate, "fatigue_date": fdate,
         "n_teams": len(games), "n_relievers": len(rows),
         "teams": games,
