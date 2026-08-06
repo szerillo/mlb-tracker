@@ -1,22 +1,17 @@
 name: Odds + projections refresh (frequent)
 
-# Odds-ONLY refresh, decoupled from the heavy data pipeline. GAME-AWARE: the
-# cron fires every 5 min across the active day, but refresh_odds.py only actually
-# fetches when a game is within its window (~4h before first pitch → 5h after) OR
-# at the overnight anchors (12 AM / 2 AM / 8 AM ET, for next-day line snapshots).
-# So it auto-tightens to a 5-min cadence whenever ANY game — day or night — is
-# live or near, and self-skips when nothing's happening (no wasted API calls).
-#
-# No FORCE_RUN on scheduled fires (that's what makes it game-aware). A manual
-# "Run workflow" forces a pull regardless.
-#
-# Times are ET (EDT, UTC-4); GitHub cron is UTC (~1h seasonal drift, same as
-# refresh.yml).
+# Reliable ~5-min odds cadence via an INTERNAL LOOP. GitHub throttles scheduled
+# crons hard (observed 20 min - 5 h between */5 fires on this repo), so a single
+# run loops for ~12 min refreshing every 5 min, and a 15-min heartbeat cron
+# restarts it. Game-awareness + freeze-at-first-pitch live in refresh_odds.py, so
+# out-of-window passes are cheap no-ops and started games stay frozen at their
+# closing pregame line. Kalshi prediction-market prices refresh on the same loop.
+# Times are ET (EDT, UTC-4); GitHub cron is UTC.
 
 on:
   schedule:
-    - cron: "*/5 11-23 * * *"   # 7 AM – 7:59 PM ET
-    - cron: "*/5 0-6 * * *"     # 8 PM – 2:59 AM ET
+    - cron: "*/15 11-23 * * *"   # 7 AM - 7:59 PM ET
+    - cron: "*/15 0-6 * * *"     # 8 PM - 2:59 AM ET
   workflow_dispatch:
 
 concurrency:
@@ -29,9 +24,12 @@ permissions:
 jobs:
   odds:
     runs-on: ubuntu-latest
+    timeout-minutes: 18
     env:
-      # Force only on manual dispatch; scheduled runs stay game-aware.
+      # Force a pull only on manual dispatch; scheduled runs stay game-aware.
       FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+      SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+      SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -41,69 +39,37 @@ jobs:
         with:
           python-version: "3.11"
 
-      # refresh_odds.py is pure stdlib; bs4/requests only for the fallback parser.
       - name: Install deps
         run: pip install requests beautifulsoup4
 
-      - name: Refresh betting odds (ActionNetwork)
-        run: python scripts/refresh_odds.py
-        continue-on-error: true
-
-      - name: Odds fallback — multi-source (if primary empty or stale)
-        run: |
-          if [ ! -s data/odds.json ] || ! python -c "import json, datetime as dt; d=json.load(open('data/odds.json')); today=(dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat(); exit(0 if (d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) and d.get('date')==today) else 1)" 2>/dev/null; then
-            echo "Primary odds empty or stale — trying multi-source fallback"
-            python scripts/refresh_odds_multi.py > data/odds.json || true
-          fi
-        continue-on-error: true
-
-      - name: Refresh F5 (first-5-innings) odds
-        # Same AN endpoint/best-price logic as full-game odds but the
-        # firstfiveinnings period -> data/f5_odds.json (F5 total + F5 ML).
-        run: python scripts/refresh_f5_odds.py
-        continue-on-error: true
-
-      - name: Import my Action PRO projections (GAME UPLOADER sheet -> sheet_projections.json)
-        # Reads the published GAME UPLOADER tab CSV, maps game_id (AN event id)
-        # -> gamePk, writes data/sheet_projections.json. Falls back to the public
-        # published-CSV URL (the same one index.html reads in-browser) when the
-        # SHEET_CSV_URL secret isn't set — this is a published-to-web link, not a
-        # credential, so the snapshot stays fresh without needing the secret.
-        run: |
-          export SHEET_CSV_URL="${SHEET_CSV_URL:-https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P/pub?gid=580753288&single=true&output=csv}"
-          python scripts/refresh_sheet_projections.py
-        continue-on-error: true
-        env:
-          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
-
-      - name: Import my F5 projections (F5 UPLOADER sheet -> f5_projections.json)
-        # Same as the GAME UPLOADER import but reads the F5 tab. Provide the F5
-        # tab's published-CSV URL via the SHEET_F5_CSV_URL secret (File -> Share
-        # -> Publish to web -> F5 UPLOADER -> CSV), or hardcode the public
-        # published URL here (same doc, F5 tab's gid) like the GAME UPLOADER one.
-        # Skips cleanly until the URL is provided so runs never fail.
-        run: |
-          # Live gviz feed (by tab name) — reflects current formula values; the
-          # /export CSV serves a stale cache that shows blank F5 projections.
-          export SHEET_F5_CSV_URL="${SHEET_F5_CSV_URL:-https://docs.google.com/spreadsheets/d/1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE/gviz/tq?tqx=out:csv&sheet=F5%20UPLOADER}"
-          python scripts/refresh_f5_projections.py
-        continue-on-error: true
-        env:
-          SHEET_F5_CSV_URL: ${{ secrets.SHEET_F5_CSV_URL }}
-
-      - name: Commit odds (if changed)
+      - name: Sweep - refresh odds + Kalshi every 5 min for ~12 min
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/odds.json data/f5_odds.json data/sheet_projections.json data/f5_projections.json || true
-          if git diff --cached --quiet; then
-            echo "No odds change."
-          else
-            git commit -m "Feeds refresh $(date -u +'%Y-%m-%dT%H:%MZ')"
-            for attempt in 1 2 3; do
-              if git push; then break; fi
-              echo "push attempt $attempt rejected; rebasing onto origin/main"
-              git fetch origin main
-              git rebase --autostash origin/main || { git rebase --abort; exit 1; }
-            done
-          fi
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          END=$(( $(date +%s) + 12*60 ))
+          pass=0
+          while : ; do
+            pass=$((pass+1))
+            echo "::group::sweep pass $pass ($(date -u +%H:%M:%SZ))"
+            git pull --rebase --autostash origin main || true
+            python scripts/refresh_odds.py || true
+            if [ ! -s data/odds.json ]; then
+              echo "primary odds empty -> multi-source fallback"
+              python scripts/refresh_odds_multi.py > data/odds.json || true
+            fi
+            python scripts/refresh_f5_odds.py || true
+            python scripts/refresh_sheet_projections.py || true
+            python scripts/refresh_f5_projections.py || true
+            python scripts/refresh_kalshi.py || true
+            git add -A data || true
+            if git diff --cached --quiet ; then
+              echo "no changes this pass"
+            else
+              git commit -m "Odds/Kalshi sweep $(date -u +%H:%MZ)" || true
+              git push || { git pull --rebase --autostash origin main || true; git push || true; }
+              echo "pushed"
+            fi
+            echo "::endgroup::"
+            [ "$(date +%s)" -ge "$END" ] && break
+            sleep 300
+          done
