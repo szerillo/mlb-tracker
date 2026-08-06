@@ -10963,5 +10963,58 @@ document.addEventListener("click", hitTrendDelegate);
 })();
 </script>
 
+<script>
+/* Embedded scoreboard modals -> overlay on top (not inline drill-in).
+   In embed mode the stylesheet forces .modal-bg.active to position:static so the
+   game detail renders inline; when the host does not apply the grid-hide it lands
+   BELOW the scoreboard. For the scoreboard embed we re-style it as an absolute
+   overlay anchored at the clicked card (which is on-screen), dim the grid behind,
+   keep the X + arrows, and let the existing resize handshake grow the iframe to
+   fit. setProperty(...,'important') beats the stylesheet !important static rules. */
+(function(){
+  function isEmbedSb(){ return document.body.classList.contains('embed-scoreboard'); }
+  var lastY=null, tmr=0, bg=null;
+  document.addEventListener('click', function(e){
+    var c=e.target.closest && e.target.closest('.apx-card[data-pk]');
+    if(c){ var r=c.getBoundingClientRect(); lastY=Math.max(8, r.top+window.scrollY); }
+  }, true);
+  function SP(el,p,v){ el.style.setProperty(p,v,'important'); }
+  function place(){
+    if(!bg) bg=document.getElementById('modal-bg');
+    if(!bg||!isEmbedSb()||!bg.classList.contains('active')) return;
+    var modal=bg.querySelector('.modal'); if(!modal) return;
+    var y=(lastY==null? (window.scrollY+24) : lastY);
+    SP(bg,'position','absolute'); SP(bg,'top','0'); SP(bg,'left','0'); SP(bg,'right','0'); SP(bg,'bottom','auto');
+    SP(bg,'background','rgba(0,0,0,.78)'); SP(bg,'padding','0'); SP(bg,'overflow','visible'); SP(bg,'display','block'); SP(bg,'width','100%');
+    SP(modal,'position','relative'); SP(modal,'margin',y+'px auto 0'); SP(modal,'max-width','1100px'); SP(modal,'width','calc(100% - 28px)'); SP(modal,'max-height','none'); SP(modal,'height','auto'); SP(modal,'overflow','visible');
+    var mh=modal.getBoundingClientRect().height;
+    SP(bg,'height',(y+mh+36)+'px');
+    bg.querySelectorAll('.modal-nav').forEach(function(n){ SP(n,'position','absolute'); SP(n,'top',(y+72)+'px'); SP(n,'transform','none'); });
+    var grid=document.getElementById('tab-scoreboard'); if(grid) SP(grid,'display','block');
+  }
+  function clear(){
+    if(!bg) return;
+    ['position','top','left','right','bottom','background','padding','overflow','display','width','height'].forEach(function(p){ bg.style.removeProperty(p); });
+    var modal=bg.querySelector('.modal'); if(modal) ['position','margin','max-width','width','max-height','height','overflow'].forEach(function(p){ modal.style.removeProperty(p); });
+    bg.querySelectorAll('.modal-nav').forEach(function(n){ ['position','top','transform'].forEach(function(p){ n.style.removeProperty(p); }); });
+    var grid=document.getElementById('tab-scoreboard'); if(grid) grid.style.removeProperty('display');
+  }
+  function sched(){ if(tmr) return; tmr=setTimeout(function(){ tmr=0; place(); }, 30); }
+  function onAttr(){
+    if(!bg) bg=document.getElementById('modal-bg');
+    if(!bg) return;
+    if(isEmbedSb() && bg.classList.contains('active')){ place(); setTimeout(place,80); }
+    else clear();
+  }
+  function init(){
+    bg=document.getElementById('modal-bg');
+    if(!bg){ setTimeout(init,200); return; }
+    new MutationObserver(onAttr).observe(bg,{attributes:true, attributeFilter:['class']});
+    new MutationObserver(function(){ if(isEmbedSb() && bg.classList.contains('active')) sched(); }).observe(bg,{childList:true, subtree:true});
+    window.addEventListener('resize', function(){ if(isEmbedSb() && bg.classList.contains('active')) place(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
 </body>
 </html>
