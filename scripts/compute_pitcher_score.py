@@ -276,6 +276,28 @@ def main() -> int:
         if not isinstance(p, dict):
             continue
         g = glby.get(k) or glby.get(_norm(p.get("name", "")))
+        # Backfill FG-standard display fields from gamelogs when the FanGraphs
+        # leaderboard row is missing (name mismatch or CI block): gives the arm
+        # real innings (so w_proj is not pinned to 1.0) and fills the modal /
+        # bullpen table (k_bb_pct, stuff_plus, ...). Only fills absent fields.
+        if isinstance(g, dict):
+            _gs = g.get("season") or {}
+            _gl5 = g.get("l5") or {}
+            if p.get("mlbam_id") is None and g.get("mlbam_id") is not None:
+                p["mlbam_id"] = g.get("mlbam_id")
+            if p.get("ip") is None and _gs.get("ip_outs"):
+                p["ip"] = round(_f(_gs.get("ip_outs")) / 3.0, 1)
+            for _sk in ("k_pct", "bb_pct", "xfip", "siera"):
+                if p.get(_sk) is None and _gs.get(_sk) is not None:
+                    p[_sk] = _gs.get(_sk)
+            if (p.get("k_bb_pct") is None and p.get("k_pct") is not None
+                    and p.get("bb_pct") is not None):
+                p["k_bb_pct"] = round(_f(p.get("k_pct")) - _f(p.get("bb_pct")), 1)
+            _st = _gs.get("stuff")
+            if _st is None:
+                _st = _gl5.get("stuff")
+            if p.get("stuff_plus") is None and _st is not None:
+                p["stuff_plus"] = round(_f(_st), 1)
         r = rollby.get(k) or rollby.get(_norm(p.get("name", "")))
         vals = {
             "roll_xfip":  stabilized_roll("xfip", p, g, r),
