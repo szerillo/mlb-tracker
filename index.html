@@ -11016,5 +11016,93 @@ document.addEventListener("click", hitTrendDelegate);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
+<script>
+/* Prediction-market ALTS + team totals: a per-card "¢ Alts" dropdown listing the full
+   Kalshi strike ladder for the game total and each team total, with our fair cents vs
+   market cents and the edge, featured strike (closest to projection) highlighted.
+   Independent of the ¢ Prices toggle, so it shows on both American and PM views.
+   Full Game only (Kalshi lists no first-5 markets). */
+(function(){
+  var K=null,S=null,loaded=false,loading=false;
+  function load(cb){
+    if(loaded){ cb&&cb(); return; }
+    if(loading) return; loading=true;
+    Promise.all([
+      fetch('data/kalshi.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch('data/sheet_projections.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+    ]).then(function(a){ K=a[0]; S=a[1]; loaded=!!(K&&S); loading=false; cb&&cb(); });
+  }
+  function cf(p){ return (p==null||isNaN(p))?null:Math.round(p*100); }
+  function nick(n){ return (n||'').split(' ').slice(-1)[0]; }
+  function feat(arr,proj){ var b=null,bd=1e9; (arr||[]).forEach(function(s){ var d=Math.abs(s.strike-proj); if(d<bd){bd=d;b=s;} }); return b?b.strike:null; }
+  function edCell(fair,mkt){
+    var e=(fair!=null&&mkt!=null)?(fair-mkt):null;
+    var c=(e==null)?'var(--muted)':(e>0?'#3fb950':(e<0?'#f85149':'var(--muted)'));
+    var s=(e==null)?'':((e>0?'+':'')+e+'¢');
+    return '<span class="ed" style="color:'+c+'">'+s+'</span>';
+  }
+  function col(title,arr,fairFn,pf){
+    var fs=feat(arr,pf);
+    var rows=(arr||[]).map(function(x){
+      var fair=cf(fairFn(x.strike)), mkt=x.over_mid;
+      return '<div class="pm-alts-row'+(x.strike===fs?' feat':'')+'">'
+        +'<span class="st">o'+x.strike+'</span>'
+        +'<span class="fr">'+(fair==null?'-':fair+'¢')+'</span>'
+        +'<span class="mk">mkt '+(mkt==null?'-':mkt+'¢')+'</span>'
+        +edCell(fair,mkt)+'</div>';
+    }).join('');
+    return '<div class="pm-alts-col"><h5>'+title+'</h5>'+rows+'</div>';
+  }
+  function modeFor(card){ var el=card.parentElement; while(el){ var a=el.querySelector&&el.querySelector('.apx-modeseg-btn.active'); if(a) return (a.textContent||''); el=el.parentElement; } return 'Full Game'; }
+  function build(g,k){
+    var wrap=document.createElement('div'); wrap.className='pm-alts-wrap';
+    var panel=document.createElement('div'); panel.className='pm-alts-panel';
+    panel.innerHTML=col('Game Total',k.total,function(st){return window.pgPOver?window.pgPOver(st,g.total):null;},g.total)
+      +col(nick(g.away_team)+' TT',k.team_total&&k.team_total.away,function(st){return window.pgPOverTeam?window.pgPOverTeam(st,g.away_runs):null;},g.away_runs)
+      +col(nick(g.home_team)+' TT',k.team_total&&k.team_total.home,function(st){return window.pgPOverTeam?window.pgPOverTeam(st,g.home_runs):null;},g.home_runs);
+    panel.onclick=function(e){ e.stopPropagation(); };
+    var btn=document.createElement('button'); btn.className='pm-alts-btn'; btn.type='button'; btn.textContent='¢ Alts ▾';
+    btn.onclick=function(e){ e.stopPropagation(); e.preventDefault(); var open=panel.classList.toggle('open'); btn.classList.toggle('on',open); btn.textContent=open?'¢ Alts ▴':'¢ Alts ▾'; };
+    wrap.appendChild(btn); wrap.appendChild(panel);
+    return wrap;
+  }
+  function decorate(){
+    if(!loaded){ load(decorate); return; }
+    document.querySelectorAll('.apx-card[data-pk]').forEach(function(card){
+      var full=modeFor(card).indexOf('Full Game')===0;
+      var ex=card.querySelector('.pm-alts-wrap');
+      if(!full){ if(ex) ex.remove(); return; }
+      if(ex) return;
+      var pk=card.getAttribute('data-pk'), g=S.games&&S.games[pk], k=K.games&&K.games[pk];
+      if(!g||!k) return;
+      card.appendChild(build(g,k));
+    });
+  }
+  function init(){
+    if(!document.getElementById('pm-alts-style')){
+      var st=document.createElement('style'); st.id='pm-alts-style';
+      st.textContent='.pm-alts-btn{font-size:10px;color:var(--muted);border:0.5px solid var(--border);border-radius:6px;padding:2px 8px;cursor:pointer;background:none;margin:6px 6px 2px 0;}'
+       +'.pm-alts-btn.on{color:var(--accent);border-color:var(--accent);}'
+       +'.pm-alts-panel{display:none;margin:2px 0 6px;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;}'
+       +'.pm-alts-panel.open{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;}'
+       +'.pm-alts-col{font-size:10px;line-height:1.55;}'
+       +'.pm-alts-col h5{margin:0 0 3px;font-size:9px;letter-spacing:.05em;color:var(--muted);font-weight:600;text-transform:uppercase;}'
+       +'.pm-alts-row{display:flex;gap:8px;padding:1px 0;white-space:nowrap;}'
+       +'.pm-alts-row.feat .st{color:var(--accent);font-weight:600;}'
+       +'.pm-alts-row .st{color:var(--text);width:38px;}'
+       +'.pm-alts-row .fr{color:var(--muted);width:34px;text-align:right;}'
+       +'.pm-alts-row .mk{color:var(--muted);width:52px;text-align:right;}'
+       +'.pm-alts-row .ed{font-weight:500;width:40px;text-align:right;}';
+      document.head.appendChild(st);
+    }
+    var moT=null, mo;
+    function run(){ if(mo)mo.disconnect(); try{ decorate(); }catch(e){} if(mo)mo.observe(document.body,{childList:true,subtree:true}); }
+    mo=new MutationObserver(function(){ if(moT)return; moT=setTimeout(function(){moT=null;run();},500); });
+    load(function(){ run(); });
+    mo.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init,300);
+})();
+</script>
 </body>
 </html>
