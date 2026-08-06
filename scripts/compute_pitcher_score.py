@@ -83,6 +83,12 @@ COMPONENTS = [
 # on the projection longer than starters at equal innings.
 K_SP = 250.0   # starter half-weight innings
 K_RP = 250.0   # reliever half-weight innings
+# Reliever half-weight innings is ASYMMETRIC (Fable 2026-08-06 calibration):
+# a reliever whose in-season mix beats his projection is showing skill the
+# career-prior systems under-trust (stuff/velo/new pitch) -> earn weight fast;
+# a reliever below his projection is mostly BABIP/HR noise -> anchor to proj.
+K_RP_GOOD = 60.0    # in-season BETTER than fip_proj -> trust it fast
+K_RP_BAD = 400.0    # in-season WORSE  than fip_proj -> lean on projection
 DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
 
 # Rolling K-BB% TREND tilt. Sean's ask: use the L5-vs-season K-BB% trend as a
@@ -338,7 +344,12 @@ def main() -> int:
         # --- DYNAMIC in-season vs projection weight, driven by innings + role ---
         ip = _f(p.get("ip")) or 0.0
         role = rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))
-        K = K_SP if role == "SP" else DEFAULT_K
+        if role == "SP":
+            K = K_SP
+        elif core is not None and proj is not None and core < proj:
+            K = K_RP_GOOD   # in-season line beats projection -> earn weight fast
+        else:
+            K = K_RP_BAD    # in-season worse (or unusable) -> lean on projection
         if core is None:                      # no in-season metrics -> pure projection
             w_season, w_proj = 0.0, 1.0
             score = proj
@@ -442,10 +453,10 @@ def main() -> int:
         "method": ("rolling-led in-season core (stabilized 0.6*L5 + 0.4*season "
                    "xFIP/SIERA + xERA/botERA), blended vs projection with a "
                    "DYNAMIC weight w_season = IP/(IP+K) that grows with innings "
-                   f"(K_SP={K_SP:g}, K_RP={K_RP:g}); plus a small rolling K-BB% "
+                   f"(K_SP={K_SP:g}, K_RP={K_RP_GOOD:g}/{K_RP_BAD:g}); plus a small rolling K-BB% "
                    "trend nudge; plus a velo+CSW LEVEL adjustment (historical-panel recalibration)."),
         "core_weights": {f: w for f, w in COMPONENTS},
-        "dynamic_projection": {"K_SP": K_SP, "K_RP": K_RP,
+        "dynamic_projection": {"K_SP": K_SP, "K_RP_good": K_RP_GOOD, "K_RP_bad": K_RP_BAD,
                                "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
         "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
                      "min_l5": KBB_TILT_MIN_L5, "scaled_by": "w_season"},
