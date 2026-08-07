@@ -259,7 +259,7 @@ def _game_states(iso):
     plus whether the game is final. Drives the lineup-lock freeze and keeps the
     live slate pinned to today until today's games are all over."""
     url = ("https://statsapi.mlb.com/api/v1/schedule?sportId=1&date="
-           + iso + "&hydrate=lineups")
+           + iso + "&hydrate=lineups,probablePitcher")
     out = {}
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "mlb-tracker/1.0"})
@@ -276,7 +276,13 @@ def _game_states(iso):
             away = lu.get("awayPlayers") or []
             locked = len(home) >= 9 and len(away) >= 9
             final = (g.get("status", {}) or {}).get("detailedState", "") in final_states
-            out[str(g.get("gamePk"))] = {"locked": locked, "final": final}
+            tms = g.get("teams", {}) or {}
+            sp_a = ((tms.get("away", {}) or {}).get("probablePitcher", {}) or {}).get("id")
+            sp_h = ((tms.get("home", {}) or {}).get("probablePitcher", {}) or {}).get("id")
+            ids_a = ",".join(str(p.get("id")) for p in sorted(away, key=lambda p: p.get("id") or 0))
+            ids_h = ",".join(str(p.get("id")) for p in sorted(home, key=lambda p: p.get("id") or 0))
+            sig = f"{sp_a}|{sp_h}|{ids_a}|{ids_h}"
+            out[str(g.get("gamePk"))] = {"locked": locked, "final": final, "sig": sig}
     return out
 
 
@@ -360,17 +366,38 @@ def main():
     except Exception:
         _prev = {}
     _nfrozen = 0
+    _nreopen = 0
     for _pk, _st in states.items():
         if not _st.get("locked"):
             continue
-        if _pk in _prev:
-            _g = dict(_prev[_pk]); _g["locked"] = True
+        _pg = _prev.get(_pk)
+        _cur_sig = _st.get("sig")
+        _stored_sig = (_pg or {}).get("lock_sig")
+        _reopened = bool((_pg or {}).get("scratch_reopened"))
+        # A lineup change after lock (late scratch / SP swap) reopens the game so
+        # your updated projection is pulled; it then stays live for the day.
+        if _pg and _stored_sig and _cur_sig and _cur_sig != _stored_sig:
+            _reopened = True
+        if _reopened:
+            if _pk in games:
+                games[_pk]["locked"] = False
+                games[_pk]["scratch_reopened"] = True
+                games[_pk]["lock_sig"] = _cur_sig
+            elif _pg is not None:
+                _g = dict(_pg); _g["locked"] = False; _g["scratch_reopened"] = True
+                _g["lock_sig"] = _cur_sig; games[_pk] = _g
+            _nreopen += 1
+            continue
+        if _pg is not None:
+            _g = dict(_pg); _g["locked"] = True; _g["lock_sig"] = _stored_sig or _cur_sig
             games[_pk] = _g; _nfrozen += 1
         elif _pk in games:
-            games[_pk]["locked"] = True; _nfrozen += 1
+            games[_pk]["locked"] = True; games[_pk]["lock_sig"] = _cur_sig; _nfrozen += 1
     for _pk in games:
         if "locked" not in games[_pk]:
             games[_pk]["locked"] = bool(states.get(_pk, {}).get("locked"))
+    if _nreopen:
+        print(f"[sheet_projections] {_nreopen} game(s) reopened after a lineup change (scratch)")
     if _nfrozen:
         print(f"[sheet_projections] froze {_nfrozen} locked game(s) at lineup lock")
 
