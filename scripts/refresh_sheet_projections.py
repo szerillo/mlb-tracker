@@ -254,6 +254,32 @@ def build_id_maps(iso: str):
     return an_teams, pk
 
 
+def _game_states(iso):
+    """Per-gamePk state for slate `iso`: locked once BOTH lineups are posted,
+    plus whether the game is final. Drives the lineup-lock freeze and keeps the
+    live slate pinned to today until today's games are all over."""
+    url = ("https://statsapi.mlb.com/api/v1/schedule?sportId=1&date="
+           + iso + "&hydrate=lineups")
+    out = {}
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "mlb-tracker/1.0"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.load(r)
+    except Exception as e:
+        print(f"[sheet_projections] lineup fetch failed: {e}", file=sys.stderr)
+        return out
+    final_states = ("Final", "Game Over", "Completed Early", "Postponed", "Cancelled")
+    for day in d.get("dates", []) or []:
+        for g in day.get("games", []) or []:
+            lu = g.get("lineups") or {}
+            home = lu.get("homePlayers") or []
+            away = lu.get("awayPlayers") or []
+            locked = len(home) >= 9 and len(away) >= 9
+            final = (g.get("status", {}) or {}).get("detailedState", "") in final_states
+            out[str(g.get("gamePk"))] = {"locked": locked, "final": final}
+    return out
+
+
 def main():
     url = sheet_csv_url(SHEET_CSV_URL, "GAME UPLOADER")
     try:
@@ -267,6 +293,18 @@ def main():
     # sheet has no parseable dates.
     all_rows = parse_sheet_csv(text, None)
     iso = pick_slate_date(all_rows)
+
+    # Pin the live slate to today while today still has games to play, so
+    # prepping tomorrow's rows in the sheet doesn't yank the slate onto tomorrow.
+    # (Advances to the sheet's latest date once today's games are all final.)
+    _today = _et_today().isoformat()
+    states = _game_states(iso)
+    if iso > _today:
+        _tstates = _game_states(_today)
+        if _tstates and not all(s.get("final") for s in _tstates.values()):
+            print(f"[sheet_projections] pinning slate to {_today} (today still live; sheet latest {iso})")
+            iso = _today
+            states = _tstates
     rows = [r for r in all_rows if (r.get("date") or iso) == iso]
     print(f"[sheet_projections] slate date {iso} ({len(rows)} projection rows)")
     an_teams, pk_map = build_id_maps(iso)
@@ -308,6 +346,33 @@ def main():
             "ml_away": row["ml_away"], "ml_home": row["ml_home"],
         }
         n_join += 1
+
+    # --- Freeze projections at lineup lock -----------------------------------
+    # Once BOTH lineups for a game post, lock its projection to the last snapshot
+    # so later sheet edits (e.g. prepping tomorrow) can't change it. Locked games
+    # are carried forward even if their rows later leave the sheet.
+    _prev = {}
+    try:
+        if os.path.exists(OUTPUT):
+            _pj = json.load(open(OUTPUT))
+            if _pj.get("date") == iso:
+                _prev = _pj.get("games", {}) or {}
+    except Exception:
+        _prev = {}
+    _nfrozen = 0
+    for _pk, _st in states.items():
+        if not _st.get("locked"):
+            continue
+        if _pk in _prev:
+            _g = dict(_prev[_pk]); _g["locked"] = True
+            games[_pk] = _g; _nfrozen += 1
+        elif _pk in games:
+            games[_pk]["locked"] = True; _nfrozen += 1
+    for _pk in games:
+        if "locked" not in games[_pk]:
+            games[_pk]["locked"] = bool(states.get(_pk, {}).get("locked"))
+    if _nfrozen:
+        print(f"[sheet_projections] froze {_nfrozen} locked game(s) at lineup lock")
 
     # Don't let an empty run (tab still being filled / rolled over) wipe a good
     # live feed — keep the previous non-empty snapshot instead.
