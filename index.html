@@ -10998,7 +10998,7 @@ document.addEventListener("click", hitTrendDelegate);
     SP(bg,'background','rgba(0,0,0,.78)'); SP(bg,'padding','0'); SP(bg,'overflow','visible'); SP(bg,'display','block'); SP(bg,'width','100%');
     SP(modal,'position','relative'); SP(modal,'margin',y+'px auto 0'); SP(modal,'max-width','1100px'); SP(modal,'width','calc(100% - 28px)'); SP(modal,'max-height','none'); SP(modal,'height','auto'); SP(modal,'overflow','visible');
     var mh=modal.getBoundingClientRect().height;
-    SP(bg,'height',(y+mh+36)+'px');
+    SP(bg,'height','auto');
     bg.querySelectorAll('.modal-nav').forEach(function(n){ SP(n,'position','absolute'); SP(n,'top',(y+72)+'px'); SP(n,'transform','none'); });
     var grid=document.getElementById('tab-scoreboard'); if(grid) SP(grid,'display','block');
   }
