@@ -10993,14 +10993,14 @@ document.addEventListener("click", hitTrendDelegate);
       bg.querySelectorAll('.modal-nav').forEach(function(n){ ['position','top','transform'].forEach(function(p){ n.style.removeProperty(p); }); });
       return;
     }
-    var y=(lastY==null? (window.scrollY+24) : lastY);
+    var y=10;  // anchor modal at the top of the (iframe) frame, not the clicked card
     SP(bg,'position','absolute'); SP(bg,'top','0'); SP(bg,'left','0'); SP(bg,'right','0'); SP(bg,'bottom','auto');
     SP(bg,'background','rgba(0,0,0,.78)'); SP(bg,'padding','0'); SP(bg,'overflow','visible'); SP(bg,'display','block'); SP(bg,'width','100%');
     SP(modal,'position','relative'); SP(modal,'margin',y+'px auto 0'); SP(modal,'max-width','1100px'); SP(modal,'width','calc(100% - 28px)'); SP(modal,'max-height','none'); SP(modal,'height','auto'); SP(modal,'overflow','visible');
     var mh=modal.getBoundingClientRect().height;
     SP(bg,'height','auto');
     bg.querySelectorAll('.modal-nav').forEach(function(n){ SP(n,'position','absolute'); SP(n,'top',(y+72)+'px'); SP(n,'transform','none'); });
-    var grid=document.getElementById('tab-scoreboard'); if(grid) SP(grid,'display','block');
+    var grid=document.getElementById('tab-scoreboard'); if(grid) SP(grid,'display','none');
   }
   function clear(){
     if(!bg) return;
