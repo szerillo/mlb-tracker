@@ -10983,7 +10983,7 @@ document.addEventListener("click", hitTrendDelegate);
     if(!bg) bg=document.getElementById('modal-bg');
     if(!bg||!isEmbedSb()||!bg.classList.contains('active')) return;
     var modal=bg.querySelector('.modal'); if(!modal) return;
-    if(window.self===window.top){
+    var _bounded=(window.self===window.top)||(window.innerHeight < document.documentElement.scrollHeight - 100); if(_bounded){
       // Top-level webview embed (the app): a FIXED overlay with a scrollable
       // backdrop (covers the grid behind) and fixed-centered arrows, like the
       // standalone site. The absolute anchor below is only for an auto-resized iframe.
