@@ -11122,7 +11122,8 @@ document.addEventListener("click", hitTrendDelegate);
 .m-env-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) !important; }
 .m-sp-box, .m-bp-box, .m-lineup-box { overflow-x: auto; min-width: 0; }
 /* Recent-starts table: fit-to-width like the lineup + arsenal tables (was auto). */
-.sp-ls, .m-sp-arsenal { table-layout: auto !important; }
+.sp-ls, .m-sp-arsenal { table-layout: auto !important; width: auto !important; }
+.sp-ls td, .sp-ls th, .m-sp-arsenal td, .m-sp-arsenal th { white-space: nowrap; }
 @media (max-width: 820px){ .sp-ls { font-size: 0.66rem; } }
 body.force-mobile .sp-ls { font-size: 0.66rem; }
 @media (max-width: 820px){
