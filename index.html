@@ -10951,6 +10951,7 @@ document.addEventListener("click", hitTrendDelegate);
     document.querySelectorAll('#pm-toggle,.pm-modal-toggle').forEach(function(b){ b.classList.toggle('on', on); b.textContent=(on?'¢ Prices ✓':'¢ Prices'); });
   }
   function init(){
+    if(document.body&&document.body.classList.contains('embed-mode')) return;
     ensureToggles();
     var qp=new URLSearchParams(location.search);
     if(qp.get('pm')==='1'||qp.get('pm')==='true'){ setPM(true); }
