@@ -267,7 +267,7 @@ def _game_states(iso):
             d = json.load(r)
     except Exception as e:
         print(f"[sheet_projections] lineup fetch failed: {e}", file=sys.stderr)
-        return out
+        return None
     final_states = ("Final", "Game Over", "Completed Early", "Postponed", "Cancelled")
     for day in d.get("dates", []) or []:
         for g in day.get("games", []) or []:
@@ -304,13 +304,23 @@ def main():
     # prepping tomorrow's rows in the sheet doesn't yank the slate onto tomorrow.
     # (Advances to the sheet's latest date once today's games are all final.)
     _today = _et_today().isoformat()
-    states = _game_states(iso)
     if iso > _today:
-        _tstates = _game_states(_today)
-        if _tstates and not all(s.get("final") for s in _tstates.values()):
+        _t = _game_states(_today)
+        if _t is None:
+            # Lineup/status fetch hiccup: don't advance onto tomorrow on a maybe;
+            # hold the live slate on today so the scoreboard can't roll early.
+            print(f"[sheet_projections] holding slate on {_today} (lineup fetch unavailable; sheet latest {iso})")
+            iso = _today
+        elif _t and not all(s.get("final") for s in _t.values()):
             print(f"[sheet_projections] pinning slate to {_today} (today still live; sheet latest {iso})")
             iso = _today
-            states = _tstates
+        # else: no games today OR all final -> allow advance to the sheet's latest
+    states = _game_states(iso)
+    if states is None:
+        # Can't read lineup locks this run; keep the existing feed rather than risk
+        # un-freezing a locked game or rolling early. The 5-min loop retries.
+        print("[sheet_projections] lineup states unavailable; keeping existing feed", file=sys.stderr)
+        return 0
     rows = [r for r in all_rows if (r.get("date") or iso) == iso]
     print(f"[sheet_projections] slate date {iso} ({len(rows)} projection rows)")
     an_teams, pk_map = build_id_maps(iso)
