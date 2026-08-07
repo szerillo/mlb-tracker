@@ -10984,10 +10984,13 @@ document.addEventListener("click", hitTrendDelegate);
     if(!bg||!isEmbedSb()||!bg.classList.contains('active')) return;
     var modal=bg.querySelector('.modal'); if(!modal) return;
     if(window.self===window.top){
-      // Top-level webview embed (the app): the default inline drill-in already
-      // works (modal in normal flow, page scrolls naturally, arrows fixed-centered).
-      // Only the iframe case needs the absolute anchor below. Clear any overrides.
-      clear();
+      // Top-level webview embed (the app): a FIXED overlay with a scrollable
+      // backdrop (covers the grid behind) and fixed-centered arrows, like the
+      // standalone site. The absolute anchor below is only for an auto-resized iframe.
+      SP(bg,'position','fixed'); SP(bg,'top','0'); SP(bg,'left','0'); SP(bg,'right','0'); SP(bg,'bottom','0');
+      SP(bg,'height','auto'); SP(bg,'overflow-y','auto'); SP(bg,'background','rgba(0,0,0,.85)'); SP(bg,'padding','2rem 1rem'); SP(bg,'display','block'); SP(bg,'width','100%');
+      SP(modal,'position','relative'); SP(modal,'margin','0 auto'); SP(modal,'max-width','1100px'); SP(modal,'width','calc(100% - 24px)'); SP(modal,'max-height','none'); SP(modal,'height','auto'); SP(modal,'overflow','visible');
+      bg.querySelectorAll('.modal-nav').forEach(function(n){ ['position','top','transform'].forEach(function(p){ n.style.removeProperty(p); }); });
       return;
     }
     var y=(lastY==null? (window.scrollY+24) : lastY);
