@@ -11124,6 +11124,9 @@ document.addEventListener("click", hitTrendDelegate);
 .m-sp-box, .m-bp-box, .m-lineup-box { overflow-x: auto; min-width: 0; }
 /* Recent-starts table: fit-to-width like the lineup + arsenal tables (was auto). */
 .sp-ls, .m-sp-arsenal { table-layout: auto !important; width: auto !important; }
+.sp-ls { width: 100% !important; } /* desktop/web: fill available width, spread columns */
+@media (max-width: 820px){ .sp-ls { width: auto !important; } } /* mobile embed: leave as-is */
+body.force-mobile .sp-ls { width: auto !important; }
 .sp-ls td, .sp-ls th, .m-sp-arsenal td, .m-sp-arsenal th { white-space: nowrap; }
 @media (max-width: 820px){ .sp-ls { font-size: 0.66rem; } }
 body.force-mobile .sp-ls { font-size: 0.66rem; }
