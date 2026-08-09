@@ -4125,6 +4125,26 @@ function lookupSplits(name) {
   return PITCHER_SPLITS.pitchers[normName(name)] || null;
 }
 
+function isOpener(key){
+  if(!key) return false;
+  try{
+    var sp=(typeof PITCHER_SPLITS!=='undefined' && PITCHER_SPLITS && PITCHER_SPLITS.pitchers) ? PITCHER_SPLITS.pitchers[key] : null;
+    if(sp && typeof sp.is_opener==='boolean') return sp.is_opener;
+  }catch(e){}
+  try{
+    var gl=(typeof GAMELOGS!=='undefined' && GAMELOGS && GAMELOGS.pitchers) ? GAMELOGS.pitchers[key] : null;
+    if(gl && Array.isArray(gl.starts) && gl.starts.length){
+      var s=gl.starts.filter(function(x){return x && x.date;}).sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);}).slice(0,4);
+      if(!s.length) return false;
+      var ips=s.map(function(x){return x.ip||0;});
+      var maxIp=Math.max.apply(null, ips);
+      var ramp=s.length>=2 && ips[0]>ips[1] && ips[0]>=3.5;
+      return !(maxIp>=4.0 || ramp);
+    }
+  }catch(e){}
+  return false;
+}
+
 // When xFIP is present AND the pitcher has enough innings for it to be
 // meaningful, xFIP is the primary stat. Otherwise fall back to projected
 // FIP (pFIP). Cutoff lowered to 15 IP for early-season coverage; by May
@@ -7971,6 +7991,7 @@ function computeSPRanks() {
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
     if (!isStarter(k)) return;
+    if (isOpener(k)) return;
     const present = [rollComp(s, 'xfip'), rollComp(s, 'siera'), s.xera, s.bot_era, s.k_bb_pct]
       .filter(v => v != null).length;
     if (present < 3) return;
@@ -8131,8 +8152,10 @@ function invalidateRankCaches() { SP_RANK_CACHE = null; BP_RANK_CACHE = null; }
 // Public helpers for rendering
 function getSpRank(spName) {
   if (!spName) return null;
+  var _k = normName(spName);
+  if (isOpener(_k)) return 'OPN';
   const c = computeSPRanks();
-  return c.byKey.get(normName(spName)) || null;
+  return c.byKey.get(_k) ?? null;
 }
 function getBullpenRank(teamAbbrOrId) {
   const c = computeBullpenRanks();
@@ -8168,6 +8191,7 @@ function unifiedScoreChip(entry, opts={}) {
 }
 
 function rankChipHtml(rank, total, kind) {
+  if (rank === 'OPN') return '<span class="rank-chip '+kind+' opener" title="Opener / short-outing arm - excluded from SP rankings">OPN</span>';
   // kind: 'sp' or 'bp' — styles via class
   if (!rank || !total) return `<span class="rank-chip ${kind} na" title="${kind==='sp'?'SP':'Bullpen'} rank unavailable">${kind==='sp'?'SP':'BP'} #N/A</span>`;
   // Tier by percentile (top ~20% elite, top 40% good, bottom 20% worst)
@@ -8354,6 +8378,7 @@ function renderSPRankings(pitchers, nameToTeam) {
     const psMap = (typeof PITCHER_STATS !== 'undefined' && PITCHER_STATS && PITCHER_STATS.pitchers) || {};
     Object.keys(glPitchers).forEach(k => {
       if (!isStarter(k)) return;
+      if (isOpener(k)) return;
       const m = buildRolling30Metrics(k);
       if (!m || m.ip < 10) return;
       const present = [m.xfip, m.siera, m.kbb].filter(v => v != null).length;
