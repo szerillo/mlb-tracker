@@ -67,7 +67,19 @@ ROLL_SEASON_WEIGHT = 0.8
 # IN-SEASON CORE = these four, in their relative proportions (renormalized among
 # whichever are available). Rolling xFIP/SIERA lead; xERA/botERA add independent
 # contact/stuff info K-BB% misses.
+STUFF_ERA_INTERCEPT = 9.48
+STUFF_ERA_SLOPE     = 0.0542
+
 COMPONENTS = [
+    ("roll_xfip",  13.0),
+    ("roll_siera", 26.0),
+    ("xera",       16.0),
+    ("bot_era",    10.0),
+    ("stuff_era",  35.0),
+]
+# insea_v2 core: legacy-comparison score, and the shape the four non-stuff
+# terms renormalize to when stuff_era is absent (no Stuff+, or a reliever).
+COMPONENTS_V2 = [
     ("roll_xfip",  20.0),
     ("roll_siera", 40.0),
     ("xera",       25.0),
@@ -305,11 +317,16 @@ def main() -> int:
             if p.get("stuff_plus") is None and _st is not None:
                 p["stuff_plus"] = round(_f(_st), 1)
         r = rollby.get(k) or rollby.get(_norm(p.get("name", "")))
+        _stuffp = _f(p.get("stuff_plus"))
+        # stuffERA is SP-only (unified_v3 caveat: reliever stuff weighting untested).
+        _role_sp = (rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))) == "SP"
         vals = {
             "roll_xfip":  stabilized_roll("xfip", p, g, r),
             "roll_siera": stabilized_roll("siera", p, g, r),
             "xera":       _f(p.get("xera")),
             "bot_era":    _f(p.get("bot_era")),
+            "stuff_era":  (STUFF_ERA_INTERCEPT - STUFF_ERA_SLOPE * _stuffp)
+                          if (_stuffp is not None and _role_sp) else None,
         }
         proj = _f(p.get("fip_proj"))
 
@@ -391,7 +408,7 @@ def main() -> int:
         _valsL = {"roll_xfip": stabilized_roll("xfip", p, g, r, 0.6, 0.4),
                   "roll_siera": stabilized_roll("siera", p, g, r, 0.6, 0.4),
                   "xera": vals["xera"], "bot_era": vals["bot_era"]}
-        for field, weight in COMPONENTS:
+        for field, weight in COMPONENTS_V2:
             v = _valsL[field]
             if v is None: continue
             _cs += weight * v; _cw += weight
@@ -456,6 +473,9 @@ def main() -> int:
                    f"(K_SP={K_SP:g}, K_RP={K_RP_GOOD:g}/{K_RP_BAD:g}); plus a small rolling K-BB% "
                    "trend nudge; plus a velo+CSW LEVEL adjustment (historical-panel recalibration)."),
         "core_weights": {f: w for f, w in COMPONENTS},
+        "stuff_era": {"intercept": STUFF_ERA_INTERCEPT, "slope_per_stuff_plus": STUFF_ERA_SLOPE,
+                      "form": "stuffERA = 9.48 - 0.0542*Stuff+", "insea_share": 0.35,
+                      "scope": "SP only", "fallback": "missing/RP -> drop term; 4 remaining renormalize to insea_v2"},
         "dynamic_projection": {"K_SP": K_SP, "K_RP_good": K_RP_GOOD, "K_RP_bad": K_RP_BAD,
                                "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
         "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
