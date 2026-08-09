@@ -125,17 +125,32 @@ def parse_pitcher(data, pid):
             "ops_against": stat.get("ops"),
         }
 
-    # Opener detection — last 5 starts, avg IP
-    started = [g for g in gamelog if g["started"]]
-    started_last5 = sorted(started, key=lambda g: g["date"] or "", reverse=True)[:5]
+    # Opener / true-SP detection — judge by the last few OUTINGS (starts AND
+    # relief), not a starts-only average. A real starter has recently gone deep
+    # (>=4 IP or >=60 pitches) OR is being stretched out (pitch counts / innings
+    # clearly ramping). A pitcher whose recent outings are all short (1-2 IP)
+    # with no upward trend is an opener / bulk arm -> excluded from SP rankings.
+    outings = sorted([g for g in gamelog if (g.get("ip") or 0) > 0 or (g.get("pitches") or 0) > 0],
+                     key=lambda g: g.get("date") or "", reverse=True)[:4]
+    ip_list = [g["ip"] for g in outings]
+    p_list = [g["pitches"] for g in outings]
+    max_ip = max(ip_list) if ip_list else 0.0
+    max_p = max(p_list) if p_list else 0
+    ramp = len(outings) >= 2 and p_list[0] > p_list[1] and p_list[0] >= 45
+    ramp_ip = len(outings) >= 2 and ip_list[0] > ip_list[1] and ip_list[0] >= 3.5
+    season_gs = int((season or {}).get("gamesStarted") or 0)
+    if not outings:
+        is_opener = season_gs < 5
+        opener_reason = "no recent outings; season GS<5" if is_opener else None
+    else:
+        true_sp = (max_ip >= 4.0) or (max_p >= 60) or ramp or ramp_ip
+        is_opener = not true_sp
+        opener_reason = (f"last {len(outings)} outings: max {max_ip:.1f} IP / {max_p} pitches,"
+                         f" no upward trend") if is_opener else None
+    # retained for display continuity
+    started = [g for g in gamelog if g.get("started")]
+    started_last5 = sorted(started, key=lambda g: g.get("date") or "", reverse=True)[:5]
     avg_ip_last5 = (sum(g["ip"] for g in started_last5) / len(started_last5)) if started_last5 else None
-
-    is_opener = False
-    opener_reason = None
-    if avg_ip_last5 is not None and len(started_last5) >= 2:
-        if avg_ip_last5 < 2.5:
-            is_opener = True
-            opener_reason = f"avg IP in last {len(started_last5)} starts: {avg_ip_last5:.1f}"
 
     return {
         "pid": pid,
