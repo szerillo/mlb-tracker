@@ -2750,6 +2750,7 @@ let KNOWN_STARTERS = new Set();
 // like Grant Taylor that the probable-pitcher heuristic misclassifies.
 function isStarter(normalizedName) {
   if (!normalizedName) return false;
+  if (isOpener(normalizedName)) return false;  // openers/bulk arms are relievers, not SPs (fixes all display sites)
   // Live probable-pitcher signal (built from the last ~10 days + upcoming
   // probables) is ground truth and wins FIRST — a pitcher who is actually
   // starting games IS a starter, regardless of what stale preseason Steamer
