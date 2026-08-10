@@ -94,10 +94,10 @@ def compute_eye():
     heart=harv(Z([1,2,3,4,5,6,7,8,9])+C(["10","20","21","30","31","00","11"]))
     comp={}
     for pid,(tp,tt,nm) in tot.items():
-        if tp<200: continue
+        if tp<50: continue  # lowered from 200 for broader (small-sample) SEAGER coverage
         cp=chase.get(pid,(0,0))[0]+waste.get(pid,(0,0))[0]; ctk=chase.get(pid,(0,0))[1]+waste.get(pid,(0,0))[1]
         sp,stk=sh2k.get(pid,(0,0))[:2]; hp,htk=heart.get(pid,(0,0))[:2]
-        if cp<45 or sp<12 or hp<30: continue
+        if cp<12 or sp<3 or hp<8: continue  # lowered thresholds for small-sample coverage
         comp[pid]={"name":nm,"ct":ctk/cp,"ed":stk/sp,"ha":1-htk/hp}
     if not comp: return {}
     for key in ("ct","ed","ha"):
