@@ -4551,6 +4551,13 @@ async function loadToday() { return loadForDate(today()); }
 async function loadForDate(date) {
   VIEW_DATE = date;
   await loadStaticData();
+  // warmAllRosterTeams: load all 30 rosters (active + 40-man) so pitcher team
+  // labels resolve to the CURRENT team. Traded arms (e.g. Doval->PIT) otherwise
+  // fall back to the stale preseason Steamer team. Fire-and-forget; cached & cheap.
+  (async () => { try { const _tms = await fetchAllTeams();
+    await Promise.all([ ..._tms.map(t => getTeamRoster(t.id).catch(() => null)),
+                        ..._tms.map(t => getTeamRoster40Man(t.id).catch(() => null)) ]);
+  } catch (e) {} })();
   // Load Action PRO sheet projections in the BACKGROUND so a slow/blocked live
   // CSV fetch can never hold up the scoreboard render. Re-render when it lands.
   loadSheetProjections().then(() => { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
