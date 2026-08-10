@@ -8103,7 +8103,7 @@ function teamAvailRelievers(team) {
   const arms = [];
   for (const p of roster) {
     const k = normName(p.name);
-    if (isStarter(k)) continue;            // exclude SPs (classifier)
+    if (isStarter(k) && !isOpener(k)) continue;  // keep openers/bulk arms in the pen            // exclude SPs (classifier)
     const s = lookupPitcherStats(p.name);
     if (!s) continue;
     const f = byName[k];
