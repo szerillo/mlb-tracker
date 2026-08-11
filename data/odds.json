@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-11T23:04:47.175674Z",
+  "generated_at": "2026-08-11T23:09:54.538116Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260811&periods=event",
   "date": "2026-08-11",
@@ -10,7 +10,7 @@
       "an_event_id": 292800,
       "matchup": "Pittsburgh Pirates @ Miami Marlins",
       "start_time": "2026-08-11T22:40:00.000Z",
-      "status": "Bot 2nd",
+      "status": "End 2nd",
       "moneyline": {
         "away": {
           "odds": -105,
@@ -150,7 +150,7 @@
       "an_event_id": 292802,
       "matchup": "Chicago Cubs @ Washington Nationals",
       "start_time": "2026-08-11T22:45:00.000Z",
-      "status": "End 1st",
+      "status": "Top 2nd",
       "moneyline": {
         "away": {
           "odds": -169,
@@ -220,7 +220,7 @@
       "an_event_id": 292803,
       "matchup": "Seattle Mariners @ New York Yankees",
       "start_time": "2026-08-11T23:05:00.000Z",
-      "status": "scheduled",
+      "status": "Top 1st",
       "moneyline": {
         "away": {
           "odds": 120,
@@ -282,14 +282,15 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 822778,
       "an_event_id": 292804,
       "matchup": "Boston Red Sox @ Toronto Blue Jays",
       "start_time": "2026-08-11T23:07:00.000Z",
-      "status": "scheduled",
+      "status": "Top 1st",
       "moneyline": {
         "away": {
           "odds": 125,
@@ -351,7 +352,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824886,
@@ -444,7 +446,7 @@
         "away": {
           "odds": 160,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "BetRivers"
         },
         "home": {
           "odds": 170,
@@ -573,9 +575,9 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": 150,
+          "odds": 149,
           "line": 0,
-          "book": "Caesars"
+          "book": "DraftKings"
         }
       },
       "run_line": {
@@ -756,81 +758,12 @@
         "home": {
           "line": 4.5,
           "over": {
-            "odds": 112,
+            "odds": 114,
             "book": "BetRivers"
           },
           "under": {
             "odds": -135,
             "book": "DraftKings"
-          },
-          "source": "posted"
-        }
-      }
-    },
-    {
-      "game_pk": 823264,
-      "an_event_id": 292810,
-      "matchup": "Milwaukee Brewers @ San Diego Padres",
-      "start_time": "2026-08-12T01:40:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": -122,
-          "line": 0,
-          "book": "bet365"
-        },
-        "home": {
-          "odds": 118,
-          "line": 0,
-          "book": "DraftKings"
-        }
-      },
-      "run_line": {
-        "away": {
-          "odds": 138,
-          "line": -1.5,
-          "book": "BetRivers"
-        },
-        "home": {
-          "odds": -151,
-          "line": 1.5,
-          "book": "DraftKings"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": 102,
-          "line": 7.5,
-          "book": "BetRivers"
-        },
-        "under": {
-          "odds": -112,
-          "line": 7.5,
-          "book": "FanDuel"
-        }
-      },
-      "team_total": {
-        "away": {
-          "line": 3.5,
-          "over": {
-            "odds": -136,
-            "book": "BetRivers"
-          },
-          "under": {
-            "odds": 110,
-            "book": "DraftKings"
-          },
-          "source": "posted"
-        },
-        "home": {
-          "line": 3.5,
-          "over": {
-            "odds": 105,
-            "book": "DraftKings"
-          },
-          "under": {
-            "odds": -125,
-            "book": "BetMGM"
           },
           "source": "posted"
         }
@@ -906,6 +839,75 @@
       }
     },
     {
+      "game_pk": 823264,
+      "an_event_id": 292810,
+      "matchup": "Milwaukee Brewers @ San Diego Padres",
+      "start_time": "2026-08-12T01:40:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": -122,
+          "line": 0,
+          "book": "bet365"
+        },
+        "home": {
+          "odds": 118,
+          "line": 0,
+          "book": "DraftKings"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": 140,
+          "line": -1.5,
+          "book": "BetRivers"
+        },
+        "home": {
+          "odds": -151,
+          "line": 1.5,
+          "book": "DraftKings"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": 102,
+          "line": 7.5,
+          "book": "BetRivers"
+        },
+        "under": {
+          "odds": -112,
+          "line": 7.5,
+          "book": "FanDuel"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "over": {
+            "odds": -136,
+            "book": "BetRivers"
+          },
+          "under": {
+            "odds": 110,
+            "book": "DraftKings"
+          },
+          "source": "posted"
+        },
+        "home": {
+          "line": 3.5,
+          "over": {
+            "odds": 105,
+            "book": "DraftKings"
+          },
+          "under": {
+            "odds": -125,
+            "book": "BetMGM"
+          },
+          "source": "posted"
+        }
+      }
+    },
+    {
       "game_pk": 823186,
       "an_event_id": 292813,
       "matchup": "Houston Astros @ San Francisco Giants",
@@ -925,7 +927,7 @@
       },
       "run_line": {
         "away": {
-          "odds": -105,
+          "odds": -108,
           "line": -1.5,
           "book": "FanDuel"
         },
@@ -982,9 +984,9 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 249,
+          "odds": 250,
           "line": 0,
-          "book": "DraftKings"
+          "book": "BetRivers"
         },
         "home": {
           "odds": -260,
@@ -994,7 +996,7 @@
       },
       "run_line": {
         "away": {
-          "odds": 108,
+          "odds": 107,
           "line": 1.5,
           "book": "BetRivers"
         },
@@ -1006,9 +1008,9 @@
       },
       "total": {
         "over": {
-          "odds": -104,
+          "odds": -103,
           "line": 8.5,
-          "book": "FanDuel"
+          "book": "BetRivers"
         },
         "under": {
           "odds": -110,
@@ -1032,12 +1034,12 @@
         "home": {
           "line": 5.5,
           "over": {
-            "odds": 114,
-            "book": "DraftKings"
+            "odds": 116,
+            "book": "BetRivers"
           },
           "under": {
             "odds": -143,
-            "book": "BetRivers"
+            "book": "Caesars"
           },
           "source": "posted"
         }
@@ -1068,9 +1070,9 @@
           "book": "BetMGM"
         },
         "home": {
-          "odds": -190,
+          "odds": -188,
           "line": 1.5,
-          "book": "bet365"
+          "book": "FanDuel"
         }
       },
       "total": {
@@ -1137,7 +1139,7 @@
           "book": "Fanatics"
         },
         "home": {
-          "odds": -122,
+          "odds": -120,
           "line": 1.5,
           "book": "FanDuel"
         }
