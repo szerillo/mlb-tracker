@@ -10971,6 +10971,7 @@ body.shot-mode .modal-close { display: none !important; } /* screenshot tool: no
   }
   function mkBtn(cls){ var b=document.createElement('button'); b.className=cls; b.textContent='¢ Prices'; b.onclick=function(){ setPM(!document.body.classList.contains('pm-on')); }; return b; }
   function ensureToggles(){
+    if(document.body&&document.body.classList.contains('embed-mode')) return;  // no cents toggle button on embeds
     if(!document.getElementById('pm-toggle')){
       var cv=[].slice.call(document.querySelectorAll('button.apx-toggle')).find(function(e){ return /Compact view/.test(e.textContent||''); });
       if(cv&&cv.parentNode){ var b=mkBtn('apx-toggle'); b.id='pm-toggle'; cv.parentNode.insertBefore(b, cv); }
@@ -10986,7 +10987,7 @@ body.shot-mode .modal-close { display: none !important; } /* screenshot tool: no
     document.querySelectorAll('#pm-toggle,.pm-modal-toggle').forEach(function(b){ b.classList.toggle('on', on); b.textContent=(on?'¢ Prices ✓':'¢ Prices'); });
   }
   function init(){
-    if(document.body&&document.body.classList.contains('embed-mode')) return;
+    var _pmReq=(function(){var q=new URLSearchParams(location.search);return q.get('pm')==='1'||q.get('pm')==='true';})(); if(document.body&&document.body.classList.contains('embed-mode')&&!_pmReq) return; // gate PM off on embeds EXCEPT pm=1 (cents-only embed)
     ensureToggles();
     var qp=new URLSearchParams(location.search);
     if(qp.get('pm')==='1'||qp.get('pm')==='true'){ setPM(true); }
