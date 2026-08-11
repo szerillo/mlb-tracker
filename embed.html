@@ -37,6 +37,12 @@
   .shot-chip{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.8rem;font-weight:600}
   .shot-chip.active{border-color:var(--accent);color:var(--accent)}
   .shot-frame{width:100%;height:1500px;border:1px solid var(--border);border-radius:10px;background:#0d1117;display:block}
+  .shot-sections{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 12px;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;position:sticky;top:0;z-index:5}
+  .shot-seclabel{color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-right:2px}
+  .shot-secbtn{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:.82rem;font-weight:600}
+  .shot-secbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .shot-secbtn:active{transform:translateY(1px)}
+  .shot-secbtn.flash{background:var(--good);color:#06302b;border-color:var(--good)}
 </style>
 </head>
 <body>
@@ -83,8 +89,16 @@
   </div><!-- /panel-embeds -->
 
   <div id="panel-shots" hidden>
-    <div class="sub">Pick a game, then tap a section button in the preview to download a PNG — matchup, lineups, bullpens, SP, or weather/park/ump. Uses the date above.</div>
+    <div class="sub">Pick a game — its matchup view opens in the preview below. Then click a <b>Screenshot</b> button (they stay pinned to the top as you scroll) to download that section as a PNG. Uses the date above.</div>
     <div class="shot-games" id="shotGames"><div class="empty">Loading games…</div></div>
+    <div class="shot-sections" id="shotSections">
+      <span class="shot-seclabel">Screenshot</span>
+      <button class="shot-secbtn" data-sec="Matchup">Matchup</button>
+      <button class="shot-secbtn" data-sec="Weather">Weather · Park · Umps</button>
+      <button class="shot-secbtn" data-sec="Starting">Starting Pitchers</button>
+      <button class="shot-secbtn" data-sec="Bullpen">Bullpens</button>
+      <button class="shot-secbtn" data-sec="Lineup">Lineups</button>
+    </div>
     <iframe id="shotFrame" class="shot-frame" title="Section screenshots"></iframe>
   </div>
 
@@ -249,6 +263,15 @@ function selectShotGame(pk){
 }
 document.getElementById('shotGames').addEventListener('click', e=>{
   const c=e.target.closest('.shot-chip'); if(!c) return; selectShotGame(c.dataset.pk);
+});
+document.getElementById('shotSections').addEventListener('click', e=>{
+  const b=e.target.closest('.shot-secbtn'); if(!b) return;
+  const key=(b.dataset.sec||'').toLowerCase();
+  const f=document.getElementById('shotFrame');
+  let fdoc=null; try{ fdoc=f&&f.contentDocument; }catch(err){}
+  const target = fdoc ? [...fdoc.querySelectorAll('button')].find(x=>/📸/.test(x.textContent||'') && (x.textContent||'').toLowerCase().includes(key)) : null;
+  if(target){ target.click(); }
+  b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'), target?650:300);
 });
 document.querySelectorAll('.tabbtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
