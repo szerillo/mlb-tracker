@@ -60,6 +60,7 @@
   <div class="tabs">
     <button class="tabbtn active" data-panel="embeds">Embed codes</button>
     <button class="tabbtn" data-panel="shots">&#128248; Screenshots</button>
+    <button class="tabbtn" data-panel="pm">&#162; Prediction market</button>
   </div>
 
   <div id="panel-embeds">
@@ -87,6 +88,11 @@
     <iframe id="shotFrame" class="shot-frame" title="Section screenshots"></iframe>
   </div>
 
+  <div id="panel-pm" hidden>
+    <div class="sub">Prediction-market / Kalshi embeds - cents pricing only, no American odds anywhere. Same layouts as the main embeds; copy the full slate or any game.</div>
+    <div id="pmGames"><div class="empty">Loading games...</div></div>
+  </div>
+
 <script>
 const BASE = "https://mlb-tracker-256.pages.dev/";
 const API  = "https://statsapi.mlb.com/api/v1";
@@ -105,7 +111,7 @@ window.addEventListener('message', function(e){
 <\/script>`;
 $("#listener").textContent = LISTENER;
 
-function iframeFor(kind, g, mkt){
+function iframeFor(kind, g, mkt, pm){
   const mode = $("#mode").value;
   const date = $("#date").value;
   const hIn = parseInt($("#height").value,10);
@@ -117,6 +123,8 @@ function iframeFor(kind, g, mkt){
   else if(kind==='nl'){ src = BASE+'?embed=nl'; title='Bartolo — NL team futures'; id='bartolo-nl'; }
   else if(kind==='playoffs'){ src = BASE+'?embed=playoffs'; title='Bartolo — playoff picture'; id='bartolo-playoffs'; } else if(kind && kind.indexOf('div-')===0){ var _dv=kind.slice(4); src = BASE+'?embed=futures&division='+_dv; title='Bartolo — '+_dv+' futures'; id='bartolo-'+kind; }
   else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
+
+  if(pm) src += (src.indexOf("?")>-1?"&":"?")+"pm=1";
 
   // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
   // (TinyMCE, Action Network, WordPress visual mode) strip <script>, which is
@@ -188,6 +196,7 @@ async function load(){
        time:new Date(g.gameDate).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})+' ET'}));
     render();
     renderShotGames();
+    renderPM();
   }catch(e){ $("#games").innerHTML='<div class="empty">Could not load schedule. Try Reload.</div>'; }
 }
 function render(){
@@ -216,6 +225,13 @@ function renderPF(){
     </div>
   </div>`; }).join('');
 }
+function renderPM(){
+  var box=document.getElementById("pmGames"); if(!box) return;
+  var date=$("#date").value;
+  var slate='<div class="card slate"><div><div class="m">Full slate - prediction-market prices</div><div class="meta">cents only, no American odds</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" href="'+BASE+'?embed=scoreboard&date='+date+'&pm=1&mobile=1">Mobile</a><button class="copy" data-kind="slate" data-pm="1">Copy</button></div></div>';
+  var games = GAMES.length ? GAMES.map(function(g,i){ return '<div class="card"><div><div class="m">'+g.away+' @ '+g.home+'</div><div class="meta">'+g.time+' - cents prices</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" href="'+BASE+'?embed=game&pk='+g.gamePk+'&date='+date+'&pm=1&mobile=1">Mobile</a><button class="copy" data-kind="game" data-i="'+i+'" data-pm="1">Copy</button></div></div>'; }).join('') : '<div class="empty">No games scheduled this date.</div>';
+  box.innerHTML = slate + games;
+}
 let SHOT_PK=null;
 function renderShotGames(){
   const box=document.getElementById('shotGames'); if(!box) return;
@@ -240,6 +256,8 @@ document.querySelectorAll('.tabbtn').forEach(btn=>{
     document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b===btn));
     document.getElementById('panel-embeds').hidden = (panel!=='embeds');
     document.getElementById('panel-shots').hidden = (panel!=='shots');
+    document.getElementById('panel-pm').hidden = (panel!=='pm');
+    if(panel==='pm') renderPM();
     if(panel==='shots' && GAMES.length && !SHOT_PK) renderShotGames();
   });
 });
@@ -248,7 +266,7 @@ document.addEventListener('click', e=>{
   if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
   const kind=b.dataset.kind; if(!kind) return;
   const g = kind==='game' ? GAMES[+b.dataset.i] : null;
-  copyText(iframeFor(kind,g,b.dataset.mkt), b);
+  copyText(iframeFor(kind,g,b.dataset.mkt, b.dataset.pm==="1"), b);
 });
 $("#date").value=todayISO();
 $("#date").addEventListener('change',load);
@@ -257,36 +275,7 @@ $("#reload").addEventListener('click',load);
 renderPF();
 load();
 </script>
-<script>
-(function(){
-  if(window.__pmEmbedInstalled) return;
-  window.__pmEmbedInstalled = true;
-  var on = false;
-  function addPm(text){
-    if(!on || typeof text !== 'string') return text;
-    return text.replace(/(src\s*=\s*["'])([^"']+)(["'])/gi, function(m, a, url, c){
-      if(/[?&]pm=1/.test(url)) return m;
-      return a + url + (url.indexOf('?') > -1 ? '&' : '?') + 'pm=1' + c;
-    });
-  }
-  var cw = (navigator.clipboard && navigator.clipboard.writeText) ? navigator.clipboard.writeText.bind(navigator.clipboard) : null;
-  if(cw){ navigator.clipboard.writeText = function(t){ return cw(addPm(t)); }; }
-  function add(){
-    if(document.getElementById('pm-embed-box')) return;
-    var sel = document.querySelector('select');
-    var host = sel ? sel.parentElement : document.body;
-    if(!host) return;
-    var wrap = document.createElement('label');
-    wrap.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-left:14px;font-size:13px;cursor:pointer;vertical-align:middle';
-    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'pm-embed-box';
-    cb.onchange = function(){ on = cb.checked; };
-    wrap.appendChild(cb); wrap.appendChild(document.createTextNode('¢ Prediction market prices'));
-    host.appendChild(wrap);
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(add, 300); });
-  else setTimeout(add, 300);
-})();
-</script>
+<!-- prediction-market embeds handled by the dedicated tab above -->
 
 </body>
 </html>
