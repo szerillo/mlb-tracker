@@ -274,7 +274,7 @@ def _game_states(iso):
             lu = g.get("lineups") or {}
             home = lu.get("homePlayers") or []
             away = lu.get("awayPlayers") or []
-            locked = len(home) >= 9 and len(away) >= 9
+            locked = (g.get("status", {}) or {}).get("abstractGameState", "") in ("Live", "Final")
             final = (g.get("status", {}) or {}).get("detailedState", "") in final_states
             tms = g.get("teams", {}) or {}
             sp_a = ((tms.get("away", {}) or {}).get("probablePitcher", {}) or {}).get("id")
@@ -383,10 +383,10 @@ def main():
         _pg = _prev.get(_pk)
         _cur_sig = _st.get("sig")
         _stored_sig = (_pg or {}).get("lock_sig")
-        _reopened = bool((_pg or {}).get("scratch_reopened"))
+        _reopened = False  # game-start freeze: a started game stays locked
         # A lineup change after lock (late scratch / SP swap) reopens the game so
         # your updated projection is pulled; it then stays live for the day.
-        if _pg and _stored_sig and _cur_sig and _cur_sig != _stored_sig:
+        if False:  # game-start freeze: no lineup-change reopen
             _reopened = True
         if _reopened:
             if _pk in games:
