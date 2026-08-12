@@ -216,6 +216,47 @@ def main():
         print(f"[f5_odds]  +{len(_tom_games)} next-day F5 games for {_tom.isoformat()}")
         games += _tom_games
 
+    # --- Freeze F5 odds at first pitch ----------------------------------------
+    # Mirror refresh_odds.py: once a game starts, lock its F5 market to the last
+    # pre-start snapshot so the scoreboard / F5 toggle show the closing pregame
+    # line, not live in-game odds. Carry the existing entry forward for any game
+    # whose start time has passed, as long as a valid pregame price was captured.
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    prev_by_pk = {}
+    try:
+        if os.path.exists(OUTPUT):
+            _prev = json.load(open(OUTPUT))
+            for pg in _prev.get("games", []):
+                if pg.get("game_pk") is not None:
+                    prev_by_pk[pg["game_pk"]] = pg
+    except Exception as e:
+        print(f"[f5_odds] WARN: could not read existing f5_odds for freeze: {e}")
+
+    def _has_started(g):
+        st = g.get("start_time")
+        if not st:
+            return False
+        try:
+            t = datetime.datetime.fromisoformat(str(st).replace("Z", "+00:00"))
+            return now_utc >= t
+        except Exception:
+            return False
+
+    def _has_pregame_price(pg):
+        pg = pg or {}
+        ml = pg.get("moneyline") or {}
+        to_ = pg.get("total") or {}
+        return bool((ml.get("away") and ml.get("home")) or (to_.get("over") and to_.get("under")))
+
+    frozen = 0
+    for i, g in enumerate(games):
+        prev_g = prev_by_pk.get(g.get("game_pk"))
+        if _has_started(g) and _has_pregame_price(prev_g):
+            games[i] = {**prev_g, "odds_locked": True}
+            frozen += 1
+    if frozen:
+        print(f"[f5_odds] froze pregame F5 odds for {frozen} started game(s)")
+
     pk_ct = sum(1 for g in games if g["game_pk"])
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
