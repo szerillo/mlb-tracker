@@ -495,6 +495,33 @@ def main() -> int:
 
     with open(OUTPUT, "w") as f:
         json.dump(d, f, indent=2)
+
+    # --- Also emit a slim wFIP lookup for the Google-Sheet pull (name -> unified_score)
+    try:
+        def _wnorm(s):
+            s = unicodedata.normalize("NFKD", str(s or ""))
+            s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+            s = "".join(c for c in s if c.isalpha() or c == " ")
+            return " ".join(s.split())
+        _wmap = {}
+        for _wk, _wv in pitchers.items():
+            _us = _wv.get("unified_score")
+            if _us is None:
+                continue
+            _nm = _wnorm(_wv.get("name", _wk))
+            if _nm:
+                _wmap[_nm] = round(float(_us), 2)
+        _wpath = os.path.join(HERE, "..", "data", "wfip_lookup.json")
+        with open(_wpath, "w") as _wf:
+            json.dump({
+                "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "source": "pitcher_stats.json unified_score (wFIP composite)",
+                "n": len(_wmap),
+                "wfip": _wmap,
+            }, _wf)
+        print(f"[score] wrote wfip_lookup.json ({len(_wmap)} pitchers)")
+    except Exception as _we:
+        print(f"[score] WARN: wfip_lookup emit failed: {_we}", file=sys.stderr)
     print(f"[score] scored {n_scored} pitchers "
           f"({n_rolling} with L5 rolling, {n_sparse} too sparse)", file=sys.stderr)
     print("[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
