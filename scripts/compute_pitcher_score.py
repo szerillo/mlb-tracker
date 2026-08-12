@@ -99,7 +99,7 @@ K_RP = 250.0   # reliever half-weight innings
 # a reliever whose in-season mix beats his projection is showing skill the
 # career-prior systems under-trust (stuff/velo/new pitch) -> earn weight fast;
 # a reliever below his projection is mostly BABIP/HR noise -> anchor to proj.
-K_RP_GOOD = 60.0    # in-season BETTER than fip_proj -> trust it fast
+K_RP_GOOD = 35.0    # in-season BETTER than fip_proj -> trust it fast
 K_RP_BAD = 400.0    # in-season WORSE  than fip_proj -> lean on projection
 DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
 
@@ -326,14 +326,27 @@ def main() -> int:
             "xera":       _f(p.get("xera")),
             "bot_era":    _f(p.get("bot_era")),
             "stuff_era":  (STUFF_ERA_INTERCEPT - STUFF_ERA_SLOPE * _stuffp)
-                          if (_stuffp is not None and _role_sp) else None,
+                          if (_stuffp is not None) else None,
         }
         proj = _f(p.get("fip_proj"))
 
         # --- in-season CORE: available components in their relative proportions ---
         core_sum = core_w_avail = 0.0
+        # RP addendum (2026-08-11): relievers get an IP-ramped stuff weight and a
+        # resmix that drops xERA; starters keep the static unified_v3 mix.
+        if _role_sp:
+            comps = COMPONENTS
+        else:
+            _ip_rp = _f(p.get("ip")) or 0.0
+            _ws = max(0.45, min(0.75, 0.75 - 0.01 * (_ip_rp - 12.0)))
+            comps = [
+                ("stuff_era",  _ws),
+                ("roll_siera", (1.0 - _ws) * 0.55),
+                ("roll_xfip",  (1.0 - _ws) * 0.30),
+                ("bot_era",    (1.0 - _ws) * 0.15),
+            ]
         components = {}
-        for field, weight in COMPONENTS:
+        for field, weight in comps:
             v = vals[field]
             if v is None:
                 continue
