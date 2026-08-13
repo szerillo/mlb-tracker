@@ -3120,12 +3120,19 @@ function _pgNormCdf(z) {
 }
 // Pre-game P(over) at a market line, per spec: SD = k·√(projTotal). k=1.50 full,
 // 1.60 F5, 1.54 team-total. Returns over-probability as a fraction in [0,1].
-function pgPOver(line, projTotal, k=1.50) {
+var _PG_TOT_LOW  = [0.863,0.819,0.788,0.713,0.671,0.621,0.569,0.504,0.451,0.407,0.353,0.311,0.272,0.249,0.209];
+var _PG_TOT_MID  = [0.817,0.769,0.725,0.686,0.628,0.575,0.526,0.484,0.435,0.385,0.348,0.309,0.274,0.239,0.215];
+var _PG_TOT_HIGH = [0.811,0.772,0.734,0.676,0.639,0.591,0.544,0.495,0.455,0.420,0.370,0.332,0.298,0.270,0.230];
+// Game-total P(over): empirical CDF lookup (TOTALS_EDGE=EMP_LOOKUP_v1, 2026-08-12).
+// Replaces the Gaussian. Interpolated on kk=(line-proj), bucketed by market total
+// (LOW<=7.5 / MID 8-9 / HIGH>=9.5). Decided basis (pushes excluded); k arg ignored.
+function pgPOver(line, projTotal, k) {
   if (line == null || projTotal == null || projTotal <= 0) return null;
-  const sd = k * Math.sqrt(projTotal);
-  if (sd <= 0) return null;
-  const z = (line - projTotal) / sd;
-  return 1 - _pgNormCdf(z);
+  var col = line <= 7.5 ? _PG_TOT_LOW : (line < 9.5 ? _PG_TOT_MID : _PG_TOT_HIGH);
+  var kk = Math.max(-3.5, Math.min(3.5, line - projTotal));
+  var pos = (kk + 3.5) / 0.5;
+  var i = Math.min(14, Math.floor(pos)), j = Math.min(14, i + 1);
+  return col[i] + (pos - i) * (col[j] - col[i]);
 }
 
 // Team-total over-prob: negative binomial (Fable 2026-08-03), mean mu = projected
