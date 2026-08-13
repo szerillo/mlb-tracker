@@ -604,6 +604,13 @@ def main():
     # Fetch forecasts in parallel (one per unique grid point). Include teams
     # whose roofs are OPEN today even if they're in DOMES.
     unique_teams = set()
+    # Field of Dreams (Dyersville, IA): host plays ~200 mi from its home park;
+    # StatsAPI venue name is "Field of Dreams". Force Open-Meteo at the Dyersville
+    # site (no NWS gridpoint exists for a one-off field) so temp/wind reflect Iowa.
+    FOD_LATLON = (42.4850, -91.0800)
+    _fod_hosts = {g["home"] for g in schedule
+                  if "field of dreams" in str(g.get("venue") or "").lower()
+                  or "dyersville" in str(g.get("venue") or "").lower()}
     for g in schedule:
         if g["home"] not in NWS_GRIDS and g["home"] not in OPENMETEO_PARKS: continue
         if game_has_started(g.get("status", "")): continue
@@ -622,6 +629,8 @@ def main():
     forecasts = {}
 
     def _load(team):
+        if team in _fod_hosts:
+            return team, get_forecast_openmeteo(*FOD_LATLON)
         if team in NWS_GRIDS:
             fc = get_forecast(*NWS_GRIDS[team])
             if fc:
@@ -641,7 +650,7 @@ def main():
     # Open-Meteo wind for the same parks (vector-averaged with NWS below).
     om_forecasts = {}
     def _load_om(team):
-        ll = PARK_LATLON.get(team)
+        ll = (FOD_LATLON if team in _fod_hosts else PARK_LATLON.get(team))
         return team, (get_forecast_openmeteo(*ll) if ll else None)
     with ThreadPoolExecutor(max_workers=10) as ex:
         for team, fc in ex.map(_load_om, unique_teams):
