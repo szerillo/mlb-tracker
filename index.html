@@ -3126,6 +3126,17 @@ var _PG_TOT_HIGH = [0.811,0.772,0.734,0.676,0.639,0.591,0.544,0.495,0.455,0.420,
 // Game-total P(over): empirical CDF lookup (TOTALS_EDGE=EMP_LOOKUP_v1, 2026-08-12).
 // Replaces the Gaussian. Interpolated on kk=(line-proj), bucketed by market total
 // (LOW<=7.5 / MID 8-9 / HIGH>=9.5). Decided basis (pushes excluded); k arg ignored.
+function pgPOverF5(line, projTotal){
+  if(line==null||projTotal==null||projTotal<=0) return null;
+  var _F5L=[0.829,0.778,0.744,0.667,0.591,0.500,0.404,0.321,0.266,0.218,0.163];
+  var _F5M=[0.847,0.753,0.720,0.626,0.576,0.500,0.430,0.373,0.307,0.275,0.218];
+  var _F5H=[0.830,0.737,0.690,0.614,0.554,0.500,0.445,0.403,0.338,0.295,0.232];
+  var col = line<=4 ? _F5L : (line<5 ? _F5M : _F5H);
+  var kk = Math.max(-2.5, Math.min(2.5, line - projTotal));
+  var pos = (kk + 2.5)/0.5;
+  var i = Math.min(10, Math.floor(pos)), j = Math.min(10, i+1);
+  return col[i] + (pos - i)*(col[j]-col[i]);
+}
 function pgPOver(line, projTotal, k) {
   if (line == null || projTotal == null || projTotal <= 0) return null;
   var col = line <= 7.5 ? _PG_TOT_LOW : (line < 9.5 ? _PG_TOT_MID : _PG_TOT_HIGH);
@@ -3326,7 +3337,7 @@ function _apxEdgeBarF5(g){
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   let tot='<span class="apx-pill">No F5 total edge</span>';
-  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.53);
+  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.53,true);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
@@ -3431,12 +3442,12 @@ const _TOT_SLOPE=[[4.5,6.0],[5,5.6],[5.5,5.4],[6,5.2],[6.5,5.0],[7,4.8],[7.5,4.7
 function _halfRunPct(L){if(L==null)return 4.6;const t=_TOT_SLOPE;if(L<=t[0][0])return t[0][1];if(L>=t[t.length-1][0])return t[t.length-1][1];for(let i=0;i<t.length-1;i++){if(L>=t[i][0]&&L<=t[i+1][0]){const f=(L-t[i][0])/(t[i+1][0]-t[i][0]);return t[i][1]+f*(t[i+1][1]-t[i][1]);}}return 4.6;}
 function _impliedFromOdds(o){ return o<0?(-o)/((-o)+100):100/(o+100); }
 function _breakeven(odds){ return odds==null?null:_impliedFromOdds(odds); }
-function _pOverAt(projTotal,line,k){ const p=pgPOver(line,projTotal,k||1.50); return (p==null)?null:Math.max(0.02,Math.min(0.98,p)); }
-function totalEdgeInfo(projTotal,overLine,overOdds,underLine,underOdds,k){
+function _pOverAt(projTotal,line,k,f5){ const p=(f5?pgPOverF5(line,projTotal):pgPOver(line,projTotal,k||1.50)); return (p==null)?null:Math.max(0.02,Math.min(0.98,p)); }
+function totalEdgeInfo(projTotal,overLine,overOdds,underLine,underOdds,k,f5){
   if(projTotal==null) return null;
   let eO=null, oL=overLine, eU=null, uL=underLine;
-  if(overLine!=null&&overOdds!=null){ eO=(_pOverAt(projTotal,overLine,k)-_breakeven(overOdds))*100; }
-  if(underLine!=null&&underOdds!=null){ const pU=1-_pOverAt(projTotal,underLine,k); eU=(pU-_breakeven(underOdds))*100; }
+  if(overLine!=null&&overOdds!=null){ eO=(_pOverAt(projTotal,overLine,k,f5)-_breakeven(overOdds))*100; }
+  if(underLine!=null&&underOdds!=null){ const pU=1-_pOverAt(projTotal,underLine,k,f5); eU=(pU-_breakeven(underOdds))*100; }
   if(eO==null&&eU==null) return null;
   if(eU==null||(eO!=null&&eO>=eU)) return {lean:'Over',line:oL,edge:eO};
   return {lean:'Under',line:uL,edge:eU};
@@ -3469,7 +3480,7 @@ function _apxEdgeBar(g){
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   let tot='<span class="apx-pill">Total —</span>';
-  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
+  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.50,F5);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
