@@ -3480,7 +3480,7 @@ function _apxEdgeBar(g){
   const ovL=o&&o.total&&o.total.over?o.total.over.line:null, ovO=o&&o.total&&o.total.over?o.total.over.odds:null;
   const unL=o&&o.total&&o.total.under?o.total.under.line:null, unO=o&&o.total&&o.total.under?o.total.under.odds:null;
   let tot='<span class="apx-pill">Total —</span>';
-  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.50,F5);
+  const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
