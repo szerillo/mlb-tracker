@@ -3512,7 +3512,7 @@ function apxCardHTML(g, opts){
   // the "home team" is the NL All-Stars, which maps to no stadium, so the PF chip
   // read "—". hostParkAbbr() resolves it to the actual venue (CBP -> PHI).
   const _pfAb = (typeof hostParkAbbr==='function') ? hostParkAbbr(g) : hAb;
-  let pfPct=null; try{ const pf=parkFactorFor(_pfAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){}
+  let pfPct=null; try{ const pf=parkFactorFor(_pfAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){} if(/field of dreams|dyersville/i.test((g.venue&&g.venue.name)||"")) pfPct = 0;
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">wX</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'wX','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
@@ -6717,7 +6717,7 @@ function renderEnvTab() {
     const wx = weatherForGame(g.gamePk);
 
     // --- Park column ---
-    const pf = parkFactorFor(homeAbbr);
+    const pf = (/field of dreams|dyersville/i.test(venue||"") ? {venue:"Field of Dreams",woba:100,bacon:100,hr:100,bb:100,so:100,park_factor:100,_neutral:true} : parkFactorFor(homeAbbr));
     const pfStat = (label, v) => {
       if (v == null) return "";
       const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
@@ -6727,7 +6727,7 @@ function renderEnvTab() {
         <div class="env-pf-val ${cls}">${sign}${pct}%</div></div>`;
     };
     const parkHTML = pf ? `
-      <div class="env-pf-venue">${pf.venue} · Savant 3-yr rolling</div>
+      <div class="env-pf-venue">${pf.venue} · ${pf._neutral ? "neutral park (temporary field)" : "Savant 3-yr rolling"}</div>
       <div class="env-pf-grid">
         ${pfStat("wOBA", pf.woba)}
         ${pfStat("Hit",  pf.bacon)}
@@ -7649,7 +7649,7 @@ async function openModal(game) {
       </div>
       <div class="m-park-box">
         ${(() => {
-          const pf = parkFactorFor(parkAbbr);
+          const pf = (/field of dreams|dyersville/i.test((game.venue&&game.venue.name)||"") ? {venue:"Field of Dreams",woba:100,bacon:100,hr:100,bb:100,so:100,park_factor:100,_neutral:true} : parkFactorFor(parkAbbr));
           if (!pf) return `<div class="coming-soon">No park factor</div>`;
           const pfStat = (label, v) => {
             const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
@@ -7658,7 +7658,7 @@ async function openModal(game) {
             return `<div class="sp-stat"><div class="sp-stat-label">${label}</div>
               <div class="sp-stat-val ${cls}" style="font-size:1rem;">${sign}${pct}%</div></div>`;
           };
-          return `<div class="pf-venue" style="text-align:center;">${pf.venue} · Savant 3-yr rolling</div>
+          return `<div class="pf-venue" style="text-align:center;">${pf.venue} · ${pf._neutral ? "neutral park (temporary field)" : "Savant 3-yr rolling"}</div>
             <div class="sp-stat-group" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem 0.55rem;">
               ${pfStat("wOBA", pf.woba)}
               ${pfStat("Hit", pf.bacon)}
