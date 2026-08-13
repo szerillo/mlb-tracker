@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T13:13:41.202209Z",
+  "generated_at": "2026-08-13T14:21:31.168842Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -303,7 +303,7 @@
         "humidity_pct": 95,
         "wind_speed_mph": 12,
         "wind_dir": "ENE",
-        "precip_pct": 34,
+        "precip_pct": 45,
         "short_forecast": "",
         "start_time": "2026-08-13T23:00Z",
         "game_window_temp_f": 66.8,
@@ -312,7 +312,7 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -0.8,
+        "run_adj_pct": -1.7,
         "capped": false,
         "is_dome": false,
         "components": {
@@ -321,7 +321,7 @@
           "w_adj_pct": -0.1,
           "dp_adj_pct": 1.5,
           "p_adj_pct": 0.6,
-          "precip_adj_pct": -0.9,
+          "precip_adj_pct": -2.0,
           "carry_pct": -0.3,
           "wind": {
             "out_component": -5.73,
@@ -329,7 +329,7 @@
             "spd_rarity": 0.31
           }
         },
-        "model_pct": -0.8,
+        "model_pct": -1.7,
         "pressure_source": "BP",
         "bp_pct": -2,
         "bp_blended": false,
@@ -1004,14 +1004,15 @@
       "weather": {
         "temp_f": 62,
         "humidity_pct": 90,
-        "wind_speed_mph": 13,
-        "wind_dir": "WSW",
+        "wind_speed_mph": 12,
+        "wind_dir": "W",
         "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
         "start_time": "2026-08-14T19:00:00-07:00",
         "game_window_temp_f": 60.2,
         "game_window_humidity_pct": 91.4,
-        "first_pitch_temp_f": 62
+        "first_pitch_temp_f": 62,
+        "wind_blended": true
       },
       "v8": {
         "run_adj_pct": -1.1,
@@ -1026,7 +1027,7 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 12.4,
+            "out_component": 11.95,
             "dir_rarity": 0,
             "spd_rarity": 0.31
           }
