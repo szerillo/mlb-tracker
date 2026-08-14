@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T22:37:53.666896Z",
+  "generated_at": "2026-08-14T23:35:46.926612Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -452,7 +452,7 @@
       "weather": {
         "temp_f": 76,
         "humidity_pct": 68,
-        "wind_speed_mph": 8,
+        "wind_speed_mph": 9,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Clear",
@@ -463,24 +463,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 1.5,
+        "run_adj_pct": 1.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -3.4,
           "t_adj_pct": -1.0,
-          "w_adj_pct": 2.5,
+          "w_adj_pct": 2.8,
           "dp_adj_pct": 1.0,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.2,
           "wind": {
-            "out_component": 8.0,
+            "out_component": 9.0,
             "dir_rarity": 0,
             "spd_rarity": 0
           }
         },
-        "model_pct": 1.5,
+        "model_pct": 1.8,
         "pressure_source": "BP",
         "bp_pct": 1,
         "bp_blended": false,
@@ -500,7 +500,7 @@
       "weather": {
         "temp_f": 78,
         "humidity_pct": 56,
-        "wind_speed_mph": 8,
+        "wind_speed_mph": 9,
         "wind_dir": "SW",
         "precip_pct": 0,
         "short_forecast": "Clear",
@@ -511,24 +511,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 4.0,
+        "run_adj_pct": 4.8,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -7.3,
           "t_adj_pct": -2.2,
-          "w_adj_pct": 6.6,
+          "w_adj_pct": 7.4,
           "dp_adj_pct": 1.0,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.5,
           "wind": {
-            "out_component": 8.0,
+            "out_component": 9.0,
             "dir_rarity": 0,
             "spd_rarity": 0.25
           }
         },
-        "model_pct": 4.0,
+        "model_pct": 4.8,
         "pressure_source": "BP",
         "bp_pct": 1,
         "bp_blended": false,
@@ -594,7 +594,7 @@
       "weather": {
         "temp_f": 61,
         "humidity_pct": 90,
-        "wind_speed_mph": 14,
+        "wind_speed_mph": 13,
         "wind_dir": "W",
         "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
@@ -617,7 +617,7 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 13.95,
+            "out_component": 12.95,
             "dir_rarity": 0,
             "spd_rarity": 0.31
           }
