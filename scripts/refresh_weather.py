@@ -781,6 +781,15 @@ def main():
                 v8["bp_temp_f"] = bp_match.get("bp_temp_f")
             if _ov:
                 v8["overridden"] = True
+        if v8 is None and g["game_pk"] in prior_by_pk and (prior_by_pk[g["game_pk"]].get("v8") is not None):
+            # Deterministic guard: a flaky NWS run can return no fresh forecast (v8 None),
+            # which would drop this game weather chip to 0 and flip it back the next run.
+            # Keep the last good published value until a real forecast returns.
+            _prev = dict(prior_by_pk[g["game_pk"]])
+            _prev["carried_forward"] = True
+            games_out.append(_prev)
+            frozen += 1
+            continue
         games_out.append({
             "game_pk": g["game_pk"],
             "matchup": f"{g['away']} @ {home}",
