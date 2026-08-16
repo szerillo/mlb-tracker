@@ -82,36 +82,36 @@ TEAM_TO_PARK = {
 # BP_BASE — per-park baselines (temp, hum, pres, carry, wr, of, cr, cq, var, runs, alt, dome)
 # ============================================================================
 BP_BASE = {
-    "LAA":{"temp":77,"hum":51,"pres":1013,"carry":-48.00,"wr_out":-2.36,"wr_in":3.32,"of":"Small","cr":"Avg","cq":"Good","var":0.79,"runs":-1,"alt":160},
-    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":10.0,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
+    "LAA":{"temp":77,"hum":51,"pres":1013,"carry":-48.00,"wr_out":-9.71,"wr_in":3.32,"of":"Small","cr":"Avg","cq":"Good","var":0.79,"runs":-1,"alt":160},
+    "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":1.92,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
     "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":2.0,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
-    "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":1.27,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
-    "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0.75,"wr_in":0.75,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
-    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":2.0,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
+    "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":2.81,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
+    "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0,"wr_in":0.75,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
+    "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":3.2,"wr_in":1.99,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},
     "TB": {"temp":72,"hum":44,"pres":1014,"carry":-53.00,"wr_out":0,"wr_in":0,"of":"Medium","cr":"Poor","cq":"Poor","var":0.03,"runs":-7,"alt":0,"dome":True},
-    "TOR":{"temp":73,"hum":59,"pres":1015,"carry":-1.67,"wr_out":-1.02,"wr_in":-1.37,"of":"Medium","cr":"Great","cq":"Good","var":0.81,"runs":-3,"alt":247,"dome":True},
-    "NYY":{"temp":74,"hum":56,"pres":1015,"carry":-1.50,"wr_out":2.50,"wr_in":3.90,"of":"Variable","cr":"Avg","cq":"Great","var":1.95,"runs":-3,"alt":54},
-    "DET":{"temp":72,"hum":56,"pres":1015,"carry":-1.54,"wr_out":0.36,"wr_in":4.69,"of":"Large","cr":"Avg","cq":"Avg","var":1.31,"runs":-1,"alt":596},
-    "MIN":{"temp":73,"hum":53,"pres":1014,"carry":-53.00,"wr_out":1.62,"wr_in":-0.11,"of":"Medium","cr":"Avg","cq":"Good","var":0.98,"runs":3,"alt":812},
-    "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":1.83,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
+    "TOR":{"temp":73,"hum":59,"pres":1015,"carry":-1.67,"wr_out":0,"wr_in":-1.37,"of":"Medium","cr":"Great","cq":"Good","var":0.81,"runs":-3,"alt":247,"dome":True},
+    "NYY":{"temp":74,"hum":56,"pres":1015,"carry":-1.50,"wr_out":10.63,"wr_in":3.90,"of":"Variable","cr":"Avg","cq":"Great","var":1.95,"runs":-3,"alt":54},
+    "DET":{"temp":72,"hum":56,"pres":1015,"carry":-1.54,"wr_out":0,"wr_in":4.69,"of":"Large","cr":"Avg","cq":"Avg","var":1.31,"runs":-1,"alt":596},
+    "MIN":{"temp":73,"hum":53,"pres":1014,"carry":-53.00,"wr_out":0,"wr_in":-0.11,"of":"Medium","cr":"Avg","cq":"Good","var":0.98,"runs":3,"alt":812},
+    "HOU":{"temp":80,"hum":48,"pres":1015,"carry":-1.68,"wr_out":9.47,"wr_in":-3.21,"of":"Variable","cr":"Bad","cq":"Poor","var":0.50,"runs":-3,"alt":38,"dome":True},
     "TEX":{"temp":81,"hum":42,"pres":1013,"carry":-1.18,"wr_out":1.34,"wr_in":0.79,"of":"Medium","cr":"Avg","cq":"Great","var":0.40,"runs":-5,"alt":616,"dome":True},
-    "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":0.0,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
+    "SEA":{"temp":71,"hum":51,"pres":1016,"carry":-2.15,"wr_out":-11.92,"wr_in":1.35,"of":"Small","cr":"Poor","cq":"Bad","var":0.88,"runs":-13,"alt":10},
     "ATH":{"temp":79,"hum":40,"pres":1012,"carry":-95.00,"wr_out":5.0,"wr_in":2.52,"of":"Large","cr":"Good","cq":"Avg","var":1.00,"runs":15,"alt":26},  # 2026-07-27 prior bump wr_out 3.0->5.0 (small-sample + physics: open-air, hot, dry Sacramento = great carry, NOT altitude). Coliseum-era of/carry/runs still stale; cross-wind/orientation (GPS_CF 46) needs a Sutter-specific look. Re-fit at n~150.
-    "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":2.61,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
-    "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":0.04,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
-    "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":3.0,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
-    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":3.00,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
-    "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":1.92,"wr_in":5.0,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
-    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":15.00,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
+    "ATL":{"temp":82,"hum":50,"pres":1015,"carry":-44.00,"wr_out":12.87,"wr_in":-0.62,"of":"Medium","cr":"Poor","cq":"Great","var":0.90,"runs":-7,"alt":1050},
+    "MIA":{"temp":80,"hum":59,"pres":1017,"carry":-1.07,"wr_out":4.24,"wr_in":2.01,"of":"Large","cr":"Good","cq":"Avg","var":0.30,"runs":-1,"alt":15,"dome":True},
+    "NYM":{"temp":73,"hum":57,"pres":1015,"carry":-1.21,"wr_out":3.76,"wr_in":-0.43,"of":"Medium","cr":"Poor","cq":"Poor","var":1.37,"runs":-9,"alt":54},
+    "PHI":{"temp":77,"hum":55,"pres":1015,"carry":-1.17,"wr_out":6.98,"wr_in":4.08,"of":"Small","cr":"Bad","cq":"Great","var":1.83,"runs":3,"alt":9},
+    "WAS":{"temp":78,"hum":55,"pres":1015,"carry":-64.00,"wr_out":9.31,"wr_in":5.0,"of":"Medium","cr":"Great","cq":"Great","var":0.98,"runs":4,"alt":25},
+    "CHC":{"temp":70,"hum":63,"pres":1015,"carry":-1.85,"wr_out":5.81,"wr_in":10.00,"of":"Medium","cr":"Poor","cq":"Bad","var":2.67,"runs":-4,"alt":596},
     "CIN":{"temp":76,"hum":61,"pres":1015,"carry":-49.00,"wr_out":-1.60,"wr_in":0.0,"of":"Small","cr":"Bad","cq":"Avg","var":0.88,"runs":10,"alt":683},
-    "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":0.50,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
-    "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":7.00,"wr_in":4.00,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
-    "STL":{"temp":79,"hum":58,"pres":1014,"carry":-77.00,"wr_out":2.63,"wr_in":1.28,"of":"Large","cr":"Good","cq":"Avg","var":1.25,"runs":-5,"alt":455},
-    "ARI":{"temp":88,"hum":15,"pres":1010,"carry":68.00,"wr_out":0.19,"wr_in":1.09,"of":"Large","cr":"Great","cq":"Bad","var":0.48,"runs":2,"alt":1082,"dome":True},
-    "COL":{"temp":75,"hum":28,"pres":1012,"carry":3.75,"wr_out":3.00,"wr_in":1.81,"of":"X","cr":"Great","cq":"Avg","var":1.36,"runs":32,"alt":5183},
-    "LAD":{"temp":78,"hum":47,"pres":1012,"carry":-1.49,"wr_out":-0.32,"wr_in":3.19,"of":"Medium","cr":"Avg","cq":"Great","var":0.87,"runs":0,"alt":267},
-    "SD": {"temp":72,"hum":62,"pres":1013,"carry":-1.77,"wr_out":0.68,"wr_in":1.64,"of":"Medium","cr":"Avg","cq":"Avg","var":1.00,"runs":-3,"alt":13},
-    "SF": {"temp":66,"hum":64,"pres":1014,"carry":-2.30,"wr_out":0.08,"wr_in":0.82,"of":"Variable","cr":"Good","cq":"Poor","var":0.81,"runs":-3,"alt":63},
+    "MIL":{"temp":76,"hum":60,"pres":1015,"carry":-1.01,"wr_out":6.18,"wr_in":-0.55,"of":"Medium","cr":"Avg","cq":"Avg","var":0.67,"runs":-10,"alt":0,"dome":True},
+    "PIT":{"temp":74,"hum":58,"pres":1015,"carry":-73.00,"wr_out":4.57,"wr_in":4.00,"of":"Variable","cr":"Good","cq":"Bad","var":1.01,"runs":0,"alt":743},
+    "STL":{"temp":79,"hum":58,"pres":1014,"carry":-77.00,"wr_out":6.08,"wr_in":1.28,"of":"Large","cr":"Good","cq":"Avg","var":1.25,"runs":-5,"alt":455},
+    "ARI":{"temp":88,"hum":15,"pres":1010,"carry":68.00,"wr_out":0,"wr_in":1.09,"of":"Large","cr":"Great","cq":"Bad","var":0.48,"runs":2,"alt":1082,"dome":True},
+    "COL":{"temp":75,"hum":28,"pres":1012,"carry":3.75,"wr_out":0,"wr_in":1.81,"of":"X","cr":"Great","cq":"Avg","var":1.36,"runs":32,"alt":5183},
+    "LAD":{"temp":78,"hum":47,"pres":1012,"carry":-1.49,"wr_out":1.63,"wr_in":3.19,"of":"Medium","cr":"Avg","cq":"Great","var":0.87,"runs":0,"alt":267},
+    "SD": {"temp":72,"hum":62,"pres":1013,"carry":-1.77,"wr_out":0,"wr_in":1.64,"of":"Medium","cr":"Avg","cq":"Avg","var":1.00,"runs":-3,"alt":13},
+    "SF": {"temp":66,"hum":64,"pres":1014,"carry":-2.30,"wr_out":2.06,"wr_in":0.82,"of":"Variable","cr":"Good","cq":"Poor","var":0.81,"runs":-3,"alt":63},
 }
 
 # Per-park DIRECTIONAL out-wind receptivity (2026-07-27, Fable): a few parks
@@ -119,7 +119,8 @@ BP_BASE = {
 # _compass_to_bucket_idx arrow (OutCenter / OutLeft / OutRight); missing arrows
 # fall back to BP_BASE[park]["wr_out"]. Single coefficient is fine everywhere else.
 # PIT: CF slope ~0, RF (To-Right) big -> 2 CF / 12 RF (LF kept at the base 7).
-BP_DIR_WR_OUT = {
+BP_DIR_WR_OUT = {}  # WIND=cos3_az_v1: kernel handles direction; directional overrides retired
+_RETIRED_BP_DIR_WR_OUT = {
     "PIT": {"OutCenter": 2.0, "OutLeft": 7.0, "OutRight": 12.0},
 }
 
