@@ -162,9 +162,9 @@ CAL_PARAMS = {
 # responsiveness magnitudes are BallparkPal park constants and are unaffected.
 GPS_CF = {
     "ARI":0,"ATL":145,"BAL":31,"BOS":45,"CHC":37,"CHW":127,"CIN":122,"CLE":0,
-    "COL":4,"DET":150,"HOU":343,"KC":46,"LAA":44,"LAD":26,"MIA":128,"MIL":129,
-    "MIN":129,"NYM":13,"NYY":75,"PHI":9,"PIT":116,"SD":0,"SF":85,"SEA":49,
-    "STL":62,"TB":359,"TEX":30,"TOR":345,"WAS":28,"ATH":46,
+    "COL":4,"DET":150,"HOU":10,"KC":46,"LAA":44,"LAD":26,"MIA":128,"MIL":129,
+    "MIN":85,"NYM":13,"NYY":75,"PHI":9,"PIT":116,"SD":0,"SF":85,"SEA":49,
+    "STL":62,"TB":359,"TEX":30,"TOR":345,"WAS":28,"ATH":245,
 }
 
 # Per-park temp and wind distribution buckets (BP_DIST)
@@ -405,7 +405,7 @@ def _compass_to_out_component(park, wd_degrees, ws):
     wt = (wd_degrees + 180) % 360
     angle_from_cf = ((wt - cf + 180) % 360) - 180
     # Project speed onto the CF axis: positive if within ±90° of CF direction
-    return ws * math.cos(math.radians(angle_from_cf))
+    return ws * math.cos(math.radians(angle_from_cf))**3  # cos^3 angle kernel (WIND=cos3_az_v1): quartering/cross winds contribute far less to runs than straight-out
 
 
 # ============================================================================
