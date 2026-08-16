@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T14:22:26.903073Z",
+  "generated_at": "2026-08-16T14:23:55.685608Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -102,7 +102,7 @@
         },
         "model_pct": 5.8,
         "pressure_source": "BP",
-        "bp_pct": 7,
+        "bp_pct": 4,
         "bp_blended": false,
         "blend_weight": 0.0,
         "bp_temp_f": 97
