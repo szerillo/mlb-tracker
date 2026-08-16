@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Bartolo · Expectations vs Reality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e13; --panel:#141a22; --panel-hover:#1c242e; --border:#242e3a;
+  --text:#e6edf3; --muted:#9aa4b2; --accent:#5eead4;
+  --over:#74d98e; --under:#ff8e6e; --projected:#e5a449; --line:#7aa2c4;
+  --display:"Space Grotesk","Inter",sans-serif; --body:"Inter",sans-serif; --mono:"JetBrains Mono",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased;font-size:14px}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 16px 60px}
+.top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.top h1{font-family:var(--display);font-size:22px;font-weight:700;margin:0;letter-spacing:-.02em}
+.top .sub{color:var(--muted);font-size:12.5px}
+.back{margin-left:auto;font-size:12.5px;color:var(--muted);border:1px solid var(--border);padding:5px 11px;border-radius:8px}
+.back:hover{background:var(--panel-hover);color:var(--text)}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 10px}
+.subtab{font-family:var(--display);font-weight:600;font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--border);padding:8px 14px;border-radius:9px;cursor:pointer;transition:.12s}
+.subtab:hover{background:var(--panel-hover);color:var(--text)}
+.subtab.active{color:#06231f;background:var(--accent);border-color:var(--accent)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px;padding:11px 13px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.controls label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:5px}
+.controls select,.controls .seg{font-family:var(--body);font-size:12.5px}
+select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 8px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{background:var(--bg);color:var(--muted);border:0;padding:5px 11px;cursor:pointer;font-size:12px;font-weight:600}
+.seg button.active{background:var(--accent);color:#06231f}
+.grp{display:flex;align-items:center;gap:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+.card .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.card .v{font-family:var(--display);font-size:24px;font-weight:700;margin-top:3px;letter-spacing:-.02em}
+.card .n{font-size:11px;color:var(--muted);margin-top:2px}
+.chartbox{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 10px;margin-bottom:16px}
+.chartbox h3{font-family:var(--display);font-size:15px;font-weight:600;margin:0 0 2px}
+.chartbox .cap{color:var(--muted);font-size:12px;margin:0 0 12px;line-height:1.45}
+.chartwrap{position:relative;height:340px}
+.note{background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.22);border-radius:10px;padding:11px 13px;color:#bfeee6;font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.note b{color:var(--accent)}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:var(--muted);text-align:center;gap:8px;border:1px dashed var(--border);border-radius:12px}
+.placeholder .big{font-size:15px;color:var(--text);font-weight:600}
+.hidden{display:none}
+.pill{display:inline-block;font-size:10.5px;font-family:var(--mono);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:2px 9px;margin-left:6px}
+.foot{color:var(--muted);font-size:11.5px;margin-top:22px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Expectations vs Reality</h1>
+    <span class="sub">rolling market &amp; batted-ball tracking <span class="pill" id="tag">loading…</span></span>
+    <a class="back" href="/">← Bartolo</a>
+  </div>
+
+  <div class="subtabs" id="subtabs">
+    <div class="subtab active" data-view="market">Market &amp; Environment</div>
+    <div class="subtab" data-view="carry">Carry vs Expectation</div>
+    <div class="subtab" data-view="ev">Exit Velocity</div>
+    <div class="subtab" data-view="hr">HR vs xHR</div>
+  </div>
+
+  <div class="controls">
+    <div class="grp"><label>Scope</label>
+      <select id="scope"><option value="league">League-wide</option><option value="team">By team</option><option value="park">By park</option></select>
+    </div>
+    <div class="grp" id="teamGrp" style="display:none"><label>Team</label><select id="team"></select></div>
+    <div class="grp"><label>Window</label>
+      <div class="seg" id="winSeg">
+        <button data-w="7" class="active">7-day</button><button data-w="14">14-day</button><button data-w="30">30-day</button>
+      </div>
+    </div>
+    <div class="grp"><label>Range</label>
+      <div class="seg" id="rangeSeg">
+        <button data-r="all" class="active">Full season</button><button data-r="60">60d</button><button data-r="30">30d</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-market">
+    <div class="note" id="marketNote">Loading…</div>
+    <div class="cards" id="marketCards"></div>
+    <div class="chartbox">
+      <h3>Market performance — rolling over-rate</h3>
+      <p class="cap">Share of games finishing <b>over</b> the listed total (pushes excluded). This is the honest market-miss signal: 50% = market perfectly centered. Bounces near 50 all season.</p>
+      <div class="chartwrap"><canvas id="cOver"></canvas></div>
+    </div>
+    <div class="chartbox">
+      <h3>Run environment — actual R/G vs listed line</h3>
+      <p class="cap">Rolling mean of <b>actual runs/game</b> against the mean <b>listed total</b>. The gap between them is <i>right-skew</i> (a few blowouts pull the mean above the median-scale line) — it is <b>not</b> a betting edge. Track the trend for offense/COR context, not for over value; use the over-rate chart above for that.</p>
+      <div class="chartwrap"><canvas id="cEnv"></canvas></div>
+    </div>
+  </div>
+
+  <div class="view hidden" id="view-carry">
+    <div class="note">Carry vs expectation = mean(<b>actual fly-ball distance − expected distance</b> from the launch-speed/angle model). Negative = the ball is carrying short (drag / heavy-air / dead-ball). This fills from the daily Statcast pull.</div>
+    <div class="cards" id="carryCards"></div>
+    <div class="chartbox"><h3>Carry vs expectation (drag)</h3><p class="cap">Rolling mean carry residual on fly balls, feet.</p>
+      <div id="carryHost"><div class="placeholder"><div class="big">Statcast metrics populate on the next data refresh</div><div>The batted-ball pull runs server-side (daily). This tab activates once <code>env_tracker.json</code> includes the Statcast block.</div></div></div>
+    </div>
+  </div>
+
+  <div class="view hidden" id="view-ev">
+    <div class="note">Exit velocity on fly balls / pulled fly balls — a proxy for ball liveliness (COR). Rising 90th-pct EV on the same swing quality = livelier ball.</div>
+    <div class="cards" id="evCards"></div>
+    <div class="chartbox"><h3>Exit velocity (COR proxy)</h3><p class="cap">Rolling mean &amp; 90th-pct EV on fly balls, mph.</p>
+      <div id="evHost"><div class="placeholder"><div class="big">Statcast metrics populate on the next data refresh</div><div>Activates once the Statcast block is present.</div></div></div>
+    </div>
+  </div>
+
+  <div class="view hidden" id="view-hr">
+    <div class="note">HR minus expected HR (xHR from launch speed/angle). Cumulative surplus/deficit shows whether balls that "should" leave are leaving.</div>
+    <div class="cards" id="hrCards"></div>
+    <div class="chartbox"><h3>HR vs expected</h3><p class="cap">Cumulative HR − xHR.</p>
+      <div id="hrHost"><div class="placeholder"><div class="big">Statcast metrics populate on the next data refresh</div><div>Activates once the Statcast block is present.</div></div></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const TEAMS=["Angels","Astros","Athletics","Blue Jays","Braves","Brewers","Cardinals","Cubs","Diamondbacks","Dodgers","Giants","Guardians","Mariners","Marlins","Mets","Nationals","Orioles","Padres","Phillies","Pirates","Rangers","Rays","Red Sox","Reds","Rockies","Royals","Tigers","Twins","White Sox","Yankees"];
+const S={view:'market',scope:'league',team:'Cubs',win:7,range:'all'};
+let PANEL=[];
+let STATCAST=null;
+let charts={};
+
+function isoRange(){const a=[];const s=new Date('2026-03-25');const e=new Date();for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))a.push(d.toISOString().slice(0,10));return a;}
+
+async function tryEnvTracker(){
+  try{
+    const r=await fetch('data/env_tracker.json?t='+Date.now());
+    const txt=await r.text();
+    if(txt.length>300000) return null;
+    const j=JSON.parse(txt);
+    if(j&&j.market&&Array.isArray(j.market.rows)){
+      const ci=Object.fromEntries((j.market.cols||["date","home","away","line","total"]).map((c,i)=>[c,i]));
+      PANEL=j.market.rows.map(r=>({d:r[ci.date],h:r[ci.home],a:r[ci.away],L:+r[ci.line],t:+r[ci.total]}));
+    }
+    if(j&&j.statcast&&Array.isArray(j.statcast.days)) STATCAST=j.statcast;
+    return (PANEL.length? j : null);
+  }catch(e){return null;}
+}
+
+async function buildFromArchive(){
+  const dates=isoRange();PANEL=[];
+  for(let i=0;i<dates.length;i+=18){
+    const b=dates.slice(i,i+18);
+    const res=await Promise.all(b.map(async dt=>{try{const x=await fetch('data/odds_archive/'+dt+'.json?t='+Date.now());if(!x.ok)return null;const j=await x.json();return{dt,g:j.games||[]};}catch(e){return null;}}));
+    res.forEach(o=>{if(!o)return;o.g.forEach(g=>{const L=g.consensus&&g.consensus.total&&g.consensus.total.line,a=g.actual_away_runs,h=g.actual_home_runs;if(typeof L==='number'&&L>3&&L<20&&typeof a==='number'&&typeof h==='number')PANEL.push({d:o.dt,h:g.home_team,a:g.away_team,L,t:a+h});});});
+  }
+}
+
+function filtered(){
+  if(S.scope==='league')return PANEL;
+  if(S.scope==='team')return PANEL.filter(g=>g.h===S.team||g.a===S.team);
+  return PANEL.filter(g=>g.h===S.team);
+}
+function median(a){if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function byDay(games){
+  const m={};games.forEach(g=>{(m[g.d]=m[g.d]||[]).push(g);});
+  return Object.keys(m).sort().map(d=>{
+    const gs=m[d];const diffs=gs.map(g=>g.t-g.L);
+    const over=gs.filter(g=>g.t>g.L).length,under=gs.filter(g=>g.t<g.L).length,push=gs.filter(g=>g.t===g.L).length;
+    return{d,n:gs.length,over,under,push,
+      meanLine:gs.reduce((s,g)=>s+g.L,0)/gs.length,
+      meanAct:gs.reduce((s,g)=>s+g.t,0)/gs.length,
+      medAct:median(gs.map(g=>g.t)),
+      medDiff:median(diffs)};
+  });
+}
+function rolling(days,W){
+  const out=[];
+  for(let i=0;i<days.length;i++){
+    let o=0,u=0,pu=0,al=0,aa=0,nn=0,j=i;
+    while(j>=0 && (i-j)<W){const r=days[j];o+=r.over;u+=r.under;pu+=r.push;al+=r.meanLine*r.n;aa+=r.meanAct*r.n;nn+=r.n;j--;}
+    out.push({d:days[i].d,overPct:(o+u)?100*o/(o+u):null,meanLine:nn?al/nn:null,meanAct:nn?aa/nn:null,n:nn});
+  }
+  return out;
+}
+function clampRange(days){
+  if(S.range==='all')return days;
+  const k=+S.range;return days.slice(Math.max(0,days.length-k));
+}
+
+function fmt(x,d=1){return x==null?'—':(+x).toFixed(d);}
+function renderMarket(){
+  const games=filtered();
+  const days=byDay(games);
+  const roll=clampRange(rolling(days,S.win));
+  const over=games.filter(g=>g.t>g.L).length,under=games.filter(g=>g.t<g.L).length,push=games.filter(g=>g.t===g.L).length;
+  const ovp=(over+under)?100*over/(over+under):null;
+  const meanAct=games.reduce((s,g)=>s+g.t,0)/games.length;
+  const meanLine=games.reduce((s,g)=>s+g.L,0)/games.length;
+  const medDiff=median(games.map(g=>g.t-g.L));
+  document.getElementById('marketNote').innerHTML='<b>Read this first.</b> Over-rate is the market-performance metric. The R/G gap below is right-skew, not edge — e.g. July went <b>under</b> 50% overs while the mean R/G still sat ~+0.8 above the line.';
+  document.getElementById('marketCards').innerHTML=[
+    ['Over rate',ovp==null?'—':ovp.toFixed(1)+'%',over+'–'+under+'–'+push+' O/U/P'],
+    ['Median gap',(medDiff>=0?'+':'')+fmt(medDiff,1),'actual − line (skew-robust)'],
+    ['Mean R/G',fmt(meanAct,2),'run environment'],
+    ['Mean line',fmt(meanLine,2),'market total'],
+    ['Games',games.length,S.scope==='league'?'full slate':S.team],
+  ].map(c=>'<div class="card"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div><div class="n">'+c[2]+'</div></div>').join('');
+  drawLine('cOver','over',roll.map(r=>r.d),[{label:S.win+'-day over %',data:roll.map(r=>r.overPct),color:'#5eead4',fill:true}],{y:{suggestedMin:35,suggestedMax:65,ticks:{callback:v=>v+'%'}},ref:50});
+  drawLine('cEnv','env',roll.map(r=>r.d),[{label:'actual R/G',data:roll.map(r=>r.meanAct),color:'#74d98e',fill:false},{label:'listed line',data:roll.map(r=>r.meanLine),color:'#7aa2c4',fill:false,dash:[5,4]}],{y:{suggestedMin:7,suggestedMax:11}});
+}
+function renderStatcast(view){
+  const host={carry:'carryHost',ev:'evHost',hr:'hrHost'}[view];
+  const cards={carry:'carryCards',ev:'evCards',hr:'hrCards'}[view];
+  if(!STATCAST){document.getElementById(cards).innerHTML='';return;}
+  let days=STATCAST.days.slice();
+  if(S.range!=='all')days=days.slice(Math.max(0,days.length-(+S.range)));
+  const el=document.getElementById(host);el.innerHTML='<div class="chartwrap"><canvas id="c'+view+'"></canvas></div>';
+  if(view==='carry'){
+    document.getElementById(cards).innerHTML=summaryCards([['Latest carry resid',fmt(days.at(-1)?.carry_resid,1)+' ft','fly balls'],['Season mean',fmt(avg(days.map(d=>d.carry_resid)),1)+' ft','vs expected']]);
+    drawLine('c'+view,view,days.map(d=>d.date),[{label:'carry residual (ft)',data:days.map(d=>d.carry_resid),color:'#e5a449',fill:true}],{ref:0});
+  }else if(view==='ev'){
+    document.getElementById(cards).innerHTML=summaryCards([['Mean EV',fmt(days.at(-1)?.ev_mean,1)+' mph','fly balls'],['90th pct EV',fmt(days.at(-1)?.ev_p90,1)+' mph','COR proxy']]);
+    drawLine('c'+view,view,days.map(d=>d.date),[{label:'mean EV',data:days.map(d=>d.ev_mean),color:'#74d98e'},{label:'90th pct EV',data:days.map(d=>d.ev_p90),color:'#5eead4',dash:[5,4]}],{});
+  }else{
+    let cum=0;const series=days.map(d=>{cum+=(d.hr-d.xhr);return cum;});
+    document.getElementById(cards).innerHTML=summaryCards([['HR − xHR (cum)',(series.at(-1)>=0?'+':'')+fmt(series.at(-1),0),'season to date'],['Last 30d',(sumLastDiff(days,30)>=0?'+':'')+fmt(sumLastDiff(days,30),0),'HR − xHR']]);
+    drawLine('c'+view,view,days.map(d=>d.date),[{label:'cumulative HR − xHR',data:series,color:'#74d98e',fill:true}],{ref:0});
+  }
+}
+function sumLastDiff(days,k){return days.slice(Math.max(0,days.length-k)).reduce((s,d)=>s+(d.hr-d.xhr),0);}
+function avg(a){a=a.filter(x=>x!=null);return a.length?a.reduce((s,x)=>s+x,0)/a.length:null;}
+function summaryCards(rows){return rows.map(c=>'<div class="card"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div><div class="n">'+c[2]+'</div></div>').join('');}
+
+function drawLine(id,key,labels,datasets,opts){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[key]){charts[key].destroy();delete charts[key];}
+  const ds=datasets.map(d=>({label:d.label,data:d.data,borderColor:d.color,backgroundColor:d.fill?hexA(d.color,.12):'transparent',fill:!!d.fill,tension:.25,borderWidth:2,pointRadius:0,borderDash:d.dash||[],spanGaps:true}));
+  const refPlugin={id:'refline_'+key,afterDraw(c){if(opts.ref==null)return;const sy=c.scales.y;const y=sy.getPixelForValue(opts.ref);const{left,right}=c.chartArea;const g=c.ctx;g.save();g.strokeStyle='rgba(154,164,178,.5)';g.setLineDash([4,4]);g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.stroke();g.restore();}};
+  charts[key]=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:ds},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#9aa4b2',boxWidth:12,font:{size:11}}},
+        tooltip:{backgroundColor:'#141a22',borderColor:'#242e3a',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#9aa4b2'}},
+      scales:{
+        x:{ticks:{color:'#6b7684',maxTicksLimit:10,font:{size:10}},grid:{color:'rgba(36,46,58,.5)'}},
+        y:Object.assign({ticks:{color:'#6b7684',font:{size:10}},grid:{color:'rgba(36,46,58,.5)'}},opts.y||{})
+      }
+    },
+    plugins:[refPlugin]
+  });
+}
+function hexA(hex,a){const m=hex.replace('#','');const r=parseInt(m.slice(0,2),16),g=parseInt(m.slice(2,4),16),b=parseInt(m.slice(4,6),16);return'rgba('+r+','+g+','+b+','+a+')';}
+
+function show(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.getElementById('view-'+S.view).classList.remove('hidden');
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('active',t.dataset.view===S.view));
+  if(S.view==='market')renderMarket();else renderStatcast(S.view);
+}
+
+function wire(){
+  document.getElementById('subtabs').addEventListener('click',e=>{const t=e.target.closest('.subtab');if(!t)return;S.view=t.dataset.view;show();});
+  const tsel=document.getElementById('team');tsel.innerHTML=TEAMS.map(t=>'<option '+(t===S.team?'selected':'')+'>'+t+'</option>').join('');
+  document.getElementById('scope').addEventListener('change',e=>{S.scope=e.target.value;document.getElementById('teamGrp').style.display=(S.scope==='league')?'none':'';show();});
+  tsel.addEventListener('change',e=>{S.team=e.target.value;show();});
+  document.getElementById('winSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.win=+b.dataset.w;[...e.currentTarget.children].forEach(c=>c.classList.toggle('active',c===b));show();});
+  document.getElementById('rangeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.range=b.dataset.r;[...e.currentTarget.children].forEach(c=>c.classList.toggle('active',c===b));show();});
+}
+
+(async function(){
+  wire();
+  const env=await tryEnvTracker();
+  let src='env_tracker.json';
+  if(!PANEL.length){await buildFromArchive();src='odds_archive (live)';}
+  document.getElementById('tag').textContent=(env&&STATCAST)?'statcast+market':'market only';
+  document.getElementById('foot').innerHTML='Source: '+src+' · '+PANEL.length+' games ('+(PANEL[0]?.d||'—')+' → '+(PANEL.at(-1)?.d||'—')+'). Over-rate excludes pushes. Statcast tabs activate once the daily server-side batted-ball pull lands in <code>env_tracker.json</code>.';
+  show();
+})();
+</script>
+</body>
+  </html>
