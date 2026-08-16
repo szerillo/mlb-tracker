@@ -3349,12 +3349,12 @@ function _apxEdgeBarTT(g){
     if(!tt || tt.line==null || mu==null) return '<span class="apx-pill">'+ab+' —</span>';
     const pv=pgPOverTeam(tt.line, mu);
     if(pv==null) return '<span class="apx-pill">'+ab+' —</span>';
-    const ovBE=(tt.over&&tt.over.odds!=null)?_breakeven(tt.over.odds):0.5;
+    if(!(tt.over&&tt.over.odds!=null)||!(tt.under&&tt.under.odds!=null)) return '<span class="apx-pill">'+ab+' thin mkt</span>'; const ovBE=(tt.over&&tt.over.odds!=null)?_breakeven(tt.over.odds):0.5;
     const unBE=(tt.under&&tt.under.odds!=null)?_breakeven(tt.under.odds):0.5;
-    const _dvS=ovBE+unBE, dvO=_dvS>0?ovBE/_dvS:0.5, dvU=_dvS>0?unBE/_dvS:0.5; const eO=0.4*(pv-dvO)*100, eU=0.4*((1-pv)-dvU)*100; /* EDGES=recal_2026-08-16: TT edge = 0.4*(model - devigged close) */
+    const _dvS=ovBE+unBE, dvO=_dvS>0?ovBE/_dvS:0.5, dvU=_dvS>0?unBE/_dvS:0.5; /* TT=mucal_lam45_v1: invert devigged mkt to implied proj, blend 45% toward model, edge vs VIGGED best price */ let _lo=0.05,_hi=30; for(let _it=0;_it<48;_it++){const _m=(_lo+_hi)/2,_p=pgPOverTeam(tt.line,_m); if(_p==null)break; if(_p<dvO)_lo=_m; else _hi=_m;} const _mkA=(_lo+_hi)/2, _usedA=_mkA+0.45*(mu-_mkA), _pc=pgPOverTeam(tt.line,_usedA), _pt=(_pc==null?pv:_pc); const eO=(_pt-ovBE)*100, eU=((1-_pt)-unBE)*100; /* EDGES=recal_2026-08-16: TT edge = 0.4*(model - devigged close) */
     const over=eO>=eU; const e=over?eO:eU;
     const lean=(over?"o":"u")+tt.line; var _od=over?((tt.over&&tt.over.odds!=null)?tt.over.odds:null):((tt.under&&tt.under.odds!=null)?tt.under.odds:null); var _os=_od!=null?(_od>0?" +"+_od:" "+_od):"";
-    const cls=e>0?(e>=3?" apx-edge-strong":" apx-edge-mild"):"";
+    const cls=e>=2?(e>=4?" apx-edge-strong":" apx-edge-mild"):"";
     return '<span class="apx-pill'+cls+'"><span class="tt-abbr">'+ab+' </span>'+lean+'<span class="tt-odds">'+_os+'</span> '+(e>=0?"+":"")+e.toFixed(1)+'%</span>';
   }
   return '<div class="apx-edgebar">'+pill("away", teamAbbr(g.teams.away.team.name), sp.away_runs)+pill("home", teamAbbr(g.teams.home.team.name), sp.home_runs)+'</div>';
