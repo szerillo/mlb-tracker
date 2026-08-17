@@ -11189,5 +11189,5 @@ body.force-mobile .sp-ls { font-size: 0.66rem; }
 }
 body.force-mobile .m-sp-grid, body.force-mobile .m-lineup-grid, body.force-mobile .m-split, body.force-mobile .m-env-row { grid-template-columns: minmax(0,1fr) !important; }
 </style>
-</body>
+<script>/* Alts dropdown persistence: keep open Alts open across scoreboard re-renders */(function(){var OPEN=new Set(),t=null;document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.pm-alts-btn');if(!b)return;var c=b.closest('[data-pk]'),pk=c&&c.getAttribute('data-pk');if(!pk)return;setTimeout(function(){var w=b.closest('.pm-alts-wrap'),p=w&&w.querySelector('.pm-alts-panel');if(p&&p.classList.contains('open'))OPEN.add(pk);else OPEN.delete(pk);},0);},true);function reapply(){OPEN.forEach(function(pk){var c=document.querySelector('[data-pk="'+pk+'"]');if(!c)return;var p=c.querySelector('.pm-alts-panel'),b=c.querySelector('.pm-alts-btn');if(p&&!p.classList.contains('open')){p.classList.add('open');if(b)b.classList.add('on');}});}new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){if(ms[i].addedNodes&&ms[i].addedNodes.length){clearTimeout(t);t=setTimeout(reapply,180);break;}}}).observe(document.body,{childList:true,subtree:true});})();</script></body>
 </html>
