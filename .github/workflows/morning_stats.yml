@@ -101,6 +101,14 @@ jobs:
         run: python scripts/refresh_hitter_splits.py
         continue-on-error: true
 
+      # ---- STAFF_OFF_v2 offense projection (Savant true xwOBA -> blend -> staff_offense.json) ----
+      - name: Refresh Savant true xwOBA (est_woba)
+        run: python scripts/refresh_savant_xwoba.py
+        continue-on-error: true
+      - name: Compute STAFF_OFF_v2 offense projections
+        run: python scripts/compute_staff_offense.py
+        continue-on-error: true
+
       # ---- Timing fingerprint (the bake-off logger) ----
       - name: Log stats-timing fingerprint
         run: python scripts/log_stats_timing.py
