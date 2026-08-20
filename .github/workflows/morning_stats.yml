@@ -128,6 +128,6 @@ jobs:
               if git push; then break; fi
               echo "push attempt $attempt rejected; rebasing onto origin/main"
               git fetch origin main
-              git rebase --autostash origin/main || { git rebase --abort; exit 1; }
+              git rebase -X theirs --autostash origin/main || { git rebase --abort; exit 1; }
             done
           fi
