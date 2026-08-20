@@ -74,6 +74,23 @@ def main():
     season = datetime.date.today().year
     pitchers = payload.get("pitchers", {})
 
+    # wFIP fix: load browser-fetched ROS-DC feed (data/fip_proj_rosdc.json) as a
+    # fallback for fip_proj. FanGraphs Cloudflare-blocks GH runners so the live API
+    # fetch below returns 0 rows; the feed (refreshed daily from a browser) carries the
+    # correct 4-system ROS-DC mean. Keyed by norm_name to match the pitcher dict.
+    feed_fip = {}
+    try:
+        import os
+        _fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "fip_proj_rosdc.json")
+        with open(_fp) as _ff:
+            _feed = json.load(_ff)
+        for _nm, _v in (_feed.get("fip_proj") or {}).items():
+            if isinstance(_v, (int, float)):
+                feed_fip[norm_name(_nm)] = float(_v)
+        print(f"[refresh_projections] loaded {len(feed_fip)} fip_proj from ROS-DC feed", file=sys.stderr)
+    except Exception as _e:
+        print(f"[refresh_projections] ROS-DC feed unavailable: {_e}", file=sys.stderr)
+
     # CRITICAL: clear stale full-season projection values BEFORE writing fresh
     # ROS values. Otherwise pitchers who got dropped from a ROS source (e.g.
     # rzips has 620 rows vs zips' ~700) keep their old full-season number,
@@ -108,7 +125,7 @@ def main():
                 pitchers[k] = pitchers.get(k, {})
                 pitchers[k][field] = round(float(fip), 2)
 
-    if sum(enriched_count.values()) == 0:
+    if sum(enriched_count.values()) == 0 and not feed_fip:
         print("[refresh_projections] all Fangraphs sources returned 0 rows; preserving prior pitcher_stats.json", file=sys.stderr)
         json.dump(_orig_payload, sys.stdout, indent=2)
         return
@@ -129,6 +146,9 @@ def main():
         if vals:
             row["fip_proj"] = round(sum(vals) / len(vals), 2)
             row["fip_proj_n_sources"] = len(vals)
+        elif feed_fip.get(norm_name(k)) is not None:
+            row["fip_proj"] = round(feed_fip[norm_name(k)], 2)
+            row["fip_proj_n_sources"] = -1  # -1 = from browser-fetched ROS-DC feed
         elif "fip_proj" in row:
             # No sources available - clear any stuck old value rather than
             # leaving an unverifiable number sitting on the record.
