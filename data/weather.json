@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T23:12:09.117385Z",
+  "generated_at": "2026-08-21T23:35:59.423500Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -434,26 +434,26 @@
       "retractable": true,
       "roof_state": "unknown",
       "open_weather": {
-        "temp_f": 103,
-        "humidity_pct": 26,
+        "temp_f": 97,
+        "humidity_pct": 39,
         "wind_speed_mph": 10,
         "wind_dir": "S",
-        "precip_pct": 13,
-        "short_forecast": "Slight Chance Showers And Thunderstorms",
+        "precip_pct": 7,
+        "short_forecast": "Mostly Clear",
         "start_time": "2026-08-21T19:00:00-05:00",
-        "game_window_temp_f": 98.8,
-        "game_window_humidity_pct": 30.4,
-        "first_pitch_temp_f": 103
+        "game_window_temp_f": 95.3,
+        "game_window_humidity_pct": 38.4,
+        "first_pitch_temp_f": 97
       },
       "open_v8": {
-        "run_adj_pct": 4.0,
+        "run_adj_pct": 4.1,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 17.8,
-          "t_adj_pct": 4.9,
+          "temp_delta": 14.3,
+          "t_adj_pct": 4.6,
           "w_adj_pct": 1.1,
-          "dp_adj_pct": 0.9,
+          "dp_adj_pct": 1.4,
           "p_adj_pct": -0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -463,7 +463,7 @@
             "spd_rarity": 0
           }
         },
-        "model_pct": 4.0,
+        "model_pct": 4.1,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
