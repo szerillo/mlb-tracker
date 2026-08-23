@@ -1,6 +1,14 @@
 {
-  "date": "2026-07-11",
-  "no_bp_blend": true,
-  "reason": "BallparkPal materially off this slate; publish pure model on fresh NWS+Open-Meteo forecast.",
-  "games": {}
+  "date": "2026-08-23",
+  "reason": "Game 823745 (ATL @ MIL) is the MLB Little League Classic at Journey Bank Ballpark, Williamsport PA — not American Family Field. The weather pipeline keys the forecast off the home team (Milwaukee), so it was pulling Milwaukee conditions and MIL's dome/park geometry. Pin the real Williamsport game-window forecast; no BP blend. Auto-expires after 2026-08-23.",
+  "games": {
+    "823745": {
+      "t": 67,
+      "hum": 67,
+      "ws": 4,
+      "wd_compass": "SSW",
+      "precip": 2,
+      "no_bp_blend": true
+    }
+  }
 }
