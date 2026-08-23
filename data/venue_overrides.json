@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-08-23",
+  "_comment": "Neutral-site / special-venue park-factor + display overrides. Matched by case-insensitive regex against the game venue name (game.venue.name). park_factor is the Savant-style index where 100 = neutral; chip pct shown = park_factor - 100. Read by index.html venueOverride(). Add a new object here for any future neutral-site game (London, Tokyo, Speedway Classic, etc.) — no code change needed.",
+  "overrides": [
+    {
+      "match": "field of dreams|dyersville",
+      "venue": "Field of Dreams",
+      "park_factor": 100, "woba": 100, "bacon": 100, "hr": 100, "bb": 100, "so": 100,
+      "_neutral": true
+    },
+    {
+      "match": "journey bank|williamsport",
+      "venue": "Journey Bank Ballpark",
+      "park_factor": 95, "woba": 98, "bacon": 98, "hr": 96, "bb": 100, "so": 100,
+      "_neutral": false
+    }
+  ]
+}
