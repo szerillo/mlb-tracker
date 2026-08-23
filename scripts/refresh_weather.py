@@ -751,6 +751,9 @@ def main():
                 for _k in ("t", "hum", "ws", "wd_compass", "precip", "pres"):
                     if _ov.get(_k) is not None:
                         wx_in[_k] = _ov[_k]
+                # accept a compass-string wind dir in overrides; v8 wants numeric degrees
+                if isinstance(wx_in.get("wd_compass"), str):
+                    wx_in["wd_compass"] = _compass_str_to_deg(wx_in["wd_compass"])
             # An open/likely-open retractable computes as a true outdoor park.
             v8 = compute_v8(park_code, wx_in, treat_as_open=(home in RETRACTABLE))
             # V9 step 2 — weight the published number toward BP's weather-only runs
