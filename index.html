@@ -2720,6 +2720,9 @@ let ASG = null;          // All-Star Game rosters (data/asg.json)
 let ODDS = null;
 let PITCHER_STATS = null;
 let PARK_FACTORS = null;
+let VENUE_OVERRIDES = null;
+fetch('data/venue_overrides.json').then(r=>r.json()).then(d=>{VENUE_OVERRIDES=d;}).catch(()=>{});
+function venueOverride(name){ if(!VENUE_OVERRIDES||!name) return null; for(const o of (VENUE_OVERRIDES.overrides||[])){ try{ if(new RegExp(o.match,'i').test(name)) return o; }catch(e){} } return null; }
 let BP_WEATHER = null;
 let PITCHER_SPLITS = null;
 let PITCHER_ARSENAL = null;
@@ -3512,7 +3515,7 @@ function apxCardHTML(g, opts){
   // the "home team" is the NL All-Stars, which maps to no stadium, so the PF chip
   // read "—". hostParkAbbr() resolves it to the actual venue (CBP -> PHI).
   const _pfAb = (typeof hostParkAbbr==='function') ? hostParkAbbr(g) : hAb;
-  let pfPct=null; try{ const pf=parkFactorFor(_pfAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){} if(/field of dreams|dyersville/i.test((g.venue&&g.venue.name)||"")) pfPct = 0;
+  let pfPct=null; try{ const pf=parkFactorFor(_pfAb); pfPct=(typeof parkFactorRunsPct==='function')?parkFactorRunsPct(pf):null; }catch(e){} { const _vo = venueOverride((g.venue&&g.venue.name)||""); if(_vo) pfPct = _vo.park_factor - 100; }
   let wxChip=''; try{ const wx=blendedWxPct(g); if(wx&&wx.isDome) wxChip='<span class="sb-pct-chip"><span class="pct-label">wX</span>Dome</span>'; else wxChip=(typeof pctChip==='function')?pctChip(wx&&wx.value!=null?wx.value:null,'wX','Blended weather runs adj'):''; }catch(e){}
   let pfChip=''; try{ pfChip=(typeof pctChip==='function')?pctChip((pfPct==null||isNaN(pfPct))?null:pfPct,'PF','Park runs factor'):''; }catch(e){}
   const hp=umpByType(g._officials,"Home Plate");
@@ -6717,7 +6720,7 @@ function renderEnvTab() {
     const wx = weatherForGame(g.gamePk);
 
     // --- Park column ---
-    const pf = (/field of dreams|dyersville/i.test(venue||"") ? {venue:"Field of Dreams",woba:100,bacon:100,hr:100,bb:100,so:100,park_factor:100,_neutral:true} : parkFactorFor(homeAbbr));
+    const pf = (venueOverride(venue||"") || parkFactorFor(homeAbbr));
     const pfStat = (label, v) => {
       if (v == null) return "";
       const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
@@ -7036,8 +7039,27 @@ function spWindowValue(w, field) {
   for (const s of w) { if (s[field] != null && s.pitches) { num += s[field] * s.pitches; den += s.pitches; } }
   return den ? +(num / den).toFixed(field === 'velo' ? 1 : 0) : null;
 }
+const SP_STAB = {
+  xfip:{winBF:200,K:200,prior:4.08,minBF:45,dp:2},
+  csw:{winBF:60,K:60,prior:0.269,minBF:25,dp:3},
+  ball_pct:{winBF:120,K:120,prior:0.358,minBF:30,dp:3}
+};
 function rollingSeries(starts, field, win = 3) {
-  return starts.map((_, i) => spWindowValue(starts.slice(Math.max(0, i - win + 1), i + 1), field));
+  const cfg = SP_STAB[field];
+  if (!cfg) { return starts.map((_, i) => spWindowValue(starts.slice(Math.max(0, i - win + 1), i + 1), field)); }
+  const out = []; let cum = 0;
+  for (let i = 0; i < starts.length; i++) {
+    cum += (starts[i].tbf || 0);
+    let t = 0, j = i, w = [];
+    while (j >= 0 && t < cfg.winBF) { w.unshift(starts[j]); t += (starts[j].tbf || 0); j--; }
+    const obs = spWindowValue(w, field);
+    if (obs == null) { out.push(null); continue; }
+    if (t <= 0) { out.push(+obs.toFixed(cfg.dp)); continue; }
+    if (cum < cfg.minBF) { out.push(null); continue; }
+    const v = (t * obs + cfg.K * cfg.prior) / (t + cfg.K);
+    out.push(+v.toFixed(cfg.dp));
+  }
+  return out;
 }
 
 function toggleSPChart(id) {
@@ -7649,7 +7671,7 @@ async function openModal(game) {
       </div>
       <div class="m-park-box">
         ${(() => {
-          const pf = (/field of dreams|dyersville/i.test((game.venue&&game.venue.name)||"") ? {venue:"Field of Dreams",woba:100,bacon:100,hr:100,bb:100,so:100,park_factor:100,_neutral:true} : parkFactorFor(parkAbbr));
+          const pf = (venueOverride((game.venue&&game.venue.name)||"") || parkFactorFor(parkAbbr));
           if (!pf) return `<div class="coming-soon">No park factor</div>`;
           const pfStat = (label, v) => {
             const cls = v >= 107 ? "elite" : v >= 103 ? "good" : v <= 93 ? "worst" : v <= 97 ? "bad" : "";
