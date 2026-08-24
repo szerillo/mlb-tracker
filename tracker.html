@@ -117,9 +117,9 @@ select{background:var(--bg);color:var(--text);border:1px solid var(--border);bor
   </div>
 
   <div class="view hidden" id="view-hr">
-    <div class="note">HR minus expected HR (xHR from launch speed/angle). Cumulative surplus/deficit shows whether balls that "should" leave are leaving.</div>
+    <div class="note">HR minus expected HR (xHR from launch speed/angle). Rolling surplus/deficit shows whether balls that "should" leave are leaving right now.</div>
     <div class="cards" id="hrCards"></div>
-    <div class="chartbox"><h3>HR vs expected</h3><p class="cap">Cumulative HR − xHR.</p>
+    <div class="chartbox"><h3>HR vs expected</h3><p class="cap">Rolling HR − xHR (per selected window) — above 0 = balls carrying, below = suppressed.</p>
       <div id="hrHost"><div class="placeholder"><div class="big">Statcast metrics populate on the next data refresh</div><div>Activates once the Statcast block is present.</div></div></div>
     </div>
   </div>
@@ -175,15 +175,16 @@ function byDay(games){
       meanLine:gs.reduce((s,g)=>s+g.L,0)/gs.length,
       meanAct:gs.reduce((s,g)=>s+g.t,0)/gs.length,
       medAct:median(gs.map(g=>g.t)),
+      acts:gs.map(g=>g.t),
       medDiff:median(diffs)};
   });
 }
 function rolling(days,W){
   const out=[];
   for(let i=0;i<days.length;i++){
-    let o=0,u=0,pu=0,al=0,aa=0,nn=0,j=i;
-    while(j>=0 && (i-j)<W){const r=days[j];o+=r.over;u+=r.under;pu+=r.push;al+=r.meanLine*r.n;aa+=r.meanAct*r.n;nn+=r.n;j--;}
-    out.push({d:days[i].d,overPct:(o+u)?100*o/(o+u):null,meanLine:nn?al/nn:null,meanAct:nn?aa/nn:null,n:nn});
+    let o=0,u=0,al=0,aa=0,nn=0,j=i,acts=[];
+    while(j>=0 && (i-j)<W){const r=days[j];o+=r.over;u+=r.under;al+=r.meanLine*r.n;aa+=r.meanAct*r.n;nn+=r.n;for(const t of r.acts)acts.push(t);j--;}
+    out.push({d:days[i].d,overPct:(o+u)?100*o/(o+u):null,meanLine:nn?al/nn:null,meanAct:nn?aa/nn:null,medAct:median(acts),n:nn});
   }
   return out;
 }
@@ -194,24 +195,28 @@ function clampRange(days){
 
 function fmt(x,d=1){return x==null?'—':(+x).toFixed(d);}
 function renderMarket(){
-  const games=filtered();
-  const days=byDay(games);
-  const roll=clampRange(rolling(days,S.win));
+  const scopeGames=filtered();
+  const allDays=byDay(scopeGames);
+  const days=clampRange(allDays);
+  const dset=new Set(days.map(d=>d.d));
+  const games=scopeGames.filter(g=>dset.has(g.d));
+  const roll=rolling(days,S.win);
   const over=games.filter(g=>g.t>g.L).length,under=games.filter(g=>g.t<g.L).length,push=games.filter(g=>g.t===g.L).length;
   const ovp=(over+under)?100*over/(over+under):null;
-  const meanAct=games.reduce((s,g)=>s+g.t,0)/games.length;
-  const meanLine=games.reduce((s,g)=>s+g.L,0)/games.length;
+  const meanAct=games.length?games.reduce((s,g)=>s+g.t,0)/games.length:null;
+  const medAct=median(games.map(g=>g.t));
+  const meanLine=games.length?games.reduce((s,g)=>s+g.L,0)/games.length:null;
   const medDiff=median(games.map(g=>g.t-g.L));
-  document.getElementById('marketNote').innerHTML='<b>Read this first.</b> Over-rate is the market-performance metric. The R/G gap below is right-skew, not edge — e.g. July went <b>under</b> 50% overs while the mean R/G still sat ~+0.8 above the line.';
+  document.getElementById('marketNote').innerHTML='<b>Over-rate</b> (~50% = market fair) is the calibration metric. <b>Median R/G tracks the line</b>; the <b>mean</b> sits above it only because run totals are right-skewed (blowouts) — expected, not a betting edge. All figures reflect the selected range &amp; team.';
   document.getElementById('marketCards').innerHTML=[
     ['Over rate',ovp==null?'—':ovp.toFixed(1)+'%',over+'–'+under+'–'+push+' O/U/P'],
-    ['Median gap',(medDiff>=0?'+':'')+fmt(medDiff,1),'actual − line (skew-robust)'],
-    ['Mean R/G',fmt(meanAct,2),'run environment'],
-    ['Mean line',fmt(meanLine,2),'market total'],
+    ['Median R/G',fmt(medAct,2),'vs '+fmt(meanLine,2)+' line'],
+    ['Median gap',(medDiff>=0?'+':'')+fmt(medDiff,1),'≈0 = calibrated'],
+    ['Mean R/G',fmt(meanAct,2),'right-skew (blowouts)'],
     ['Games',games.length,S.scope==='league'?'full slate':S.team],
   ].map(c=>'<div class="card"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div><div class="n">'+c[2]+'</div></div>').join('');
   drawLine('cOver','over',roll.map(r=>r.d),[{label:S.win+'-day over %',data:roll.map(r=>r.overPct),color:'#5eead4',fill:true}],{y:{suggestedMin:35,suggestedMax:65,ticks:{callback:v=>v+'%'}},ref:50});
-  drawLine('cEnv','env',roll.map(r=>r.d),[{label:'actual R/G',data:roll.map(r=>r.meanAct),color:'#74d98e',fill:false},{label:'listed line',data:roll.map(r=>r.meanLine),color:'#7aa2c4',fill:false,dash:[5,4]}],{y:{suggestedMin:7,suggestedMax:11}});
+  drawLine('cEnv','env',roll.map(r=>r.d),[{label:'median R/G',data:roll.map(r=>r.medAct),color:'#74d98e',fill:false},{label:'listed line',data:roll.map(r=>r.meanLine),color:'#7aa2c4',fill:false,dash:[5,4]},{label:'mean R/G (skew)',data:roll.map(r=>r.meanAct),color:'#e5a449',fill:false,dash:[2,3]}],{y:{suggestedMin:7,suggestedMax:11}});
 }
 function renderStatcast(view){
   const host={carry:'carryHost',ev:'evHost',hr:'hrHost'}[view];
@@ -227,9 +232,9 @@ function renderStatcast(view){
     document.getElementById(cards).innerHTML=summaryCards([['Mean EV',fmt(days.at(-1)?.ev_mean,1)+' mph','fly balls'],['90th pct EV',fmt(days.at(-1)?.ev_p90,1)+' mph','COR proxy']]);
     drawLine('c'+view,view,days.map(d=>d.date),[{label:'mean EV',data:days.map(d=>d.ev_mean),color:'#74d98e'},{label:'90th pct EV',data:days.map(d=>d.ev_p90),color:'#5eead4',dash:[5,4]}],{});
   }else{
-    let cum=0;const series=days.map(d=>{cum+=(d.hr-d.xhr);return cum;});
-    document.getElementById(cards).innerHTML=summaryCards([['HR − xHR (cum)',(series.at(-1)>=0?'+':'')+fmt(series.at(-1),0),'season to date'],['Last 30d',(sumLastDiff(days,30)>=0?'+':'')+fmt(sumLastDiff(days,30),0),'HR − xHR']]);
-    drawLine('c'+view,view,days.map(d=>d.date),[{label:'cumulative HR − xHR',data:series,color:'#74d98e',fill:true}],{ref:0});
+    const W=S.win;const series=days.map((_,i)=>{let sm=0,j=i;while(j>=0&&(i-j)<W){sm+=(days[j].hr-days[j].xhr);j--;}return sm;});
+    document.getElementById(cards).innerHTML=summaryCards([['HR − xHR ('+W+'d)',(series.at(-1)>=0?'+':'')+fmt(series.at(-1),0),'rolling window'],['Last 30d',(sumLastDiff(days,30)>=0?'+':'')+fmt(sumLastDiff(days,30),0),'HR − xHR']]);
+    drawLine('c'+view,view,days.map(d=>d.date),[{label:W+'-day HR − xHR',data:series,color:'#74d98e',fill:true}],{ref:0});
   }
 }
 function sumLastDiff(days,k){return days.slice(Math.max(0,days.length-k)).reduce((s,d)=>s+(d.hr-d.xhr),0);}
