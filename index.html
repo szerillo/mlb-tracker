@@ -6994,11 +6994,14 @@ function bigChart(vals, opts={}) {
   if (pts.length < 2) return `<div class="sp-nochart">not enough data yet</div>`;
   const xs = vals.length - 1;
   let min = Math.min(...pts.map(p => p.v)), max = Math.max(...pts.map(p => p.v));
+  const _bl = (opts.baseline != null && isFinite(opts.baseline)) ? opts.baseline : null;
+  if (_bl != null) { min = Math.min(min, _bl); max = Math.max(max, _bl); }
   if (min === max) { min -= 1; max += 1; }
   const X = i => padL + (xs ? (i / xs) * (w - padL - padR) : 0);
   const Y = v => h - padB - ((v - min) / (max - min)) * (h - padT - padB);
   const d = pts.map((p, k) => `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
   const dots = pts.map(p => `<circle cx="${X(p.i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="1.8" fill="var(--accent)"/>`).join('');
+  const baseLine = _bl == null ? '' : ('<line x1="' + padL + '" y1="' + Y(_bl).toFixed(1) + '" x2="' + (w - padR) + '" y2="' + Y(_bl).toFixed(1) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,3" opacity="0.55"/><text x="' + (w - padR).toFixed(1) + '" y="' + (Y(_bl) - 2).toFixed(1) + '" class="sp-axis" text-anchor="end" opacity="0.7">' + (opts.baseLabel || 'lg') + '</text>');
   const lab = v => Math.abs(v) < 10 ? v.toFixed(2) : Math.round(v).toString();
   const first = pts[0], last = pts[pts.length - 1];
   const maxP = pts.reduce((a, b) => b.v > a.v ? b : a);
@@ -7008,6 +7011,7 @@ function bigChart(vals, opts={}) {
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="sp-bigsvg">
     <text x="2" y="${(Y(max) + 3).toFixed(1)}" class="sp-axis">${lab(max)}</text>
     <text x="2" y="${Y(min).toFixed(1)}" class="sp-axis">${lab(min)}</text>
+    ${baseLine}
     <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>${dots}
     ${valLab(maxP, -4)}${valLab(minP, 9)}${last !== maxP && last !== minP ? valLab(last, -4) : ''}
     <text x="${X(first.i).toFixed(1)}" y="${h - 5}" class="sp-axis" text-anchor="start">${dShort(dates[first.i])}</text>
@@ -7115,20 +7119,22 @@ function renderSPTrendsHTML(gl) {
   // Paired rows (2-col grid): K-BB% + xFIP (best predictors), then CSW% + Ball%,
   // then Velo + FB Spin. Each pair sits side-by-side on its own line.
   const pctFmt = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+  const LG_BASE = { kbb: 13.8, xfip: 4.08, csw: 0.269, ball: 0.358 };
+  const _avgN = a => { const _v = a.filter(x => x != null && isFinite(x)); return _v.length ? _v.reduce((q, x) => q + x, 0) / _v.length : null; };
   const metrics = [
-    { key: 'kbb',  label: 'K-BB%',  series: _kbbS, l5: _kbbL5, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling' },
-    { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling' },
+    { key: 'kbb',  label: 'K-BB%',  series: _kbbS, l5: _kbbL5, fmt: v => v != null ? v.toFixed(1) + '%' : '—', mode: 'rolling', baseline: LG_BASE.kbb, baseLabel: 'lg' },
+    { key: 'xfip', label: 'xFIP',   series: rollingSeries(starts, 'xfip'),  l5: l5.xfip,  fmt: v => v != null ? v.toFixed(2) : '—', mode: 'rolling', baseline: LG_BASE.xfip, baseLabel: 'lg' },
   ];
   if (starts.some(s => s.csw != null)) {
-    metrics.push({ key: 'csw', label: 'CSW%', series: rollingSeries(starts, 'csw'), l5: l5.csw, fmt: pctFmt, mode: 'rolling' });
+    metrics.push({ key: 'csw', label: 'CSW%', series: rollingSeries(starts, 'csw'), l5: l5.csw, fmt: pctFmt, mode: 'rolling', baseline: LG_BASE.csw, baseLabel: 'lg' });
   }
   if (starts.some(s => s.ball_pct != null)) {
-    metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling' });
+    metrics.push({ key: 'ball', label: 'Ball%', series: rollingSeries(starts, 'ball_pct'), l5: l5.ball_pct, fmt: pctFmt, mode: 'rolling', baseline: LG_BASE.ball, baseLabel: 'lg' });
   }
-  metrics.push({ key: 'velo', label: 'Velo', series: starts.map(s => s.velo), l5: l5.velo, fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start' });
+  metrics.push({ key: 'velo', label: 'Velo', series: starts.map(s => s.velo), l5: l5.velo, fmt: v => v != null ? v.toFixed(1) : '—', mode: 'by start', baseline: _avgN(starts.map(s => s.velo)), baseLabel: 'avg' });
   // Fastball spin (Statcast release_spin_rate, rpm) — pairs next to Velo.
   if (starts.some(s => s.fb_spin != null)) {
-    metrics.push({ key: 'spin', label: 'FB Spin', series: rollingSeries(starts, 'fb_spin'), l5: l5.fb_spin, fmt: v => v != null ? Math.round(v) + '' : '—', mode: 'rolling' });
+    metrics.push({ key: 'spin', label: 'FB Spin', series: rollingSeries(starts, 'fb_spin'), l5: l5.fb_spin, fmt: v => v != null ? Math.round(v) + '' : '—', mode: 'rolling', baseline: _avgN(starts.map(s => s.fb_spin)), baseLabel: 'avg' });
   }
   const dateSeries = starts.map(s => s.date);
   const sparkCells = metrics.map(m => {
@@ -7146,7 +7152,7 @@ function renderSPTrendsHTML(gl) {
   const bigCharts = metrics.map(m => `
     <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
       <div class="sp-bigchart-hdr">${m.label} — ${m.mode}, full season (${m.series.filter(v => v != null).length} starts)</div>
-      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries })}
+      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries, baseline: m.baseline, baseLabel: m.baseLabel })}
     </div>`).join("");
 
   const sieraTxt = l5.siera != null ? l5.siera.toFixed(2) : '—';
@@ -7263,7 +7269,7 @@ function renderHitterTrendsHTML(gl) {
   const bigCharts = metrics.map(m => `
     <div class="sp-bigchart" id="spchart-${uid}_${m.key}" style="display:none;">
       <div class="sp-bigchart-hdr">${m.label} — trailing ${HIT_PA_WIN} PA rolling, full season (${m.series.filter(v => v != null).length} games)</div>
-      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries })}
+      ${bigChart(m.series, { fmt: m.fmt, dates: dateSeries, baseline: m.baseline, baseLabel: m.baseLabel })}
     </div>`).join("");
   const paToggle = `<span class="hit-pa-toggle">${[25, 50].map(n => `<button class="${HIT_PA_WIN === n ? 'active' : ''}" onclick="hitPaToggle(${n})">${n} PA</button>`).join('')}</span>`;
 
