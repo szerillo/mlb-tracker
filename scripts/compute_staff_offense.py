@@ -158,7 +158,8 @@ def blend(prior, ytd, xw):
         else:
             team = pt or yt_
         ptwt = (P["proj_pa"] if P and P["proj_pa"] else pa) or 1.0
-        players[mid] = {"team": team, "prior": round(prior_w, 4), "prior_real": prior_real,
+        nm = (P.get("name") if P else None) or (Y.get("name") if Y else None)
+        players[mid] = {"team": team, "name": nm, "prior": round(prior_w, 4), "prior_real": prior_real,
                         "woba": None if woba is None else round(woba, 4),
                         "xwoba": None if xwoba is None else round(xwoba, 4),
                         "insea": None if insea is None else round(insea, 4),
