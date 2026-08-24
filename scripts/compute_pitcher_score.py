@@ -57,10 +57,9 @@ GAMELOGS  = os.path.join(HERE, "..", "data", "pitcher_gamelogs.json")
 ROLES     = os.path.join(HERE, "..", "pitcher_roles.json")  # SP/RP classification (repo root)
 OUTPUT    = INPUT  # in-place enrichment
 
-# Stabilized-rolling blend for xFIP/SIERA: 0.6·L5 + 0.4·season-to-date.
-# Historical panel (2023-26, purged monthly walk-forward): recency SUBTRACTS
-# skill info — season-weighting beats 0.6/0.4 monotonically across the whole
-# grid and every season. Was 0.6/0.4.
+# Stabilized-rolling blend for xFIP/SIERA — PER-POPULATION (Fable 2026-08-24):
+# SP recency 0.6 (5 starts is real signal); RP recency 0.2 (5 appearances ~10 IP
+# is noise). These globals are RP/default; SP 0.6 is passed at the call site by role.
 ROLL_L5_WEIGHT     = 0.2
 ROLL_SEASON_WEIGHT = 0.8
 
@@ -71,10 +70,10 @@ STUFF_ERA_INTERCEPT = 9.48
 STUFF_ERA_SLOPE     = 0.0542
 
 COMPONENTS = [
-    ("roll_xfip",  13.0),
-    ("roll_siera", 26.0),
-    ("xera",       16.0),
-    ("bot_era",    10.0),
+    ("roll_xfip",  0.0),
+    ("roll_siera", 40.0),
+    ("xera",       21.0),
+    ("bot_era",    4.0),
     ("stuff_era",  35.0),
 ]
 # insea_v2 core: legacy-comparison score, and the shape the four non-stuff
@@ -101,7 +100,9 @@ K_RP = 250.0   # reliever half-weight innings
 # a reliever below his projection is mostly BABIP/HR noise -> anchor to proj.
 K_RP_GOOD = 35.0    # in-season BETTER than fip_proj -> trust it fast
 K_RP_BAD = 400.0    # in-season WORSE  than fip_proj -> lean on projection
-DEFAULT_K = K_RP  # role unknown -> treat like a reliever (more projection)
+DEFAULT_K = K_RP
+K_GOOD = 15.0   # in-season beats projection -> earn weight fast (SP & RP, Fable 2026-08-24)
+K_BAD  = 250.0  # in-season worse/unusable -> lean on projection
 
 # Rolling K-BB% TREND tilt. Sean's ask: use the L5-vs-season K-BB% trend as a
 # guide. K-BB% is the best forward rate signal; a pitcher whose recent K-BB% has
@@ -320,9 +321,10 @@ def main() -> int:
         _stuffp = _f(p.get("stuff_plus"))
         # stuffERA is SP-only (unified_v3 caveat: reliever stuff weighting untested).
         _role_sp = (rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))) == "SP"
+        _rl5, _rse = (0.6, 0.4) if _role_sp else (0.2, 0.8)   # SP recency 0.6, RP 0.2 (Fable 2026-08-24)
         vals = {
-            "roll_xfip":  stabilized_roll("xfip", p, g, r),
-            "roll_siera": stabilized_roll("siera", p, g, r),
+            "roll_xfip":  stabilized_roll("xfip", p, g, r, _rl5, _rse),
+            "roll_siera": stabilized_roll("siera", p, g, r, _rl5, _rse),
             "xera":       _f(p.get("xera")),
             "bot_era":    _f(p.get("bot_era")),
             "stuff_era":  (STUFF_ERA_INTERCEPT - STUFF_ERA_SLOPE * _stuffp)
@@ -334,17 +336,7 @@ def main() -> int:
         core_sum = core_w_avail = 0.0
         # RP addendum (2026-08-11): relievers get an IP-ramped stuff weight and a
         # resmix that drops xERA; starters keep the static unified_v3 mix.
-        if _role_sp:
-            comps = COMPONENTS
-        else:
-            _ip_rp = _f(p.get("ip")) or 0.0
-            _ws = max(0.45, min(0.75, 0.75 - 0.01 * (_ip_rp - 12.0)))
-            comps = [
-                ("stuff_era",  _ws),
-                ("roll_siera", (1.0 - _ws) * 0.55),
-                ("roll_xfip",  (1.0 - _ws) * 0.30),
-                ("bot_era",    (1.0 - _ws) * 0.15),
-            ]
+        comps = COMPONENTS   # SP & RP both 5-way; renorm gives 62/32/6 no-stuff fallback (Fable 2026-08-24)
         components = {}
         for field, weight in comps:
             v = vals[field]
@@ -374,12 +366,10 @@ def main() -> int:
         # --- DYNAMIC in-season vs projection weight, driven by innings + role ---
         ip = _f(p.get("ip")) or 0.0
         role = rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))
-        if role == "SP":
-            K = K_SP
-        elif core is not None and proj is not None and core < proj:
-            K = K_RP_GOOD   # in-season line beats projection -> earn weight fast
+        if core is not None and proj is not None and core < proj:
+            K = K_GOOD   # in-season beats projection -> earn weight fast (SP & RP)
         else:
-            K = K_RP_BAD    # in-season worse (or unusable) -> lean on projection
+            K = K_BAD    # in-season worse (or unusable) -> lean on projection
         if core is None:                      # no in-season metrics -> pure projection
             w_season, w_proj = 0.0, 1.0
             score = proj
@@ -483,13 +473,13 @@ def main() -> int:
         "method": ("rolling-led in-season core (stabilized 0.6*L5 + 0.4*season "
                    "xFIP/SIERA + xERA/botERA), blended vs projection with a "
                    "DYNAMIC weight w_season = IP/(IP+K) that grows with innings "
-                   f"(K_SP={K_SP:g}, K_RP={K_RP_GOOD:g}/{K_RP_BAD:g}); plus a small rolling K-BB% "
+                   f"(K_good={K_GOOD:g}/K_bad={K_BAD:g}, SP+RP asymmetric); plus a small rolling K-BB% "
                    "trend nudge; plus a velo+CSW LEVEL adjustment (historical-panel recalibration)."),
         "core_weights": {f: w for f, w in COMPONENTS},
         "stuff_era": {"intercept": STUFF_ERA_INTERCEPT, "slope_per_stuff_plus": STUFF_ERA_SLOPE,
                       "form": "stuffERA = 9.48 - 0.0542*Stuff+", "insea_share": 0.35,
-                      "scope": "SP only", "fallback": "missing/RP -> drop term; 4 remaining renormalize to insea_v2"},
-        "dynamic_projection": {"K_SP": K_SP, "K_RP_good": K_RP_GOOD, "K_RP_bad": K_RP_BAD,
+                      "scope": "SP+RP", "fallback": "no Stuff+ -> drop term; non-stuff renormalize to 62/32/6"},
+        "dynamic_projection": {"K_good": K_GOOD, "K_bad": K_BAD, "populations": "SP+RP",
                                "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
         "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
                      "min_l5": KBB_TILT_MIN_L5, "scaled_by": "w_season"},
