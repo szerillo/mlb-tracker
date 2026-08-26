@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26T19:07:50.374612Z",
+  "generated_at": "2026-08-26T20:19:00.483855Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260826&periods=event",
   "date": "2026-08-26",
@@ -10,7 +10,7 @@
       "an_event_id": 294317,
       "matchup": "Tampa Bay Rays @ Detroit Tigers",
       "start_time": "2026-08-26T17:10:00.000Z",
-      "status": "Bot 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 105,
@@ -80,7 +80,7 @@
       "an_event_id": 294318,
       "matchup": "Chicago Cubs @ Arizona Diamondbacks",
       "start_time": "2026-08-26T19:40:00.000Z",
-      "status": "scheduled",
+      "status": "Top 3rd",
       "moneyline": {
         "away": {
           "odds": -113,
@@ -142,14 +142,15 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823180,
       "an_event_id": 294319,
       "matchup": "Cincinnati Reds @ San Francisco Giants",
       "start_time": "2026-08-26T19:45:00.000Z",
-      "status": "scheduled",
+      "status": "Mid 2nd",
       "moneyline": {
         "away": {
           "odds": 111,
@@ -211,14 +212,15 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823988,
       "an_event_id": 294320,
       "matchup": "Cleveland Guardians @ Los Angeles Angels",
       "start_time": "2026-08-26T20:07:00.000Z",
-      "status": "scheduled",
+      "status": "Mid 1st",
       "moneyline": {
         "away": {
           "odds": -134,
@@ -280,83 +282,15 @@
           },
           "source": "posted"
         }
-      }
-    },
-    {
-      "game_pk": 823255,
-      "an_event_id": 294322,
-      "matchup": "Pittsburgh Pirates @ San Diego Padres",
-      "start_time": "2026-08-26T20:10:00.000Z",
-      "status": "scheduled",
-      "moneyline": {
-        "away": {
-          "odds": 125,
-          "line": 0,
-          "book": "DraftKings"
-        },
-        "home": {
-          "odds": -132,
-          "line": 0,
-          "book": "FanDuel"
-        }
       },
-      "run_line": {
-        "away": {
-          "odds": -166,
-          "line": 1.5,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": 160,
-          "line": -1.5,
-          "book": "BetRivers"
-        }
-      },
-      "total": {
-        "over": {
-          "odds": 100,
-          "line": 8.5,
-          "book": "bet365"
-        },
-        "under": {
-          "odds": -115,
-          "line": 8.5,
-          "book": "Fanatics"
-        }
-      },
-      "team_total": {
-        "away": {
-          "line": 3.5,
-          "over": {
-            "odds": -125,
-            "book": "BetMGM"
-          },
-          "under": {
-            "odds": 102,
-            "book": "BetRivers"
-          },
-          "source": "posted"
-        },
-        "home": {
-          "line": 4.5,
-          "over": {
-            "odds": 110,
-            "book": "Caesars"
-          },
-          "under": {
-            "odds": -135,
-            "book": "DraftKings"
-          },
-          "source": "posted"
-        }
-      }
+      "odds_locked": true
     },
     {
       "game_pk": 823096,
       "an_event_id": 294321,
       "matchup": "Philadelphia Phillies @ Seattle Mariners",
       "start_time": "2026-08-26T20:10:00.000Z",
-      "status": "scheduled",
+      "status": "Top 1st",
       "moneyline": {
         "away": {
           "odds": -128,
@@ -418,7 +352,78 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
+    },
+    {
+      "game_pk": 823255,
+      "an_event_id": 294322,
+      "matchup": "Pittsburgh Pirates @ San Diego Padres",
+      "start_time": "2026-08-26T20:10:00.000Z",
+      "status": "Bot 1st",
+      "moneyline": {
+        "away": {
+          "odds": 125,
+          "line": 0,
+          "book": "DraftKings"
+        },
+        "home": {
+          "odds": -132,
+          "line": 0,
+          "book": "FanDuel"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": -166,
+          "line": 1.5,
+          "book": "FanDuel"
+        },
+        "home": {
+          "odds": 160,
+          "line": -1.5,
+          "book": "BetRivers"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": 100,
+          "line": 8.5,
+          "book": "bet365"
+        },
+        "under": {
+          "odds": -115,
+          "line": 8.5,
+          "book": "Fanatics"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "over": {
+            "odds": -125,
+            "book": "BetMGM"
+          },
+          "under": {
+            "odds": 102,
+            "book": "BetRivers"
+          },
+          "source": "posted"
+        },
+        "home": {
+          "line": 4.5,
+          "over": {
+            "odds": 110,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -135,
+            "book": "DraftKings"
+          },
+          "source": "posted"
+        }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 823825,
@@ -428,50 +433,50 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -126,
-          "line": 0,
-          "book": "FanDuel"
-        },
-        "home": {
-          "odds": 120,
+          "odds": -124,
           "line": 0,
           "book": "DraftKings"
+        },
+        "home": {
+          "odds": 116,
+          "line": 0,
+          "book": "FanDuel"
         }
       },
       "run_line": {
         "away": {
-          "odds": 130,
+          "odds": 135,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "BetMGM"
         },
         "home": {
           "odds": -145,
           "line": 1.5,
-          "book": "Caesars"
+          "book": "Fanatics"
         }
       },
       "total": {
         "over": {
-          "odds": -112,
+          "odds": -113,
           "line": 7.5,
           "book": "BetRivers"
         },
         "under": {
-          "odds": 100,
+          "odds": -104,
           "line": 7.5,
-          "book": "bet365"
+          "book": "FanDuel"
         }
       },
       "team_total": {
         "away": {
-          "line": 4.5,
+          "line": 3.5,
           "over": {
-            "odds": 112,
-            "book": "BetRivers"
+            "odds": -143,
+            "book": "Caesars"
           },
           "under": {
-            "odds": -140,
-            "book": "DraftKings"
+            "odds": 115,
+            "book": "BetMGM"
           },
           "source": "posted"
         },
@@ -497,12 +502,12 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 116,
+          "odds": 126,
           "line": 0,
-          "book": "DraftKings"
+          "book": "bet365"
         },
         "home": {
-          "odds": -122,
+          "odds": -126,
           "line": 0,
           "book": "FanDuel"
         }
@@ -514,16 +519,16 @@
           "book": "BetRivers"
         },
         "home": {
-          "odds": 160,
+          "odds": 158,
           "line": -1.5,
           "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": 100,
+          "odds": -105,
           "line": 9,
-          "book": "Fanatics"
+          "book": "FanDuel"
         },
         "under": {
           "odds": -105,
@@ -535,24 +540,24 @@
         "away": {
           "line": 4.5,
           "over": {
-            "odds": 110,
-            "book": "DraftKings"
+            "odds": 115,
+            "book": "Caesars"
           },
           "under": {
-            "odds": -132,
-            "book": "BetRivers"
+            "odds": -135,
+            "book": "DraftKings"
           },
           "source": "posted"
         },
         "home": {
           "line": 4.5,
           "over": {
-            "odds": -105,
-            "book": "BetMGM"
+            "odds": -110,
+            "book": "BetRivers"
           },
           "under": {
-            "odds": -109,
-            "book": "BetRivers"
+            "odds": -115,
+            "book": "DraftKings"
           },
           "source": "posted"
         }
@@ -578,14 +583,14 @@
       },
       "run_line": {
         "away": {
-          "odds": -190,
-          "line": 1.5,
-          "book": "Fanatics"
-        },
-        "home": {
-          "odds": 170,
+          "odds": 160,
           "line": -1.5,
           "book": "BetRivers"
+        },
+        "home": {
+          "odds": 165,
+          "line": -1.5,
+          "book": "bet365"
         }
       },
       "total": {
@@ -608,8 +613,8 @@
             "book": "DraftKings"
           },
           "under": {
-            "odds": -133,
-            "book": "Caesars"
+            "odds": -122,
+            "book": "BetRivers"
           },
           "source": "posted"
         },
@@ -617,7 +622,7 @@
           "line": 4.5,
           "over": {
             "odds": 105,
-            "book": "Caesars"
+            "book": "BetRivers"
           },
           "under": {
             "odds": -125,
@@ -637,48 +642,48 @@
         "away": {
           "odds": 140,
           "line": 0,
-          "book": "Caesars"
+          "book": "BetRivers"
         },
         "home": {
-          "odds": -143,
+          "odds": -148,
           "line": 0,
-          "book": "BetRivers"
+          "book": "DraftKings"
         }
       },
       "run_line": {
         "away": {
-          "odds": -160,
+          "odds": -157,
           "line": 1.5,
-          "book": "bet365"
+          "book": "BetRivers"
         },
         "home": {
-          "odds": 145,
+          "odds": 140,
           "line": -1.5,
-          "book": "BetRivers"
+          "book": "Fanatics"
         }
       },
       "total": {
         "over": {
-          "odds": -116,
-          "line": 8.5,
-          "book": "DraftKings"
-        },
-        "under": {
-          "odds": 102,
+          "odds": -112,
           "line": 8.5,
           "book": "BetRivers"
+        },
+        "under": {
+          "odds": -100,
+          "line": 8.5,
+          "book": "FanDuel"
         }
       },
       "team_total": {
         "away": {
           "line": 3.5,
           "over": {
-            "odds": -130,
-            "book": "DraftKings"
+            "odds": -120,
+            "book": "BetRivers"
           },
           "under": {
-            "odds": 107,
-            "book": "BetRivers"
+            "odds": 100,
+            "book": "DraftKings"
           },
           "source": "posted"
         },
@@ -686,7 +691,7 @@
           "line": 4.5,
           "over": {
             "odds": -110,
-            "book": "DraftKings"
+            "book": "BetMGM"
           },
           "under": {
             "odds": -110,
@@ -721,9 +726,9 @@
           "book": "FanDuel"
         },
         "home": {
-          "odds": -127,
+          "odds": -129,
           "line": 1.5,
-          "book": "BetRivers"
+          "book": "DraftKings"
         }
       },
       "total": {
@@ -773,26 +778,26 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -124,
+          "odds": -118,
           "line": 0,
-          "book": "DraftKings"
+          "book": "bet365"
         },
         "home": {
-          "odds": 116,
+          "odds": 112,
           "line": 0,
-          "book": "DraftKings"
+          "book": "FanDuel"
         }
       },
       "run_line": {
         "away": {
-          "odds": 130,
+          "odds": 136,
           "line": -1.5,
           "book": "FanDuel"
         },
         "home": {
-          "odds": -149,
+          "odds": -150,
           "line": 1.5,
-          "book": "DraftKings"
+          "book": "BetRivers"
         }
       },
       "total": {
@@ -811,8 +816,8 @@
         "away": {
           "line": 4.5,
           "over": {
-            "odds": -110,
-            "book": "BetRivers"
+            "odds": -105,
+            "book": "BetMGM"
           },
           "under": {
             "odds": -115,
@@ -827,8 +832,8 @@
             "book": "BetRivers"
           },
           "under": {
-            "odds": 110,
-            "book": "Caesars"
+            "odds": 114,
+            "book": "DraftKings"
           },
           "source": "posted"
         }
@@ -854,7 +859,7 @@
       },
       "run_line": {
         "away": {
-          "odds": 175,
+          "odds": 170,
           "line": -1.5,
           "book": "BetRivers"
         },
@@ -881,11 +886,11 @@
           "line": 3.5,
           "over": {
             "odds": -125,
-            "book": "BetMGM"
+            "book": "Caesars"
           },
           "under": {
-            "odds": 102,
-            "book": "BetRivers"
+            "odds": 105,
+            "book": "BetMGM"
           },
           "source": "posted"
         },
@@ -911,33 +916,33 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -107,
+          "odds": -108,
           "line": 0,
           "book": "DraftKings"
         },
         "home": {
           "odds": 101,
           "line": 0,
-          "book": "Caesars"
+          "book": "DraftKings"
         }
       },
       "run_line": {
         "away": {
-          "odds": 155,
+          "odds": 150,
           "line": -1.5,
           "book": "BetRivers"
         },
         "home": {
-          "odds": 185,
+          "odds": 180,
           "line": -1.5,
           "book": "Caesars"
         }
       },
       "total": {
         "over": {
-          "odds": -102,
+          "odds": 100,
           "line": 8.5,
-          "book": "BetMGM"
+          "book": "BetRivers"
         },
         "under": {
           "odds": -115,
@@ -949,7 +954,7 @@
         "away": {
           "line": 4.5,
           "over": {
-            "odds": 116,
+            "odds": 114,
             "book": "BetRivers"
           },
           "under": {
@@ -965,8 +970,8 @@
             "book": "Caesars"
           },
           "under": {
-            "odds": 112,
-            "book": "BetRivers"
+            "odds": 110,
+            "book": "DraftKings"
           },
           "source": "posted"
         }
@@ -980,9 +985,9 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -132,
+          "odds": -130,
           "line": 0,
-          "book": "bet365"
+          "book": "FanDuel"
         },
         "home": {
           "odds": 126,
@@ -997,9 +1002,9 @@
           "book": "BetMGM"
         },
         "home": {
-          "odds": -130,
+          "odds": -135,
           "line": 1.5,
-          "book": "BetRivers"
+          "book": "BetMGM"
         }
       },
       "total": {
@@ -1009,7 +1014,7 @@
           "book": "BetMGM"
         },
         "under": {
-          "odds": -112,
+          "odds": -114,
           "line": 10.5,
           "book": "BetRivers"
         }
@@ -1019,11 +1024,11 @@
           "line": 5.5,
           "over": {
             "odds": -105,
-            "book": "BetMGM"
+            "book": "BetRivers"
           },
           "under": {
-            "odds": -115,
-            "book": "BetRivers"
+            "odds": -120,
+            "book": "DraftKings"
           },
           "source": "posted"
         },
@@ -1035,7 +1040,7 @@
           },
           "under": {
             "odds": -110,
-            "book": "BetMGM"
+            "book": "DraftKings"
           },
           "source": "posted"
         }
@@ -1049,19 +1054,19 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -100,
+          "odds": 101,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Caesars"
         },
         "home": {
-          "odds": -115,
+          "odds": -111,
           "line": 0,
-          "book": "Fanatics"
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
-          "odds": 158,
+          "odds": 160,
           "line": -1.5,
           "book": "FanDuel"
         },
@@ -1073,30 +1078,40 @@
       },
       "total": {
         "over": {
-          "odds": 100,
-          "line": 9.5,
-          "book": "Fanatics"
+          "odds": -115,
+          "line": 9,
+          "book": "DraftKings"
         },
         "under": {
-          "odds": -115,
-          "line": 9.5,
-          "book": "FanDuel"
+          "odds": -105,
+          "line": 9,
+          "book": "DraftKings"
         }
       },
       "team_total": {
         "away": {
           "line": 4.5,
-          "implied": 4.67,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": -110,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -118,
+            "book": "Caesars"
+          },
+          "source": "posted"
         },
         "home": {
           "line": 4.5,
-          "implied": 4.83,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": 100,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -125,
+            "book": "Caesars"
+          },
+          "source": "posted"
         }
       }
     },
@@ -1128,54 +1143,64 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": 134,
+          "odds": 135,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Caesars"
         },
         "home": {
-          "odds": -155,
+          "odds": -145,
           "line": 0,
-          "book": "Fanatics"
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
-          "odds": -154,
+          "odds": -150,
           "line": 1.5,
-          "book": "FanDuel"
+          "book": "bet365"
         },
         "home": {
-          "odds": 130,
+          "odds": 134,
           "line": -1.5,
-          "book": "Fanatics"
+          "book": "FanDuel"
         }
       },
       "total": {
         "over": {
           "odds": -120,
           "line": 8,
-          "book": "FanDuel"
+          "book": "DraftKings"
         },
         "under": {
-          "odds": -102,
+          "odds": 100,
           "line": 8,
-          "book": "FanDuel"
+          "book": "DraftKings"
         }
       },
       "team_total": {
         "away": {
           "line": 3.5,
-          "implied": 3.67,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": -120,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -110,
+            "book": "Caesars"
+          },
+          "source": "posted"
         },
         "home": {
           "line": 4.5,
-          "implied": 4.33,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": 105,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -133,
+            "book": "Caesars"
+          },
+          "source": "posted"
         }
       }
     },
@@ -1187,54 +1212,64 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -104,
+          "odds": -108,
           "line": 0,
           "book": "FanDuel"
         },
         "home": {
-          "odds": -112,
+          "odds": 101,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
-          "odds": 158,
+          "odds": 150,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "bet365"
         },
         "home": {
-          "odds": -190,
+          "odds": -178,
           "line": 1.5,
-          "book": "Fanatics"
+          "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": -115,
-          "line": 8.5,
-          "book": "Fanatics"
+          "odds": -120,
+          "line": 8,
+          "book": "DraftKings"
         },
         "under": {
-          "odds": -104,
-          "line": 8.5,
-          "book": "FanDuel"
+          "odds": 100,
+          "line": 8,
+          "book": "DraftKings"
         }
       },
       "team_total": {
         "away": {
           "line": 4.5,
-          "implied": 4.21,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": 110,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": -143,
+            "book": "Caesars"
+          },
+          "source": "posted"
         },
         "home": {
-          "line": 4.5,
-          "implied": 4.29,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "line": 3.5,
+          "over": {
+            "odds": -133,
+            "book": "Caesars"
+          },
+          "under": {
+            "odds": 105,
+            "book": "Caesars"
+          },
+          "source": "posted"
         }
       }
     },
@@ -1246,12 +1281,12 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -220,
+          "odds": -210,
           "line": 0,
-          "book": "Fanatics"
+          "book": "Caesars"
         },
         "home": {
-          "odds": 188,
+          "odds": 190,
           "line": 0,
           "book": "FanDuel"
         }
@@ -1260,37 +1295,37 @@
         "away": {
           "odds": -120,
           "line": -1.5,
-          "book": "FanDuel"
+          "book": "bet365"
         },
         "home": {
-          "odds": -100,
+          "odds": 104,
           "line": 1.5,
           "book": "FanDuel"
         }
       },
       "total": {
         "over": {
-          "odds": -100,
-          "line": 7.5,
-          "book": "FanDuel"
+          "odds": -110,
+          "line": 7,
+          "book": "Caesars"
         },
         "under": {
-          "odds": -120,
-          "line": 7.5,
-          "book": "Fanatics"
+          "odds": -100,
+          "line": 7,
+          "book": "FanDuel"
         }
       },
       "team_total": {
         "away": {
           "line": 4.5,
-          "implied": 4.34,
+          "implied": 4.04,
           "over": null,
           "under": null,
           "source": "implied"
         },
         "home": {
-          "line": 3.5,
-          "implied": 3.16,
+          "line": 2.5,
+          "implied": 2.96,
           "over": null,
           "under": null,
           "source": "implied"
@@ -1305,51 +1340,51 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -106,
+          "odds": -102,
           "line": 0,
           "book": "FanDuel"
         },
         "home": {
-          "odds": -110,
+          "odds": 101,
           "line": 0,
-          "book": "FanDuel"
+          "book": "Caesars"
         }
       },
       "run_line": {
         "away": {
-          "odds": 168,
+          "odds": 172,
           "line": -1.5,
           "book": "FanDuel"
         },
         "home": {
-          "odds": -190,
+          "odds": -200,
           "line": 1.5,
           "book": "Fanatics"
         }
       },
       "total": {
         "over": {
-          "odds": 100,
-          "line": 7.5,
-          "book": "Fanatics"
+          "odds": -110,
+          "line": 7,
+          "book": "DraftKings"
         },
         "under": {
-          "odds": -120,
-          "line": 7.5,
+          "odds": -105,
+          "line": 7,
           "book": "FanDuel"
         }
       },
       "team_total": {
         "away": {
           "line": 3.5,
-          "implied": 3.73,
+          "implied": 3.51,
           "over": null,
           "under": null,
           "source": "implied"
         },
         "home": {
           "line": 3.5,
-          "implied": 3.77,
+          "implied": 3.49,
           "over": null,
           "under": null,
           "source": "implied"
