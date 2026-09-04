@@ -1,35 +1,35 @@
 {
-  "generated_at": "2026-09-03T21:33:16Z",
+  "generated_at": "2026-09-04T02:25:10Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-09-02"
+    "2026-09-03"
   ],
   "forecast_input_accuracy": {
-    "n_games": 518,
-    "our_temp_MAE_f": 2.35,
+    "n_games": 523,
+    "our_temp_MAE_f": 2.36,
     "our_wind_MAE_mph": 2.47,
-    "our_winddir_MAE_deg": 34.38,
+    "our_winddir_MAE_deg": 34.36,
     "temp_head_to_head": {
-      "n": 356,
-      "our_temp_MAE_f": 2.19,
-      "bp_temp_MAE_f": 3.95
+      "n": 360,
+      "our_temp_MAE_f": 2.21,
+      "bp_temp_MAE_f": 3.97
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 517,
-    "calibrated_slope_runs_per_pct": 0.0905,
+    "n_played": 521,
+    "calibrated_slope_runs_per_pct": 0.0904,
     "ours": {
-      "slope": 0.1789,
-      "r": 0.161,
-      "n": 517,
-      "realized_x": 1.98
+      "slope": 0.1771,
+      "r": 0.158,
+      "n": 521,
+      "realized_x": 1.96
     },
     "bp": {
-      "slope": 0.0893,
-      "r": 0.12,
-      "n": 429,
-      "realized_x": 0.99
+      "slope": 0.0905,
+      "r": 0.121,
+      "n": 432,
+      "realized_x": 1.0
     }
   },
   "games": [
@@ -10392,6 +10392,106 @@
       "total": 11,
       "our_adj": -2.0,
       "bp_adj": -4.0
+    },
+    {
+      "date": "2026-09-03",
+      "pk": 823337,
+      "venue": "PNC Park",
+      "obs_temp": 80.4,
+      "obs_wind": 10.4,
+      "obs_dir": 196.0,
+      "obs_src": "obs",
+      "our_temp": 89.0,
+      "our_wind": 7.0,
+      "our_dir": 247.5,
+      "bp_temp": 97.0,
+      "our_temp_err": 8.599999999999994,
+      "bp_temp_err": 16.599999999999994,
+      "our_wind_err": 3.4000000000000004,
+      "our_dir_err": 51.5,
+      "total": 7,
+      "our_adj": 4.5,
+      "bp_adj": 5.0
+    },
+    {
+      "date": "2026-09-03",
+      "pk": 824069,
+      "venue": "Kauffman Stadium",
+      "obs_temp": 96.6,
+      "obs_wind": 13.5,
+      "obs_dir": 173.0,
+      "obs_src": "obs",
+      "our_temp": 96.0,
+      "our_wind": 9.0,
+      "our_dir": 180,
+      "bp_temp": 99.0,
+      "our_temp_err": 0.5999999999999943,
+      "bp_temp_err": 2.4000000000000057,
+      "our_wind_err": 4.5,
+      "our_dir_err": 7.0,
+      "total": null,
+      "our_adj": 5.0,
+      "bp_adj": 11.0
+    },
+    {
+      "date": "2026-09-03",
+      "pk": 824388,
+      "venue": "Progressive Field",
+      "obs_temp": 82.3,
+      "obs_wind": 8.0,
+      "obs_dir": 269.0,
+      "obs_src": "obs",
+      "our_temp": 85.0,
+      "our_wind": 8.0,
+      "our_dir": 292.5,
+      "bp_temp": 82.0,
+      "our_temp_err": 2.700000000000003,
+      "bp_temp_err": 0.29999999999999716,
+      "our_wind_err": 0.0,
+      "our_dir_err": 23.5,
+      "total": 9,
+      "our_adj": 4.9,
+      "bp_adj": 12.0
+    },
+    {
+      "date": "2026-09-03",
+      "pk": 824632,
+      "venue": "Wrigley Field",
+      "obs_temp": 84.3,
+      "obs_wind": 9.9,
+      "obs_dir": 106.0,
+      "obs_src": "obs",
+      "our_temp": 80.0,
+      "our_wind": 9.0,
+      "our_dir": 135,
+      "bp_temp": 83.0,
+      "our_temp_err": 4.299999999999997,
+      "bp_temp_err": 1.2999999999999972,
+      "our_wind_err": 0.9000000000000004,
+      "our_dir_err": 29.0,
+      "total": 3,
+      "our_adj": 6.0,
+      "bp_adj": 2.0
+    },
+    {
+      "date": "2026-09-03",
+      "pk": 824796,
+      "venue": "Oriole Park at Camden Yards",
+      "obs_temp": 87.9,
+      "obs_wind": 3.6,
+      "obs_dir": 193.0,
+      "obs_src": "obs",
+      "our_temp": 89.0,
+      "our_wind": 2.0,
+      "our_dir": 247.5,
+      "bp_temp": null,
+      "our_temp_err": 1.0999999999999943,
+      "bp_temp_err": null,
+      "our_wind_err": 1.6,
+      "our_dir_err": 54.5,
+      "total": 11,
+      "our_adj": 3.1,
+      "bp_adj": null
     }
   ]
 }
