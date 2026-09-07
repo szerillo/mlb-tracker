@@ -45,7 +45,17 @@ OUTPUT      = REPO_ROOT / "data" / "staff_offense.json"
 
 K            = 500          # in-season shrinkage constant
 XWOBA_W      = 0.6          # in-season composite: 0.6*xwOBA + 0.4*wOBA
-PRIOR_FLOOR  = 0.310        # Marcel fallback when no ROS projection exists
+PRIOR_FLOOR  = 0.310        # legacy flat stub — superseded by the Marcel prior below
+# Marcel hitter prior (Fable 2026, forward-validated regression target 0.292).
+# Replaces the flat 0.310 floor: real regressed-to-league wOBA per MLBAM id, with a
+# no-history default. Keeps call-up projections honest during roster expansion.
+_MARCEL_PATH = REPO_ROOT / "data" / "marcel_prior_2026.json"
+try:
+    _mj = json.loads(_MARCEL_PATH.read_text())
+    MARCEL_PRIORS  = _mj.get("priors", {}) or {}
+    MARCEL_DEFAULT = _mj.get("no_history_default", 0.292)
+except Exception:
+    MARCEL_PRIORS, MARCEL_DEFAULT = {}, 0.292
 PRIOR_SYS    = ("atc", "batx")
 
 # _fg_* files use a few FanGraphs-style abbreviations
@@ -61,10 +71,13 @@ def _fix(ab):
 
 
 def _prior_fallback(mlbam):
-    """Marcel-from-statsAPI stub. Returns the 0.310 floor today; hook for a
-    real regressed-to-league estimate later. Kept a function so the fallback
-    policy lives in one place."""
-    return PRIOR_FLOOR
+    """Marcel hitter prior (Fable 2026, forward-validated to 0.292). Regressed-to-
+    league wOBA for hitters with no ROS projection, keyed by MLBAM id; falls back to
+    the no-history default (0.292) when the player is absent from the Marcel file."""
+    e = MARCEL_PRIORS.get(str(mlbam))
+    if e and e.get("marcel_woba") is not None:
+        return e["marcel_woba"]
+    return MARCEL_DEFAULT
 
 
 def build_prior(ros):
@@ -207,6 +220,7 @@ def main():
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "method": "STAFF_OFF_v2",
         "K": K, "xwoba_weight": XWOBA_W, "prior_floor": PRIOR_FLOOR,
+        "prior_source": "marcel_2026", "prior_default": MARCEL_DEFAULT, "n_marcel_priors": len(MARCEL_PRIORS),
         "prior_systems": list(PRIOR_SYS),
         "league_avg": lg,
         "teams": dict(sorted(teams.items(), key=lambda kv: -kv[1]["proj_woba"])),
