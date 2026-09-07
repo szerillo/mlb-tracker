@@ -60,7 +60,9 @@ OUTPUT    = INPUT  # in-place enrichment
 # Stabilized-rolling blend for xFIP/SIERA — PER-POPULATION (Fable 2026-08-24):
 # SP recency 0.6 (5 starts is real signal); RP recency 0.2 (5 appearances ~10 IP
 # is noise). These globals are RP/default; SP 0.6 is passed at the call site by role.
-ROLL_L5_WEIGHT     = 0.2
+SP_ROLL_L5_WEIGHT     = 0.6   # B3 per-population: SP recency (Fable 2026-08-24)
+SP_ROLL_SEASON_WEIGHT = 0.4
+ROLL_L5_WEIGHT     = 0.2      # RP recency
 ROLL_SEASON_WEIGHT = 0.8
 
 # IN-SEASON CORE = these four, in their relative proportions (renormalized among
@@ -119,9 +121,9 @@ KBB_TILT_MIN_L5 = 3     # need at least this many recent starts/appearances
 # velocity and CSW level. Each ~0.049 FIP per unit vs the league mean (per mph;
 # per CSW percentage-point). Sign: higher velo / higher CSW -> lower FIP. Applied
 # as a post-core level correction, scaled by the in-season weight and capped.
-VELOCSW_SLOPE = 0.11
-CSW_SLOPE     = 0.03
-VELOCSW_CAP   = 0.40    # max |combined adj| in FIP units
+VELOCSW_SLOPE = 0.055   # Fable 2026-09-07: halved (LOAO min at 0.5x; velo double-counts Stuff+)
+CSW_SLOPE     = 0.015   # Fable 2026-09-07: halved with the velo/CSW channel
+VELOCSW_CAP   = 0.20    # Fable 2026-09-07: cap halved 0.4 -> 0.2    # max |combined adj| in FIP units
 VELOCSW_MIN_IP = 20.0   # only for arms with a stabilized velo/CSW sample
 
 MIN_CORE_WEIGHT = 40.0  # need ~half of the 85-pt core (or a projection) to score
@@ -321,7 +323,7 @@ def main() -> int:
         _stuffp = _f(p.get("stuff_plus"))
         # stuffERA is SP-only (unified_v3 caveat: reliever stuff weighting untested).
         _role_sp = (rolesby.get(k) or rolesby.get(_norm(p.get("name", "")))) == "SP"
-        _rl5, _rse = (0.6, 0.4) if _role_sp else (0.2, 0.8)   # SP recency 0.6, RP 0.2 (Fable 2026-08-24)
+        _rl5, _rse = (SP_ROLL_L5_WEIGHT, SP_ROLL_SEASON_WEIGHT) if _role_sp else (ROLL_L5_WEIGHT, ROLL_SEASON_WEIGHT)   # SP recency 0.6, RP 0.2 (Fable 2026-08-24)
         vals = {
             "roll_xfip":  stabilized_roll("xfip", p, g, r, _rl5, _rse),
             "roll_siera": stabilized_roll("siera", p, g, r, _rl5, _rse),
@@ -483,8 +485,9 @@ def main() -> int:
                                "form": "w_proj = K/(IP+K); w_season = 1 - w_proj"},
         "kbb_tilt": {"slope_fip_per_pt": KBB_TILT_SLOPE, "cap": KBB_TILT_CAP,
                      "min_l5": KBB_TILT_MIN_L5, "scaled_by": "w_season"},
-        "rolling_blend": {"l5": ROLL_L5_WEIGHT, "season": ROLL_SEASON_WEIGHT,
-                          "note": "was 0.6/0.4; recalibrated on the 2023-26 historical panel (purged CV)"},
+        "rolling_blend": {"sp_l5": SP_ROLL_L5_WEIGHT, "sp_season": SP_ROLL_SEASON_WEIGHT,
+                          "rp_l5": ROLL_L5_WEIGHT, "rp_season": ROLL_SEASON_WEIGHT,
+                          "note": "per-population B3 (Fable 2026-08-24): SP 0.6/0.4, RP 0.2/0.8 (emitted from constants)"},
         "velocsw_adj": {"slope_fip_per_unit": VELOCSW_SLOPE, "cap": VELOCSW_CAP,
                         "min_ip": VELOCSW_MIN_IP, "lg_velo": round(LG_VELO,1), "lg_csw_pct": round(LG_CSW*100,1),
                         "scaled_by": "w_season", "form": "-slope*(velo-lg) -slope*(CSW%-lg)"},
