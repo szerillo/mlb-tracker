@@ -3354,7 +3354,7 @@ function _apxEdgeBarTT(g){
     if(pv==null) return '<span class="apx-pill">'+ab+' —</span>';
     if(!(tt.over&&tt.over.odds!=null)||!(tt.under&&tt.under.odds!=null)) return '<span class="apx-pill">'+ab+' thin mkt</span>'; const ovBE=(tt.over&&tt.over.odds!=null)?_breakeven(tt.over.odds):0.5;
     const unBE=(tt.under&&tt.under.odds!=null)?_breakeven(tt.under.odds):0.5;
-    const _dvS=ovBE+unBE, dvO=_dvS>0?ovBE/_dvS:0.5, dvU=_dvS>0?unBE/_dvS:0.5; /* TT=mucal_lam45_v1: invert devigged mkt to implied proj, blend 45% toward model, edge vs VIGGED best price */ let _lo=0.05,_hi=30; for(let _it=0;_it<48;_it++){const _m=(_lo+_hi)/2,_p=pgPOverTeam(tt.line,_m); if(_p==null)break; if(_p<dvO)_lo=_m; else _hi=_m;} const _mkA=(_lo+_hi)/2, _usedA=_mkA+0.45*(mu-_mkA), _pc=pgPOverTeam(tt.line,_usedA), _pt=(_pc==null?pv:_pc); const pc=1/(1+Math.exp(-0.68*Math.log(pv/(1-pv)))); /* TT=empctr_v1: outcome-centered NB b=0.68; raw edge vs vigged implied; flag 3% like ML/totals */ const eO=(pc-ovBE)*100, eU=((1-pc)-unBE)*100; /* EDGES=recal_2026-08-16: TT edge = 0.4*(model - devigged close) */
+    const _dvS=ovBE+unBE, dvO=_dvS>0?ovBE/_dvS:0.5, dvU=_dvS>0?unBE/_dvS:0.5; /* TT=mucal_lam28_v1 (Fable 2026-09-07: model over-sharp, 45->28): invert devigged mkt to implied proj, blend 28% toward model, edge vs VIGGED best price */ let _lo=0.05,_hi=30; for(let _it=0;_it<48;_it++){const _m=(_lo+_hi)/2,_p=pgPOverTeam(tt.line,_m); if(_p==null)break; if(_p<dvO)_lo=_m; else _hi=_m;} const _mkA=(_lo+_hi)/2, _usedA=_mkA+0.28*(mu-_mkA), _pc=pgPOverTeam(tt.line,_usedA), _pt=(_pc==null?pv:_pc); const pc=1/(1+Math.exp(-0.68*Math.log(pv/(1-pv)))); /* TT=empctr_v1: outcome-centered NB b=0.68; raw edge vs vigged implied; flag 3% like ML/totals */ const eO=(pc-ovBE)*100, eU=((1-pc)-unBE)*100; /* EDGES=recal_2026-08-16: TT edge = 0.4*(model - devigged close) */
     const over=eO>=eU; const e=over?eO:eU;
     const lean=(over?"o":"u")+tt.line; var _od=over?((tt.over&&tt.over.odds!=null)?tt.over.odds:null):((tt.under&&tt.under.odds!=null)?tt.under.odds:null); var _os=_od!=null?(_od>0?" +"+_od:" "+_od):"";
     const cls=e>=3?" apx-edge-strong":"";
@@ -3411,7 +3411,14 @@ function mlEdgeInfo(awp,hwp,aO,hO){
   if(awp==null||hwp==null||aO==null||hO==null) return null;
   const ip=o=>o<0?(-o)/((-o)+100):100/(o+100);
   const eA=(awp-ip(aO))*100, eH=(hwp-ip(hO))*100;
-  return eA>=eH?{side:'away',edge:eA,wp:awp}:{side:'home',edge:eH,wp:hwp};
+  const r = eA>=eH?{side:'away',edge:eA,wp:awp}:{side:'home',edge:eH,wp:hwp};
+  /* Fable 2026-09-07: our ML edge sits at the market noise floor. Kill sub-2% volume
+     (63% of bets, -11.7u, structural vig-bleed) and gate away-dogs to >=4% (the one
+     persistently negative-CLV cell). Zero the edge below threshold so every consumer suppresses it. */
+  const _sideOdds = r.side==='away' ? aO : hO;
+  const _minEdge = (r.side==='away' && _sideOdds>0) ? 4 : 2;
+  if(r.edge < _minEdge) r.edge = 0;
+  return r;
 }
 function _apxHand(name){ try{ let h=null; if(typeof lookupSplits==='function'){const x=lookupSplits(name); if(x&&x.hand)h=x.hand;} if(!h&&typeof lookupPitcherStats==='function'){const y=lookupPitcherStats(name); if(y&&y.hand)h=y.hand;} return h?' ('+h+')':''; }catch(e){ return ''; } }
 function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRank(name); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'sp'); } }catch(e){} return ''; }
