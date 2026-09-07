@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+  #!/usr/bin/env python3
 """
 Player Futures awards model — V5.1 / V6.3 methodology.
 
@@ -391,7 +391,7 @@ def _kl(p, q):
     return sum(pi * math.log((pi + eps) / (qi + eps)) for pi, qi in zip(p, q))
 
 
-def _calibrate_temp(scores, market_p, lo=0.1, hi=5.0, iters=64):
+def _calibrate_temp(scores, market_p, lo=0.7, hi=1.2, iters=64):  # Fable 2026-09-07: clamp T to [0.7,1.2]; over-sharpening (T<0.7) is the worst-case, worse than over-flattening
     """Bounded scalar KL minimization via golden-section search."""
     phi = (math.sqrt(5) - 1) / 2
     a, b = lo, hi
@@ -959,7 +959,7 @@ def _render_market(scored, market_key, market_meta, top_n, sharpen=1.0, alpha=1.
     # Calibrate temperature against market — drop players with no odds for the
     # KL-min fit; they still get a model probability assigned post-hoc.
     cal_pool = [x for x in pool if x.get("consensus_prob") is not None]
-    if cal_pool:
+    if cal_pool and len(cal_pool) >= 10:   # Fable 2026-09-07: <10 priced candidates is unfittable -> fixed T=1.0
         scores  = [x["score"] for x in cal_pool]
         mkt_p   = [x["consensus_prob"] for x in cal_pool]
         mkt_sum = sum(mkt_p) or 1
