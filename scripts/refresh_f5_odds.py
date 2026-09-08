@@ -170,6 +170,14 @@ def _pull(date):
 
         ml_away = best_market(g, "moneyline", side="away")
         ml_home = best_market(g, "moneyline", side="home")
+        # Fable 2026-09-07 A5: reject incoherent two-way F5 ML (mis-scraped/fallback prices,
+        # ~11% of rows, e.g. +1100/+205 => implied sum 0.41). Real books sum to ~1.02-1.08;
+        # gate to [1.00, 1.12] so fictional prices never enter the feed or surface as edges.
+        if ml_away and ml_home:
+            def _ip(o): return (-o) / ((-o) + 100) if o < 0 else 100 / (o + 100)
+            _ivsum = _ip(ml_away["odds"]) + _ip(ml_home["odds"])
+            if _ivsum < 1.00 or _ivsum > 1.12:
+                ml_away = ml_home = None
         tot_over, tot_under = best_total(g)
         # skip games with no F5 markets at all
         if not any([ml_away, ml_home, tot_over, tot_under]):
