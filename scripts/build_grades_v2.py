@@ -75,7 +75,7 @@ def compute_damage():
         bbe=_f(r.get("attempts")); brl=_f(r.get("brl_percent")); ev95=_f(r.get("ev95percent")); air=_f(r.get("fbld"))
         if None in (bbe,brl,ev95,air): continue
         raw=-108.825 + 0.939*brl + 0.120*ev95 + 1.256*air
-        shrunk=(bbe*raw + 68*20.3)/(bbe+68)
+        shrunk=(bbe*raw + 19*20.3)/(bbe+19)  # Fable 2026-09-08 A7: k 68->19 (we over-shrink 3.5x; interim on proxy pending Orr parquets)
         out[norm(r[nk])]={"name":r[nk],"power":round(shrunk,1),"power_grade":by_cuts(DAMAGE_CUTS,shrunk)}
     return out
 
