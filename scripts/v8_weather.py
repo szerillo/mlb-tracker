@@ -568,8 +568,8 @@ def compute_v8(park, wx, treat_as_open=False):
     # Validated on 1,127 station-obs 2026 games (park-year-demeaned, LOWO CV):
     # the published % tracks BallparkPal's HR number, not its RUNS number.
     # Per-side realized_x: suppression 1.14 (real, untouched), boosts 0.11 —
-    # warm/wind-out boosts saturate ~+6% in realized runs and the big ones are
-    # ~90% phantom. So ONLY the positive side is damped, via 6·tanh(raw/6).
+    # warm/wind-out boosts saturate ~+5% in realized runs and the big ones are
+    # ~90% phantom. Positive side damped via 5·tanh(raw/5); suppression x1.1.
     # WRIGLEY (CHC) is EXEMPT: its wind genuinely plays (2026 realized_x 0.86;
     # BP runs +30 = our +30 on 7/20). Applied to the published % (already
     # inclusive of WIND_SOFT + EMPIRICAL_SCALE — do not re-tune those).
@@ -579,11 +579,18 @@ def compute_v8(park, wx, treat_as_open=False):
     # Health) is a PRIOR add (2026-07-27) — small, hot, dry Sacramento launching
     # pad, physically Wrigley-like, but n~82 and UNVALIDATED; lower/conservative
     # cap. Re-check this exemption (keep/pull) once Sutter has n~150 out-wind games.
+    # Fable 2026-09-08 (DAMPER_6TO5): boost saturation tightened 6->5 (LOWO MAE
+    # monotone in A) and the suppression side bumped x1.1 (measured slightly
+    # understated). Ship = IF(raw<=0, raw*1.1, 5*TANH(raw/5)); exemptions still
+    # skip positive damping (cap only). The aggressive pos*0.1/neg*1.2 optimum is
+    # HELD for October (same static panel as the July fit -> overfit guard).
     DAMPER_EXEMPT = {"CHC": 40.0, "ATH": 15.0}
-    DAMPER_A = 6.0
-    if run_adj_pct > 0 and park not in DAMPER_EXEMPT:
+    DAMPER_A = 5.0
+    if run_adj_pct <= 0:
+        run_adj_pct = run_adj_pct * 1.1
+    elif park not in DAMPER_EXEMPT:
         run_adj_pct = DAMPER_A * math.tanh(run_adj_pct / DAMPER_A)
-    elif park in DAMPER_EXEMPT and run_adj_pct > DAMPER_EXEMPT[park]:
+    elif run_adj_pct > DAMPER_EXEMPT[park]:
         run_adj_pct = DAMPER_EXEMPT[park]
 
     # Apply V8.1 cold cap for most parks.
