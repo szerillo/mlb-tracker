@@ -1,0 +1,45 @@
+{
+ "name": "ROY engine v1 (share-fit score + outcome-calibrated win conversion)",
+ "fit_target": "vote-point shares (118 ballot-obs, 17 races) per Sean's original frame; winner-only used ONLY for win-conversion calibration",
+ "score": {
+  "basis": "z(WAR_final_projected) within field",
+  "war_coef": 0.0926,
+  "war_ci": [
+   0.0546,
+   0.1477
+  ],
+  "hr_coef": 0.0306,
+  "hr_ci": [
+   -0.0555,
+   0.1083
+  ],
+  "rbi_coef": 0.0162,
+  "rbi_ci": [
+   -0.0699,
+   0.1211
+  ],
+  "note": "HR/RBI point-positive but CIs span zero; ship WAR-only, carry HR at 0 pending more seasons; AVG/SB dead"
+ },
+ "ros": {
+  "rule": "final WAR = banked + ROS projection; ROS -> 0 if idle > 8 days (roster/IL-aware)",
+  "sigma_ros": "0.669*sqrt(1-frac) in z-units (checkpoint-drift fit)"
+ },
+ "win_conversion": {
+  "form": "P(leader beats field) via probit on score gaps",
+  "sigma_voter": 0.834,
+  "provenance": "MLE on 17 race outcomes; reproduces 82% WAR-leader hit rate"
+ },
+ "regime_guard": {
+  "rule": "if model/market ratio >= 3x OR large counting-gap regime (field HR leader beats WAR leader by >= ~12 HR), suppress model display and anchor to market",
+  "provenance": "WAR leader 2/5 in large-HR-gap races; Sept market Brier-optimal (T4, 45 markets)"
+ },
+ "current_output": {
+  "AL_ROY": "McGonigle 44.9 / Messick 24.9 / Peters 14.2 (displayable)",
+  "NL_ROY": "engine 63.8 Wetherholt vs market 3.5 -> REGIME GUARD FIRES -> display market-anchored"
+ },
+ "deleted": [
+  "softmax",
+  "temperature",
+  "V5.1 ROY path"
+ ]
+}
