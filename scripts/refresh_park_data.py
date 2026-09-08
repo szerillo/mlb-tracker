@@ -92,6 +92,16 @@ def build_park_factors():
         "so": 100, "year": "manual override (+25%)",
     }
 
+    # Fable A3 park-factor rulings (2026-09-08): override Savant's raw 3-yr run index
+    # for parks where the evidence-final call differs, so the app matches Sean's sheet
+    # (Adjustments!H: Trop 1.00 / Camden 0.99 / American Family 0.98). Run index only;
+    # sub-indices stay Savant. COL 125 / TEX 88 are Savant-correct (A3 HOLD) -- untouched.
+    A3_PARK_FACTOR = {"TB": 100, "BAL": 99, "MIL": 98}
+    for _code, _pf in A3_PARK_FACTOR.items():
+        if _code in out:
+            out[_code]["park_factor"] = _pf
+            out[_code]["year"] = (out[_code].get("year") or "") + " | A3 run-index override"
+
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "source": "Baseball Savant (statcast-park-factors, 3-year rolling)",
