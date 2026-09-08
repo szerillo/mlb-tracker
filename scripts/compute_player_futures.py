@@ -1321,7 +1321,7 @@ def _roy_market_map(market_meta):
                     "best_book": p.get("best_book"), "all_book_odds": p.get("all_book_odds") or books}
     return out
 
-def _render_roy_mc(pool, market_key, market_meta, top_n=50):
+def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engine_tag="roy_mc_v1"):
     mkt = _roy_market_map(market_meta)
     for x in pool:
         nm = _norm_name(x["player"].get("name") or "")
@@ -1337,13 +1337,14 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50):
         lm = (leader.get("_mkt") or {}).get("market_p")
         if lm and lm > 0 and (leader["model_p"] / lm) >= ROY_GUARD_RATIO:
             guard = True; reason = "ratio"
-        board = [x for x in pool if (x.get("_mkt") or {}).get("market_p") is not None] or pool[:8]
-        war_leader = max(board, key=lambda x: x["war_final"])
-        close = [x for x in board if x["war_final"] >= war_leader["war_final"] - 1.5]
-        hr_leader = max(close, key=lambda x: ((x.get("stats") or {}).get("hr") or 0))
-        gap = ((hr_leader.get("stats") or {}).get("hr") or 0) - ((war_leader.get("stats") or {}).get("hr") or 0)
-        if gap >= ROY_GUARD_HRGAP:
-            guard = True; reason = (reason or "hrgap")
+        if use_hrgap:
+            board = [x for x in pool if (x.get("_mkt") or {}).get("market_p") is not None] or pool[:8]
+            war_leader = max(board, key=lambda x: x["war_final"])
+            close = [x for x in board if x["war_final"] >= war_leader["war_final"] - 1.5]
+            hr_leader = max(close, key=lambda x: ((x.get("stats") or {}).get("hr") or 0))
+            gap = ((hr_leader.get("stats") or {}).get("hr") or 0) - ((war_leader.get("stats") or {}).get("hr") or 0)
+            if gap >= ROY_GUARD_HRGAP:
+                guard = True; reason = (reason or "hrgap")
     results = []
     for rk, x in enumerate(pool[:top_n]):
         mp = x["model_p"]; market_p = (x.get("_mkt") or {}).get("market_p")
@@ -1380,10 +1381,94 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50):
         "n_pool": len(pool),
         "temperature": None,
         "calibrated_against_n_books": None,
-        "engine": "roy_mc_v1",
+        "engine": engine_tag,
         "regime_guard": (reason or None),
         "candidates": results,
     }
+
+
+# ── MVP / CY share-fit MC engines (Fable 2026-09-08; same frame as ROY) ───
+# One architecture, three fitted weight sets. Score = Σ w_f·z_f(projected final)
+# within the league field (the regression's predicted vote share). Win prob = MC
+# frequency that score_i + w_WAR·N(0,σ_ROS) + N(0,σ_voter) is the field max, with
+# σ_voter fitted per award (in SCORE units) and σ_ROS = 0.669·√(1−frac) (z-units,
+# shared with ROY). No softmax / temperature / n_books. Ratio regime guard only
+# (the large-HR-gap trigger is ROY-specific; MVP/CY carry counting channels in-model).
+try:
+    _MVP_M = json.loads((REPO_ROOT / "awards" / "mvp_share_model.json").read_text())
+except Exception:
+    _MVP_M = {"weights": {"WAR": 0.0376, "HR": 0.0188, "AVG": 0.0157, "RBI": 0.0089,
+                          "SB": 0.0041}, "sigma_voter_score_units": 0.0232}
+try:
+    _CY_M = json.loads((REPO_ROOT / "awards" / "cy_share_model.json").read_text())
+except Exception:
+    _CY_M = {"weights": {"WAR": 0.0487, "W": 0.0367, "negERA": 0.0537, "SO": 0.0568,
+                         "SV": 0.0307}, "sigma_voter_score_units": 0.0672}
+AWARD_MC_N = 40000
+
+
+def _mvp_features(x):
+    """MVP award stats from the pool candidate. WAR = combined (2-way Ohtani) →
+    pitchers score via WAR only (their HR/AVG/RBI/SB are None → neutral z)."""
+    p = x.get("player") or {}
+    war = x.get("combined_war")
+    if war is None:
+        war = _eos(p, "war")
+    return {"WAR": war, "HR": _eos(p, "hr"), "AVG": _eos(p, "avg"),
+            "RBI": _eos(p, "rbi"), "SB": _eos(p, "sb")}
+
+
+def _cy_features(x):
+    """CY award stats. WAR = the pool's wFIP-adjusted WAR (stats.war). negERA and
+    SO(=k)/SV read award-faithful values straight off the player's EOS."""
+    p = x.get("player") or {}
+    war = (x.get("stats") or {}).get("war")
+    if war is None:
+        war = _eos(p, "war")
+    era = _eos(p, "era")
+    return {"WAR": war, "W": _eos(p, "w"),
+            "negERA": (-era if era is not None else None),
+            "SO": _eos(p, "k"), "SV": _eos(p, "sv")}
+
+
+def _award_engine(pool, frac, model, feat_fn):
+    """Attach score (share basis) + model_p (MC win prob) to each candidate."""
+    if not pool:
+        return []
+    weights = model["weights"]
+    sig_v   = model.get("sigma_voter_score_units", 0.03)
+    sig_ros = ROY_SIG_ROS_K * math.sqrt(max(0.0, 1.0 - frac))
+    w_war   = weights.get("WAR", 0.0)
+    feats   = list(weights.keys())
+    fv = [feat_fn(x) for x in pool]
+    mu, sd = {}, {}
+    for f in feats:
+        col = [row.get(f) for row in fv]
+        m = _mean(col); sig = _stdev(col, m) if m is not None else None
+        mu[f] = m; sd[f] = sig or 1.0
+    for i, x in enumerate(pool):
+        sc = 0.0; wz = 0.0
+        for f in feats:
+            vv = fv[i].get(f)
+            z = 0.0 if (vv is None or mu[f] is None) else (vv - mu[f]) / sd[f]
+            sc += weights[f] * z
+            if f == "WAR":
+                wz = z
+        x["score"]     = sc
+        x["_war_z"]    = wz
+        x["war_final"] = fv[i].get("WAR")
+    n = len(pool); base = [x["score"] for x in pool]; wins = [0] * n
+    for _ in range(AWARD_MC_N):
+        best = -1e9; bi = 0
+        for i in range(n):
+            r = base[i] + w_war * random.gauss(0.0, sig_ros) + random.gauss(0.0, sig_v)
+            if r > best:
+                best = r; bi = i
+        wins[bi] += 1
+    for i, x in enumerate(pool):
+        x["model_p"] = wins[i] / AWARD_MC_N
+    return sorted(pool, key=lambda x: -x["model_p"])
+
 
 def main():
     if _skip_daily(OUTPUT, "player-futures"):
@@ -1404,22 +1489,23 @@ def main():
     markets_in = odds.get("markets", {})
 
     out_markets = {}
+    frac = _roy_season_frac(war)
     for league in ("AL", "NL"):
-        # MVP
+        # MVP — share-fit MC engine (Fable 2026-09-08)
         mvp_key = f"{league}_MVP"
         mvp_pool = _mvp_pool(hitters, league, tf, pitchers)
-        mvp_scored = _score_mvp(mvp_pool)
-        out_markets[mvp_key] = _render_market(
+        mvp_scored = _award_engine(mvp_pool, frac, _MVP_M, _mvp_features)
+        out_markets[mvp_key] = _render_roy_mc(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
-            top_n=70, sharpen=MVP_SHARPEN)
+            top_n=70, use_hrgap=False, engine_tag="mvp_mc_v1")
 
-        # CY
+        # CY — share-fit MC engine (Fable 2026-09-08)
         cy_key = f"{league}_CY"
         cy_pool = _cy_pool(pitchers, league)
-        cy_scored = _score_cy(cy_pool)
-        out_markets[cy_key] = _render_market(
+        cy_scored = _award_engine(cy_pool, frac, _CY_M, _cy_features)
+        out_markets[cy_key] = _render_roy_mc(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=70, alpha=1.85, adaptive_conc=True)
+            top_n=70, use_hrgap=False, engine_tag="cy_mc_v1")
 
         # ROY — share-fit MC engine (Fable 2026-09-08); MVP/CY stay on softmax for now
         roy_key = f"{league}_ROY"
