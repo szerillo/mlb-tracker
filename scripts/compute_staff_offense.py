@@ -45,7 +45,6 @@ OUTPUT      = REPO_ROOT / "data" / "staff_offense.json"
 
 K            = 500          # in-season shrinkage constant
 XWOBA_W      = 0.6          # in-season composite: 0.6*xwOBA + 0.4*wOBA
-PRIOR_FLOOR  = 0.310        # legacy flat stub — superseded by the Marcel prior below
 # Marcel hitter prior (Fable 2026, forward-validated regression target 0.292).
 # Replaces the flat 0.310 floor: real regressed-to-league wOBA per MLBAM id, with a
 # no-history default. Keeps call-up projections honest during roster expansion.
@@ -219,7 +218,7 @@ def main():
     payload = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "method": "STAFF_OFF_v2",
-        "K": K, "xwoba_weight": XWOBA_W, "prior_floor": PRIOR_FLOOR,
+        "K": K, "xwoba_weight": XWOBA_W,
         "prior_source": "marcel_2026", "prior_default": MARCEL_DEFAULT, "n_marcel_priors": len(MARCEL_PRIORS),
         "prior_systems": list(PRIOR_SYS),
         "league_avg": lg,
