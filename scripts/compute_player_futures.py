@@ -45,7 +45,7 @@ Methodology (per the user's "Awards Model 5.1.rtf"):
   Best-price comparison uses American odds payout ratio.
 """
 from __future__ import annotations
-import datetime, json, math, sys, unicodedata
+import datetime, json, math, random, sys, unicodedata
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -1226,6 +1226,165 @@ def _skip_daily(output_path, label, am_hour_et=9):
     return False
 
 
+# ── ROY share-fit MC engine (Fable 2026-09-08; validated vs published board) ──
+import urllib.request as _roy_rq
+try:
+    _ROY_P = json.loads((REPO_ROOT / "awards" / "roy_engine_params.json").read_text())
+except Exception:
+    _ROY_P = {}
+ROY_WAR_COEF    = 0.0926
+ROY_SIG_VOTER   = 0.834
+ROY_SIG_ROS_K   = 0.669
+ROY_IDLE_MAX    = 8
+ROY_GUARD_RATIO = 3.0
+ROY_GUARD_HRGAP = 12
+ROY_MC_N        = 40000
+
+
+def _roy_season_frac(war):
+    """Season fraction elapsed. Prefer explicit field; else date-based (Mar 27 -> Sep 28)."""
+    f = war.get("season_frac")
+    if isinstance(f, (int, float)) and 0 < f <= 1:
+        return float(f)
+    today = datetime.date.today(); yr = today.year
+    start = datetime.date(yr, 3, 27); end = datetime.date(yr, 9, 28)
+    return max(0.0, min(1.0, (today - start).days / max(1, (end - start).days)))
+
+def _roy_idle_days(mlbam):
+    """Days since last game via statsapi gameLog; None on failure (never zero ROS on error)."""
+    if not mlbam:
+        return None
+    try:
+        url = (f"https://statsapi.mlb.com/api/v1/people/{mlbam}/stats"
+               f"?stats=gameLog&group=hitting,pitching&season={datetime.date.today().year}")
+        with _roy_rq.urlopen(url, timeout=8) as r:
+            d = json.loads(r.read())
+        dates = [sp.get("date") for st in d.get("stats", [])
+                 for sp in st.get("splits", []) if sp.get("date")]
+        if not dates:
+            return None
+        return (datetime.date.today() - datetime.date.fromisoformat(max(dates))).days
+    except Exception:
+        return None
+
+def _roy_war_final(cand, idle):
+    """WAR_final = banked + ROS, using the pipeline's canonical ROS blend
+    (cand['talent_war'] == _eos(war) == ytd + ROS). Idle > 8d -> banked only."""
+    talent = cand.get("talent_war")
+    if talent is None:
+        talent = _eos(cand["player"], "war")
+    ytd = ((cand["player"].get("ytd") or {}) or {}).get("war")
+    if idle is not None and idle > ROY_IDLE_MAX and ytd is not None:
+        return ytd           # roster/IL-aware: idle -> stop accruing ROS
+    return talent if talent is not None else (ytd or 0.0)
+
+def _roy_engine(pool, frac, do_idle=True):
+    """Attach war_final / z / model_p (MC win prob) / score (share basis) to each candidate."""
+    sig = math.sqrt(ROY_SIG_VOTER**2 + (ROY_SIG_ROS_K * math.sqrt(max(0.0, 1.0 - frac)))**2)
+    for x in pool:
+        idle = _roy_idle_days((x["player"] or {}).get("mlbam_id")) if do_idle else None
+        x["idle_days"] = idle
+        x["war_final"] = _roy_war_final(x, idle)
+    wars = [x["war_final"] for x in pool]
+    mu = _mean(wars); sd = _stdev(wars, mu) or 1.0
+    for x in pool:
+        x["z"] = (x["war_final"] - mu) / sd
+    zs = [x["z"] for x in pool]; wins = [0] * len(pool)
+    for _ in range(ROY_MC_N):
+        best = -1e9; bi = 0
+        for i, z in enumerate(zs):
+            r = z + random.gauss(0.0, sig)
+            if r > best:
+                best = r; bi = i
+        wins[bi] += 1
+    for i, x in enumerate(pool):
+        x["model_p"] = wins[i] / ROY_MC_N
+        x["score"]   = ROY_WAR_COEF * x["z"]
+    return sorted(pool, key=lambda x: -x["model_p"])
+
+def _roy_market_map(market_meta):
+    def _imp(o):
+        try: o = float(o)
+        except (TypeError, ValueError): return None
+        if o == 0: return None
+        return (100.0 / (o + 100.0)) if o > 0 else (abs(o) / (abs(o) + 100.0))
+    out = {}
+    for p in market_meta.get("players", []):
+        key = _norm_name(p.get("name") or "")
+        if not key: continue
+        books = dict(p.get("all_book_odds") or {})
+        if not books and p.get("best_odds") is not None:
+            books[p.get("best_book") or "?"] = p["best_odds"]
+        imps = sorted(v for v in (_imp(o) for o in books.values()) if v is not None)
+        med = imps[len(imps) // 2] if imps else None      # robust to stale outliers
+        out[key] = {"market_p": med, "best_odds": p.get("best_odds"),
+                    "best_book": p.get("best_book"), "all_book_odds": p.get("all_book_odds") or books}
+    return out
+
+def _render_roy_mc(pool, market_key, market_meta, top_n=50):
+    mkt = _roy_market_map(market_meta)
+    for x in pool:
+        nm = _norm_name(x["player"].get("name") or "")
+        m = mkt.get(nm)
+        if not m:
+            for v in _name_variants(x["player"].get("name") or ""):
+                if _norm_name(v) in mkt:
+                    m = mkt[_norm_name(v)]; break
+        x["_mkt"] = m or {}
+    guard = False; reason = None
+    if pool:
+        leader = pool[0]
+        lm = (leader.get("_mkt") or {}).get("market_p")
+        if lm and lm > 0 and (leader["model_p"] / lm) >= ROY_GUARD_RATIO:
+            guard = True; reason = "ratio"
+        board = [x for x in pool if (x.get("_mkt") or {}).get("market_p") is not None] or pool[:8]
+        war_leader = max(board, key=lambda x: x["war_final"])
+        close = [x for x in board if x["war_final"] >= war_leader["war_final"] - 1.5]
+        hr_leader = max(close, key=lambda x: ((x.get("stats") or {}).get("hr") or 0))
+        gap = ((hr_leader.get("stats") or {}).get("hr") or 0) - ((war_leader.get("stats") or {}).get("hr") or 0)
+        if gap >= ROY_GUARD_HRGAP:
+            guard = True; reason = (reason or "hrgap")
+    results = []
+    for rk, x in enumerate(pool[:top_n]):
+        mp = x["model_p"]; market_p = (x.get("_mkt") or {}).get("market_p")
+        disp_p = (market_p if (guard and market_p is not None) else mp)
+        edge = None if guard else ((disp_p - market_p) if market_p is not None else None)
+        if   edge is None:  stars = ""
+        elif edge >= 0.04:  stars = "★★★"
+        elif edge >= 0.02:  stars = "★★"
+        elif edge >= 0.005: stars = "★"
+        else:               stars = ""
+        keep = ((rk + 1) <= 5) or (mp >= 0.01) or (edge is not None and edge >= 0.0005)
+        if not keep:
+            continue
+        results.append({
+            "rank": rk + 1,
+            "name": x["player"].get("name"),
+            "team_abbr": x["player"].get("team_abbr"),
+            "league": x["player"].get("league"),
+            "pos": None,
+            "p_war": round(x.get("war_final", 0.0), 2),
+            "p_ops": _eos(x["player"], "ops"),
+            "p_fip": _eos(x["player"], "fip"),
+            "p_ip":  _eos(x["player"], "ip"),
+            "model_p": round(disp_p, 4),
+            "market_p": round(market_p, 4) if market_p is not None else None,
+            "edge": round(edge, 4) if edge is not None else None,
+            "stars": stars,
+            "best_odds": (x.get("_mkt") or {}).get("best_odds"),
+            "best_book": (x.get("_mkt") or {}).get("best_book"),
+            "all_book_odds": (x.get("_mkt") or {}).get("all_book_odds"),
+        })
+    return {
+        "label": market_meta.get("label", market_key),
+        "n_pool": len(pool),
+        "temperature": None,
+        "calibrated_against_n_books": None,
+        "engine": "roy_mc_v1",
+        "regime_guard": (reason or None),
+        "candidates": results,
+    }
+
 def main():
     if _skip_daily(OUTPUT, "player-futures"):
         return 0
@@ -1262,14 +1421,13 @@ def main():
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
             top_n=70, alpha=1.85, adaptive_conc=True)
 
-        # ROY
+        # ROY — share-fit MC engine (Fable 2026-09-08); MVP/CY stay on softmax for now
         roy_key = f"{league}_ROY"
         odds_players = markets_in.get(roy_key, {}).get("players", [])
         pool_h, pool_p = _roy_pool(hitters, pitchers, league, odds_players)
-        roy_scored = _score_roy(pool_h, pool_p)
-        out_markets[roy_key] = _render_market(
-            roy_scored, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
-            top_n=50, alpha=1.35, sharpen=0.75)
+        roy_pool = _roy_engine(pool_h + pool_p, _roy_season_frac(war))
+        out_markets[roy_key] = _render_roy_mc(
+            roy_pool, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}))
 
     _enrich_display(out_markets, hitters, pitchers)
 
@@ -1291,8 +1449,8 @@ def main():
     print(f"[player-futures] wrote {len(out_markets)} markets → {OUTPUT}",
           file=sys.stderr)
     for k, m in out_markets.items():
-        print(f"  {k:8} pool={m['n_pool']:>2}  temp={m['temperature']}  "
-              f"calib_n={m['calibrated_against_n_books']}", file=sys.stderr)
+        print(f"  {k:8} pool={m['n_pool']:>2}  temp={m.get('temperature')}  "
+              f"calib_n={m.get('calibrated_against_n_books')}", file=sys.stderr)
     return 0
 
 
