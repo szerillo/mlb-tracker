@@ -106,7 +106,8 @@ def fetch_standings():
         for tr in rec.get("teamRecords", []):
             abbr = MLBAM_TO_ABBR.get(tr["team"]["id"])
             if abbr:
-                out[abbr] = {"w": tr["wins"], "l": tr["losses"]}
+                out[abbr] = {"w": tr["wins"], "l": tr["losses"],
+                             "rs": tr.get("runsScored"), "ra": tr.get("runsAllowed")}
     return out
 
 
@@ -268,8 +269,26 @@ def main():
     for ab, s in strengths.items():
         gr = max(g_rem[ab], 1)
         ros_wins = REPL_PCT * gr + s["ros_war"]
-        talent[ab] = min(max(ros_wins / gr, 0.30), 0.70)
+        ros_talent = ros_wins / gr                       # ROS-WAR-implied win%
+        st = standings.get(ab, {})
+        G = (st.get("w") or 0) + (st.get("l") or 0)
+        rs, ra = st.get("rs"), st.get("ra")
+        if rs and ra and (rs + ra) > 0:
+            pyth = rs**1.83 / (rs**1.83 + ra**1.83)       # season-to-date Pythagorean win%
+        elif G > 0:
+            pyth = st["w"] / G                            # fallback: actual win%
+        else:
+            pyth = ros_talent
+        # Fable 2026-09-08: blend banked pythag + ROS-WAR talent, w=G/(G+140)
+        # (~0.50 at G~143). Fixes shading against leaders overperforming their
+        # ROS priors (HOU/CWS) and toward underperforming chasers (SEA).
+        wgt = G / (G + 140.0)
+        blended = wgt * pyth + (1.0 - wgt) * ros_talent
+        talent[ab] = min(max(blended, 0.30), 0.70)
         s["ros_wins_talent"] = round(ros_wins, 1)
+        s["talent_pyth"] = round(pyth, 3)
+        s["talent_ros"]  = round(ros_talent, 3)
+        s["talent_wgt"]  = round(wgt, 3)
 
     po_talent = {ab: min(max((REPL_PCT * 162 + s["playoff_war_eq"]) / 162, 0.32), 0.72)
                  for ab, s in strengths.items()}
