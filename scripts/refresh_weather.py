@@ -825,6 +825,19 @@ def main():
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
     print(f"  wrote {len(games_out)} games to {OUTPUT}")
+
+    # Fable 2026-09-08 (SCHEDULE_SPOTS enablement): archive the build-time weather
+    # inputs per slate so forecast-vs-realized cost can be graded in ~6 weeks.
+    try:
+        import datetime as _dt
+        _et = (_dt.datetime.utcnow() - _dt.timedelta(hours=4)).date().isoformat()
+        _adir = os.path.join(os.path.dirname(OUTPUT), "archive", _et)
+        os.makedirs(_adir, exist_ok=True)
+        with open(os.path.join(_adir, "wx.json"), "w") as _af:
+            json.dump(payload, _af, indent=2)
+        print(f"  archived weather inputs -> archive/{_et}/wx.json")
+    except Exception as _e:
+        print(f"  [wx-archive] skipped: {_e}")
     good = sum(1 for g in games_out if g.get("weather"))
     blended = sum(1 for g in games_out if (g.get("v8") or {}).get("bp_blended"))
     bp_pres_used = sum(1 for g in games_out if (g.get("v8") or {}).get("pressure_source") == "BP")
