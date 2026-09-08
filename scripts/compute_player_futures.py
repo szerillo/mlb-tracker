@@ -1237,6 +1237,7 @@ ROY_SIG_VOTER   = 0.834
 ROY_SIG_ROS_K   = 0.669
 ROY_IDLE_MAX    = 8
 ROY_GUARD_RATIO = 3.0
+ROY_GUARD_MODEL_FLOOR = 0.20
 ROY_GUARD_HRGAP = 12
 ROY_MC_N        = 40000
 
@@ -1333,10 +1334,14 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
         x["_mkt"] = m or {}
     guard = False; reason = None
     if pool:
-        leader = pool[0]
-        lm = (leader.get("_mkt") or {}).get("market_p")
-        if lm and lm > 0 and (leader["model_p"] / lm) >= ROY_GUARD_RATIO:
-            guard = True; reason = "ratio"
+        # Ratio guard (Fable 2026-09-08 MVP_CY_LIVE_BOARDS): fire when ANY meaningful
+        # model pick (>=20%) sits >=3x its market price -- catches the model backing a
+        # candidate the market dismisses (NL CY Sanchez, NL ROY Wetherholt class), not
+        # just the leader. Subsumes the old leader-only check.
+        for _g in pool:
+            _gm = (_g.get("_mkt") or {}).get("market_p")
+            if _g["model_p"] >= ROY_GUARD_MODEL_FLOOR and _gm and _gm > 0 and (_g["model_p"] / _gm) >= ROY_GUARD_RATIO:
+                guard = True; reason = "ratio"; break
         if use_hrgap:
             board = [x for x in pool if (x.get("_mkt") or {}).get("market_p") is not None] or pool[:8]
             war_leader = max(board, key=lambda x: x["war_final"])
