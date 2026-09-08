@@ -3422,7 +3422,7 @@ function _apxHand(name){ try{ let h=null; if(typeof lookupSplits==='function'){c
 function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRank(name); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'sp'); } }catch(e){} return ''; }
 function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=getBullpenRank(id); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'bp'); } }catch(e){} return ''; }
 function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; if(!fd.teams[team]) return ''; const rows=(typeof _penRelievers==='function')?_penRelievers(fd.teams[team]):fd.teams[team]; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
-function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return Math.max(-1.2, Math.min(1.2, (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT)); }catch(e){ return null; } }
+function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT; /* Sean 2026-09-08: show ACTUAL ump adj (uncapped, shrunk); model stays neutered */ }catch(e){ return null; } }
 function _teamConLetter(players){ try{ if(typeof HITTERS==='undefined'||!HITTERS||!players||!players.length) return null; let wsum=0,tw=0; players.forEach((p,i)=>{ const h=HITTERS.hitters[normName(p.name||'')]; if(!h)return; const k=(h.k_pct_actual!=null)?h.k_pct_actual:h.k_pct; if(k==null||k<0||k>80)return; const d=(i>=0&&i<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[i]:0; const w=SLOT_BASE_PA+d; /* CON slot-PA-weighted by batting order */ wsum+=k*w; tw+=w; }); if(tw<=0)return null; const k_pct=wsum/tw; const pctDisp=Math.max(1,Math.min(99,99-(k_pct-TEAM_K_BEST)/(TEAM_K_WORST-TEAM_K_BEST)*98)); return gradeLetter(pctDisp); }catch(e){ return null; } }
 function _apxTeamGrades(game,side){
   try{
@@ -4268,7 +4268,7 @@ function umpBadge(name) {
   const s = lookupUmp(name);
   if (!s) return `<span class="ump-pct tbd">—</span>`;
   const delta = s.off_adj_shrunk - UMP_STATS.baseline;
-  const pct = Math.max(-1.2, Math.min(1.2, delta / RUNS_PER_PCT));  // Fable 2026-09-07: ump anti-predictive under ABS; cap display to +/-1.2% (~0.1 runs)
+  const pct = delta / RUNS_PER_PCT;  // Sean 2026-09-08: display ACTUAL ump adj (uncapped, shrunk vs baseline); model keeps ump neutered separately
   const cls = pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral";
   const sign = pct >= 0 ? "+" : "";
   return `<span class="ump-pct ${cls}" title="n=${s.n} g · Acc vs Exp ${s.acc_above_x>=0?"+":""}${s.acc_above_x.toFixed(2)}">${sign}${pct.toFixed(1)}%</span>`;
