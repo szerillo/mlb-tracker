@@ -365,6 +365,16 @@ def main():
     }
     with open(OUT_JSON, "w") as f:
         json.dump(payload, f, indent=2)
+    # Fable 2026-09-08 (SCHEDULE_SPOTS enablement): dated snapshot so the pen
+    # availability/FRESH flags can be graded vs who actually pitched (~6 weeks).
+    try:
+        _adir = os.path.join(REPO_ROOT, "data", "archive", slate)
+        os.makedirs(_adir, exist_ok=True)
+        with open(os.path.join(_adir, "bullpens_rr.json"), "w") as _af:
+            json.dump(payload, _af, indent=2)
+        print(f"[bullpens] archived snapshot -> archive/{slate}/bullpens_rr.json")
+    except Exception as _e:
+        print(f"[bullpens] archive skipped: {_e}")
     flagged_ct = sum(1 for r in rows if r[7] == "TRUE")
     print(f"[bullpens] wrote {len(rows)} relievers across {len(games)} teams "
           f"({flagged_ct} flagged workload) -> {OUT_CSV}")
