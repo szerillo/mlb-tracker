@@ -3080,11 +3080,11 @@ function computePregame(game) {
   const awayBSR = _pgSum(ap, 'bsr'), awayDEF = _pgSum(ap, 'fld');
   const homeBSR = _pgSum(hp, 'bsr'), homeDEF = _pgSum(hp, 'fld');
   const blend = (staff, off) => {
-    const staffRA = (staff.spRA * 0.555 + staff.bpRA * 0.445 * staff.bpf) * staff.pqm;
+    const staffRA = (staff.spRA * 0.57 + staff.bpRA * 0.43 * staff.bpf) * staff.pqm;
     return staffRA * staff.pw + off * (1 - staff.pw);
   };
-  let awayRuns = (blend(homeStaff, awayOff) * park + awayBSR - homeDEF) * 0.96;
-  let homeRuns = (blend(awayStaff, homeOff) * park + homeBSR - awayDEF) * 1.04;
+  let awayRuns = (blend(homeStaff, awayOff) * park + awayBSR - homeDEF) * 0.97;
+  let homeRuns = (blend(awayStaff, homeOff) * park + homeBSR - awayDEF) * 1.03;
   awayRuns = Math.max(0.5, awayRuns); homeRuns = Math.max(0.5, homeRuns);
   const hp_ = Math.pow(homeRuns, PG_PYTH), ap_ = Math.pow(awayRuns, PG_PYTH);
   const homeWP = hp_ / (hp_ + ap_);
@@ -3093,7 +3093,7 @@ function computePregame(game) {
   // worth × homeWP). Expose the trimmed value (homeRunsAdj) for the displayed
   // projected score so it RECONCILES with the projected total below — the raw
   // homeRuns stays for the Pythagorean WP math, which needs full-9 values.
-  const homeForTotal = homeRuns - (homeRuns / 9 * homeWP * (0.7 + 0.3 * homeWP));
+  const homeForTotal = homeRuns * 0.958;  // Fable 2026-09-07: home offensive innings 8.62/9 = 0.958 flat (pooled 2023-26), replaces WP-scaled 9th trim
   const total = awayRuns + homeForTotal;
   return {
     awayRuns, homeRuns, homeRunsAdj: homeForTotal,
@@ -3105,7 +3105,7 @@ function computePregame(game) {
     components: {
       away: { offense: awayOff, staff: homeStaff, BSR: awayBSR, DEF: awayDEF, oppSP: homeSP, oppHand: homeHand },
       home: { offense: homeOff, staff: awayStaff, BSR: homeBSR, DEF: homeDEF, oppSP: awaySP, oppHand: awayHand },
-      park, hfaAway: 0.96, hfaHome: 1.04, pyth: PG_PYTH,
+      park, hfaAway: 0.97, hfaHome: 1.03, pyth: PG_PYTH,
     },
   };
 }
@@ -3410,21 +3410,19 @@ function renderSheetEdgesHTML(game){
 function mlEdgeInfo(awp,hwp,aO,hO){
   if(awp==null||hwp==null||aO==null||hO==null) return null;
   const ip=o=>o<0?(-o)/((-o)+100):100/(o+100);
+  /* Fable 2026-09-07: reject incoherent two-way markets (mis-scraped/fallback prices, ~11% of f5_odds ML rows).
+     A real book's two implied probs sum to ~1.02-1.08; garbage sums <1.00 or blows past. Gate to [1.00,1.12]. */
+  const _ivsum=ip(aO)+ip(hO); if(_ivsum<1.00||_ivsum>1.12) return null;
   const eA=(awp-ip(aO))*100, eH=(hwp-ip(hO))*100;
   const r = eA>=eH?{side:'away',edge:eA,wp:awp}:{side:'home',edge:eH,wp:hwp};
-  /* Fable 2026-09-07: our ML edge sits at the market noise floor. Kill sub-2% volume
-     (63% of bets, -11.7u, structural vig-bleed) and gate away-dogs to >=4% (the one
-     persistently negative-CLV cell). Zero the edge below threshold so every consumer suppresses it. */
-  const _sideOdds = r.side==='away' ? aO : hO;
-  const _minEdge = (r.side==='away' && _sideOdds>0) ? 4 : 2;
-  if(r.edge < _minEdge) r.edge = 0;
+  /* Fable 2026-09-07: gates removed (Sean) -- surface true edge; highlight bar (>=3%) does the flagging, no zeroing. */
   return r;
 }
 function _apxHand(name){ try{ let h=null; if(typeof lookupSplits==='function'){const x=lookupSplits(name); if(x&&x.hand)h=x.hand;} if(!h&&typeof lookupPitcherStats==='function'){const y=lookupPitcherStats(name); if(y&&y.hand)h=y.hand;} return h?' ('+h+')':''; }catch(e){ return ''; } }
 function _apxRank(name){ try{ if(typeof getSpRank==='function'){ const r=getSpRank(name); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'sp'); } }catch(e){} return ''; }
 function _apxPenRank(id){ try{ if(typeof getBullpenRank==='function'){ const r=getBullpenRank(id); if(r&&r.rank!=null&&typeof rankChipHtml==='function') return rankChipHtml(r.rank,r.total,'bp'); } }catch(e){} return ''; }
 function _apxPenTag(team){ try{ const fd=(typeof activeFatigue==='function')?activeFatigue():null; if(!fd||!fd.teams) return ''; if(!fd.teams[team]) return ''; const rows=(typeof _penRelievers==='function')?_penRelievers(fd.teams[team]):fd.teams[team]; const out=rows.filter(r=>r.tier==='LIKELY OUT').length; const ftg=rows.filter(r=>r.tier==='FATIGUED').length; if(!out&&!ftg) return 'rested'; const p=[]; if(out)p.push(out+' OUT'); if(ftg)p.push(ftg+' FTG'); return p.join('/'); }catch(e){ return ''; } }
-function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT; }catch(e){ return null; } }
+function _umpPct(name){ try{ if(typeof lookupUmp!=='function'||typeof UMP_STATS==='undefined'||!UMP_STATS) return null; const s=lookupUmp(name); if(!s) return null; return Math.max(-1.2, Math.min(1.2, (s.off_adj_shrunk - UMP_STATS.baseline)/RUNS_PER_PCT)); }catch(e){ return null; } }
 function _teamConLetter(players){ try{ if(typeof HITTERS==='undefined'||!HITTERS||!players||!players.length) return null; let wsum=0,tw=0; players.forEach((p,i)=>{ const h=HITTERS.hitters[normName(p.name||'')]; if(!h)return; const k=(h.k_pct_actual!=null)?h.k_pct_actual:h.k_pct; if(k==null||k<0||k>80)return; const d=(i>=0&&i<SLOT_PA_DELTA.length)?SLOT_PA_DELTA[i]:0; const w=SLOT_BASE_PA+d; /* CON slot-PA-weighted by batting order */ wsum+=k*w; tw+=w; }); if(tw<=0)return null; const k_pct=wsum/tw; const pctDisp=Math.max(1,Math.min(99,99-(k_pct-TEAM_K_BEST)/(TEAM_K_WORST-TEAM_K_BEST)*98)); return gradeLetter(pctDisp); }catch(e){ return null; } }
 function _apxTeamGrades(game,side){
   try{
@@ -4270,7 +4268,7 @@ function umpBadge(name) {
   const s = lookupUmp(name);
   if (!s) return `<span class="ump-pct tbd">—</span>`;
   const delta = s.off_adj_shrunk - UMP_STATS.baseline;
-  const pct = delta / RUNS_PER_PCT;
+  const pct = Math.max(-1.2, Math.min(1.2, delta / RUNS_PER_PCT));  // Fable 2026-09-07: ump anti-predictive under ABS; cap display to +/-1.2% (~0.1 runs)
   const cls = pct > 0.5 ? "over" : pct < -0.5 ? "under" : "neutral";
   const sign = pct >= 0 ? "+" : "";
   return `<span class="ump-pct ${cls}" title="n=${s.n} g · Acc vs Exp ${s.acc_above_x>=0?"+":""}${s.acc_above_x.toFixed(2)}">${sign}${pct.toFixed(1)}%</span>`;
