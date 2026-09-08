@@ -1,18 +1,40 @@
 {
-  "generated_at": "2026-08-23",
+  "generated_at": "2026-09-07",
   "_comment": "Neutral-site / special-venue park-factor + display overrides. Matched by case-insensitive regex against the game venue name (game.venue.name). park_factor is the Savant-style index where 100 = neutral; chip pct shown = park_factor - 100. Read by index.html venueOverride(). Add a new object here for any future neutral-site game (London, Tokyo, Speedway Classic, etc.) — no code change needed.",
   "overrides": [
     {
       "match": "field of dreams|dyersville",
       "venue": "Field of Dreams",
-      "park_factor": 100, "woba": 100, "bacon": 100, "hr": 100, "bb": 100, "so": 100,
+      "park_factor": 100,
+      "woba": 100,
+      "bacon": 100,
+      "hr": 100,
+      "bb": 100,
+      "so": 100,
       "_neutral": true
     },
     {
       "match": "journey bank|williamsport",
       "venue": "Journey Bank Ballpark",
-      "park_factor": 95, "woba": 98, "bacon": 98, "hr": 96, "bb": 100, "so": 100,
+      "park_factor": 95,
+      "woba": 98,
+      "bacon": 98,
+      "hr": 96,
+      "bb": 100,
+      "so": 100,
       "_neutral": false
+    },
+    {
+      "match": "las vegas ballpark|las vegas (?!.*athletics)",
+      "venue": "Las Vegas Ballpark",
+      "park_factor": 140,
+      "woba": 125,
+      "bacon": 125,
+      "hr": 140,
+      "bb": 100,
+      "so": 100,
+      "_neutral": false,
+      "_note": "Fable 2026-09-07 A3: 6 ATH games here scored 17 R/G; treat COL-class on n=6 until sample grows"
     }
   ]
 }
