@@ -1381,6 +1381,13 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
             "best_book": (x.get("_mkt") or {}).get("best_book"),
             "all_book_odds": (x.get("_mkt") or {}).get("all_book_odds"),
         })
+    # Order the board by DISPLAYED probability (market when the guard fired, else
+    # model) so a market-anchored board leads with the market favorite, not the
+    # model's suppressed pick (Fable 2026-09-09: NL ROY showed Wetherholt #1 at 2%
+    # while Sal Stewart, the 90% market favorite, sat at #4).
+    results.sort(key=lambda r: -((r.get("model_p") or 0)))
+    for _i, _r in enumerate(results):
+        _r["rank"] = _i + 1
     return {
         "label": market_meta.get("label", market_key),
         "n_pool": len(pool),
