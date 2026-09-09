@@ -1238,6 +1238,7 @@ ROY_SIG_ROS_K   = 0.669
 ROY_IDLE_MAX    = 8
 ROY_GUARD_RATIO = 3.0
 ROY_GUARD_MODEL_FLOOR = 0.20
+ROY_GUARD_BROAD_RATIO = 5.0   # non-leader phantom needs a bigger gap than the leader (3x)
 ROY_GUARD_HRGAP = 12
 ROY_MC_N        = 40000
 
@@ -1338,10 +1339,17 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
         # model pick (>=20%) sits >=3x its market price -- catches the model backing a
         # candidate the market dismisses (NL CY Sanchez, NL ROY Wetherholt class), not
         # just the leader. Subsumes the old leader-only check.
-        for _g in pool:
-            _gm = (_g.get("_mkt") or {}).get("market_p")
-            if _g["model_p"] >= ROY_GUARD_MODEL_FLOOR and _gm and _gm > 0 and (_g["model_p"] / _gm) >= ROY_GUARD_RATIO:
-                guard = True; reason = "ratio"; break
+        # Leader phantom fires at 3x its market; a NON-leader (>=20% model) needs
+        # >=5x so a moderate legit disagreement (AL CY Cease ~3.4x, which Fable wants
+        # displayed) is not suppressed while a true phantom (NL CY Sanchez ~14x) is.
+        _lead = pool[0]; _lm = (_lead.get("_mkt") or {}).get("market_p")
+        if _lm and _lm > 0 and (_lead["model_p"] / _lm) >= ROY_GUARD_RATIO:
+            guard = True; reason = "ratio"
+        else:
+            for _g in pool[1:]:
+                _gm = (_g.get("_mkt") or {}).get("market_p")
+                if _g["model_p"] >= ROY_GUARD_MODEL_FLOOR and _gm and _gm > 0 and (_g["model_p"] / _gm) >= ROY_GUARD_BROAD_RATIO:
+                    guard = True; reason = "ratio"; break
         if use_hrgap:
             board = [x for x in pool if (x.get("_mkt") or {}).get("market_p") is not None] or pool[:8]
             war_leader = max(board, key=lambda x: x["war_final"])
