@@ -131,7 +131,7 @@ function iframeFor(kind, g, mkt, pm){
   const hIn = parseInt($("#height").value,10);
   const h = (hIn && hIn>=300) ? hIn : (kind==='slate'?1200:kind==='pf'?820:900);
   let src, title, id;
-  if(kind==='slate'){ src = BASE+`?embed=scoreboard&date=${date}`; title="MLB Scoreboard "+date; id="bartolo-slate-"+date; }
+  if(kind==='slate'){ var _auto=(date===todayISO()); src = _auto ? BASE+`?embed=scoreboard` : BASE+`?embed=scoreboard&date=${date}`; title = _auto ? "MLB Scoreboard (today)" : "MLB Scoreboard "+date; id = _auto ? "bartolo-slate" : "bartolo-slate-"+date; }  // auto-roll: today's slate omits the date so the same iframe advances daily
   else if(kind==='pf'){ src = BASE+`?embed=player-futures&market=${mkt}`; title="BARTOLO "+mkt+" model"; id="bartolo-pf-"+mkt; }
   else if(kind==='al'){ src = BASE+'?embed=al'; title='Bartolo — AL team futures'; id='bartolo-al'; }
   else if(kind==='nl'){ src = BASE+'?embed=nl'; title='Bartolo — NL team futures'; id='bartolo-nl'; }
