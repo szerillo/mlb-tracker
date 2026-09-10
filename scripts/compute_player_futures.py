@@ -1239,6 +1239,7 @@ ROY_IDLE_MAX    = 8
 ROY_GUARD_RATIO = 3.0
 ROY_GUARD_MODEL_FLOOR = 0.20
 ROY_GUARD_BROAD_RATIO = 5.0   # non-leader phantom needs a bigger gap than the leader (3x)
+GUARD_LOG = REPO_ROOT / "data" / "awards_guard_log.jsonl"
 ROY_GUARD_HRGAP = 12
 ROY_MC_N        = 40000
 
@@ -1366,6 +1367,36 @@ def _roy_market_map(market_meta):
                     "best_book": p.get("best_book"), "all_book_odds": p.get("all_book_odds") or books}
     return out
 
+def _log_guard(market_key, reason, pool):
+    """Append one guard firing (date, market, type, model/market at firing) to
+    awards_guard_log.jsonl. Fable 2026-09-10: the dataset for fitting the 5x/20%
+    thresholds later. Idempotent per (date, market)."""
+    try:
+        today = datetime.date.today().isoformat()
+        if GUARD_LOG.exists():
+            for _ln in GUARD_LOG.read_text().splitlines():
+                try:
+                    _r = json.loads(_ln)
+                    if _r.get("date") == today and _r.get("market") == market_key:
+                        return
+                except Exception:
+                    pass
+        lead = pool[0] if pool else {}
+        rec = {
+            "date": today,
+            "market": market_key,
+            "guard": reason,
+            "leader": (lead.get("player") or {}).get("name"),
+            "leader_model_p": round(lead.get("model_p", 0.0) or 0.0, 4),
+            "leader_market_p": (lead.get("_mkt") or {}).get("market_p"),
+        }
+        GUARD_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(GUARD_LOG, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+    except Exception:
+        pass
+
+
 def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engine_tag="roy_mc_v1"):
     mkt = _roy_market_map(market_meta)
     for x in pool:
@@ -1401,6 +1432,8 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
             gap = ((hr_leader.get("stats") or {}).get("hr") or 0) - ((war_leader.get("stats") or {}).get("hr") or 0)
             if gap >= ROY_GUARD_HRGAP:
                 guard = True; reason = (reason or "hrgap")
+    if guard:
+        _log_guard(market_key, reason, pool)
     results = []
     for rk, x in enumerate(pool[:top_n]):
         mp = x["model_p"]; market_p = (x.get("_mkt") or {}).get("market_p")
