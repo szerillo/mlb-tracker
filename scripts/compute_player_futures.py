@@ -1280,18 +1280,61 @@ def _roy_war_final(cand, idle):
         return ytd           # roster/IL-aware: idle -> stop accruing ROS
     return talent if talent is not None else (ytd or 0.0)
 
-def _roy_engine(pool, frac, do_idle=True):
+ROY_FIELD_N = 8
+MVP_FIELD_N = 20
+CY_FIELD_N  = 10
+
+
+def _is_mlb_rostered(cand):
+    """On an MLB roster this season. NPB posters who ARE on MLB rosters stay
+    (Murakami/Ohtani-class, per Fable 2026-09-09); only a futures-board name with no
+    MLB team is dropped."""
+    ab = ((cand.get("player") or {}).get("team_abbr") or "")
+    return bool(str(ab).strip()) and str(ab).strip().upper() not in ("NPB", "FA", "-")
+
+
+def _attach_market(pool, market_meta):
+    """Attach each candidate's median-implied market_p (x['_mkt']) before z-scoring
+    so the field rule can use it."""
+    mkt = _roy_market_map(market_meta or {})
+    for x in pool:
+        nm = _norm_name((x.get("player") or {}).get("name") or "")
+        m = mkt.get(nm)
+        if not m:
+            for _v in _name_variants((x.get("player") or {}).get("name") or ""):
+                if _norm_name(_v) in mkt:
+                    m = mkt[_norm_name(_v)]; break
+        x["_mkt"] = m or {}
+
+
+def _award_field(pool, field_n):
+    """Fable 2026-09-09 field rule (match the calibration field): top-N by war_final
+    UNION any candidate with market_p >= 2%, MINUS non-MLB-roster names. Built BEFORE
+    z-scoring because within-field z is part of the sigma_voter calibration frame."""
+    rostered = [x for x in pool if _is_mlb_rostered(x)]
+    field = sorted(rostered, key=lambda x: -(x.get("war_final") if x.get("war_final") is not None else -9.0))[:field_n]
+    have = {id(x) for x in field}
+    for x in rostered:
+        mp = (x.get("_mkt") or {}).get("market_p")
+        if mp is not None and mp >= 0.02 and id(x) not in have:
+            field.append(x); have.add(id(x))
+    return field
+
+
+def _roy_engine(pool, frac, market_meta=None, field_n=ROY_FIELD_N, do_idle=True):
     """Attach war_final / z / model_p (MC win prob) / score (share basis) to each candidate."""
     sig = math.sqrt(ROY_SIG_VOTER**2 + (ROY_SIG_ROS_K * math.sqrt(max(0.0, 1.0 - frac)))**2)
     for x in pool:
         idle = _roy_idle_days((x["player"] or {}).get("mlbam_id")) if do_idle else None
         x["idle_days"] = idle
         x["war_final"] = _roy_war_final(x, idle)
-    wars = [x["war_final"] for x in pool]
+    _attach_market(pool, market_meta)
+    field = _award_field(pool, field_n)
+    wars = [x["war_final"] for x in field]
     mu = _mean(wars); sd = _stdev(wars, mu) or 1.0
-    for x in pool:
+    for x in field:
         x["z"] = (x["war_final"] - mu) / sd
-    zs = [x["z"] for x in pool]; wins = [0] * len(pool)
+    zs = [x["z"] for x in field]; wins = [0] * len(field)
     for _ in range(ROY_MC_N):
         best = -1e9; bi = 0
         for i, z in enumerate(zs):
@@ -1299,10 +1342,10 @@ def _roy_engine(pool, frac, do_idle=True):
             if r > best:
                 best = r; bi = i
         wins[bi] += 1
-    for i, x in enumerate(pool):
+    for i, x in enumerate(field):
         x["model_p"] = wins[i] / ROY_MC_N
         x["score"]   = ROY_WAR_COEF * x["z"]
-    return sorted(pool, key=lambda x: -x["model_p"])
+    return sorted(field, key=lambda x: -x["model_p"])
 
 def _roy_market_map(market_meta):
     def _imp(o):
@@ -1451,7 +1494,7 @@ def _cy_features(x):
             "SO": _eos(p, "k"), "SV": _eos(p, "sv")}
 
 
-def _award_engine(pool, frac, model, feat_fn):
+def _award_engine(pool, frac, model, feat_fn, market_meta=None, field_n=20):
     """Attach score (share basis) + model_p (MC win prob) to each candidate."""
     if not pool:
         return []
@@ -1460,13 +1503,17 @@ def _award_engine(pool, frac, model, feat_fn):
     sig_ros = ROY_SIG_ROS_K * math.sqrt(max(0.0, 1.0 - frac))
     w_war   = weights.get("WAR", 0.0)
     feats   = list(weights.keys())
-    fv = [feat_fn(x) for x in pool]
+    for x in pool:
+        x["war_final"] = feat_fn(x).get("WAR")
+    _attach_market(pool, market_meta)
+    field = _award_field(pool, field_n)
+    fv = [feat_fn(x) for x in field]
     mu, sd = {}, {}
     for f in feats:
         col = [row.get(f) for row in fv]
         m = _mean(col); sig = _stdev(col, m) if m is not None else None
         mu[f] = m; sd[f] = sig or 1.0
-    for i, x in enumerate(pool):
+    for i, x in enumerate(field):
         sc = 0.0; wz = 0.0
         for f in feats:
             vv = fv[i].get(f)
@@ -1476,8 +1523,7 @@ def _award_engine(pool, frac, model, feat_fn):
                 wz = z
         x["score"]     = sc
         x["_war_z"]    = wz
-        x["war_final"] = fv[i].get("WAR")
-    n = len(pool); base = [x["score"] for x in pool]; wins = [0] * n
+    n = len(field); base = [x["score"] for x in field]; wins = [0] * n
     for _ in range(AWARD_MC_N):
         best = -1e9; bi = 0
         for i in range(n):
@@ -1485,9 +1531,9 @@ def _award_engine(pool, frac, model, feat_fn):
             if r > best:
                 best = r; bi = i
         wins[bi] += 1
-    for i, x in enumerate(pool):
+    for i, x in enumerate(field):
         x["model_p"] = wins[i] / AWARD_MC_N
-    return sorted(pool, key=lambda x: -x["model_p"])
+    return sorted(field, key=lambda x: -x["model_p"])
 
 
 def main():
@@ -1514,7 +1560,7 @@ def main():
         # MVP — share-fit MC engine (Fable 2026-09-08)
         mvp_key = f"{league}_MVP"
         mvp_pool = _mvp_pool(hitters, league, tf, pitchers)
-        mvp_scored = _award_engine(mvp_pool, frac, _MVP_M, _mvp_features)
+        mvp_scored = _award_engine(mvp_pool, frac, _MVP_M, _mvp_features, markets_in.get(mvp_key), MVP_FIELD_N)
         out_markets[mvp_key] = _render_roy_mc(
             mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
             top_n=70, use_hrgap=False, engine_tag="mvp_mc_v1")
@@ -1522,7 +1568,7 @@ def main():
         # CY — share-fit MC engine (Fable 2026-09-08)
         cy_key = f"{league}_CY"
         cy_pool = _cy_pool(pitchers, league)
-        cy_scored = _award_engine(cy_pool, frac, _CY_M, _cy_features)
+        cy_scored = _award_engine(cy_pool, frac, _CY_M, _cy_features, markets_in.get(cy_key), CY_FIELD_N)
         out_markets[cy_key] = _render_roy_mc(
             cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
             top_n=70, use_hrgap=False, engine_tag="cy_mc_v1")
@@ -1531,7 +1577,7 @@ def main():
         roy_key = f"{league}_ROY"
         odds_players = markets_in.get(roy_key, {}).get("players", [])
         pool_h, pool_p = _roy_pool(hitters, pitchers, league, odds_players)
-        roy_pool = _roy_engine(pool_h + pool_p, _roy_season_frac(war))
+        roy_pool = _roy_engine(pool_h + pool_p, _roy_season_frac(war), markets_in.get(roy_key), ROY_FIELD_N)
         out_markets[roy_key] = _render_roy_mc(
             roy_pool, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}))
 
