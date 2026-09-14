@@ -8,6 +8,7 @@ import json, os, datetime
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SPLITS = os.path.join(REPO, "data", "pitcher_splits.json")
 LINEUPS = os.path.join(REPO, "data", "lineups.json")
+F5ODDS  = os.path.join(REPO, "data", "f5_odds.json")
 OUTPUT  = os.path.join(REPO, "data", "pitcher_split_tilt.json")
 SHR_K = 150.0
 F5_SLOT_WT = [2.3, 2.2, 2.1, 2.0, 1.9, 1.7, 1.6, 1.5, 1.4]
@@ -76,6 +77,14 @@ def main():
         if gp is None:
             continue
         by_game.setdefault(str(gp), {})[vv.get("team")] = vv
+    # game_pk -> an_event_id (the sheet joins on the Action Network event id)
+    aemap = {}
+    try:
+        for x in json.load(open(F5ODDS)).get("games", []):
+            if x.get("game_pk") is not None and x.get("an_event_id") is not None:
+                aemap[str(x["game_pk"])] = x["an_event_id"]
+    except Exception:
+        pass
     lu = json.load(open(LINEUPS)).get("games", [])
     out = {}
     for g in lu:
@@ -88,7 +97,7 @@ def main():
         home_sp = sps.get(g.get("home"))
         away_tilt = tilt(home_sp, away_pl)   # away bats vs the HOME sp
         home_tilt = tilt(away_sp, home_pl)   # home bats vs the AWAY sp
-        out[gp] = {"matchup": g.get("matchup"),
+        out[gp] = {"matchup": g.get("matchup"), "an_event_id": aemap.get(gp),
                    "away_tilt": away_tilt, "home_tilt": home_tilt,
                    "away_sp": (away_sp or {}).get("name"), "home_sp": (home_sp or {}).get("name"),
                    "home_sp_opener": bool((home_sp or {}).get("is_opener")),
