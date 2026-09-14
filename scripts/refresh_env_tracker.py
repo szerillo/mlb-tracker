@@ -18,6 +18,7 @@ import json, glob, os, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARCH = os.path.join(ROOT, "data", "odds_archive")
+ARCHIVE = os.path.join(ROOT, "data", "archive")   # dated sheet_projections lives here
 OUT  = os.path.join(ROOT, "data", "env_tracker.json")
 SEASON = 2026
 
@@ -39,6 +40,68 @@ def build_market():
                     and isinstance(a, (int, float)) and isinstance(h, (int, float))):
                 rows.append([date, g.get("home_team"), g.get("away_team"), L, a + h])
     return {"cols": ["date", "home", "away", "line", "total"], "rows": rows}
+
+
+def build_guardrail():
+    """Grade Sean's PRO (sheet) series against the finalized close + result.
+
+    Emits one row per gradeable game so the frontend can window it exactly like
+    the market panel (daily mean level line + rolling; weekly WP calibration).
+    A game contributes to LEVEL if it has both a sheet total and a close line;
+    to WP if it has both sides' win prob and a decisive (non-tie) final.
+    """
+    rows = []
+    for sp in sorted(glob.glob(os.path.join(ARCHIVE, "*", "sheet_projections.json"))):
+        date = os.path.basename(os.path.dirname(sp))
+        try:
+            sj = json.load(open(sp))
+        except Exception:
+            continue
+        ap = os.path.join(ARCH, date + ".json")
+        if not os.path.exists(ap):
+            continue
+        try:
+            aj = json.load(open(ap))
+        except Exception:
+            continue
+        fin = {g.get("an_event_id"): g for g in aj.get("games", [])}
+        for _gp, s in (sj.get("games") or {}).items():
+            ae = s.get("an_event_id")
+            a = fin.get(ae)
+            if not a:
+                continue
+            line = ((a.get("consensus") or {}).get("total") or {}).get("line")
+            aa, ah = a.get("actual_away_runs"), a.get("actual_home_runs")
+            proj = s.get("total")
+            awp, hwp = s.get("away_wp"), s.get("home_wp")
+
+            level = None
+            if (isinstance(proj, (int, float)) and isinstance(line, (int, float))
+                    and 3 < line < 20):
+                level = round(proj - line, 3)
+
+            fav_p, fav_won = None, None
+            if (isinstance(awp, (int, float)) and isinstance(hwp, (int, float))
+                    and isinstance(aa, (int, float)) and isinstance(ah, (int, float))
+                    and aa != ah):
+                fav_away = awp >= hwp
+                fav_p = round(awp if fav_away else hwp, 4)
+                away_win = aa > ah
+                fav_won = 1 if (away_win == fav_away) else 0
+
+            if level is None and fav_p is None:
+                continue
+            rows.append([date, ae, proj, line, level, fav_p, fav_won])
+
+    return {
+        "note": ("level = sheet projected total - close line (PRO series; positive = "
+                 "we project higher than the market). WP calibration = realized "
+                 "favorite win rate / model mean favorite prob; <1 = model over-confident "
+                 "(exponent too hot), >1 = under-confident. Tail bucket (model_fav_p>=0.62) "
+                 "is where the S10 exponent recal was validated."),
+        "cols": ["date", "an_event_id", "proj", "close", "level", "model_fav_p", "fav_won"],
+        "rows": rows,
+    }
 
 
 def build_statcast(season=SEASON):
@@ -105,6 +168,7 @@ def main():
                         "mean R/G is run-environment only (right-skewed vs the median-scale line). "
                         "Statcast metrics are residuals vs a season-pooled EV/LA baseline."),
         "market": build_market(),
+        "guardrail": build_guardrail(),
         "statcast": build_statcast(),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -112,6 +176,7 @@ def main():
         json.dump(out, f, separators=(",", ":"))
     print("wrote", OUT,
           "| market rows:", len(out["market"]["rows"]),
+          "| guardrail rows:", len(out["guardrail"]["rows"]),
           "| statcast days:", len(out["statcast"]["days"]) if out["statcast"] else 0)
 
 
