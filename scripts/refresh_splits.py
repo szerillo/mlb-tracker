@@ -206,6 +206,18 @@ def main():
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
 
+    # Fable 2026-09-13: archive daily AS-OF splits so October's full-weight
+    # revisit is leakage-free (statsapi season splits are full-season ~3%/gm).
+    try:
+        _et = (datetime.datetime.utcnow() - datetime.timedelta(hours=4)).date().isoformat()
+        _adir = os.path.join(os.path.dirname(OUTPUT), "archive", _et)
+        os.makedirs(_adir, exist_ok=True)
+        with open(os.path.join(_adir, "pitcher_splits.json"), "w") as _af:
+            json.dump(payload, _af, indent=2)
+        print(f"  archived as-of splits -> archive/{_et}/pitcher_splits.json")
+    except Exception as _e:
+        print(f"  [splits-archive] skipped: {_e}")
+
     openers = [v for v in results.values() if v["is_opener"]]
     print(f"  wrote {len(results)} probable SPs ({len(openers)} flagged as openers)")
     for op in openers:
