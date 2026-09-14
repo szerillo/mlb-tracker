@@ -63,6 +63,7 @@ select{background:var(--bg);color:var(--text);border:1px solid var(--border);bor
 
   <div class="subtabs" id="subtabs">
     <div class="subtab active" data-view="market">Market &amp; Environment</div>
+    <div class="subtab" data-view="guard">Model Guardrail</div>
     <div class="subtab" data-view="carry">Carry vs Expectation</div>
     <div class="subtab" data-view="ev">Exit Velocity</div>
     <div class="subtab" data-view="hr">HR vs xHR</div>
@@ -100,6 +101,30 @@ select{background:var(--bg);color:var(--text);border:1px solid var(--border);bor
     </div>
   </div>
 
+  <div class="view hidden" id="view-guard">
+    <div class="note" id="guardNote">
+      <b>Model self-check on the PRO (sheet) series.</b> <b>Level line</b> = your projected
+      total − the devigged close, per game (positive = you project higher than the market;
+      Fable's B7 anchor target is ≈ 0). <b>WP calibration</b> = realized favorite win-rate ÷
+      your model's mean favorite probability — the S10-exponent drift monitor: 1.00 = calibrated,
+      &lt;1 = model over-confident (exponent running hot), &gt;1 = under-confident.
+    </div>
+    <div class="cards" id="guardCards"></div>
+    <div class="chartbox">
+      <h3>Level line — projected total vs close</h3>
+      <p class="cap">Rolling daily mean of <b>proj − close</b> on the sheet series. Zero line =
+      centered on the market. A persistent drift here is what distorted every season retrospective —
+      two consecutive days beyond ±0.15 is the tripwire.</p>
+      <div class="chartwrap"><canvas id="cLevel"></canvas></div>
+    </div>
+    <div class="chartbox">
+      <h3>Win-probability calibration — favorites</h3>
+      <p class="cap">Weekly, favorites only (model p ≥ 0.55). <b>Model mean p</b> vs <b>realized
+      win rate</b>; the ratio card above summarizes. Diverging bands = the full-game WP exponent
+      is drifting off reality — recheck the S10 recal.</p>
+      <div class="chartwrap"><canvas id="cCal"></canvas></div>
+    </div>
+  </div>
   <div class="view hidden" id="view-carry">
     <div class="note">Carry vs expectation = mean(<b>actual fly-ball distance − expected distance</b> from the launch-speed/angle model). Negative = the ball is carrying short (drag / heavy-air / dead-ball). This fills from the daily Statcast pull.</div>
     <div class="cards" id="carryCards"></div>
@@ -132,6 +157,7 @@ const TEAMS=["Angels","Astros","Athletics","Blue Jays","Braves","Brewers","Cardi
 const S={view:'market',scope:'league',team:'Cubs',win:7,range:'all'};
 let PANEL=[];
 let STATCAST=null;
+let GUARD=[];
 let charts={};
 
 function isoRange(){const a=[];const s=new Date('2026-03-25');const e=new Date();for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))a.push(d.toISOString().slice(0,10));return a;}
@@ -145,6 +171,11 @@ async function tryEnvTracker(){
     if(j&&j.market&&Array.isArray(j.market.rows)){
       const ci=Object.fromEntries((j.market.cols||["date","home","away","line","total"]).map((c,i)=>[c,i]));
       PANEL=j.market.rows.map(r=>({d:r[ci.date],h:r[ci.home],a:r[ci.away],L:+r[ci.line],t:+r[ci.total]}));
+    }
+    if(j&&j.guardrail&&Array.isArray(j.guardrail.rows)){
+      const gi=Object.fromEntries((j.guardrail.cols||[]).map((c,i)=>[c,i]));
+      GUARD=j.guardrail.rows.map(r=>({d:r[gi.date],ae:r[gi.an_event_id],
+        level:r[gi.level],fp:r[gi.model_fav_p],fw:r[gi.fav_won]}));
     }
     if(j&&j.statcast&&Array.isArray(j.statcast.days)) STATCAST=j.statcast;
     return (PANEL.length? j : null);
@@ -218,6 +249,58 @@ function renderMarket(){
   drawLine('cOver','over',roll.map(r=>r.d),[{label:S.win+'-day over %',data:roll.map(r=>r.overPct),color:'#5eead4',fill:true}],{y:{suggestedMin:35,suggestedMax:65,ticks:{callback:v=>v+'%'}},ref:50});
   drawLine('cEnv','env',roll.map(r=>r.d),[{label:'median R/G',data:roll.map(r=>r.medAct),color:'#74d98e',fill:false},{label:'listed line',data:roll.map(r=>r.meanLine),color:'#7aa2c4',fill:false,dash:[5,4]},{label:'mean R/G (skew)',data:roll.map(r=>r.meanAct),color:'#e5a449',fill:false,dash:[2,3]}],{y:{suggestedMin:7,suggestedMax:11}});
 }
+function mondayKey(ds){const d=new Date(ds+'T00:00:00');const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.toISOString().slice(0,10);}
+function levelDaily(rows){
+  const m={};rows.forEach(r=>{if(r.level==null)return;(m[r.d]=m[r.d]||[]).push(r.level);});
+  return Object.keys(m).sort().map(d=>({d,mean:m[d].reduce((s,x)=>s+x,0)/m[d].length,n:m[d].length}));
+}
+function rollLevel(days,W){
+  const out=[];for(let i=0;i<days.length;i++){let s=0,n=0,j=i;
+    while(j>=0&&(i-j)<W){s+=days[j].mean*days[j].n;n+=days[j].n;j--;}
+    out.push({d:days[i].d,v:n?s/n:null});}
+  return out;
+}
+function calWeekly(rows){
+  const m={};rows.forEach(r=>{if(r.fp==null||r.fw==null||r.fp<0.55)return;
+    const k=mondayKey(r.d);(m[k]=m[k]||[]).push(r);});
+  return Object.keys(m).sort().map(k=>{const g=m[k];
+    const mp=g.reduce((s,r)=>s+r.fp,0)/g.length, rp=g.reduce((s,r)=>s+r.fw,0)/g.length;
+    return{wk:k,n:g.length,model:mp,real:rp,ratio:mp?rp/mp:null};});
+}
+function renderGuardrail(){
+  if(!GUARD.length){
+    document.getElementById('guardCards').innerHTML='';
+    document.getElementById('cLevel').closest('.chartbox').querySelector('.chartwrap').innerHTML=
+      '<div class="placeholder"><div class="big">Guardrail populates on the next data refresh</div><div>Runs server-side once <code>env_tracker.json</code> includes the <code>guardrail</code> block.</div></div>';
+    return;
+  }
+  const days=clampRange(levelDaily(GUARD));
+  const roll=rollLevel(days,S.win);
+  // recent level (last 14 gradeable days), full-season level
+  const allLv=GUARD.filter(r=>r.level!=null);
+  const lvFull=allLv.reduce((s,r)=>s+r.level,0)/allLv.length;
+  const recentDates=[...new Set(allLv.map(r=>r.d))].sort().slice(-14);
+  const recentLv=allLv.filter(r=>recentDates.includes(r.d));
+  const lvRecent=recentLv.length?recentLv.reduce((s,r)=>s+r.level,0)/recentLv.length:null;
+  // calibration: recent (last ~21d) favorites + tail bucket
+  const favAll=GUARD.filter(r=>r.fp!=null&&r.fw!=null&&r.fp>=0.55);
+  const calRatio=(g)=>{if(!g.length)return null;const mp=g.reduce((s,r)=>s+r.fp,0)/g.length;return mp?(g.reduce((s,r)=>s+r.fw,0)/g.length)/mp:null;};
+  const tail=GUARD.filter(r=>r.fp!=null&&r.fw!=null&&r.fp>=0.62);
+  document.getElementById('guardCards').innerHTML=[
+    ['Level (recent)',(lvRecent>=0?'+':'')+fmt(lvRecent,2),'last 14 days, proj−close'],
+    ['Level (season)',(lvFull>=0?'+':'')+fmt(lvFull,2),allLv.length+' games'],
+    ['Fav calibration',fmt(calRatio(favAll),2)+'×',favAll.length+' favs, realized÷model'],
+    ['Tail calibration',fmt(calRatio(tail),2)+'×','model p≥0.62 ('+tail.length+')'],
+  ].map(c=>'<div class="card"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div><div class="n">'+c[2]+'</div></div>').join('');
+  drawLine('cLevel','level',roll.map(r=>r.d),
+    [{label:S.win+'-day mean proj−close',data:roll.map(r=>r.v),color:'#e5a449',fill:true}],
+    {y:{suggestedMin:-1,suggestedMax:1},ref:0});
+  const wk=calWeekly(GUARD);
+  drawLine('cCal','cal',wk.map(w=>w.wk),
+    [{label:'model mean fav p',data:wk.map(w=>w.model),color:'#7aa2c4',dash:[5,4]},
+     {label:'realized fav win rate',data:wk.map(w=>w.real),color:'#74d98e'}],
+    {y:{suggestedMin:0.45,suggestedMax:0.75,ticks:{callback:v=>(v*100).toFixed(0)+'%'}}});
+}
 function renderStatcast(view){
   const host={carry:'carryHost',ev:'evHost',hr:'hrHost'}[view];
   const cards={carry:'carryCards',ev:'evCards',hr:'hrCards'}[view];
@@ -267,7 +350,9 @@ function show(){
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   document.getElementById('view-'+S.view).classList.remove('hidden');
   document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('active',t.dataset.view===S.view));
-  if(S.view==='market')renderMarket();else renderStatcast(S.view);
+  if(S.view==='market')renderMarket();
+  else if(S.view==='guard')renderGuardrail();
+  else renderStatcast(S.view);
 }
 
 function wire(){
