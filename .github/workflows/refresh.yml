@@ -359,6 +359,79 @@ jobs:
           PY
         continue-on-error: true
 
+      - name: Archive full-game opening odds (write-once; close already archived)
+        # Fable 2026-09-14: capture the full-game OPENING line daily. The close is
+        # archived by refresh_odds.py (closing_odds.json); the open was never kept,
+        # which confined the ML/projection open-capture CLV test to July. Mirrors the
+        # F5 opener capture from data/odds.json.  Re-run open-capture in ~5 wks.
+        run: |
+          python - <<'PY'
+          import json, os, shutil, datetime as dt
+          src = "data/odds.json"
+          if not os.path.exists(src):
+              print("no odds.json this run; skipping"); raise SystemExit(0)
+          try:
+              d = json.load(open(src)); n = d.get("n_games") or len(d.get("games") or [])
+          except Exception:
+              d, n = {}, 0
+          if n <= 0:
+              print("odds.json has 0 games; skipping"); raise SystemExit(0)
+          et = (dt.datetime.utcnow() - dt.timedelta(hours=4)).date()
+          D = et.isoformat()
+          sd = str(d.get("date") or "")
+          try:
+              sd_date = dt.date.fromisoformat(sd)
+              if -1 <= (sd_date - et).days <= 2:
+                  D = sd
+          except Exception:
+              pass
+          os.makedirs(f"data/archive/{D}", exist_ok=True)
+          op = f"data/archive/{D}/full_odds_open.json"
+          if not os.path.exists(op):
+              shutil.copy(src, op); print(f"full-game opener captured -> {op} ({n} games)")
+          else:
+              print(f"full-game opener already exists ({op}); leaving intact")
+          PY
+        continue-on-error: true
+
+      - name: Archive overnight odds snapshot (~midnight ET; the overnight-bet entry)
+        # Sean 2026-09-14: a distinct entry point between the soft opener and the
+        # morning line -- the line you'd actually get betting overnight, after the
+        # evening soft openers have firmed. Captured ONCE in the 12a-4a ET window,
+        # write-once per slate date, for full game (ML+totals) and F5 (ML+totals).
+        run: |
+          python - <<'PY'
+          import json, os, shutil, datetime as dt
+          et_now = dt.datetime.utcnow() - dt.timedelta(hours=4)
+          if not (0 <= et_now.hour < 4):
+              print(f"not in overnight window (ET hour {et_now.hour}); skipping"); raise SystemExit(0)
+          for src, tag in (("data/odds.json", "full_odds_overnight.json"),
+                           ("data/f5_odds.json", "f5_odds_overnight.json")):
+              if not os.path.exists(src):
+                  print(f"no {src}; skip"); continue
+              try:
+                  d = json.load(open(src)); n = d.get("n_games") or len(d.get("games") or [])
+              except Exception:
+                  n = 0
+              if n <= 0:
+                  print(f"{src} has 0 games; skip"); continue
+              et = et_now.date(); D = et.isoformat()
+              sd = str(d.get("date") or "")
+              try:
+                  sdd = dt.date.fromisoformat(sd)
+                  if -1 <= (sdd - et).days <= 2:
+                      D = sd
+              except Exception:
+                  pass
+              os.makedirs(f"data/archive/{D}", exist_ok=True)
+              dst = f"data/archive/{D}/{tag}"
+              if not os.path.exists(dst):
+                  shutil.copy(src, dst); print(f"overnight captured -> {dst} ({n} games)")
+              else:
+                  print(f"overnight already exists ({dst}); leaving intact")
+          PY
+        continue-on-error: true
+
       - name: Odds fallback - multi-source (BettingPros/VegasInsider/ScoresAndOdds)
         # Triggers if odds.json is missing, has no games, OR has yesterday's date.
         # Date-freshness check was added because ActionNetwork's API sometimes
