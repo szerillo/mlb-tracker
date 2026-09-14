@@ -115,6 +115,13 @@ jobs:
         run: python scripts/apply_lineup_overrides.py
         continue-on-error: true
 
+      - name: Pitcher-split F5 tilt (per-game platoon adjustment)
+        # Fable 2026-09-13: opposing SP L/R ops splits x lineup slot-weighted handedness,
+        # TBF-shrunk, opener-zeroed -> data/pitcher_split_tilt.json. Runs after lineups so
+        # it tracks confirmations; sheet adds 7.5*tilt to F5 team runs (half weight).
+        run: python scripts/refresh_pitcher_split_tilt.py
+        continue-on-error: true
+
       # Re-apply unified scores after every overnight refresh.
       # refresh_pitcher_stats.py overwrites the whole `pitchers` map from a
       # fresh FG dump, dropping unified_score keys; same risk on hitters when
