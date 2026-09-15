@@ -287,6 +287,7 @@ _FN_REMAP = {
     "zachary": ["zach", "zack"],
     "patrick": ["pat", "patty"],
     "raymond": ["ray"],
+  "peter": ["pete"],
     "kenneth": ["ken", "kenny"],
     "ronald": ["ron", "ronny"],
     "vincent": ["vince", "vinny"],
@@ -1437,8 +1438,8 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
     results = []
     for rk, x in enumerate(pool[:top_n]):
         mp = x["model_p"]; market_p = (x.get("_mkt") or {}).get("market_p")
-        disp_p = (market_p if (guard and market_p is not None) else mp)
-        edge = None if guard else ((disp_p - market_p) if market_p is not None else None)
+        disp_p = mp   # model prob only — no market substitution (2026-09-15)
+        edge = (mp - market_p) if market_p is not None else None
         if   edge is None:  stars = ""
         elif edge >= 0.04:  stars = "★★★"
         elif edge >= 0.02:  stars = "★★"
