@@ -70,7 +70,19 @@ def _base(feat):
     return feat[:-2] if feat.endswith("_z") else feat
 
 
-def score_race(cands, obj):
+def _vote_pool(group_cands):
+    """v1.3 vote-plausible mean pool: keep candidates with war >= max(1.5,
+    0.25*type-max-war); fall back to the full group if <2 qualify. Sub-replacement
+    names never received votes and must not bend the per-type stat means."""
+    if len(group_cands) < 2:
+        return group_cands
+    wmax = max((c.get("war", 0.0) or 0.0) for c in group_cands)
+    floor = max(1.5, 0.25 * wmax)
+    kept = [c for c in group_cands if (c.get("war", 0.0) or 0.0) >= floor]
+    return kept if len(kept) > 1 else group_cands
+
+
+def score_race(cands, obj, _mean_pool=True):
     """Attach p_model + share to each candidate in a race (object-driven z rule)."""
     F = obj["share_features"]
     W = dict(zip(F, obj["share_weights"]))
@@ -78,31 +90,42 @@ def score_race(cands, obj):
     for c in cands:
         if "groups" not in c:
             c["groups"] = {"P"} if c.get("is_pit") else {"H"}
-    mwar = _mean([c.get("war", 0.0) for c in cands])
+    mwar = _mean([c.get("war", 0.0) for c in cands])       # whole-field (uniform shift cancels)
     macc = _mean([c.get("acc", 0.0) for c in cands])
     for c in cands:
         c["WAR_z"] = (c.get("war", 0.0) - mwar) / SD["war"]
         c["ACC_z"] = (c.get("acc", 0.0) - macc) / SD["acc"]
+    hitters  = [c for c in cands if "H" in c["groups"]]
+    pitchers = [c for c in cands if "P" in c["groups"]]
+    hpool = _vote_pool(hitters) if _mean_pool else hitters
+    ppool = _vote_pool(pitchers) if _mean_pool else pitchers
     for f in F:
         b = _base(f)
         if b == "WAR":
             continue
-        grp = "H" if b in HIT_FEATS else ("P" if b in PIT_FEATS else None)
-        sub = [c for c in cands if grp is None or grp in c["groups"]]
-        m = _mean([c.get(b, 0.0) for c in sub]) if sub else 0.0
+        if b in HIT_FEATS:
+            grp, ingroup, meanpool = "H", hitters, hpool
+        elif b in PIT_FEATS:
+            grp, ingroup, meanpool = "P", pitchers, ppool
+        else:
+            grp, ingroup, meanpool = None, cands, cands
+        m = _mean([c.get(b, 0.0) for c in meanpool]) if meanpool else 0.0
         for c in cands:
             inn = (grp is None) or (grp in c["groups"])
-            if inn and sub:
+            if inn and len(ingroup) > 1 and b in SD:
                 z = (c.get(b, 0.0) - m) / SD[b]
                 c[f] = -z if b == "ERA" else z   # v1.2: ERA lower-is-better
             else:
                 c[f] = 0.0
     pdelta = obj.get("pitcher_delta", 0.0)       # v1.2: pure-pitcher MVP prior
+    ndelta = obj.get("npb_vet_delta", 0.0)       # v1.3: posted NPB/KBO vet prior (ROY)
     for c in cands:
         c["share"] = sum(W[f] * c[f] for f in F)
         c["lin"] = c["share"] / obj["temp"] + obj["absence_gamma"] * c["ACC_z"]
         if pdelta and c["groups"] == {"P"}:       # pure pitcher only; two-way exempt
             c["lin"] += pdelta
+        if ndelta and c.get("npb_vet"):
+            c["lin"] += ndelta
     mx = max(c["lin"] for c in cands)
     Z = sum(math.exp(c["lin"] - mx) for c in cands)
     for c in cands:
