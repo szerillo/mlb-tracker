@@ -10283,7 +10283,7 @@ function _pfBar(cat){
     + '<div class="pfx-dot" style="left:'+p+'%;background:'+col+'">'+p+'</div></div>'+val+'</div>';
 }
 function _pfCard(cand, rankTxt, isVal){
-  const mp = cand.model_p;
+  const mp = cand.model_p; const dp = cand.display_p ?? cand.model_p;
   const mktP = cand.best_odds!=null ? _pfImp(cand.best_odds) : cand.market_p;
   const mktOdds = cand.best_odds!=null ? cand.best_odds : (cand.market_p!=null ? _pfP2Odds(cand.market_p) : null);
   const edge = (mp!=null && mktP!=null) ? mp - mktP : null;
@@ -10300,7 +10300,7 @@ function _pfCard(cand, rankTxt, isVal){
     +   '<span class="pfx-logo">'+logo+'</span>'
     +   '<span class="pfx-name">'+cand.name+tw+'</span>'
     +   '<div class="pfx-mets">'
-    +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(mp)+'</span><span class="pfx-o">'+_pfP2Odds(mp)+'</span></div>'
+    +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(dp)+'</span><span class="pfx-o">'+_pfP2Odds(dp)+'</span></div>'
     +     '<div class="pfx-met mk"><span class="pfx-k">Market</span><span class="pfx-p">'+_pfPc(mktP)+'</span><span class="pfx-o">'+_pfOddsStr(mktOdds)+'</span></div>'
     +     '<div class="pfx-met edge"><span class="pfx-k">Edge</span><span class="pfx-edge '+eCls+'">'+eTxt+'</span></div>'
     +   '</div>'
