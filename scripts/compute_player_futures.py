@@ -287,7 +287,7 @@ _FN_REMAP = {
     "zachary": ["zach", "zack"],
     "patrick": ["pat", "patty"],
     "raymond": ["ray"],
-  "peter": ["pete"],
+    "peter": ["pete"],
     "kenneth": ["ken", "kenny"],
     "ronald": ["ron", "ronny"],
     "vincent": ["vince", "vinny"],
@@ -1400,6 +1400,18 @@ def _log_guard(market_key, reason, pool):
 
 def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engine_tag="roy_mc_v1"):
     mkt = _roy_market_map(market_meta)
+    # Unique-surname fallback: VI legal names vs baseball names (Francis->Dillon
+    # Dingler). Join by last name ONLY when the surname is unambiguous on both
+    # the odds board and the model pool, so two players sharing a surname can
+    # never be crossed. (2026-09-15)
+    _mkt_surname = {}
+    for _k in mkt:
+        _sn = (_k.split() or [""])[-1]
+        _mkt_surname.setdefault(_sn, []).append(_k)
+    _pool_surname = {}
+    for _x in pool:
+        _sn = ((_norm_name(_x["player"].get("name") or "")).split() or [""])[-1]
+        _pool_surname[_sn] = _pool_surname.get(_sn, 0) + 1
     for x in pool:
         nm = _norm_name(x["player"].get("name") or "")
         m = mkt.get(nm)
@@ -1407,6 +1419,11 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
             for v in _name_variants(x["player"].get("name") or ""):
                 if _norm_name(v) in mkt:
                     m = mkt[_norm_name(v)]; break
+        if not m:
+            _sn = (nm.split() or [""])[-1]
+            _c = _mkt_surname.get(_sn, [])
+            if len(_c) == 1 and _pool_surname.get(_sn, 0) == 1:
+                m = mkt[_c[0]]
         x["_mkt"] = m or {}
     guard = False; reason = None
     if pool:
@@ -1438,7 +1455,7 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
     results = []
     for rk, x in enumerate(pool[:top_n]):
         mp = x["model_p"]; market_p = (x.get("_mkt") or {}).get("market_p")
-        disp_p = mp   # model prob only — no market substitution (2026-09-15)
+        disp_p = mp   # always the model's own MC probability -- no market substitution (2026-09-15)
         edge = (mp - market_p) if market_p is not None else None
         if   edge is None:  stars = ""
         elif edge >= 0.04:  stars = "★★★"
@@ -1459,6 +1476,8 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
             "p_fip": _eos(x["player"], "fip"),
             "p_ip":  _eos(x["player"], "ip"),
             "model_p": round(disp_p, 4),
+            "display_p": round(x.get("display_p", disp_p), 4),   # vote-fit λ-blend board value; bets use model_p
+            "low_confidence": x.get("low_confidence", False),    # CY: no bets off model edges (Fable 2026-09-16)
             "market_p": round(market_p, 4) if market_p is not None else None,
             "edge": round(edge, 4) if edge is not None else None,
             "stars": stars,
@@ -1470,7 +1489,7 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
     # model) so a market-anchored board leads with the market favorite, not the
     # model's suppressed pick (Fable 2026-09-09: NL ROY showed Wetherholt #1 at 2%
     # while Sal Stewart, the 90% market favorite, sat at #4).
-    results.sort(key=lambda r: -((r.get("model_p") or 0)))
+    results.sort(key=lambda r: -(((r.get("display_p") if r.get("display_p") is not None else r.get("model_p")) or 0)))
     for _i, _r in enumerate(results):
         _r["rank"] = _i + 1
     return {
@@ -1570,6 +1589,114 @@ def _award_engine(pool, frac, model, feat_fn, market_meta=None, field_n=20):
     return sorted(field, key=lambda x: -x["model_p"])
 
 
+# ── Vote-fit award boards (Fable V1: banked bWAR + counting + ACC win-layer + λ blend) ──
+# Replaces the MC share engine. bWAR from refresh_bwar.py; banked counting from
+# player["ytd"]; ACC = Sept-to-date (final games) + FG-ROS ATC. Two numbers:
+# model_p (bets) and display_p (board, conditional-λ log-pool). Falls back to the
+# legacy engine when the objects/module are absent.
+try:
+    import awards_votefit as _vf
+except Exception:
+    _vf = None
+
+_VF_DATA = WAR_PATH.parent  # data/
+
+
+def _vf_json(*parts):
+    try:
+        p = _VF_DATA
+        for q in parts:
+            p = p / q
+        return json.loads(p.read_text())
+    except Exception:
+        return {}
+
+
+_VF_OBJ = {
+    "ROY": _vf_json("awards", "roy_votefit_V1_final.json"),
+    "MVP": _vf_json("awards", "mvp_votefit_V1.json"),
+    "CY":  _vf_json("awards", "cy_votefit_V1.json"),
+}
+_VF_BWAR = (_vf_json("bwar_YTD.json") or {}).get("players", {})
+_VF_HGL = {str(v.get("mlbam_id")): (v.get("games") or [])
+           for v in (_vf_json("hitter_gamelogs.json") or {}).get("hitters", {}).values()}
+_VF_PGL = {str(v.get("mlbam_id")): (v.get("starts") or [])
+           for v in (_vf_json("pitcher_gamelogs.json") or {}).get("pitchers", {}).values()}
+_VF_ROS = _vf_json("_fg_ros.json")
+_VF_ROSB = {r.get("xMLBAMID"): r for r in ((_VF_ROS.get("bat") or {}).get("atc") or [])}
+_VF_ROSP = {r.get("xMLBAMID"): r for r in ((_VF_ROS.get("pit") or {}).get("atc") or [])}
+_VF_SEPT = "%d-09-01" % datetime.date.today().year
+
+
+def _vf_acc(mid, groups):
+    try:
+        mid_i = int(mid)
+    except Exception:
+        mid_i = None
+    acc_p = None
+    if "P" in groups:
+        sep_ip = sum((g.get("ip") or (g.get("outs") or 0) / 3.0)
+                     for g in _VF_PGL.get(str(mid), []) if (g.get("date") or "") >= _VF_SEPT)
+        ros_ip = (_VF_ROSP.get(mid_i) or {}).get("IP", 0) or 0
+        acc_p = (sep_ip + ros_ip) * 4.3
+        if groups == {"P"}:
+            return acc_p
+    sep_pa = sum((g.get("pa") or 0)
+                 for g in _VF_HGL.get(str(mid), []) if (g.get("date") or "") >= _VF_SEPT)
+    ros_pa = (_VF_ROSB.get(mid_i) or {}).get("PA", 0) or 0
+    acc_h = sep_pa + ros_pa
+    return max(acc_h, acc_p) if acc_p is not None else acc_h
+
+
+def _vf_feat(x):
+    p = x.get("player") or {}
+    ytd = p.get("ytd") or {}
+    mid = p.get("mlbam_id")
+    groups = _vf.assign_groups(ytd.get("pa") or 0, ytd.get("ip") or 0)
+    bw = (_VF_BWAR.get(str(mid)) or {}).get("bwar")
+    war = bw if bw is not None else (x.get("combined_war") if x.get("combined_war") is not None
+                                     else (ytd.get("war") or 0.0))
+    era = ytd.get("era")
+    return {"key": mid if mid is not None else p.get("name"), "name": p.get("name"),
+            "groups": groups, "war": war, "acc": _vf_acc(mid, groups),
+            "HR": ytd.get("hr") or 0, "RBI": ytd.get("rbi") or 0, "OPS": ytd.get("ops") or 0,
+            "W": ytd.get("w") or 0, "K": ytd.get("k") or 0, "IP": ytd.get("ip") or 0,
+            "ERA": (era if era is not None else 0.0), "_x": x}
+
+
+def _votefit_attach(pool, award, market_meta):
+    """Vote-fit board -> set model_p / display_p / war_final on the field candidates.
+    Returns the display-ordered field (list of x), or None -> legacy engine fallback."""
+    obj = _VF_OBJ.get(award)
+    if not _vf or not obj:
+        return None
+    _attach_market(pool, market_meta)
+    feats = [_vf_feat(x) for x in pool if _is_mlb_rostered(x)]
+    if not feats:
+        return None
+    mkt = {f["key"]: (f["_x"].get("_mkt") or {}).get("market_p") for f in feats}
+    field = _vf.build_field(feats, obj, mkt, min_n=8, mkt_floor=0.005)
+    _vf.score_race([dict(c) for c in field], obj)          # prelim: find model leader for λ
+    lead = max(field, key=lambda c: c.get("share", -9.0))
+    idle = None
+    try:
+        if str(lead.get("key")).isdigit():
+            idle = _roy_idle_days(lead["key"])
+    except Exception:
+        idle = None
+    board, _meta = _vf.build_board(field, obj, mkt, leader_days_idle=idle,
+                                   low_confidence=(award == "CY"))
+    out = []
+    for c in board:
+        x = c["_x"]
+        x["model_p"] = c["p_model"]
+        x["display_p"] = c["p_display"]
+        x["war_final"] = c["war"]
+        x["low_confidence"] = c.get("low_confidence", False)
+        out.append(x)
+    return out
+
+
 def main():
     if _skip_daily(OUTPUT, "player-futures"):
         return 0
@@ -1591,29 +1718,36 @@ def main():
     out_markets = {}
     frac = _roy_season_frac(war)
     for league in ("AL", "NL"):
-        # MVP — share-fit MC engine (Fable 2026-09-08)
+        # MVP — vote-fit V1 board (Fable 2026-09-16); legacy MC fallback if objects absent
         mvp_key = f"{league}_MVP"
         mvp_pool = _mvp_pool(hitters, league, tf, pitchers)
-        mvp_scored = _award_engine(mvp_pool, frac, _MVP_M, _mvp_features, markets_in.get(mvp_key), MVP_FIELD_N)
+        mvp_field = _votefit_attach(mvp_pool, "MVP", markets_in.get(mvp_key))
+        if mvp_field is None:
+            mvp_field = _award_engine(mvp_pool, frac, _MVP_M, _mvp_features, markets_in.get(mvp_key), MVP_FIELD_N)
         out_markets[mvp_key] = _render_roy_mc(
-            mvp_scored, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
-            top_n=70, use_hrgap=False, engine_tag="mvp_mc_v1")
+            mvp_field, mvp_key, markets_in.get(mvp_key, {"label": f"{league} MVP"}),
+            top_n=70, use_hrgap=False, engine_tag="mvp_votefit_v1")
 
-        # CY — share-fit MC engine (Fable 2026-09-08)
+        # CY — vote-fit V1 board (ships FLAGGED low-confidence: display only, no bets)
         cy_key = f"{league}_CY"
         cy_pool = _cy_pool(pitchers, league)
-        cy_scored = _award_engine(cy_pool, frac, _CY_M, _cy_features, markets_in.get(cy_key), CY_FIELD_N)
+        cy_field = _votefit_attach(cy_pool, "CY", markets_in.get(cy_key))
+        if cy_field is None:
+            cy_field = _award_engine(cy_pool, frac, _CY_M, _cy_features, markets_in.get(cy_key), CY_FIELD_N)
         out_markets[cy_key] = _render_roy_mc(
-            cy_scored, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
-            top_n=70, use_hrgap=False, engine_tag="cy_mc_v1")
+            cy_field, cy_key, markets_in.get(cy_key, {"label": f"{league} Cy Young"}),
+            top_n=70, use_hrgap=False, engine_tag="cy_votefit_v1")
 
-        # ROY — share-fit MC engine (Fable 2026-09-08); MVP/CY stay on softmax for now
+        # ROY — vote-fit V1 board
         roy_key = f"{league}_ROY"
         odds_players = markets_in.get(roy_key, {}).get("players", [])
         pool_h, pool_p = _roy_pool(hitters, pitchers, league, odds_players)
-        roy_pool = _roy_engine(pool_h + pool_p, _roy_season_frac(war), markets_in.get(roy_key), ROY_FIELD_N)
+        roy_field = _votefit_attach(pool_h + pool_p, "ROY", markets_in.get(roy_key))
+        if roy_field is None:
+            roy_field = _roy_engine(pool_h + pool_p, _roy_season_frac(war), markets_in.get(roy_key), ROY_FIELD_N)
         out_markets[roy_key] = _render_roy_mc(
-            roy_pool, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}))
+            roy_field, roy_key, markets_in.get(roy_key, {"label": f"{league} Rookie of the Year"}),
+            engine_tag="roy_votefit_v1")
 
     _enrich_display(out_markets, hitters, pitchers)
 
