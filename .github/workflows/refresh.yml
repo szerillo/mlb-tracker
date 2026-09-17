@@ -167,7 +167,7 @@ jobs:
         continue-on-error: true
 
       - name: Scrape AN archive (prior day finalized odds + PRO where public)
-        run: python scripts/scrape_action_archive.py --start yesterday --end yesterday
+        run: python scripts/scrape_action_archive.py --start "$(date -u -d '5 days ago' +%F)" --end yesterday
         continue-on-error: true
         env:
           FORCE_RUN: ${{ github.event.inputs.force == 'true' && '1' || '' }}
