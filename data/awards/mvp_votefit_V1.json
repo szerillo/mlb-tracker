@@ -1,1 +1,34 @@
-{"share_features": ["WAR_z", "HR_z", "RBI_z", "OPS_z", "W_z", "K_z"], "share_weights": [0.04311013193730996, 0.021782769708926633, -0.0043237846602353375, 0.01046868496007197, -0.001403805684482374, -0.013749346768844423], "temp": 0.013189103143988091, "absence_gamma": 0.5986720249595233, "fixed_SDs": {"war": 1.8162905596394072, "acc": 62.13608496453158, "HR": 11.958854994050451, "RBI": 33.022172788364756, "OPS": 0.2357967929047184, "W": 4.4674113281804795, "K": 61.69520351409794}, "loro": "15/20", "crosstype_rule": "same as ROY V1 (per-race per-type means, fixed SDs, off-type z=0)"}
+{
+ "share_features": [
+  "WAR_z",
+  "HR_z",
+  "RBI_z",
+  "OPS_z",
+  "W_z",
+  "K_z"
+ ],
+ "share_weights": [
+  0.04311013193730996,
+  0.021782769708926633,
+  -0.0043237846602353375,
+  0.01046868496007197,
+  -0.001403805684482374,
+  -0.013749346768844423
+ ],
+ "temp": 0.0132453,
+ "absence_gamma": 0.599,
+ "fixed_SDs": {
+  "war": 1.8162905596394072,
+  "acc": 62.13608496453158,
+  "HR": 11.958854994050451,
+  "RBI": 33.022172788364756,
+  "OPS": 0.2357967929047184,
+  "W": 4.4674113281804795,
+  "K": 61.69520351409794
+ },
+ "loro": "15/20",
+ "crosstype_rule": "same as ROY V1 (per-race per-type means, fixed SDs, off-type z=0)",
+ "pitcher_delta": -3.317,
+ "structure": "p_win = softmax(share/temp + gamma*ACC_z + pitcher_delta*[is_pure_pitcher])",
+ "pitcher_delta_provenance": "PRIOR not fit (MLE unbounded: 0 pitcher winners / 20 panel races). v1.2 basis: marginal pitcher MVP win rate ~2/60 races (~3.5%) per principal voter-behavior read \u2014 when a viable elite hitter exists, voters default to the hitter; the earlier -2.44 (8% when-leading) over-credited transcendent-season cases (Verlander 2011, Kershaw 2014) with weak hitter fields. Pure pitchers only; two-way exempt. Refit when a pitcher-led MVP race resolves."
+}
