@@ -61,11 +61,15 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
 
+      - name: Archive awards board (model_p/display_p/market_p for lambda fit)
+        run: python scripts/archive_awards.py
+        continue-on-error: true
+
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/player_futures_odds.json data/player_war_projections.json data/player_futures.json data/_player_team_cache.json data/awards_guard_log.jsonl data/bwar_YTD.json 2>/dev/null || true
+          git add data/player_futures_odds.json data/player_war_projections.json data/player_futures.json data/_player_team_cache.json data/awards_guard_log.jsonl data/bwar_YTD.json data/awards_archive 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
