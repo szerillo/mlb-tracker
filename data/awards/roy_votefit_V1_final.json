@@ -1,0 +1,51 @@
+{
+ "share_features": [
+  "WAR_z",
+  "HR_z",
+  "RBI_z",
+  "OPS_z",
+  "W_z",
+  "K_z"
+ ],
+ "share_weights": [
+  0.12598759495187387,
+  0.08020977604450505,
+  -0.012869720221475882,
+  -0.003492105332731804,
+  0.031891010339253796,
+  0.07937106399447069
+ ],
+ "temp": 0.03456995039734192,
+ "absence_gamma": 1.1512199561579897,
+ "fixed_SDs": {
+  "war": 1.327690892873731,
+  "HR": 9.241170146476616,
+  "RBI": 26.16573236970967,
+  "OPS": 0.3188992863798096,
+  "W": 3.5635308653306192,
+  "K": 49.9893749851726,
+  "acc": 41.11526000630006
+ },
+ "loro": "16/20",
+ "structure": "p_win = softmax(share_score/temp + gamma*ACC_z); ACC = projected full-Sept accrual (PA; IP*4.3)",
+ "war_input": "banked YTD bWAR (B-R war_daily_bat/pitch.txt, mlb_ID keyed)",
+ "crosstype_rule": {
+  "means": "per-race; WAR_z and ACC_z centered on whole field mean; HR/RBI/OPS on race HITTERS mean (hitters only); W/K on race PITCHERS mean (pitchers only)",
+  "off_type": "z=0 exactly (a pitcher has HR_z=RBI_z=OPS_z=0; a hitter has W_z=K_z=0)",
+  "sds": "ALWAYS the fixed_SDs, never within-race",
+  "single_member_group": "z=0 (x==mean)"
+ },
+ "verification_anchors": {
+  "NL": {
+   "JJ Wetherholt": 0.537,
+   "Nolan McLean": 0.228,
+   "Carson Benge": 0.16,
+   "Sal Stewart": 0.061,
+   "Logan Henderson": 0.014
+  },
+  "AL": {
+   "Kevin McGonigle": 0.772,
+   "Parker Messick": 0.228
+  }
+ }
+}
