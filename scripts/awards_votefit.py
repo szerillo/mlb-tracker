@@ -12,6 +12,12 @@ Cross-type z rule (per Fable, identical across awards):
   - single-member group -> members' z = 0 (x==mean); missing group -> 0.
   - SDs ALWAYS the fixed historical SDs; means are per-race per-type.
   - Two-way (Ohtani-class) candidates belong to BOTH groups (all channels live).
+  - ERA_z is SIGN-FLIPPED (lower ERA is better) so its positive weight rewards
+    low ERA. (v1.2)
+
+Win layer: p_model = softmax(share/temp + γ·ACC_z + pitcher_delta·[pure pitcher]).
+  pitcher_delta (from the object, default 0) is a PURE-pitcher prior applied in
+  MVP only; two-way (Ohtani-class) candidates are exempt. (v1.2)
 
 Two numbers:
   * p_model   — pure vote-fit softmax. BET SELECTION reads this only.
@@ -86,10 +92,17 @@ def score_race(cands, obj):
         m = _mean([c.get(b, 0.0) for c in sub]) if sub else 0.0
         for c in cands:
             inn = (grp is None) or (grp in c["groups"])
-            c[f] = ((c.get(b, 0.0) - m) / SD[b]) if (inn and sub) else 0.0
+            if inn and sub:
+                z = (c.get(b, 0.0) - m) / SD[b]
+                c[f] = -z if b == "ERA" else z   # v1.2: ERA lower-is-better
+            else:
+                c[f] = 0.0
+    pdelta = obj.get("pitcher_delta", 0.0)       # v1.2: pure-pitcher MVP prior
     for c in cands:
         c["share"] = sum(W[f] * c[f] for f in F)
         c["lin"] = c["share"] / obj["temp"] + obj["absence_gamma"] * c["ACC_z"]
+        if pdelta and c["groups"] == {"P"}:       # pure pitcher only; two-way exempt
+            c["lin"] += pdelta
     mx = max(c["lin"] for c in cands)
     Z = sum(math.exp(c["lin"] - mx) for c in cands)
     for c in cands:
