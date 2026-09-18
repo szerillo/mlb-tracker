@@ -43,6 +43,31 @@ function _norm(s) {
   return out.replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '')
     .replace(/['.]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
+function _fiKey(nk) {
+  var p = String(nk).split(' ');
+  if (p.length < 2) return '';
+  return p[0].charAt(0) + ' ' + p[p.length - 1];   // "zach thornton" -> "z thornton"
+}
+// StatsAPI name search fallback for a starter not in Handedness. Accepts only a
+// UNIQUE active pitcher matching the full norm or first-initial+lastname. Returns
+// {id, throws} or null (null -> caller uses the league prior, never a hard 0).
+function _searchPitcher(name) {
+  try {
+    var last = String(name).trim().split(/\s+/).pop();
+    var r = UrlFetchApp.fetch('https://statsapi.mlb.com/api/v1/people/search?names=' +
+      encodeURIComponent(last), {muteHttpExceptions: true});
+    if (r.getResponseCode() !== 200) return null;
+    var ppl = (JSON.parse(r.getContentText()).people) || [];
+    var want = _norm(name), wantFi = _fiKey(want);
+    var cands = ppl.filter(function (p) { return p.active && ((p.primaryPosition || {}).code === '1'); })
+      .map(function (p) { return {id: p.id, nm: _norm(p.fullName || ''), throws: (p.pitchHand || {}).code || 'R'}; });
+    var exact = cands.filter(function (c) { return c.nm === want; });
+    if (exact.length === 1) return exact[0];
+    var fi = cands.filter(function (c) { return _fiKey(c.nm) === wantFi; });
+    if (fi.length === 1) return fi[0];
+    return null;
+  } catch (e) { return null; }
+}
 function _n(x) { var v = parseFloat(x); return isNaN(v) ? 0 : v; }
 function _fip(st) {
   if (!st) return null;
@@ -64,14 +89,18 @@ function computeTiltByGame() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // 1) Handedness: name -> bats, name -> mlbam_id
-  var HAND = {}, NAMEID = {};
+  var HAND = {}, NAMEID = {}, FI = {};
   var hv = ss.getSheetByName(HAND_TAB).getDataRange().getValues();
   for (var i = 0; i < hv.length; i++) {
     var id = hv[i][0], nm = hv[i][1], bt = hv[i][2];
     if (nm) {
       var kn = _norm(nm);
       if (bt) HAND[kn] = String(bt).trim().toUpperCase();
-      if (id !== '' && id != null) NAMEID[kn] = id;
+      if (id !== '' && id != null) {
+        NAMEID[kn] = id;
+        var _fk = _fiKey(kn);
+        if (_fk) FI[_fk] = (FI[_fk] === undefined) ? id : 'AMBIG';   // unique-only fallback
+      }
     }
   }
 
@@ -95,6 +124,24 @@ function computeTiltByGame() {
     byGame[gg][t] = byGame[gg][t] || {batters: {}, sp: null};
     if (o >= 1 && o <= 9) byGame[gg][t].batters[o] = player;
     else if (o === 10) { byGame[gg][t].sp = player; spNames[_norm(player)] = player; }
+  }
+
+  // 3b) resolve SP names missing from Handedness: unique first-initial+lastname
+  //     (RotoWire "Zach" -> MLB "Zac" Thornton), then StatsAPI name search (append
+  //     new arms to Handedness so next run is direct). Unresolved -> league prior below.
+  var _newHand = [];
+  Object.keys(spNames).forEach(function (k) {
+    if (NAMEID[k] != null) return;
+    var alt = _fiKey(k);
+    if (alt && FI[alt] != null && FI[alt] !== 'AMBIG') { NAMEID[k] = FI[alt]; return; }
+    var found = _searchPitcher(spNames[k]);
+    if (found && found.id) { NAMEID[k] = found.id; _newHand.push([found.id, spNames[k], (found.throws || 'R'), 'P']); }
+  });
+  if (_newHand.length) {
+    try {
+      var _hs = ss.getSheetByName(HAND_TAB);
+      _hs.getRange(_hs.getLastRow() + 1, 1, _newHand.length, 4).setValues(_newHand);
+    } catch (e) {}
   }
 
   // 4) fetch career splits + bio for every id'd starter — with a retry pass and no silent drops
@@ -157,6 +204,14 @@ function computeTiltByGame() {
     SP[k] = {hand: hand, opener: opener, floored: thin, priorOnly: priorOnly,
              priorDelta: lg, sideL: sideL, sideR: sideR, mo: mo, tl: tL, tr: tR};
   });
+  // Unresolved starters (no id anywhere): still emit a small league-prior SP so the
+  // opposing tilt is handedness-neutral+nonzero rather than a hard 0.
+  Object.keys(spNames).forEach(function (k) {
+    if (SP[k]) return;
+    SP[k] = {hand: 'R', opener: false, floored: true, priorOnly: true,
+             priorDelta: LG_RHP, sideL: 0, sideR: 0, mo: 0, tl: 0, tr: 0};
+    onPrior.push(spNames[k] + '??');   // ?? = fully unresolved (default RHP prior)
+  });
 
   function tilt(batters, oppSP) {
     if (!oppSP || oppSP.opener) return 0;
@@ -217,8 +272,8 @@ function computeTiltByGame() {
 /** Checkbox hook — tick Tilt By Game!A1 (or Dashboard!M2 via onEdit) to recompute. */
 function wtiltGameOnCheckboxEdit(e) {
   if (!e || !e.range) return;
-  if (e.range.getSheet().getName() !== OUT_TAB) return;
-  if (e.range.getA1Notation() !== 'A1') return;
+  var _sh = e.range.getSheet().getName(), _a1 = e.range.getA1Notation();
+  if (!((_sh === OUT_TAB && _a1 === 'A1') || (_sh === 'Dashboard' && _a1 === 'M2'))) return;
   if (e.value !== 'TRUE') return;
   try { computeTiltByGame(); } finally { e.range.setValue(false); }
 }
