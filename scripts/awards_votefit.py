@@ -180,11 +180,11 @@ def build_board(cands, obj, market_by_key, leader_days_idle=None, leader_il=Fals
     score_race(cands, obj)
     lam, leader, tripwire, absent = compute_lambda(cands, market_by_key, leader_days_idle, leader_il)
     mkt = [market_by_key.get(c["key"]) if market_by_key else None for c in cands]
-    disp = logpool([c["p_model"] for c in cands], devig(mkt), lam) if lam > 0 else [c["p_model"] for c in cands]
+    _ld = max(lam, 0.5); disp = logpool([c["p_model"] for c in cands], devig(mkt), _ld) if _ld > 0 else [c["p_model"] for c in cands]
     for c, pd in zip(cands, disp):
         c["p_display"] = pd
         c["low_confidence"] = low_confidence
-    meta = {"lambda": lam, "leader": leader["key"], "tripwire": tripwire,
+    meta = {"lambda": max(lam, 0.5), "lambda_absence": lam, "leader": leader["key"], "tripwire": tripwire,
             "absence": absent, "low_confidence": low_confidence,
             "tripwire_log": tripwire}  # always log any leader divergence>=0.35
     return sorted(cands, key=lambda c: -c["p_display"]), meta
