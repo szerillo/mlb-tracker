@@ -1,593 +1,593 @@
 {
-  "generated_at": "2026-09-09",
+  "generated_at": "2026-09-20",
   "source": "UmpScorecards (umpscorecards.com/api)",
   "source_url": "https://umpscorecards.com",
-  "methodology": "Offense/pitching bias = batter_impact - pitcher_impact (runs). 2026x5 + 2025x4 + 2024x1 (50/40/10) per-game weighting. Challenge-dampened x0.766 = 1 - the 2026 ABS overturn share of wrong calls (UmpScorecards impact is pre-challenge; overturned misses still count against the ump, so raw overstates realized game impact). 50-game Bayesian prior toward the dampened baseline.",
+  "methodology": "Offense/pitching bias = batter_impact - pitcher_impact (runs). 2026x5 + 2025x4 + 2024x1 (50/40/10) per-game weighting. Challenge-dampened x0.764 = 1 - the 2026 ABS overturn share of wrong calls (UmpScorecards impact is pre-challenge; overturned misses still count against the ump, so raw overstates realized game impact). 50-game Bayesian prior toward the dampened baseline.",
   "window_label": "2024-2026 (50/40/10 by year, ABS-challenge adjusted)",
   "shrinkage_prior_games": 50,
-  "challenge_dampen": 0.7661,
-  "league_overturn_share_2026": 0.2339,
-  "baseline": 0.11455808436354387,
+  "challenge_dampen": 0.7642,
+  "league_overturn_share_2026": 0.2358,
+  "baseline": 0.11150110318063931,
   "league_avg": {
-    "baseline_off_adj": 0.1146,
-    "acc_above_x_mean": 0.1642
+    "baseline_off_adj": 0.1115,
+    "acc_above_x_mean": 0.1392
   },
   "umpires": {
     "Lance Barksdale": {
-      "n": 91,
-      "off_adj_shrunk": 0.4185,
-      "off_adj_raw": 0.585,
-      "acc_above_x": 0.128
+      "n": 92,
+      "off_adj_shrunk": 0.4178,
+      "off_adj_raw": 0.584,
+      "acc_above_x": 0.12
     },
     "Andy Fletcher": {
-      "n": 81,
-      "off_adj_shrunk": 0.2449,
-      "off_adj_raw": 0.325,
-      "acc_above_x": -1.016
+      "n": 84,
+      "off_adj_shrunk": 0.2562,
+      "off_adj_raw": 0.342,
+      "acc_above_x": -1.028
     },
     "Adrian Johnson": {
       "n": 84,
-      "off_adj_shrunk": 0.123,
+      "off_adj_shrunk": 0.1216,
       "off_adj_raw": 0.128,
       "acc_above_x": -0.633
     },
     "Dan Iassogna": {
-      "n": 88,
-      "off_adj_shrunk": -0.0938,
-      "off_adj_raw": -0.212,
-      "acc_above_x": -0.617
+      "n": 91,
+      "off_adj_shrunk": -0.0893,
+      "off_adj_raw": -0.2,
+      "acc_above_x": -0.608
     },
     "Mark Ripperger": {
-      "n": 94,
-      "off_adj_shrunk": 0.0546,
-      "off_adj_raw": 0.023,
-      "acc_above_x": 1.367
+      "n": 95,
+      "off_adj_shrunk": 0.0759,
+      "off_adj_raw": 0.057,
+      "acc_above_x": 1.327
     },
     "Alan Porter": {
-      "n": 88,
-      "off_adj_shrunk": 0.2069,
+      "n": 90,
+      "off_adj_shrunk": 0.2065,
       "off_adj_raw": 0.259,
-      "acc_above_x": 0.94
+      "acc_above_x": 0.96
     },
     "Todd Tichenor": {
-      "n": 88,
-      "off_adj_shrunk": 0.2981,
-      "off_adj_raw": 0.402,
-      "acc_above_x": 0.213
+      "n": 90,
+      "off_adj_shrunk": 0.3127,
+      "off_adj_raw": 0.424,
+      "acc_above_x": 0.15
     },
     "Laz Diaz": {
-      "n": 89,
-      "off_adj_shrunk": 0.0587,
+      "n": 90,
+      "off_adj_shrunk": 0.0572,
       "off_adj_raw": 0.027,
-      "acc_above_x": -1.017
+      "acc_above_x": -1.063
     },
     "Brian O'Nora": {
       "n": 70,
-      "off_adj_shrunk": -0.1118,
-      "off_adj_raw": -0.274,
+      "off_adj_shrunk": -0.1127,
+      "off_adj_raw": -0.273,
       "acc_above_x": -0.57
     },
     "Chris Guccione": {
       "n": 75,
-      "off_adj_shrunk": 0.2824,
-      "off_adj_raw": 0.394,
+      "off_adj_shrunk": 0.2806,
+      "off_adj_raw": 0.393,
       "acc_above_x": 0.084
     },
     "James Hoye": {
-      "n": 88,
-      "off_adj_shrunk": 0.2363,
-      "off_adj_raw": 0.306,
-      "acc_above_x": -0.051
+      "n": 90,
+      "off_adj_shrunk": 0.2239,
+      "off_adj_raw": 0.286,
+      "acc_above_x": -0.101
     },
     "Chad Fairchild": {
-      "n": 82,
-      "off_adj_shrunk": 0.1748,
-      "off_adj_raw": 0.212,
-      "acc_above_x": -0.141
+      "n": 84,
+      "off_adj_shrunk": 0.1252,
+      "off_adj_raw": 0.133,
+      "acc_above_x": -0.195
     },
     "Marvin Hudson": {
-      "n": 78,
-      "off_adj_shrunk": 0.0537,
-      "off_adj_raw": 0.015,
-      "acc_above_x": -0.231
+      "n": 79,
+      "off_adj_shrunk": 0.0785,
+      "off_adj_raw": 0.058,
+      "acc_above_x": -0.281
     },
     "Dan Bellino": {
-      "n": 90,
-      "off_adj_shrunk": 0.0355,
-      "off_adj_raw": -0.008,
-      "acc_above_x": 0.204
+      "n": 91,
+      "off_adj_shrunk": 0.0258,
+      "off_adj_raw": -0.021,
+      "acc_above_x": 0.138
     },
     "Larry Vanover": {
       "n": 28,
-      "off_adj_shrunk": -0.0871,
-      "off_adj_raw": -0.447,
+      "off_adj_shrunk": -0.0886,
+      "off_adj_raw": -0.446,
       "acc_above_x": -1.376
     },
     "Alfonso M\u00e1rquez": {
-      "n": 88,
-      "off_adj_shrunk": 0.3697,
-      "off_adj_raw": 0.515,
-      "acc_above_x": -0.31
+      "n": 90,
+      "off_adj_shrunk": 0.3441,
+      "off_adj_raw": 0.473,
+      "acc_above_x": -0.374
     },
     "Mark Wegner": {
-      "n": 81,
-      "off_adj_shrunk": 0.1605,
-      "off_adj_raw": 0.189,
-      "acc_above_x": 0.583
+      "n": 83,
+      "off_adj_shrunk": 0.153,
+      "off_adj_raw": 0.178,
+      "acc_above_x": 0.538
     },
     "Cory Blaser": {
-      "n": 82,
-      "off_adj_shrunk": 0.1069,
-      "off_adj_raw": 0.102,
-      "acc_above_x": -0.069
+      "n": 84,
+      "off_adj_shrunk": 0.1077,
+      "off_adj_raw": 0.105,
+      "acc_above_x": -0.102
     },
     "Brian Knight": {
       "n": 16,
-      "off_adj_shrunk": 0.1114,
-      "off_adj_raw": 0.102,
+      "off_adj_shrunk": 0.109,
+      "off_adj_raw": 0.101,
       "acc_above_x": 1.122
     },
     "Rob Drake": {
-      "n": 59,
-      "off_adj_shrunk": -0.1874,
-      "off_adj_raw": -0.443,
-      "acc_above_x": -1.369
+      "n": 61,
+      "off_adj_shrunk": -0.1823,
+      "off_adj_raw": -0.423,
+      "acc_above_x": -1.394
     },
     "Phil Cuzzi": {
       "n": 61,
-      "off_adj_shrunk": 0.0413,
+      "off_adj_shrunk": 0.04,
       "off_adj_raw": -0.019,
       "acc_above_x": 0.641
     },
     "Hunter Wendelstedt": {
-      "n": 62,
-      "off_adj_shrunk": 0.027,
-      "off_adj_raw": -0.044,
-      "acc_above_x": -1.328
+      "n": 63,
+      "off_adj_shrunk": 0.041,
+      "off_adj_raw": -0.015,
+      "acc_above_x": -1.357
     },
     "David Rackley": {
-      "n": 88,
-      "off_adj_shrunk": -0.0011,
-      "off_adj_raw": -0.067,
-      "acc_above_x": 0.039
+      "n": 90,
+      "off_adj_shrunk": -0.026,
+      "off_adj_raw": -0.102,
+      "acc_above_x": -0.019
     },
     "Adam Hamari": {
-      "n": 93,
-      "off_adj_shrunk": 0.0476,
-      "off_adj_raw": 0.012,
-      "acc_above_x": 1.099
+      "n": 95,
+      "off_adj_shrunk": 0.0758,
+      "off_adj_raw": 0.057,
+      "acc_above_x": 1.023
     },
     "Ryan Blakney": {
-      "n": 79,
-      "off_adj_shrunk": 0.2003,
-      "off_adj_raw": 0.255,
-      "acc_above_x": 0.007
+      "n": 80,
+      "off_adj_shrunk": 0.1797,
+      "off_adj_raw": 0.222,
+      "acc_above_x": -0.011
     },
     "Lance Barrett": {
-      "n": 92,
-      "off_adj_shrunk": 0.1104,
-      "off_adj_raw": 0.108,
-      "acc_above_x": -0.273
+      "n": 95,
+      "off_adj_shrunk": 0.1078,
+      "off_adj_raw": 0.106,
+      "acc_above_x": -0.319
     },
     "Mark Carlson": {
       "n": 36,
-      "off_adj_shrunk": 0.2814,
-      "off_adj_raw": 0.513,
+      "off_adj_shrunk": 0.2791,
+      "off_adj_raw": 0.512,
       "acc_above_x": -0.054
     },
     "Scott Barry": {
-      "n": 77,
-      "off_adj_shrunk": 0.3106,
-      "off_adj_raw": 0.438,
-      "acc_above_x": -0.13
+      "n": 79,
+      "off_adj_shrunk": 0.3406,
+      "off_adj_raw": 0.486,
+      "acc_above_x": -0.131
     },
     "Bruce Dreckman": {
-      "n": 76,
-      "off_adj_shrunk": 0.0672,
-      "off_adj_raw": 0.036,
-      "acc_above_x": -0.863
+      "n": 79,
+      "off_adj_shrunk": 0.0485,
+      "off_adj_raw": 0.009,
+      "acc_above_x": -0.992
     },
     "John Tumpane": {
-      "n": 85,
-      "off_adj_shrunk": 0.0574,
-      "off_adj_raw": 0.024,
-      "acc_above_x": 0.464
+      "n": 86,
+      "off_adj_shrunk": 0.0523,
+      "off_adj_raw": 0.018,
+      "acc_above_x": 0.427
     },
     "CB Bucknor": {
       "n": 58,
-      "off_adj_shrunk": -0.0556,
+      "off_adj_shrunk": -0.0568,
       "off_adj_raw": -0.202,
       "acc_above_x": -0.594
     },
     "Manny Gonzalez": {
-      "n": 79,
-      "off_adj_shrunk": 0.2073,
-      "off_adj_raw": 0.266,
-      "acc_above_x": -0.282
+      "n": 81,
+      "off_adj_shrunk": 0.2088,
+      "off_adj_raw": 0.269,
+      "acc_above_x": -0.228
     },
     "Tripp Gibson": {
-      "n": 82,
-      "off_adj_shrunk": 0.0082,
-      "off_adj_raw": -0.057,
-      "acc_above_x": 0.678
+      "n": 83,
+      "off_adj_shrunk": 0.0152,
+      "off_adj_raw": -0.043,
+      "acc_above_x": 0.644
     },
     "Gabe Morales": {
-      "n": 91,
-      "off_adj_shrunk": -0.0773,
-      "off_adj_raw": -0.183,
-      "acc_above_x": 0.624
+      "n": 92,
+      "off_adj_shrunk": -0.0678,
+      "off_adj_raw": -0.165,
+      "acc_above_x": 0.63
     },
     "Carlos Torres": {
-      "n": 85,
-      "off_adj_shrunk": 0.327,
-      "off_adj_raw": 0.452,
-      "acc_above_x": -0.105
+      "n": 88,
+      "off_adj_shrunk": 0.2903,
+      "off_adj_raw": 0.392,
+      "acc_above_x": -0.161
     },
     "Vic Carapazza": {
-      "n": 97,
-      "off_adj_shrunk": 0.0485,
-      "off_adj_raw": 0.014,
-      "acc_above_x": 0.518
+      "n": 98,
+      "off_adj_shrunk": 0.0402,
+      "off_adj_raw": 0.004,
+      "acc_above_x": 0.486
     },
     "D.J. Reyburn": {
-      "n": 84,
-      "off_adj_shrunk": -0.0524,
-      "off_adj_raw": -0.152,
-      "acc_above_x": 0.074
+      "n": 86,
+      "off_adj_shrunk": -0.0448,
+      "off_adj_raw": -0.136,
+      "acc_above_x": 0.103
     },
     "Tony Randazzo": {
       "n": 57,
-      "off_adj_shrunk": 0.1231,
-      "off_adj_raw": 0.131,
+      "off_adj_shrunk": 0.1215,
+      "off_adj_raw": 0.13,
       "acc_above_x": 0.489
     },
     "Nate Tomlinson": {
-      "n": 83,
-      "off_adj_shrunk": 0.1671,
-      "off_adj_raw": 0.199,
-      "acc_above_x": 1.044
+      "n": 84,
+      "off_adj_shrunk": 0.1611,
+      "off_adj_raw": 0.191,
+      "acc_above_x": 0.937
     },
     "Quinn Wolcott": {
-      "n": 88,
-      "off_adj_shrunk": 0.2662,
-      "off_adj_raw": 0.352,
-      "acc_above_x": 0.722
+      "n": 89,
+      "off_adj_shrunk": 0.2618,
+      "off_adj_raw": 0.346,
+      "acc_above_x": 0.773
     },
     "Ramon De Jesus": {
-      "n": 86,
-      "off_adj_shrunk": 0.0404,
-      "off_adj_raw": -0.003,
-      "acc_above_x": 0.307
+      "n": 87,
+      "off_adj_shrunk": 0.0423,
+      "off_adj_raw": 0.003,
+      "acc_above_x": 0.353
     },
     "Jeremie Rehak": {
-      "n": 78,
-      "off_adj_shrunk": -0.0991,
-      "off_adj_raw": -0.236,
-      "acc_above_x": 0.942
+      "n": 80,
+      "off_adj_shrunk": -0.1035,
+      "off_adj_raw": -0.238,
+      "acc_above_x": 0.88
     },
     "Adam Beck": {
-      "n": 89,
-      "off_adj_shrunk": 0.1553,
-      "off_adj_raw": 0.178,
-      "acc_above_x": 0.65
+      "n": 91,
+      "off_adj_shrunk": 0.1454,
+      "off_adj_raw": 0.164,
+      "acc_above_x": 0.574
     },
     "Derek Thomas": {
-      "n": 71,
-      "off_adj_shrunk": 0.1752,
-      "off_adj_raw": 0.218,
-      "acc_above_x": 1.437
+      "n": 72,
+      "off_adj_shrunk": 0.1814,
+      "off_adj_raw": 0.23,
+      "acc_above_x": 1.403
     },
     "Ryan Additon": {
-      "n": 87,
-      "off_adj_shrunk": 0.2551,
-      "off_adj_raw": 0.336,
-      "acc_above_x": 0.341
+      "n": 88,
+      "off_adj_shrunk": 0.2756,
+      "off_adj_raw": 0.369,
+      "acc_above_x": 0.335
     },
     "Jonathan Parra": {
-      "n": 41,
-      "off_adj_shrunk": 0.2304,
-      "off_adj_raw": 0.372,
-      "acc_above_x": -0.517
+      "n": 42,
+      "off_adj_shrunk": 0.2356,
+      "off_adj_raw": 0.383,
+      "acc_above_x": -0.545
     },
     "Mike Estabrook": {
-      "n": 87,
-      "off_adj_shrunk": 0.0077,
-      "off_adj_raw": -0.054,
-      "acc_above_x": -0.45
+      "n": 90,
+      "off_adj_shrunk": 0.0141,
+      "off_adj_raw": -0.04,
+      "acc_above_x": -0.555
     },
     "Dan Merzel": {
-      "n": 86,
-      "off_adj_shrunk": 0.0537,
-      "off_adj_raw": 0.018,
-      "acc_above_x": 0.743
+      "n": 87,
+      "off_adj_shrunk": 0.0351,
+      "off_adj_raw": -0.009,
+      "acc_above_x": 0.761
     },
     "John Libka": {
-      "n": 88,
-      "off_adj_shrunk": 0.3127,
-      "off_adj_raw": 0.425,
-      "acc_above_x": 0.87
+      "n": 90,
+      "off_adj_shrunk": 0.3077,
+      "off_adj_raw": 0.417,
+      "acc_above_x": 0.835
     },
     "Nestor Ceja": {
-      "n": 88,
-      "off_adj_shrunk": 0.0855,
-      "off_adj_raw": 0.069,
-      "acc_above_x": 0.979
+      "n": 89,
+      "off_adj_shrunk": 0.081,
+      "off_adj_raw": 0.064,
+      "acc_above_x": 0.934
     },
     "Nick Mahrley": {
-      "n": 79,
-      "off_adj_shrunk": -0.005,
-      "off_adj_raw": -0.081,
-      "acc_above_x": 0.046
+      "n": 81,
+      "off_adj_shrunk": -0.006,
+      "off_adj_raw": -0.078,
+      "acc_above_x": -0.087
     },
     "Alex Tosi": {
-      "n": 87,
-      "off_adj_shrunk": 0.0412,
-      "off_adj_raw": -0.001,
-      "acc_above_x": 0.98
+      "n": 89,
+      "off_adj_shrunk": 0.0454,
+      "off_adj_raw": 0.008,
+      "acc_above_x": 1.023
     },
     "Chris Segal": {
-      "n": 88,
-      "off_adj_shrunk": -0.0278,
-      "off_adj_raw": -0.109,
-      "acc_above_x": -0.439
+      "n": 89,
+      "off_adj_shrunk": -0.0389,
+      "off_adj_raw": -0.123,
+      "acc_above_x": -0.48
     },
     "Edwin Moscoso": {
-      "n": 90,
-      "off_adj_shrunk": 0.296,
-      "off_adj_raw": 0.397,
-      "acc_above_x": 1.193
+      "n": 92,
+      "off_adj_shrunk": 0.3005,
+      "off_adj_raw": 0.403,
+      "acc_above_x": 1.199
     },
     "Sean Barber": {
-      "n": 82,
-      "off_adj_shrunk": 0.1954,
-      "off_adj_raw": 0.245,
-      "acc_above_x": -0.501
+      "n": 85,
+      "off_adj_shrunk": 0.1798,
+      "off_adj_raw": 0.22,
+      "acc_above_x": -0.498
     },
     "Erich Bacchus": {
-      "n": 84,
-      "off_adj_shrunk": 0.203,
-      "off_adj_raw": 0.256,
-      "acc_above_x": 0.468
+      "n": 85,
+      "off_adj_shrunk": 0.2074,
+      "off_adj_raw": 0.264,
+      "acc_above_x": 0.462
     },
     "Ben May": {
-      "n": 83,
-      "off_adj_shrunk": 0.0643,
-      "off_adj_raw": 0.034,
-      "acc_above_x": 0.531
+      "n": 84,
+      "off_adj_shrunk": 0.0625,
+      "off_adj_raw": 0.033,
+      "acc_above_x": 0.517
     },
     "Brennan Miller": {
-      "n": 87,
-      "off_adj_shrunk": 0.2068,
+      "n": 88,
+      "off_adj_shrunk": 0.2064,
       "off_adj_raw": 0.26,
-      "acc_above_x": -0.325
+      "acc_above_x": -0.309
     },
     "Bill Miller": {
-      "n": 90,
-      "off_adj_shrunk": -0.1971,
-      "off_adj_raw": -0.37,
-      "acc_above_x": 0.161
+      "n": 93,
+      "off_adj_shrunk": -0.1946,
+      "off_adj_raw": -0.359,
+      "acc_above_x": 0.04
     },
     "Jordan Baker": {
-      "n": 85,
-      "off_adj_shrunk": 0.1306,
-      "off_adj_raw": 0.14,
-      "acc_above_x": -0.084
+      "n": 88,
+      "off_adj_shrunk": 0.1506,
+      "off_adj_raw": 0.173,
+      "acc_above_x": -0.109
     },
     "Roberto Ortiz": {
-      "n": 83,
-      "off_adj_shrunk": 0.2113,
-      "off_adj_raw": 0.27,
-      "acc_above_x": -0.341
+      "n": 86,
+      "off_adj_shrunk": 0.1923,
+      "off_adj_raw": 0.239,
+      "acc_above_x": -0.375
     },
     "Charlie Ramos": {
-      "n": 83,
-      "off_adj_shrunk": 0.2784,
-      "off_adj_raw": 0.377,
-      "acc_above_x": -0.171
+      "n": 85,
+      "off_adj_shrunk": 0.2859,
+      "off_adj_raw": 0.388,
+      "acc_above_x": -0.093
     },
     "Clint Vondrak": {
-      "n": 87,
-      "off_adj_shrunk": 0.2943,
-      "off_adj_raw": 0.398,
-      "acc_above_x": 0.241
+      "n": 88,
+      "off_adj_shrunk": 0.2864,
+      "off_adj_raw": 0.386,
+      "acc_above_x": 0.286
     },
     "Doug Eddings": {
-      "n": 95,
-      "off_adj_shrunk": -0.2282,
-      "off_adj_raw": -0.409,
-      "acc_above_x": 0.019
+      "n": 97,
+      "off_adj_shrunk": -0.2422,
+      "off_adj_raw": -0.424,
+      "acc_above_x": -0.046
     },
     "Stu Scheurwater": {
-      "n": 88,
-      "off_adj_shrunk": 0.0025,
-      "off_adj_raw": -0.061,
-      "acc_above_x": -0.326
+      "n": 90,
+      "off_adj_shrunk": 0.0074,
+      "off_adj_raw": -0.051,
+      "acc_above_x": -0.319
     },
     "Tom Hanahan": {
-      "n": 82,
-      "off_adj_shrunk": 0.1964,
-      "off_adj_raw": 0.246,
-      "acc_above_x": 0.089
+      "n": 84,
+      "off_adj_shrunk": 0.1878,
+      "off_adj_raw": 0.233,
+      "acc_above_x": 0.132
     },
     "Paul Clemons": {
-      "n": 87,
-      "off_adj_shrunk": 0.0341,
-      "off_adj_raw": -0.012,
-      "acc_above_x": 0.151
+      "n": 89,
+      "off_adj_shrunk": 0.0351,
+      "off_adj_raw": -0.008,
+      "acc_above_x": 0.044
     },
     "Brian Walsh": {
-      "n": 88,
-      "off_adj_shrunk": 0.087,
-      "off_adj_raw": 0.071,
-      "acc_above_x": 0.325
+      "n": 90,
+      "off_adj_shrunk": 0.0406,
+      "off_adj_raw": 0.001,
+      "acc_above_x": 0.237
     },
     "Chad Whitson": {
-      "n": 72,
-      "off_adj_shrunk": 0.2139,
-      "off_adj_raw": 0.283,
-      "acc_above_x": -0.01
+      "n": 73,
+      "off_adj_shrunk": 0.212,
+      "off_adj_raw": 0.281,
+      "acc_above_x": -0.02
     },
     "Mike Muchlinski": {
-      "n": 88,
-      "off_adj_shrunk": -0.0673,
-      "off_adj_raw": -0.171,
-      "acc_above_x": -0.152
+      "n": 89,
+      "off_adj_shrunk": -0.0819,
+      "off_adj_raw": -0.191,
+      "acc_above_x": -0.176
     },
     "Nic Lentz": {
-      "n": 89,
-      "off_adj_shrunk": 0.3766,
-      "off_adj_raw": 0.524,
-      "acc_above_x": 0.419
+      "n": 90,
+      "off_adj_shrunk": 0.3501,
+      "off_adj_raw": 0.483,
+      "acc_above_x": 0.36
     },
     "Jansen Visconti": {
-      "n": 85,
-      "off_adj_shrunk": 0.1846,
-      "off_adj_raw": 0.226,
-      "acc_above_x": 1.191
+      "n": 88,
+      "off_adj_shrunk": 0.1787,
+      "off_adj_raw": 0.217,
+      "acc_above_x": 1.151
     },
     "Malachi Moore": {
-      "n": 87,
-      "off_adj_shrunk": 0.0657,
-      "off_adj_raw": 0.038,
-      "acc_above_x": -0.366
+      "n": 89,
+      "off_adj_shrunk": 0.072,
+      "off_adj_raw": 0.05,
+      "acc_above_x": -0.421
     },
     "Emil Jimenez": {
-      "n": 88,
-      "off_adj_shrunk": -0.0814,
-      "off_adj_raw": -0.193,
-      "acc_above_x": 0.322
+      "n": 89,
+      "off_adj_shrunk": -0.0846,
+      "off_adj_raw": -0.195,
+      "acc_above_x": 0.327
     },
     "Brock Ballou": {
-      "n": 53,
-      "off_adj_shrunk": 0.2605,
-      "off_adj_raw": 0.398,
-      "acc_above_x": 0.278
+      "n": 56,
+      "off_adj_shrunk": 0.2588,
+      "off_adj_raw": 0.39,
+      "acc_above_x": 0.335
     },
     "Alex MacKay": {
-      "n": 82,
-      "off_adj_shrunk": 0.1142,
-      "off_adj_raw": 0.114,
-      "acc_above_x": 0.613
+      "n": 84,
+      "off_adj_shrunk": 0.098,
+      "off_adj_raw": 0.09,
+      "acc_above_x": 0.652
     },
     "Junior Valentine": {
-      "n": 73,
-      "off_adj_shrunk": 0.2254,
-      "off_adj_raw": 0.301,
-      "acc_above_x": 0.821
+      "n": 76,
+      "off_adj_shrunk": 0.1986,
+      "off_adj_raw": 0.256,
+      "acc_above_x": 0.767
     },
     "John Bacon": {
       "n": 69,
-      "off_adj_shrunk": -0.1352,
-      "off_adj_raw": -0.316,
+      "off_adj_shrunk": -0.136,
+      "off_adj_raw": -0.315,
       "acc_above_x": -0.393
     },
     "David Arrieta": {
       "n": 13,
-      "off_adj_shrunk": 0.1626,
-      "off_adj_raw": 0.348,
+      "off_adj_shrunk": 0.16,
+      "off_adj_raw": 0.347,
       "acc_above_x": 0.157
     },
     "Ryan Wills": {
-      "n": 84,
-      "off_adj_shrunk": 0.1111,
-      "off_adj_raw": 0.109,
-      "acc_above_x": 0.032
+      "n": 86,
+      "off_adj_shrunk": 0.1178,
+      "off_adj_raw": 0.122,
+      "acc_above_x": 0.009
     },
     "Jim Wolf": {
-      "n": 79,
-      "off_adj_shrunk": 0.0793,
-      "off_adj_raw": 0.057,
-      "acc_above_x": 0.183
+      "n": 82,
+      "off_adj_shrunk": 0.0901,
+      "off_adj_raw": 0.077,
+      "acc_above_x": 0.043
     },
     "Edwin Jimenez": {
-      "n": 62,
-      "off_adj_shrunk": 0.1605,
-      "off_adj_raw": 0.197,
-      "acc_above_x": 1.107
+      "n": 64,
+      "off_adj_shrunk": 0.1537,
+      "off_adj_raw": 0.187,
+      "acc_above_x": 0.967
     },
     "Chris Conroy": {
       "n": 79,
-      "off_adj_shrunk": 0.1331,
-      "off_adj_raw": 0.145,
+      "off_adj_shrunk": 0.1317,
+      "off_adj_raw": 0.144,
       "acc_above_x": 0.759
     },
     "Jeremy Riggs": {
       "n": 17,
-      "off_adj_shrunk": 0.0036,
-      "off_adj_raw": -0.323,
+      "off_adj_shrunk": 0.0015,
+      "off_adj_raw": -0.322,
       "acc_above_x": 1.633
     },
     "Will Little": {
-      "n": 78,
-      "off_adj_shrunk": 0.1592,
-      "off_adj_raw": 0.188,
-      "acc_above_x": 0.673
+      "n": 79,
+      "off_adj_shrunk": 0.1539,
+      "off_adj_raw": 0.181,
+      "acc_above_x": 0.646
     },
     "Jacob Metz": {
-      "n": 49,
-      "off_adj_shrunk": 0.0683,
-      "off_adj_raw": 0.021,
-      "acc_above_x": -0.177
+      "n": 51,
+      "off_adj_shrunk": 0.054,
+      "off_adj_raw": -0.002,
+      "acc_above_x": -0.205
     },
     "James Jean": {
-      "n": 51,
-      "off_adj_shrunk": 0.307,
-      "off_adj_raw": 0.496,
-      "acc_above_x": 0.306
+      "n": 53,
+      "off_adj_shrunk": 0.3135,
+      "off_adj_raw": 0.504,
+      "acc_above_x": 0.244
     },
     "Austin Jones": {
-      "n": 53,
-      "off_adj_shrunk": 0.1786,
-      "off_adj_raw": 0.239,
-      "acc_above_x": 1.183
+      "n": 55,
+      "off_adj_shrunk": 0.1758,
+      "off_adj_raw": 0.234,
+      "acc_above_x": 1.164
     },
     "Shane Livensparger": {
-      "n": 63,
-      "off_adj_shrunk": 0.2084,
-      "off_adj_raw": 0.283,
-      "acc_above_x": 0.532
+      "n": 64,
+      "off_adj_shrunk": 0.1916,
+      "off_adj_raw": 0.254,
+      "acc_above_x": 0.423
     },
     "Ron Kulpa": {
-      "n": 44,
-      "off_adj_shrunk": -0.3033,
-      "off_adj_raw": -0.778,
-      "acc_above_x": -1.106
+      "n": 45,
+      "off_adj_shrunk": -0.3092,
+      "off_adj_raw": -0.777,
+      "acc_above_x": -1.088
     },
     "Steven Jaschinski": {
-      "n": 20,
-      "off_adj_shrunk": 0.0119,
-      "off_adj_raw": -0.245,
-      "acc_above_x": 0.459
+      "n": 22,
+      "off_adj_shrunk": 0.0043,
+      "off_adj_raw": -0.239,
+      "acc_above_x": 0.638
     },
     "Dexter Kelley": {
       "n": 25,
-      "off_adj_shrunk": 0.008,
+      "off_adj_shrunk": 0.0061,
       "off_adj_raw": -0.205,
       "acc_above_x": 0.102
     },
     "Willie Traynor": {
-      "n": 45,
-      "off_adj_shrunk": 0.3424,
-      "off_adj_raw": 0.596,
-      "acc_above_x": 0.291
+      "n": 47,
+      "off_adj_shrunk": 0.3442,
+      "off_adj_raw": 0.592,
+      "acc_above_x": 0.243
     },
     "Tyler Jones": {
-      "n": 26,
-      "off_adj_shrunk": 0.1904,
-      "off_adj_raw": 0.336,
-      "acc_above_x": 0.17
+      "n": 27,
+      "off_adj_shrunk": 0.1878,
+      "off_adj_raw": 0.329,
+      "acc_above_x": 0.231
     },
     "Jen Pawol": {
       "n": 18,
-      "off_adj_shrunk": 0.1416,
-      "off_adj_raw": 0.217,
+      "off_adj_shrunk": 0.1392,
+      "off_adj_raw": 0.216,
       "acc_above_x": -1.169
     },
     "Louie Krupa": {
-      "n": 14,
-      "off_adj_shrunk": 0.1067,
-      "off_adj_raw": 0.079,
-      "acc_above_x": 0.58
+      "n": 16,
+      "off_adj_shrunk": 0.0921,
+      "off_adj_raw": 0.032,
+      "acc_above_x": 0.388
     }
   }
 }
