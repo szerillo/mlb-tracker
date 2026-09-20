@@ -8,15 +8,18 @@ name: Model grades (vs close)
 #     first run inside the midnight-ET window (write-once per slate).
 #   - grade_model.py re-grades every date that has our number + a finalized
 #     close, writing data/model_grades/{date}.json + data/model_grades_summary.json.
+#   - backtest_additive.py grades the SP-response slope (is the additive/more-SP
+#     -weight justified) + model-vs-results + model-vs-close over the full
+#     archive window, writing data/additive_backtest.json.
 #
 # Reads the data the refresh workflow already commits (sheet_projections.json,
 # odds.json, data/archive/*, data/odds_archive/*), so it just needs a checkout.
 
 on:
   schedule:
-    - cron: "10 4 * * *"    # 00:10 AM ET — freeze the midnight snapshot
-    - cron: "10 5 * * *"    # 01:10 AM ET — redundant midnight catch (write-once)
-    - cron: "0 16 * * *"    # 12:00 PM ET — grade prior slates (finals are in)
+    - cron: "10 4 * * *"    # 00:10 AM ET â freeze the midnight snapshot
+    - cron: "10 5 * * *"    # 01:10 AM ET â redundant midnight catch (write-once)
+    - cron: "0 16 * * *"    # 12:00 PM ET â grade prior slates (finals are in)
   workflow_dispatch:
 
 concurrency:
@@ -48,11 +51,17 @@ jobs:
         run: python scripts/grade_model.py
         continue-on-error: true
 
+      - name: Additive backtest (SP-slope + vs results + vs close)
+        run: |
+          pip install --quiet numpy
+          python scripts/backtest_additive.py
+        continue-on-error: true
+
       - name: Commit changed grades (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/model_grades data/model_grades_summary.json data/archive 2>/dev/null || true
+          git add data/model_grades data/model_grades_summary.json data/additive_backtest.json data/archive 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
