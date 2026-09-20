@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-20T22:50:50.028702Z",
+  "generated_at": "2026-09-20T23:45:50.523396Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260920&periods=event",
   "date": "2026-09-20",
@@ -430,7 +430,7 @@
       "an_event_id": 296047,
       "matchup": "Detroit Tigers @ Chicago White Sox",
       "start_time": "2026-09-20T18:10:00.000Z",
-      "status": "Bot 3rd",
+      "status": "Bot 5th",
       "moneyline": {
         "away": {
           "odds": 102,
@@ -710,7 +710,7 @@
       "an_event_id": 296051,
       "matchup": "Minnesota Twins @ Los Angeles Angels",
       "start_time": "2026-09-20T20:07:00.000Z",
-      "status": "End 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": -115,
@@ -920,7 +920,7 @@
       "an_event_id": 296053,
       "matchup": "New York Yankees @ Arizona Diamondbacks",
       "start_time": "2026-09-20T20:10:00.000Z",
-      "status": "Top 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 105,
@@ -990,7 +990,7 @@
       "an_event_id": 296055,
       "matchup": "Milwaukee Brewers @ Baltimore Orioles",
       "start_time": "2026-09-20T23:20:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 2nd",
       "moneyline": {
         "away": {
           "odds": -205,
@@ -1052,7 +1052,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 824787,
@@ -1120,18 +1121,57 @@
       "start_time": "2026-09-21T22:40:00.000Z",
       "status": "scheduled",
       "moneyline": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": 133,
+          "line": 0,
+          "book": "Caesars"
+        },
+        "home": {
+          "odds": -155,
+          "line": 0,
+          "book": "bet365"
+        }
       },
       "run_line": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": -165,
+          "line": 1.5,
+          "book": "Fanatics"
+        },
+        "home": {
+          "odds": 155,
+          "line": -1.5,
+          "book": "FanDuel"
+        }
       },
       "total": {
-        "over": null,
-        "under": null
+        "over": {
+          "odds": 102,
+          "line": 8.5,
+          "book": "Caesars"
+        },
+        "under": {
+          "odds": -120,
+          "line": 8.5,
+          "book": "bet365"
+        }
       },
-      "team_total": null
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "implied": 3.9,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 4.5,
+          "implied": 4.6,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
     },
     {
       "game_pk": 823169,
@@ -1141,7 +1181,7 @@
       "status": "scheduled",
       "moneyline": {
         "away": {
-          "odds": -118,
+          "odds": -120,
           "line": 0,
           "book": "DraftKings"
         },
@@ -1178,14 +1218,14 @@
       "team_total": {
         "away": {
           "line": 4.5,
-          "implied": 4.1,
+          "implied": 4.11,
           "over": null,
           "under": null,
           "source": "implied"
         },
         "home": {
           "line": 3.5,
-          "implied": 3.9,
+          "implied": 3.89,
           "over": null,
           "under": null,
           "source": "implied"
