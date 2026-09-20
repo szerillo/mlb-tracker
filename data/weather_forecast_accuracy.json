@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-09-20T15:39:13Z",
+  "generated_at": "2026-09-20T18:22:31Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
     "2026-09-19"
   ],
   "forecast_input_accuracy": {
-    "n_games": 654,
-    "our_temp_MAE_f": 2.27,
+    "n_games": 658,
+    "our_temp_MAE_f": 2.26,
     "our_wind_MAE_mph": 2.42,
-    "our_winddir_MAE_deg": 33.4,
+    "our_winddir_MAE_deg": 33.39,
     "temp_head_to_head": {
       "n": 471,
       "our_temp_MAE_f": 2.14,
@@ -17,19 +17,19 @@
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 653,
-    "calibrated_slope_runs_per_pct": 0.09,
+    "n_played": 657,
+    "calibrated_slope_runs_per_pct": 0.0903,
     "ours": {
-      "slope": 0.1652,
-      "r": 0.151,
-      "n": 653,
-      "realized_x": 1.84
+      "slope": 0.162,
+      "r": 0.146,
+      "n": 657,
+      "realized_x": 1.79
     },
     "bp": {
-      "slope": 0.0866,
-      "r": 0.118,
-      "n": 540,
-      "realized_x": 0.96
+      "slope": 0.085,
+      "r": 0.115,
+      "n": 544,
+      "realized_x": 0.94
     }
   },
   "games": [
@@ -952,6 +952,86 @@
       "total": 17,
       "our_adj": 2.3,
       "bp_adj": 3.0
+    },
+    {
+      "date": "2026-07-06",
+      "pk": 822712,
+      "venue": "Nationals Park",
+      "obs_temp": 80.0,
+      "obs_wind": 0.0,
+      "obs_dir": 0.0,
+      "obs_src": "obs",
+      "our_temp": 83.0,
+      "our_wind": 6.0,
+      "our_dir": 67.5,
+      "bp_temp": null,
+      "our_temp_err": 3.0,
+      "bp_temp_err": null,
+      "our_wind_err": 6.0,
+      "our_dir_err": 67.5,
+      "total": 23,
+      "our_adj": 1.8,
+      "bp_adj": 4.0
+    },
+    {
+      "date": "2026-07-06",
+      "pk": 823036,
+      "venue": "Busch Stadium",
+      "obs_temp": 83.0,
+      "obs_wind": 7.5,
+      "obs_dir": 29.0,
+      "obs_src": "obs",
+      "our_temp": 84.0,
+      "our_wind": 8.0,
+      "our_dir": 22.5,
+      "bp_temp": null,
+      "our_temp_err": 1.0,
+      "bp_temp_err": null,
+      "our_wind_err": 0.5,
+      "our_dir_err": 6.5,
+      "total": 7,
+      "our_adj": 0.3,
+      "bp_adj": 1.0
+    },
+    {
+      "date": "2026-07-06",
+      "pk": 824089,
+      "venue": "Kauffman Stadium",
+      "obs_temp": 85.9,
+      "obs_wind": 5.1,
+      "obs_dir": 40.0,
+      "obs_src": "obs",
+      "our_temp": 86.0,
+      "our_wind": 6.0,
+      "our_dir": 67.5,
+      "bp_temp": null,
+      "our_temp_err": 0.09999999999999432,
+      "bp_temp_err": null,
+      "our_wind_err": 0.9000000000000004,
+      "our_dir_err": 27.5,
+      "total": 16,
+      "our_adj": 0.1,
+      "bp_adj": -2.0
+    },
+    {
+      "date": "2026-07-06",
+      "pk": 824900,
+      "venue": "Truist Park",
+      "obs_temp": 87.4,
+      "obs_wind": 8.5,
+      "obs_dir": 225.0,
+      "obs_src": "obs",
+      "our_temp": 84.0,
+      "our_wind": 6.0,
+      "our_dir": 202.5,
+      "bp_temp": null,
+      "our_temp_err": 3.4000000000000057,
+      "bp_temp_err": null,
+      "our_wind_err": 2.5,
+      "our_dir_err": 22.5,
+      "total": 13,
+      "our_adj": 2.7,
+      "bp_adj": 5.0
     },
     {
       "date": "2026-07-07",
