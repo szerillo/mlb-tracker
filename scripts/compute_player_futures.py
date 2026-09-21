@@ -1178,7 +1178,7 @@ def _enrich_display(out_markets, hitters, pitchers):
             nm = _norm_name(cand.get("name") or ""); lg = cand.get("league")
             side = "pit" if cand.get("p_fip") is not None else "hit"
             hrec = hidx.get((nm, lg)); prec = pidx.get((nm, lg))
-            twoway = bool(is_mvp and hrec and prec and (_phase_val(prec, "eos", "ip") or 0) >= 50)
+            twoway = bool(is_mvp and hrec and prec and (_phase_val(prec, "eos", "ip") or 0) >= 50 and (_phase_val(hrec, "eos", "pa") or 0) >= 200)
             rec = (hrec if side == "hit" else prec) or hrec or prec
             if is_mvp:
                 spec = _DISP_MVP_CATS if side == "hit" else _DISP_CY_CATS
