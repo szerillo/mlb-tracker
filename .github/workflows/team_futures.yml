@@ -59,6 +59,8 @@ jobs:
 
       - name: Compute team futures aggregate
         run: python scripts/compute_team_futures.py
+        env:
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         continue-on-error: true
 
       - name: Commit changed data (if any)
