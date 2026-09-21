@@ -88,6 +88,12 @@ SEASON   = datetime.date.today().year
 PO_MIN_PA   = 150.0       # a real everyday-ish contributor (incl. IL returnees)
 PO_MIN_SP_IP = 40.0       # a real starter
 PO_MIN_RP_IP = 15.0       # a real reliever
+# Steepen the WAR -> win% conversion for the PLAYOFF series. The flat linear map
+# compressed the whole field into ~0.45-0.60 and left the elite tier (LAD/MIL/CHC)
+# as near coin-flips, so no team could separate. This spreads talent around .500
+# by PO_STEEP so elite rosters push toward ~0.66-0.70 and the field re-expands to
+# roughly real-MLB true-talent width. 1.95 matches the full-game pythag exponent.
+PO_STEEP     = 1.95
 
 MLBAM_TO_ABBR = {
     108: "LAA", 109: "ARI", 110: "BAL", 111: "BOS", 112: "CHC", 113: "CIN",
@@ -342,16 +348,19 @@ def main():
     for ab, s in strengths.items():
         gr = max(g_rem[ab], 1)
         ros_wins = REPL_PCT * gr + s["ros_war"]
-        ros_talent = ros_wins / gr
+        ros_talent = ros_wins / gr                       # ROS-WAR-implied win%
         st = standings.get(ab, {})
         G = (st.get("w") or 0) + (st.get("l") or 0)
         rs, ra = st.get("rs"), st.get("ra")
         if rs and ra and (rs + ra) > 0:
-            pyth = rs**1.83 / (rs**1.83 + ra**1.83)
+            pyth = rs**1.83 / (rs**1.83 + ra**1.83)       # season-to-date Pythagorean win%
         elif G > 0:
-            pyth = st["w"] / G
+            pyth = st["w"] / G                            # fallback: actual win%
         else:
             pyth = ros_talent
+        # Fable 2026-09-08: blend banked pythag + ROS-WAR talent, w=G/(G+140)
+        # (~0.50 at G~143). Fixes shading against leaders overperforming their
+        # ROS priors (HOU/CWS) and toward underperforming chasers (SEA).
         wgt = G / (G + 140.0)
         blended = wgt * pyth + (1.0 - wgt) * ros_talent
         talent[ab] = min(max(blended, 0.30), 0.70)
@@ -360,7 +369,7 @@ def main():
         s["talent_ros"]  = round(ros_talent, 3)
         s["talent_wgt"]  = round(wgt, 3)
 
-    po_talent = {ab: min(max((REPL_PCT * 162 + s["playoff_war_eq"]) / 162, 0.32), 0.72)
+    po_talent = {ab: min(max(0.5 + PO_STEEP * ((REPL_PCT * 162 + s["playoff_war_eq"]) / 162 - 0.5), 0.30), 0.75)
                  for ab, s in strengths.items()}
 
     counts = {ab: {"div": 0, "wc": 0, "po": 0, "bye": 0, "ws_app": 0, "ws": 0,
