@@ -10286,7 +10286,7 @@ function _pfCard(cand, rankTxt, isVal){
   const mp = cand.model_p; const dp = cand.display_p ?? cand.model_p;
   const mktP = cand.best_odds!=null ? _pfImp(cand.best_odds) : cand.market_p;
   const mktOdds = cand.best_odds!=null ? cand.best_odds : (cand.market_p!=null ? _pfP2Odds(cand.market_p) : null);
-  const edge = (mp!=null && mktP!=null) ? mp - mktP : null;
+  const edge = (dp!=null && mktP!=null) ? dp - mktP : null;
   const eCls = edge==null ? 'neu' : (edge>=0 ? 'pos':'neg');
   const eTxt = edge==null ? '—' : (edge>=0?'+':'')+_pfPc(edge);
   const logo = (typeof teamLogoByAbbr==='function') ? teamLogoByAbbr(cand.team_abbr,18) : '';
