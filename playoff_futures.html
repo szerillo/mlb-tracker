@@ -195,7 +195,7 @@ function renderMarket(){
     const k=th.dataset.k; if(k==='__tm')return;
     if(k===mSortK)mDir*=-1; else{mSortK=k;mDir=-1;} render();});
   document.getElementById('cnt').textContent = anyN? (teams.length+' teams · pennant + WS')
-    : (teams.length+' teams · WS priced (pennant odds pending next refresh)';
+    : (teams.length+' teams · WS priced (pennant odds pending next refresh)');
 }
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{cur=b.dataset.src;render();});
 load();
