@@ -2519,6 +2519,7 @@ body.embed-mode.embed-futures #tab-futures,
     <button class="tab" data-tab="futures" role="tab">Team Futures</button>
     <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
     <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
+        <button class="tab" data-tab="playoff-futures" role="tab">Playoff Futures</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -2535,6 +2536,10 @@ body.embed-mode.embed-futures #tab-futures,
 </div>
 
 <main class="content">
+    <section id="tab-playoff-futures" class="tab-content" hidden>
+      <iframe id="pf-frame" title="Playoff Futures" src="playoff_futures.html" style="width:100%;border:0;display:block;min-height:520px" scrolling="no"></iframe>
+    </section>
+    <script>(function(){var f=document.getElementById('pf-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}f.addEventListener('load',function(){[150,600,1500,3000].forEach(function(t){setTimeout(fit,t);});});window.addEventListener('resize',fit);document.querySelectorAll('.tab[data-tab="playoff-futures"]').forEach(function(b){b.addEventListener('click',function(){[60,300,900].forEach(function(t){setTimeout(fit,t);});});});})();</script>
   <section id="tab-scoreboard" class="tab-content">
     <div class="an-proj-banner">
       <span class="an-proj-lbl">Today's projections</span>
