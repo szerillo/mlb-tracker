@@ -6,7 +6,7 @@
 <title>Bartolo — Playoff Futures</title>
 <style>
   :root{ --bg:#0a0e13; --panel:#141a22; --panel2:#1b232d; --border:#243240; --text:#e6edf3;
-         --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; --al:#4aa3ff; --nl:#ff6f6f;
+         --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; --bad:#ff8f8f; --al:#4aa3ff; --nl:#ff6f6f;
          --fillA:#12313a; --fillB:#1d5c5a; }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;
@@ -14,17 +14,18 @@
   .head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
   h1{font-size:1.12rem;margin:0;font-weight:800;letter-spacing:.2px}
   .as{color:var(--muted);font-size:.74rem}
-  .tabs{display:flex;gap:4px;margin:6px 0 4px;border-bottom:1px solid var(--border)}
+  .tabs{display:flex;gap:4px;margin:6px 0 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
   .tabbtn{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);
           font-weight:700;font-size:.85rem;padding:8px 12px;margin-bottom:-1px;cursor:pointer;font-family:inherit}
   .tabbtn.active{color:var(--text);border-bottom-color:var(--accent)}
   .sub{color:var(--muted);font-size:.75rem;margin:6px 2px 12px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:680px){ .grid{grid-template-columns:1fr} }
-  .lg{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .lg{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
   .lghd{display:flex;align-items:center;gap:7px;padding:8px 11px;font-weight:800;font-size:.8rem;
         text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
   .lghd.al{color:var(--al)} .lghd.nl{color:var(--nl)}
+  .lghd .mk{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;font-size:.72rem;margin-left:2px}
   .dot{width:8px;height:8px;border-radius:50%} .dot.al{background:var(--al)} .dot.nl{background:var(--nl)}
   table{width:100%;border-collapse:collapse}
   th,td{padding:5px 6px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -43,7 +44,11 @@
   td.b .v{position:relative;z-index:1;font-size:.8rem;font-weight:600}
   td.b.ws .v{color:var(--good);font-weight:800}
   td.b.na .v{color:#41505f}
-  td.b.bye .v{color:var(--mut);font-weight:800;font-size:.66rem;letter-spacing:.08em}
+  td.b.bye .v{color:var(--muted);font-weight:800;font-size:.66rem;letter-spacing:.08em}
+  td.mkc{font-size:.8rem;font-weight:600}
+  td.mkt-mkt{color:var(--muted)}
+  td.edge.pos{color:var(--good);font-weight:700} td.edge.neg{color:var(--bad)} td.edge.flat{color:var(--muted)}
+  .star{color:var(--accent);font-size:.62rem;letter-spacing:-1px}
   .dash{color:#3a4854}
   .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .err{padding:16px;color:#ff8f8f}
@@ -57,17 +62,19 @@
   <div class="tabs">
     <button class="tabbtn active" data-src="mine">Bartolo Projection</button>
     <button class="tabbtn" data-src="blend">Blended (6-system)</button>
+    <button class="tabbtn" data-src="market">vs Market</button>
   </div>
   <div class="sub" id="srcnote"></div>
-  <div class="grid">
+  <div class="grid" id="roundGrid">
     <div class="lg"><div class="lghd al"><span class="dot al"></span>American League</div>
       <table data-lg="AL"><thead></thead><tbody></tbody></table></div>
     <div class="lg"><div class="lghd nl"><span class="dot nl"></span>National League</div>
       <table data-lg="NL"><thead></thead><tbody></tbody></table></div>
   </div>
+  <div id="mktWrap" style="display:none"></div>
   <div class="foot">
     <span id="cnt"></span>
-    <span>Bartolo · odds to win each round · tap a header to sort</span>
+    <span id="footnote">Bartolo · odds to win each round · tap a header to sort</span>
   </div>
 <script>
 const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
@@ -81,7 +88,13 @@ const COLS=[
  {k:'ws_app_pct',  lab:'Pennant'},
  {k:'ws_pct',      lab:'WS', ws:true},
 ];
-let DATA={mine:null,blend:null}, cur='mine', sortK='ws_pct', dir=-1;
+// vs-Market tables: model prob (Bartolo sim & 6-system blend) vs market implied.
+const MKTS=[
+ {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct'},
+ {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct'},
+];
+let DATA={mine:null,blend:null}, MKT={}, cur='mine', sortK='ws_pct', dir=-1;
+let mSortK='bl', mDir=-1;   // vs-Market sort: bart|bl|m|be|ble
 const num=v=>(v==null||isNaN(v))?null:+v;
 const fmt=v=>v==null?'<span class="dash">—</span>':(v>=99.95?'100':(v<0.05?'0':v.toFixed(1)))+'%';
 
@@ -91,26 +104,38 @@ async function load(){
       fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json())
     ]);
-    const mine={},blend={};
+    const mine={},blend={},mkt={};
     for(const[ab,t]of Object.entries(sean.teams)) mine[ab]=t;
-    for(const[ab,t]of Object.entries(tf.teams)) blend[ab]=t.composite||{};
-    DATA.mine=mine; DATA.blend=blend;
+    for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
+    DATA.mine=mine; DATA.blend=blend; MKT=mkt;
     const g=(sean.generated_at||'').slice(0,10);
     document.getElementById('asof').textContent=g?('as of '+g):'';
     render();
-  }catch(e){ document.querySelector('.grid').innerHTML='<div class="err">Could not load feed: '+e.message+'</div>'; }
+  }catch(e){ document.getElementById('roundGrid').innerHTML='<div class="err">Could not load feed: '+e.message+'</div>'; }
 }
 function contenders(rows){
   return Object.entries(rows).filter(([ab,t])=>num(t.playoff_pct)!=null && t.playoff_pct>=1);
 }
 function render(){
-  const rows=DATA[cur]; if(!rows) return;
   document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.src===cur));
+  const isMkt = cur==='market';
+  document.getElementById('roundGrid').style.display = isMkt?'none':'grid';
+  document.getElementById('mktWrap').style.display = isMkt?'block':'none';
+  document.getElementById('footnote').textContent = isMkt
+    ? 'Bartolo · model probability vs market-implied · edge = model − market · ★ 0.5 / ★★ 2 / ★★★ 4 pts'
+    : 'Bartolo · odds to win each round · tap a header to sort';
   document.getElementById('srcnote').textContent = cur==='mine'
     ? "Bartolo's Monte-Carlo playoff sim — odds to survive each round."
-    : "Equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and Bartolo.";
+    : cur==='blend'
+    ? "Equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and Bartolo."
+    : "Model win-probability vs best-available market price (VegasInsider). Positive edge = model higher than the market.";
+  if(isMkt){ renderMarket(); return; }
+  renderRounds();
+}
+function renderRounds(){
+  const rows=DATA[cur]; if(!rows) return;
   let tot=0;
-  document.querySelectorAll('table[data-lg]').forEach(tbl=>{
+  document.querySelectorAll('#roundGrid table[data-lg]').forEach(tbl=>{
     const lg=tbl.dataset.lg;
     let arr=contenders(rows).filter(([ab])=>LEAGUE[ab]===lg).map(([ab,t])=>({ab,t}));
     arr.sort((a,b)=>{const x=num(a.t[sortK]),y=num(b.t[sortK]);
@@ -131,6 +156,46 @@ function render(){
     }).join('');
   });
   document.getElementById('cnt').textContent=tot+' teams in contention';
+}
+const MCOLS=[
+ {k:'bart',lab:'Bartolo'},{k:'bl',lab:'Blend'},{k:'m',lab:'Market'},
+ {k:'be',lab:'B Edge',edge:true},{k:'ble',lab:'Blend Edge',edge:true},
+];
+function edgeCell(e){
+  if(e==null) return '<td class="mkc"><span class="dash">—</span></td>';
+  const star=e>=4?'★★★':e>=2?'★★':e>=0.5?'★':'';
+  const cls=e>=0.5?'pos':(e<=-0.5?'neg':'flat');
+  return `<td class="mkc edge ${cls}">${e>0?'+':''}${e.toFixed(1)}${star?'<span class="star"> '+star+'</span>':''}</td>`;
+}
+function renderMarket(){
+  const wrap=document.getElementById('mktWrap');
+  const teams=contenders(DATA.mine).map(([ab])=>ab);
+  let anyN=0;
+  wrap.innerHTML=MKTS.map(M=>{
+    const rows=teams.map(ab=>{
+      const bart=num((DATA.mine[ab]||{})[M.model]);
+      const bl=num((DATA.blend[ab]||{})[M.model]);
+      const m=num((MKT[ab]||{})[M.mkt]);
+      return {ab, bart, bl, m,
+              be:(bart!=null&&m!=null)?+(bart-m).toFixed(1):null,
+              ble:(bl!=null&&m!=null)?+(bl-m).toFixed(1):null};
+    }).filter(r=>r.bart!=null||r.bl!=null||r.m!=null);
+    rows.sort((a,b)=>{const x=a[mSortK],y=b[mSortK];
+      if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (x-y)*mDir;});
+    if(rows.some(r=>r.m!=null)) anyN++;
+    const head='<tr><th data-k="__tm">Team</th>'+MCOLS.map(c=>
+      `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${c.lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
+    const body=rows.map(r=>`<tr><td><span class="tm"><img src="${LOGO(r.ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${r.ab}</span></td>`
+      +`<td class="mkc">${fmt(r.bart)}</td><td class="mkc">${fmt(r.bl)}</td>`
+      +`<td class="mkc mkt-mkt">${fmt(r.m)}</td>${edgeCell(r.be)}${edgeCell(r.ble)}</tr>`).join('');
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— model win-prob vs market</span></div>`
+      +`<table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  }).join('');
+  wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k; if(k==='__tm')return;
+    if(k===mSortK)mDir*=-1; else{mSortK=k;mDir=-1;} render();});
+  document.getElementById('cnt').textContent = anyN? (teams.length+' teams · pennant + WS')
+    : (teams.length+' teams · WS priced (pennant odds pending next refresh)';
 }
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{cur=b.dataset.src;render();});
 load();
