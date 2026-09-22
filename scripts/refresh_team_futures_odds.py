@@ -74,6 +74,11 @@ DIVISIONS = [
     ("/mlb/odds/national-league-west/",     "table-nl-west-winner",     "NL West"),
 ]
 
+PENNANTS = [
+    ("/mlb/odds/american-league/", "table-al-winner", "AL Pennant"),
+    ("/mlb/odds/national-league/", "table-nl-winner", "NL Pennant"),
+]
+
 # Map of VI's header column logo alt text → friendly book name.
 BOOK_NAMES = {
     "BetMGM": "BetMGM", "DraftKings": "DraftKings", "Caesars": "Caesars",
@@ -229,6 +234,16 @@ def main():
             }
         time.sleep(0.4)  # pace polite
 
+    # 3b) Pennant / league championship winner (x2)
+    for path, table_id, label in PENNANTS:
+        url = f"https://www.vegasinsider.com{path}"
+        for abbr, info in fetch_market(url, table_id, label).items():
+            teams_out.setdefault(abbr, {"abbr": abbr})
+            teams_out[abbr]["pennant"] = {
+                "odds": info["best_odds"], "book": info["best_book"],
+            }
+        time.sleep(0.4)  # pace polite
+
     # 4) PRESERVE-ON-EMPTY: if our scrape missed every market (e.g. VI
     #    rotates structure), do NOT overwrite the existing file. Keeps
     #    whatever the last good run wrote so the Futures tab stays populated.
@@ -263,7 +278,7 @@ def main():
     books_seen = sorted({
         t[mkt]["book"]
         for t in teams_out.values()
-        for mkt in ("world_series", "playoffs", "division", "win_total")
+        for mkt in ("world_series", "playoffs", "division", "pennant", "win_total")
         if isinstance(t.get(mkt), dict) and t[mkt].get("book")
     })
 

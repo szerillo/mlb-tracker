@@ -238,6 +238,7 @@ def main():
         div = market.get("division") or {}
         po = market.get("playoffs") or {}
         ws = market.get("world_series") or {}
+        penn = market.get("pennant") or {}
 
         # Win-total "fair line implied" — when over/under odds aren't a
         # symmetric -110/-110, the actual implied total is offset. We use
@@ -294,6 +295,7 @@ def main():
 
         ws_imp = ws_implied_all.get(abbr)
         ws_edge = round(comp["ws_pct"] - ws_imp, 2) if (comp.get("ws_pct") is not None and ws_imp is not None) else None
+        penn_imp = round(american_to_prob(penn.get("odds")) * 100, 2) if penn.get("odds") is not None else None
 
         teams_out[abbr] = {
             "abbr":         abbr,
@@ -321,6 +323,9 @@ def main():
                 "playoff_no_odds":     po_no_odds,
                 "playoff_no_book":     po_no_book,
                 "playoff_no_implied_pct": po_no_imp,
+                "pennant_odds":      penn.get("odds"),
+                "pennant_book":      penn.get("book"),
+                "pennant_implied_pct": penn_imp,
                 "ws_odds":           ws.get("odds"),
                 "ws_book":           ws.get("book"),
                 "ws_implied_pct":    ws_imp,
