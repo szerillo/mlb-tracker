@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bartolo — Playoff Futures</title>
+<style>
+  :root{ --bg:#0a0e13; --panel:#141a22; --panel2:#1b232d; --border:#243240; --text:#e6edf3;
+         --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; --al:#4aa3ff; --nl:#ff6f6f;
+         --fillA:#12313a; --fillB:#1d5c5a; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;
+       padding:14px;max-width:900px;margin:0 auto}
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:1.12rem;margin:0;font-weight:800;letter-spacing:.2px}
+  .as{color:var(--muted);font-size:.74rem}
+  .tabs{display:flex;gap:4px;margin:6px 0 4px;border-bottom:1px solid var(--border)}
+  .tabbtn{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);
+          font-weight:700;font-size:.85rem;padding:8px 12px;margin-bottom:-1px;cursor:pointer;font-family:inherit}
+  .tabbtn.active{color:var(--text);border-bottom-color:var(--accent)}
+  .sub{color:var(--muted);font-size:.75rem;margin:6px 2px 12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){ .grid{grid-template-columns:1fr} }
+  .lg{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .lghd{display:flex;align-items:center;gap:7px;padding:8px 11px;font-weight:800;font-size:.8rem;
+        text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+  .lghd.al{color:var(--al)} .lghd.nl{color:var(--nl)}
+  .dot{width:8px;height:8px;border-radius:50%} .dot.al{background:var(--al)} .dot.nl{background:var(--nl)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:5px 6px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left;padding-left:10px}
+  thead th{color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.03em;
+           font-weight:800;cursor:pointer;user-select:none;padding-top:7px;padding-bottom:7px}
+  thead th.on{color:var(--accent)}
+  thead th .ar{font-size:.55rem;opacity:.8;margin-left:1px}
+  tbody tr{border-top:1px solid #1a2330}
+  tbody tr:hover{background:#101720}
+  .tm{display:flex;align-items:center;gap:7px;font-weight:700;font-size:.82rem}
+  .tm img{width:19px;height:19px;object-fit:contain;flex:0 0 19px}
+  td.b{position:relative}
+  td.b .fill{position:absolute;left:0;top:3px;bottom:3px;background:linear-gradient(90deg,var(--fillA),var(--fillB));
+             opacity:.55;border-radius:3px;z-index:0}
+  td.b .v{position:relative;z-index:1;font-size:.8rem;font-weight:600}
+  td.b.ws .v{color:var(--good);font-weight:800}
+  td.b.na .v{color:#41505f}
+  td.b.bye .v{color:var(--mut);font-weight:800;font-size:.66rem;letter-spacing:.08em}
+  .dash{color:#3a4854}
+  .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .err{padding:16px;color:#ff8f8f}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>2026 Playoff Futures</h1>
+    <span class="as" id="asof"></span>
+  </div>
+  <div class="tabs">
+    <button class="tabbtn active" data-src="mine">Bartolo Projection</button>
+    <button class="tabbtn" data-src="blend">Blended (6-system)</button>
+  </div>
+  <div class="sub" id="srcnote"></div>
+  <div class="grid">
+    <div class="lg"><div class="lghd al"><span class="dot al"></span>American League</div>
+      <table data-lg="AL"><thead></thead><tbody></tbody></table></div>
+    <div class="lg"><div class="lghd nl"><span class="dot nl"></span>National League</div>
+      <table data-lg="NL"><thead></thead><tbody></tbody></table></div>
+  </div>
+  <div class="foot">
+    <span id="cnt"></span>
+    <span>Bartolo · odds to win each round · tap a header to sort</span>
+  </div>
+<script>
+const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
+const LOGO=ab=>'https://a.espncdn.com/i/teamlogos/mlb/500/'+({CWS:'chw',ATH:'ath',WSH:'wsh'}[ab]||ab.toLowerCase())+'.png';
+const LEAGUE={NYY:'AL',BOS:'AL',TOR:'AL',TB:'AL',BAL:'AL',CLE:'AL',MIN:'AL',DET:'AL',KC:'AL',CWS:'AL',
+ HOU:'AL',SEA:'AL',TEX:'AL',LAA:'AL',ATH:'AL',ATL:'NL',NYM:'NL',PHI:'NL',WSH:'NL',MIA:'NL',MIL:'NL',
+ CHC:'NL',CIN:'NL',STL:'NL',PIT:'NL',LAD:'NL',SD:'NL',SF:'NL',ARI:'NL',COL:'NL'};
+const COLS=[
+ {k:'reach_ds_pct',lab:'WC'},
+ {k:'reach_cs_pct',lab:'LDS'},
+ {k:'ws_app_pct',  lab:'Pennant'},
+ {k:'ws_pct',      lab:'WS', ws:true},
+];
+let DATA={mine:null,blend:null}, cur='mine', sortK='ws_pct', dir=-1;
+const num=v=>(v==null||isNaN(v))?null:+v;
+const fmt=v=>v==null?'<span class="dash">—</span>':(v>=99.95?'100':(v<0.05?'0':v.toFixed(1)))+'%';
+
+async function load(){
+  try{
+    const [sean,tf]=await Promise.all([
+      fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
+      fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json())
+    ]);
+    const mine={},blend={};
+    for(const[ab,t]of Object.entries(sean.teams)) mine[ab]=t;
+    for(const[ab,t]of Object.entries(tf.teams)) blend[ab]=t.composite||{};
+    DATA.mine=mine; DATA.blend=blend;
+    const g=(sean.generated_at||'').slice(0,10);
+    document.getElementById('asof').textContent=g?('as of '+g):'';
+    render();
+  }catch(e){ document.querySelector('.grid').innerHTML='<div class="err">Could not load feed: '+e.message+'</div>'; }
+}
+function contenders(rows){
+  return Object.entries(rows).filter(([ab,t])=>num(t.playoff_pct)!=null && t.playoff_pct>=1);
+}
+function render(){
+  const rows=DATA[cur]; if(!rows) return;
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.src===cur));
+  document.getElementById('srcnote').textContent = cur==='mine'
+    ? "Bartolo's Monte-Carlo playoff sim — odds to survive each round."
+    : "Equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and Bartolo.";
+  let tot=0;
+  document.querySelectorAll('table[data-lg]').forEach(tbl=>{
+    const lg=tbl.dataset.lg;
+    let arr=contenders(rows).filter(([ab])=>LEAGUE[ab]===lg).map(([ab,t])=>({ab,t}));
+    arr.sort((a,b)=>{const x=num(a.t[sortK]),y=num(b.t[sortK]);
+      if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (x-y)*dir;});
+    tot+=arr.length;
+    tbl.querySelector('thead').innerHTML='<tr><th data-k="__tm">Team</th>'+COLS.map(c=>
+      `<th data-k="${c.k}" class="${c.k===sortK?'on':''}">${c.lab}${c.k===sortK?`<span class="ar">${dir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
+    tbl.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+      const k=th.dataset.k; if(k==='__tm')return;
+      if(k===sortK)dir*=-1; else{sortK=k;dir=-1;} render();});
+    tbl.querySelector('tbody').innerHTML=arr.map(({ab,t})=>{
+      const cells=COLS.map(c=>{
+        if(c.k==='reach_ds_pct' && num(t.bye_pct)!=null && t.bye_pct>=50)
+          return `<td class="b bye"><span class="v">BYE</span></td>`;
+        const v=num(t[c.k]); const w=v==null?0:Math.max(0,Math.min(100,v));
+        return `<td class="b ${c.ws?'ws':''} ${v==null?'na':''}">${v==null?'':`<span class="fill" style="width:${w}%"></span>`}<span class="v">${fmt(v)}</span></td>`;}).join('');
+      return `<tr><td><span class="tm"><img src="${LOGO(ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${ab}</span></td>${cells}</tr>`;
+    }).join('');
+  });
+  document.getElementById('cnt').textContent=tot+' teams in contention';
+}
+document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{cur=b.dataset.src;render();});
+load();
+</script>
+</body>
+</html>
