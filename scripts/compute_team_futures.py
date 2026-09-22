@@ -65,7 +65,7 @@ def mean(values):
 
 def composite_for_team(projs: dict) -> dict:
     """Equal-weight average across whichever source systems exist."""
-    fields = ["wins", "losses", "div_pct", "wc_pct", "playoff_pct", "ws_pct"]
+    fields = ["wins", "losses", "div_pct", "wc_pct", "playoff_pct", "reach_ds_pct", "reach_cs_pct", "ws_app_pct", "ws_pct"]
     out = {}
     for f in fields:
         vals = [p.get(f) for p in projs.values()]
@@ -200,7 +200,7 @@ def main():
         if sd and sd.get("wins") is not None:
             projs["sean"] = {k: sd.get(k) for k in
                              ("wins", "losses", "div_pct", "wc_pct",
-                              "playoff_pct", "ws_pct")}
+                              "playoff_pct", "reach_ds_pct", "reach_cs_pct", "ws_app_pct", "ws_pct")}
         composites[abbr] = composite_for_team(projs)
 
     # 2) De-vig the futures markets across the league
@@ -303,7 +303,7 @@ def main():
             "composite":    comp,
             "sean":         ({k: (sean_data.get(abbr) or {}).get(k) for k in
                               ("wins", "div_pct", "wc_pct", "playoff_pct",
-                               "bye_pct", "ws_pct")}
+                               "bye_pct", "reach_ds_pct", "reach_cs_pct", "ws_app_pct", "ws_pct")}
                              if sean_data.get(abbr) else
                              {"wins": None, "div_pct": None, "wc_pct": None,
                               "playoff_pct": None, "ws_pct": None}),

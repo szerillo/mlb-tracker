@@ -60,7 +60,7 @@ Method
 Output
   data/sean_team_projections.json  { teams: {abbr: {wins, losses, ros_war,
     hit_war, sp_war, pen_war, adj, playoff_war_eq, div_pct, wc_pct,
-    playoff_pct, bye_pct, ws_app_pct, ws_pct}}, ... }
+    playoff_pct, bye_pct, reach_ds_pct, reach_cs_pct, ws_app_pct, ws_pct}}, ... }
 
 compute_team_futures.py copies these into the `sean` slot of team_futures.json.
 """
@@ -372,7 +372,7 @@ def main():
     po_talent = {ab: min(max(0.5 + PO_STEEP * ((REPL_PCT * 162 + s["playoff_war_eq"]) / 162 - 0.5), 0.30), 0.75)
                  for ab, s in strengths.items()}
 
-    counts = {ab: {"div": 0, "wc": 0, "po": 0, "bye": 0, "ws_app": 0, "ws": 0,
+    counts = {ab: {"div": 0, "wc": 0, "po": 0, "bye": 0, "ws_app": 0, "ws": 0, "ds": 0, "cs": 0,
                    "wins_sum": 0.0} for ab in LEAGUE_DIV}
     rng = random.Random(20260714)
     lg_teams = {lg: [ab for ab, (l, _) in LEAGUE_DIV.items() if l == lg]
@@ -411,6 +411,8 @@ def main():
             wc2 = duel(seeds[3], seeds[4], 3, (1, 1, 1))
             ds1 = duel(seeds[0], wc2, 5, (1, 1, 0, 0, 1))
             ds2 = duel(seeds[1], wc1, 5, (1, 1, 0, 0, 1))
+            for ab in (seeds[0], seeds[1], wc1, wc2): counts[ab]["ds"] += 1
+            for ab in (ds1, ds2): counts[ab]["cs"] += 1
             hi, lo = (ds1, ds2) if (w[ds1], rng.random()) >= (w[ds2], rng.random()) else (ds2, ds1)
             finalists[lg] = duel(hi, lo, 7, (1, 1, 0, 0, 0, 1, 1))
         al, nl = finalists["AL"], finalists["NL"]
@@ -432,6 +434,8 @@ def main():
             "wc_pct": round(100 * c["wc"] / N_SIMS, 1),
             "playoff_pct": round(100 * c["po"] / N_SIMS, 1),
             "bye_pct": round(100 * c["bye"] / N_SIMS, 1),
+            "reach_ds_pct": round(100 * c["ds"] / N_SIMS, 1),
+            "reach_cs_pct": round(100 * c["cs"] / N_SIMS, 1),
             "ws_app_pct": round(100 * c["ws_app"] / N_SIMS, 1),
             "ws_pct": round(100 * c["ws"] / N_SIMS, 1),
             **s,

@@ -201,6 +201,9 @@ def _parse_next_data(html: str) -> dict[str, dict]:
             "div_pct":     round(e.get("divTitle", 0) * 100, 1),
             "wc_pct":      round(e.get("wcTitle", 0) * 100, 1),
             "playoff_pct": round(e.get("poffTitle", 0) * 100, 1),
+            "reach_ds_pct": round(e.get("wcWin", 0) * 100, 1),
+            "reach_cs_pct": round(e.get("dsWin", 0) * 100, 1),
+            "ws_app_pct":   round(e.get("csWin", 0) * 100, 1),
             "ws_pct":      round(e.get("wsWin", 0) * 100, 1),
         }
     return out
