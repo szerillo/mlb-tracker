@@ -93,7 +93,19 @@ PO_MIN_RP_IP = 15.0       # a real reliever
 # as near coin-flips, so no team could separate. This spreads talent around .500
 # by PO_STEEP so elite rosters push toward ~0.66-0.70 and the field re-expands to
 # roughly real-MLB true-talent width. 1.95 matches the full-game pythag exponent.
-PO_STEEP     = 1.95
+PO_STEEP     = 1.0  # Fable ruling 2026-09-22: 1.0 = identity (plain log5); >1 unsupported by 99-series test
+
+# Fable ruling 2026-09-23: shrink hitter WAR-rate toward the player's own 2024-25
+# rate (league mean fallback), k=400 PA. Fixes part-timer rate inflation (regress
+# to prior) and injured-star deflation (Acuna/Riley regress UP toward their level).
+PRIOR_FILE   = REPO_ROOT / "data" / "bwar_prior_2425.json"
+try:
+    _prj = json.loads(PRIOR_FILE.read_text())
+    PRIOR_RATES = _prj.get("rates", {})   # {mlbam_id: rate620}, pre-filtered to >=200 prior PA
+    PRIOR_LM    = _prj.get("league_mean_rate620", 2.2)
+except Exception:
+    PRIOR_RATES, PRIOR_LM = {}, 2.2
+HIT_SHRINK_K = 400          # Fable-fitted shrinkage constant (PA) for hitter WAR-rate
 
 MLBAM_TO_ABBR = {
     108: "LAA", 109: "ARI", 110: "BAL", 111: "BOS", 112: "CHC", 113: "CIN",
@@ -170,6 +182,13 @@ def _rate(war, pt, per):
     if not war or not pt or pt <= 0:
         return 0.0
     return war / pt * per
+
+def _shr_hit_rate(war, pt, mid):
+    """Hitter WAR-rate per 620 PA, shrunk toward own 2024-25 rate (league mean
+    fallback) with k=HIT_SHRINK_K PA. Fable 2026-09-23."""
+    obs = _rate(war, pt, 620)
+    prior = PRIOR_RATES.get(str(mid), PRIOR_LM)   # own 2024-25 rate, or league mean if no qualified prior
+    return (obs * pt + prior * HIT_SHRINK_K) / (pt + HIT_SHRINK_K)
 
 
 def _fs(p, is_pit):
@@ -250,11 +269,11 @@ def build_strengths(pwp, pen_data, adj):
 
         # lineup: top 9 hitters by full-season WAR-rate, star-weighted (top of
         # the order soaks up playoff PA); weights sum to 9 lineup-slots-equiv
-        hs = [(w, pt) for (w, pt, mid, nm) in hit_pool.get(ab, [])
+        hs = [(w, pt, mid) for (w, pt, mid, nm) in hit_pool.get(ab, [])
               if pt >= PO_MIN_PA and not _is_out(mid, nm)]
-        hs.sort(key=lambda x: _rate(x[0], x[1], 620), reverse=True)
+        hs.sort(key=lambda x: _shr_hit_rate(x[0], x[1], x[2]), reverse=True)
         H_WTS = [1.25, 1.20, 1.15, 1.10, 1.00, 0.90, 0.85, 0.80, 0.75]
-        lineup_eq = sum(_rate(w, pt, 620) * hw for (w, pt), hw in zip(hs[:9], H_WTS))
+        lineup_eq = sum(_shr_hit_rate(w, pt, mid) * hw for (w, pt, mid), hw in zip(hs[:9], H_WTS))
 
         # rotation: top 4 SP by full-season WAR-rate (ace matters most in Oct)
         ss = [(w, pt) for (w, pt, mid, nm) in sp_pool.get(ab, [])
@@ -369,7 +388,7 @@ def main():
         s["talent_ros"]  = round(ros_talent, 3)
         s["talent_wgt"]  = round(wgt, 3)
 
-    po_talent = {ab: min(max(0.5 + PO_STEEP * ((REPL_PCT * 162 + s["playoff_war_eq"]) / 162 - 0.5), 0.30), 0.75)
+    po_talent = {ab: min(max(0.5 + PO_STEEP * ((REPL_PCT * 162 + s["playoff_war_eq"]) / 162 - 0.5), 0.02), 0.98)
                  for ab, s in strengths.items()}
 
     counts = {ab: {"div": 0, "wc": 0, "po": 0, "bye": 0, "ws_app": 0, "ws": 0, "ds": 0, "cs": 0,
