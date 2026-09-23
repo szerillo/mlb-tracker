@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bartolo — Playoff Futures</title>
+<title>BARTOLO — Playoff Futures</title>
 <style>
   :root{ --bg:#0a0e13; --panel:#141a22; --panel2:#1b232d; --border:#243240; --text:#e6edf3;
          --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; --bad:#ff8f8f; --al:#4aa3ff; --nl:#ff6f6f;
@@ -45,11 +45,13 @@
   td.b.ws .v{color:var(--good);font-weight:800}
   td.b.na .v{color:#41505f}
   td.b.bye .v{color:var(--muted);font-weight:800;font-size:.66rem;letter-spacing:.08em}
-  td.mkc{font-size:.8rem;font-weight:600}
-  td.mkt-mkt{color:var(--text)}
-  td.mkt-mkt .odds{color:var(--muted);font-size:.72rem;font-weight:600}
-  td.edge.pos{color:var(--good);font-weight:700} td.edge.neg{color:var(--bad)} td.edge.flat{color:var(--muted)}
-  .star{color:var(--accent);font-size:.62rem;letter-spacing:-1px}
+  /* vs-Market stacked cell: probability (or odds) on top, fair odds + edge (or implied %) below */
+  td.mkc{vertical-align:top;line-height:1.15}
+  td.mkc .p{font-size:.82rem;font-weight:700;color:var(--text)}
+  td.mkc .fo{font-size:.68rem;color:var(--muted);font-weight:600;margin-top:1px}
+  td.mkc.mkt .p{color:var(--muted)}
+  .fo .edge.pos{color:var(--good)} .fo .edge.neg{color:var(--bad)} .fo .edge.flat{color:var(--muted)}
+  .fo .star{color:var(--accent);font-size:.6rem;letter-spacing:-1px}
   .dash{color:#3a4854}
   .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .err{padding:16px;color:#ff8f8f}
@@ -61,8 +63,8 @@
     <span class="as" id="asof"></span>
   </div>
   <div class="tabs">
-    <button class="tabbtn active" data-src="mine">Bartolo Projection</button>
-    <button class="tabbtn" data-src="blend">Blended (6-system)</button>
+    <button class="tabbtn active" data-src="mine">BARTOLO</button>
+    <button class="tabbtn" data-src="blend">Composite (6-system)</button>
     <button class="tabbtn" data-src="market">vs Market</button>
   </div>
   <div class="sub" id="srcnote"></div>
@@ -75,7 +77,7 @@
   <div id="mktWrap" style="display:none"></div>
   <div class="foot">
     <span id="cnt"></span>
-    <span id="footnote">Bartolo · odds to win each round · tap a header to sort</span>
+    <span id="footnote">BARTOLO · odds to win each round · tap a header to sort</span>
   </div>
 <script>
 const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
@@ -89,16 +91,40 @@ const COLS=[
  {k:'ws_app_pct',  lab:'Pennant'},
  {k:'ws_pct',      lab:'WS', ws:true},
 ];
-// vs-Market tables: model prob (Bartolo sim & 6-system blend) vs market implied.
+// vs-Market tables: model prob (BARTOLO sim & 6-system composite) vs market implied.
 const MKTS=[
  {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct', odds:'pennant_odds'},
  {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct', odds:'ws_odds'},
 ];
-const fmtOdds=o=>o==null?'':((o>0?'+':'')+o);
 let DATA={mine:null,blend:null}, MKT={}, cur='mine', sortK='ws_pct', dir=-1;
-let mSortK='bl', mDir=-1;   // vs-Market sort: bart|bl|m|be|ble
+let mSortK='composite', mDir=-1;   // vs-Market sort: bart|composite|m
 const num=v=>(v==null||isNaN(v))?null:+v;
 const fmt=v=>v==null?'<span class="dash">—</span>':(v>=99.95?'100':(v<0.05?'0':v.toFixed(1)))+'%';
+const fmtOdds=o=>o==null?'':((o>0?'+':'')+o);
+// fair American odds from a win probability (percent). No vig.
+const fairOdds=p=>{
+  if(p==null) return '';
+  const q=p/100;
+  if(q<=0.0005) return '';
+  if(q>=0.9995) return '−∞';
+  const o = q>=0.5 ? -100*q/(1-q) : 100*(1-q)/q;
+  const r = Math.abs(o)>=200 ? Math.round(o/10)*10 : Math.round(o/5)*5;
+  return (r>0?'+':'')+r;
+};
+const edgeSpan=e=>{
+  if(e==null) return '';
+  const cls=e>=0.5?'pos':(e<=-0.5?'neg':'flat');
+  const star=e>=4?'★★★':e>=2?'★★':e>=0.5?'★':'';
+  return ` <span class="edge ${cls}">(${e>0?'+':''}${e.toFixed(1)})</span>${star?'<span class="star"> '+star+'</span>':''}`;
+};
+function modelCell(p, e){
+  if(p==null) return '<td class="mkc model"><span class="dash">—</span></td>';
+  return `<td class="mkc model"><div class="p">${fmt(p)}</div><div class="fo">${fairOdds(p)}${edgeSpan(e)}</div></td>`;
+}
+function marketCell(odds, m){
+  if(m==null && odds==null) return '<td class="mkc mkt"><span class="dash">—</span></td>';
+  return `<td class="mkc mkt"><div class="p">${odds!=null?fmtOdds(odds):'—'}</div><div class="fo">${fmt(m)}</div></td>`;
+}
 
 async function load(){
   try{
@@ -124,13 +150,13 @@ function render(){
   document.getElementById('roundGrid').style.display = isMkt?'none':'grid';
   document.getElementById('mktWrap').style.display = isMkt?'block':'none';
   document.getElementById('footnote').textContent = isMkt
-    ? 'Bartolo · model probability vs market-implied · edge = model − market · ★ 0.5 / ★★ 2 / ★★★ 4 pts'
-    : 'Bartolo · odds to win each round · tap a header to sort';
+    ? 'Model probability with fair odds · edge (pts) = model − market · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort'
+    : 'BARTOLO · odds to win each round · tap a header to sort';
   document.getElementById('srcnote').textContent = cur==='mine'
-    ? "Bartolo's Monte-Carlo playoff sim — odds to survive each round."
+    ? "BARTOLO's Monte-Carlo playoff sim — odds to survive each round."
     : cur==='blend'
-    ? "Equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and Bartolo."
-    : "Model win-probability vs best-available market price (VegasInsider). Positive edge = model higher than the market.";
+    ? "Composite: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and BARTOLO."
+    : "Model win-probability with fair odds vs best-available market price (VegasInsider). Positive edge = model higher than the market.";
   if(isMkt){ renderMarket(); return; }
   renderRounds();
 }
@@ -160,15 +186,8 @@ function renderRounds(){
   document.getElementById('cnt').textContent=tot+' teams in contention';
 }
 const MCOLS=[
- {k:'bart',lab:'Bartolo'},{k:'bl',lab:'Blend'},{k:'m',lab:'Market'},
- {k:'be',lab:'B Edge',edge:true},{k:'ble',lab:'Blend Edge',edge:true},
+ {k:'bart',lab:'BARTOLO'},{k:'composite',lab:'COMPOSITE'},{k:'m',lab:'MARKET'},
 ];
-function edgeCell(e){
-  if(e==null) return '<td class="mkc"><span class="dash">—</span></td>';
-  const star=e>=4?'★★★':e>=2?'★★':e>=0.5?'★':'';
-  const cls=e>=0.5?'pos':(e<=-0.5?'neg':'flat');
-  return `<td class="mkc edge ${cls}">${e>0?'+':''}${e.toFixed(1)}${star?'<span class="star"> '+star+'</span>':''}</td>`;
-}
 function renderMarket(){
   const wrap=document.getElementById('mktWrap');
   const teams=contenders(DATA.mine).map(([ab])=>ab);
@@ -176,22 +195,21 @@ function renderMarket(){
   wrap.innerHTML=MKTS.map(M=>{
     const rows=teams.map(ab=>{
       const bart=num((DATA.mine[ab]||{})[M.model]);
-      const bl=num((DATA.blend[ab]||{})[M.model]);
+      const composite=num((DATA.blend[ab]||{})[M.model]);
       const m=num((MKT[ab]||{})[M.mkt]);
       const odds=num((MKT[ab]||{})[M.odds]);
-      return {ab, bart, bl, m, odds,
+      return {ab, bart, composite, m, odds,
               be:(bart!=null&&m!=null)?+(bart-m).toFixed(1):null,
-              ble:(bl!=null&&m!=null)?+(bl-m).toFixed(1):null};
-    }).filter(r=>r.bart!=null||r.bl!=null||r.m!=null);
+              ble:(composite!=null&&m!=null)?+(composite-m).toFixed(1):null};
+    }).filter(r=>r.bart!=null||r.composite!=null||r.m!=null);
     rows.sort((a,b)=>{const x=a[mSortK],y=b[mSortK];
       if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (x-y)*mDir;});
     if(rows.some(r=>r.m!=null)) anyN++;
     const head='<tr><th data-k="__tm">Team</th>'+MCOLS.map(c=>
       `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${c.lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
     const body=rows.map(r=>`<tr><td><span class="tm"><img src="${LOGO(r.ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${r.ab}</span></td>`
-      +`<td class="mkc">${fmt(r.bart)}</td><td class="mkc">${fmt(r.bl)}</td>`
-      +`<td class="mkc mkt-mkt">${r.odds!=null?`<span class="odds">${fmtOdds(r.odds)}</span> `:''}${fmt(r.m)}</td>${edgeCell(r.be)}${edgeCell(r.ble)}</tr>`).join('');
-    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— model win-prob vs market</span></div>`
+      +modelCell(r.bart, r.be)+modelCell(r.composite, r.ble)+marketCell(r.odds, r.m)+`</tr>`).join('');
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— fair odds vs market</span></div>`
       +`<table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
   }).join('');
   wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
