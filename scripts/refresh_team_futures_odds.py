@@ -165,8 +165,7 @@ def _parse_data_rows(table_html: str, books: list[str]) -> dict[str, dict]:
         # with `books`.
         cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
         if len(cells) < 2: continue
-        best = None
-        best_book = None
+        priced = []   # (odds, book) for every book that posted a price
         # Walk odds cells against books. cells[1:] may be ordered different
         # than `books[1:]` depending on rendering; we assume same order.
         for cell, book in zip(cells[1:], books):
@@ -178,14 +177,21 @@ def _parse_data_rows(table_html: str, books: list[str]) -> dict[str, dict]:
                 cell)
             if not val: continue
             try:
-                odds = int(val.group(1))
+                priced.append((int(val.group(1)), book))
             except ValueError:
                 continue
-            if best is None or _is_better(odds, best):
-                best = odds
-                best_book = book
-        if best is not None:
-            out[abbr] = {"best_odds": best, "best_book": best_book}
+        if priced:
+            # Use the SECOND-best price, not the best. A single book with a
+            # stale / mispriced number (e.g. CLE pennant +2200 while the field
+            # is ~+600) would otherwise win "best available" and distort the
+            # implied % on the vs-Market board. Dropping the single most
+            # generous price gives a consensus-representative number. With only
+            # one book, fall back to it. (`top_odds`/`n_books` kept for audit.)
+            def _payout(o): return o / 100 if o > 0 else 100 / abs(o)
+            priced.sort(key=lambda x: _payout(x[0]), reverse=True)
+            pick = priced[1] if len(priced) >= 2 else priced[0]
+            out[abbr] = {"best_odds": pick[0], "best_book": pick[1],
+                         "n_books": len(priced), "top_odds": priced[0][0]}
     return out
 
 
