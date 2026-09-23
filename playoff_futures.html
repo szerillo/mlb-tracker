@@ -55,9 +55,8 @@
   td.mkc .p{font-size:.82rem;font-weight:700;color:var(--text)}
   td.mkc .fo{font-size:.68rem;color:var(--muted);font-weight:600;margin-top:1px}
   td.mkc.mkt .p{color:var(--muted)}
-  td.mkc.edge{font-size:.78rem;font-weight:700}
-  td.mkc.edge.pos{color:var(--good)} td.mkc.edge.neg{color:var(--bad)} td.mkc.edge.flat{color:var(--muted)}
-  td.mkc.edge .star{color:var(--accent);font-size:.6rem;letter-spacing:-1px}
+  td.mkc .p.pos{color:var(--good)} td.mkc .p.neg{color:var(--bad)} td.mkc .p.flat{color:var(--text)}
+  td.mkc .p .star{color:var(--accent);font-size:.58rem;letter-spacing:-1px;font-weight:700}
   .dash{color:#3a4854}
   .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .err{padding:16px;color:#ff8f8f}
@@ -102,12 +101,12 @@ const MKTS=[
  {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct', odds:'ws_odds'},
 ];
 const MCOLS=[
- {k:'bart',lab:'BARTOLO'},{k:'be',lab:'Edge'},{k:'composite',lab:'COMPOSITE'},{k:'ble',lab:'Edge'},{k:'m',lab:'MARKET'},
+ {k:'m',lab:'Odds'},{k:'be',lab:'vs BARTOLO'},{k:'ble',lab:'vs COMPOSITE'},
 ];
 let DATA={mine:null,blend:null}, MKT={};
 let curTab='proj', projSrc='mine', edgeLg='ALL';
 let sortK='ws_pct', dir=-1;          // Projections tables
-let mSortK='composite', mDir=-1;     // Edges tables
+let mSortK='m', mDir=-1;             // Edges tables (default: market odds order)
 const num=v=>(v==null||isNaN(v))?null:+v;
 const fmt=v=>v==null?'<span class="dash">—</span>':(v>=99.95?'100':(v<0.05?'0':v.toFixed(1)))+'%';
 const fmtOdds=o=>o==null?'':((o>0?'+':'')+o);
@@ -126,12 +125,17 @@ function mktStack(odds, implied){
   if(odds==null && implied==null) return '<td class="mkc mkt"><span class="dash">—</span></td>';
   return `<td class="mkc mkt"><div class="p">${odds!=null?fmtOdds(odds):'—'}</div><div class="fo">${fmt(implied)}</div></td>`;
 }
-function edgeCol(e){
-  if(e==null) return '<td class="mkc"><span class="dash">—</span></td>';
-  const cls=e>=3?'pos':(e<=-3?'neg':'flat');
-  const star=e>=4?'★★★':e>=2?'★★':e>=0.5?'★':'';
-  return `<td class="mkc edge ${cls}">${e>0?'+':''}${e.toFixed(1)}%${star?'<span class="star"> '+star+'</span>':''}</td>`;
+// model column: edge on top (primary, colored + star), fair odds muted below
+function modelEdgeCell(e, pct){
+  if(e==null && pct==null) return '<td class="mkc"><span class="dash">—</span></td>';
+  const cls=e==null?'flat':(e>=3?'pos':(e<=-3?'neg':'flat'));
+  const star=(e!=null&&e>=4)?'★★★':(e!=null&&e>=2)?'★★':(e!=null&&e>=0.5)?'★':'';
+  const eTxt=e==null?'—':((e>0?'+':'')+e.toFixed(1)+'%');
+  const fair=pct!=null?fmtAm(pctToAmerican(pct)):'';
+  return `<td class="mkc"><div class="p ${cls}">${eTxt}${star?'<span class="star"> '+star+'</span>':''}</div><div class="fo">${fair}</div></td>`;
 }
+// resize our own iframe to fit content on every render (fixes clipped 2nd table on tab switch)
+function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(document.body.scrollHeight+4)+'px'; }catch(e){} }
 
 async function load(){
   try{
@@ -164,8 +168,8 @@ function render(){
   if(isEdges){
     seg.innerHTML=segHTML([{v:'ALL',lab:'All'},{v:'AL',lab:'AL'},{v:'NL',lab:'NL'}], edgeLg);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{edgeLg=b.dataset.v;render();});
-    document.getElementById('srcnote').textContent="BARTOLO & Composite fair odds vs best-available market price (VegasInsider). Edge = model − market.";
-    document.getElementById('footnote').textContent='Fair odds · edge (pts) = model − market · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
+    document.getElementById('srcnote').textContent="Best-available market odds (VegasInsider) vs BARTOLO & Composite. Edge = model − market; fair odds shown beneath.";
+    document.getElementById('footnote').textContent='Book odds · edge (pts) = model − market, model fair odds beneath · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
     renderEdges();
   } else {
     seg.innerHTML=segHTML([{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}], projSrc);
@@ -176,6 +180,7 @@ function render(){
     document.getElementById('footnote').textContent='Odds to win each round · tap a header to sort';
     renderRounds();
   }
+  requestAnimationFrame(fit);
 }
 function renderRounds(){
   const rows=DATA[projSrc]; if(!rows) return;
@@ -193,7 +198,8 @@ function renderRounds(){
       if(k===sortK)dir*=-1; else{sortK=k;dir=-1;} render();});
     tbl.querySelector('tbody').innerHTML=arr.map(({ab,t})=>{
       const cells=COLS.map(c=>{
-        if(c.k==='reach_ds_pct' && num(t.bye_pct)!=null && t.bye_pct>=50)
+        const byePct=num((DATA.mine[ab]||{}).bye_pct);   // bye flag from the sim, applied to both toggles
+        if(c.k==='reach_ds_pct' && byePct!=null && byePct>=50)
           return `<td class="b bye"><span class="v">BYE</span></td>`;
         const v=num(t[c.k]); const w=v==null?0:Math.max(0,Math.min(100,v));
         return `<td class="b ${c.ws?'ws':''} ${v==null?'na':''}">${v==null?'':`<span class="fill" style="width:${w}%"></span>`}<span class="v">${fmt(v)}</span></td>`;}).join('');
@@ -223,8 +229,8 @@ function renderEdges(){
     const head='<tr><th data-k="__tm">Team</th>'+MCOLS.map(c=>
       `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${c.lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
     const body=rows.map(r=>`<tr><td><span class="tm"><img src="${LOGO(r.ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${r.ab}</span></td>`
-      +fairStack(r.bart)+edgeCol(r.be)+fairStack(r.composite)+edgeCol(r.ble)+mktStack(r.odds,r.m)+`</tr>`).join('');
-    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— fair odds vs market</span></div>`
+      +mktStack(r.odds,r.m)+modelEdgeCell(r.be,r.bart)+modelEdgeCell(r.ble,r.composite)+`</tr>`).join('');
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— book odds & model edge</span></div>`
       +`<div class="tblwrap"><table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
   }).join('');
   wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
