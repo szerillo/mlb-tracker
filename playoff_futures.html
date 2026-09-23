@@ -57,6 +57,15 @@
   td.mkc.mkt .p{color:var(--muted)}
   td.mkc .p.pos{color:var(--good)} td.mkc .p.neg{color:var(--bad)} td.mkc .p.flat{color:var(--text)}
   td.mkc .p .star{color:var(--accent);font-size:.58rem;letter-spacing:-1px;font-weight:700}
+  /* Edges tab flat columns (Playoff-Picture style): one number per labeled column */
+  td.mut{color:var(--muted);font-weight:600;font-size:.8rem}
+  td.mdl{color:var(--text);font-weight:700;font-size:.82rem}
+  td.edg{font-weight:800;font-size:.82rem}
+  td.edg.pos{color:var(--good)} td.edg.neg{color:var(--bad)} td.edg.flat{color:var(--muted)}
+  td.edg .star{color:var(--accent);font-size:.6rem;letter-spacing:-1px;font-weight:700;margin-left:2px}
+  .segwrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
+  .segwrap .seg{margin:0}
+  .seglab{color:var(--muted);font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-right:-3px}
   .dash{color:#3a4854}
   .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .err{padding:16px;color:#ff8f8f}
@@ -100,13 +109,14 @@ const MKTS=[
  {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct', odds:'pennant_odds'},
  {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct', odds:'ws_odds'},
 ];
+// Edges tab: flat columns, one model at a time (Playoff-Picture style)
 const MCOLS=[
- {k:'m',lab:'Odds'},{k:'be',lab:'vs BARTOLO'},{k:'ble',lab:'vs COMPOSITE'},
+ {k:'odds',lab:'Listed'},{k:'mkt',lab:'Mkt%'},{k:'model',lab:'MODEL'},{k:'edge',lab:'Edge'},
 ];
 let DATA={mine:null,blend:null}, MKT={};
-let curTab='proj', projSrc='mine', edgeLg='ALL';
+let curTab='proj', projSrc='mine', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
 let sortK='ws_pct', dir=-1;          // Projections tables
-let mSortK='m', mDir=-1;             // Edges tables (default: market odds order)
+let mSortK='edge', mDir=-1;          // Edges tables (default: biggest edge first)
 const num=v=>(v==null||isNaN(v))?null:+v;
 const fmt=v=>v==null?'<span class="dash">—</span>':(v>=99.95?'100':(v<0.05?'0':v.toFixed(1)))+'%';
 const fmtOdds=o=>o==null?'':((o>0?'+':'')+o);
@@ -166,10 +176,23 @@ function render(){
   const seg=document.getElementById('seg');
   seg.className='seg';
   if(isEdges){
-    seg.innerHTML=segHTML([{v:'ALL',lab:'All'},{v:'AL',lab:'AL'},{v:'NL',lab:'NL'}], edgeLg);
-    seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{edgeLg=b.dataset.v;render();});
-    document.getElementById('srcnote').textContent="Best-available market odds (VegasInsider) vs BARTOLO & Composite. Edge = model − market; fair odds shown beneath.";
-    document.getElementById('footnote').textContent='Book odds · edge (pts) = model − market, model fair odds beneath · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
+    seg.className='segwrap';
+    const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
+    seg.innerHTML=
+      grp('model',[{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}],edgeModel)
+      +grp('lg',[{v:'ALL',lab:'All'},{v:'AL',lab:'AL'},{v:'NL',lab:'NL'}],edgeLg)
+      +`<span class="seglab">Vig</span>`+grp('vig',[{v:'raw',lab:'Raw'},{v:'novig',lab:'No‑vig'}],edgeVig);
+    seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const g=b.closest('.seg').dataset.grp, v=b.dataset.v;
+      if(g==='model')edgeModel=v; else if(g==='lg')edgeLg=v; else edgeVig=v;
+      render();});
+    const mn=edgeModel==='mine'?'BARTOLO':'Composite';
+    document.getElementById('srcnote').textContent = edgeVig==='novig'
+      ? `${mn} vs market. Listed = best book price; Mkt% is de‑vigged (field normalized to 100%); Edge = ${mn} − no‑vig Mkt%.`
+      : `${mn} vs market. Listed = best book price; Mkt% is the raw book implied %; Edge = ${mn} − Mkt%.`;
+    document.getElementById('footnote').textContent =
+      (edgeVig==='novig'?'No‑vig: market % normalized to 100% per field (pennant per league). ':'Raw book implied %. ')
+      +'Edge = model − Mkt% · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
     renderEdges();
   } else {
     seg.innerHTML=segHTML([{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}], projSrc);
@@ -208,37 +231,65 @@ function renderRounds(){
   });
   document.getElementById('cnt').textContent=tot+' teams in contention';
 }
+// flat edge cell: edge value, colored, with star. Model % and Mkt% are plain columns.
+function edgeCell(e){
+  if(e==null) return '<td class="edg flat"><span class="dash">—</span></td>';
+  const cls=e>=3?'pos':(e<=-3?'neg':'flat');
+  const star=e>=4?'★★★':e>=2?'★★':e>=0.5?'★':'';
+  return `<td class="edg ${cls}">${(e>0?'+':'')+e.toFixed(1)}%${star?`<span class="star">${star}</span>`:''}</td>`;
+}
 function renderEdges(){
   const wrap=document.getElementById('mktWrap');
-  let teams=contenders(DATA.mine).map(([ab])=>ab);
-  if(edgeLg!=='ALL') teams=teams.filter(ab=>LEAGUE[ab]===edgeLg);
+  const src = edgeModel==='mine'?DATA.mine:DATA.blend;
+  const mn  = edgeModel==='mine'?'BARTOLO':'Composite';
+  const field = contenders(DATA.mine).map(([ab])=>ab);   // full field for devig sums
+  let display = field.slice();
+  if(edgeLg!=='ALL') display = display.filter(ab=>LEAGUE[ab]===edgeLg);
   let anyN=0;
   wrap.innerHTML=MKTS.map(M=>{
-    const rows=teams.map(ab=>{
-      const bart=num((DATA.mine[ab]||{})[M.model]);
-      const composite=num((DATA.blend[ab]||{})[M.model]);
-      const m=num((MKT[ab]||{})[M.mkt]);
+    // raw implied for the whole field, then consensus de-vig (normalize to 100%)
+    const imp={}; field.forEach(ab=>{ imp[ab]=num((MKT[ab]||{})[M.mkt]); });
+    // consensus de-vig = divide each implied by (field sum / 100). Only strip vig when the
+    // field actually shows overround (sum > 100); if the market is still partly unpriced the
+    // sum is understated, so we leave it raw rather than inflate the priced teams.
+    const devig=(v,d)=> (v==null||!d)?null : (d>100 ? +(v/(d/100)).toFixed(1) : v);
+    let fairOf;
+    if(M.key==='pennant'){                                 // one champion per league → per-league sum
+      const s={AL:0,NL:0}; field.forEach(ab=>{ if(imp[ab]!=null) s[LEAGUE[ab]]+=imp[ab]; });
+      fairOf=ab=>devig(imp[ab], s[LEAGUE[ab]]);
+    } else {                                               // one WS champ → whole-field sum
+      let d=0; field.forEach(ab=>{ if(imp[ab]!=null) d+=imp[ab]; });
+      fairOf=ab=>devig(imp[ab], d);
+    }
+    const rows=display.map(ab=>{
+      const model=num((src[ab]||{})[M.model]);
+      const raw=imp[ab], fair=fairOf(ab);
+      const mkt = edgeVig==='novig'?fair:raw;
       const odds=num((MKT[ab]||{})[M.odds]);
-      return {ab, bart, composite, m, odds,
-              be:(bart!=null&&m!=null)?+(bart-m).toFixed(1):null,
-              ble:(composite!=null&&m!=null)?+(composite-m).toFixed(1):null};
-    }).filter(r=>r.bart!=null||r.composite!=null||r.m!=null);
+      const edge=(model!=null&&mkt!=null)?+(model-mkt).toFixed(1):null;
+      return {ab, odds, mkt, model, edge};
+    }).filter(r=>r.model!=null||r.mkt!=null);
     rows.sort((a,b)=>{const x=a[mSortK],y=b[mSortK];
       if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (x-y)*mDir;});
-    if(rows.some(r=>r.m!=null)) anyN++;
-    const head='<tr><th data-k="__tm">Team</th>'+MCOLS.map(c=>
-      `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${c.lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
+    if(rows.some(r=>r.mkt!=null)) anyN++;
+    const head='<tr><th data-k="__tm">Team</th>'+MCOLS.map(c=>{
+      const lab=c.k==='model'?(mn+' %'):c.lab;
+      return `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`;
+    }).join('')+'</tr>';
     const body=rows.map(r=>`<tr><td><span class="tm"><img src="${LOGO(r.ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${r.ab}</span></td>`
-      +mktStack(r.odds,r.m)+modelEdgeCell(r.be,r.bart)+modelEdgeCell(r.ble,r.composite)+`</tr>`).join('');
-    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— book odds & model edge</span></div>`
+      +`<td class="mut" title="best available book price">${r.odds!=null?fmtOdds(r.odds):'<span class=dash>—</span>'}</td>`
+      +`<td class="mut">${fmt(r.mkt)}</td>`
+      +`<td class="mdl">${fmt(r.model)}</td>`
+      +edgeCell(r.edge)+`</tr>`).join('');
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— ${mn} vs market${edgeVig==='novig'?' · no‑vig':''}</span></div>`
       +`<div class="tblwrap"><table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
   }).join('');
   wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
     const k=th.dataset.k; if(k==='__tm')return;
     if(k===mSortK)mDir*=-1; else{mSortK=k;mDir=-1;} render();});
   const lgtxt = edgeLg==='ALL'?'':(' · '+edgeLg);
-  document.getElementById('cnt').textContent = anyN? (teams.length+' teams · pennant + WS'+lgtxt)
-    : (teams.length+' teams · WS priced (pennant odds pending next refresh)'+lgtxt);
+  document.getElementById('cnt').textContent = anyN? (display.length+' teams · pennant + WS'+lgtxt)
+    : (display.length+' teams · WS priced (pennant odds pending next refresh)'+lgtxt);
 }
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{curTab=b.dataset.tab;render();});
 load();
