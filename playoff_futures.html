@@ -46,7 +46,8 @@
   td.b.na .v{color:#41505f}
   td.b.bye .v{color:var(--muted);font-weight:800;font-size:.66rem;letter-spacing:.08em}
   td.mkc{font-size:.8rem;font-weight:600}
-  td.mkt-mkt{color:var(--muted)}
+  td.mkt-mkt{color:var(--text)}
+  td.mkt-mkt .odds{color:var(--muted);font-size:.72rem;font-weight:600}
   td.edge.pos{color:var(--good);font-weight:700} td.edge.neg{color:var(--bad)} td.edge.flat{color:var(--muted)}
   .star{color:var(--accent);font-size:.62rem;letter-spacing:-1px}
   .dash{color:#3a4854}
@@ -90,9 +91,10 @@ const COLS=[
 ];
 // vs-Market tables: model prob (Bartolo sim & 6-system blend) vs market implied.
 const MKTS=[
- {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct'},
- {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct'},
+ {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct', odds:'pennant_odds'},
+ {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct', odds:'ws_odds'},
 ];
+const fmtOdds=o=>o==null?'':((o>0?'+':'')+o);
 let DATA={mine:null,blend:null}, MKT={}, cur='mine', sortK='ws_pct', dir=-1;
 let mSortK='bl', mDir=-1;   // vs-Market sort: bart|bl|m|be|ble
 const num=v=>(v==null||isNaN(v))?null:+v;
@@ -176,7 +178,8 @@ function renderMarket(){
       const bart=num((DATA.mine[ab]||{})[M.model]);
       const bl=num((DATA.blend[ab]||{})[M.model]);
       const m=num((MKT[ab]||{})[M.mkt]);
-      return {ab, bart, bl, m,
+      const odds=num((MKT[ab]||{})[M.odds]);
+      return {ab, bart, bl, m, odds,
               be:(bart!=null&&m!=null)?+(bart-m).toFixed(1):null,
               ble:(bl!=null&&m!=null)?+(bl-m).toFixed(1):null};
     }).filter(r=>r.bart!=null||r.bl!=null||r.m!=null);
@@ -187,7 +190,7 @@ function renderMarket(){
       `<th data-k="${c.k}" class="${c.k===mSortK?'on':''}">${c.lab}${c.k===mSortK?`<span class="ar">${mDir<0?'▼':'▲'}</span>`:''}</th>`).join('')+'</tr>';
     const body=rows.map(r=>`<tr><td><span class="tm"><img src="${LOGO(r.ab)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${r.ab}</span></td>`
       +`<td class="mkc">${fmt(r.bart)}</td><td class="mkc">${fmt(r.bl)}</td>`
-      +`<td class="mkc mkt-mkt">${fmt(r.m)}</td>${edgeCell(r.be)}${edgeCell(r.ble)}</tr>`).join('');
+      +`<td class="mkc mkt-mkt">${r.odds!=null?`<span class="odds">${fmtOdds(r.odds)}</span> `:''}${fmt(r.m)}</td>${edgeCell(r.be)}${edgeCell(r.ble)}</tr>`).join('');
     return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— model win-prob vs market</span></div>`
       +`<table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
   }).join('');
