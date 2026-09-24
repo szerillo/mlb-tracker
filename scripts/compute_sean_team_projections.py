@@ -335,7 +335,39 @@ def series_win(p_neutral, n, hha):
     return f(0, 0)
 
 
+def _skip_daily(output_path, label, am_hour_et=9):
+    """Recompute at most once per day — the first pipeline run at/after ~9 AM ET, so the
+    published generated_at stays steady all day AND in lockstep with compute_team_futures,
+    which uses the identical guard. Keeps the sim, the composite and the market board (and
+    therefore Team Futures / Playoff Picture / Playoff Futures) all on the same daily run.
+    FORCE_RUN bypasses (manual workflow_dispatch)."""
+    import os, json, datetime
+    if os.environ.get("FORCE_RUN"):
+        return False
+    try:
+        if not output_path.exists():
+            return False
+        gen = json.loads(output_path.read_text()).get("generated_at", "") or ""
+        g = gen.replace("Z", "")
+        if "+" in g:
+            g = g.split("+")[0]
+        gen_dt = datetime.datetime.fromisoformat(g)
+    except Exception:
+        return False
+    et_now = datetime.datetime.utcnow() - datetime.timedelta(hours=4)
+    gen_et = gen_dt - datetime.timedelta(hours=4)
+    if gen_et.date() >= et_now.date():
+        print(f"[{label}] skip recompute: already refreshed today ({gen}); keeping steady.")
+        return True
+    if et_now.hour < am_hour_et:
+        print(f"[{label}] skip recompute: before {am_hour_et}AM ET; holding until the AM data pull.")
+        return True
+    return False
+
+
 def main():
+    if _skip_daily(OUTPUT, "sean-proj"):
+        return 0
     if not PWP_FILE.exists() or not PEN_FILE.exists():
         print("[sean-proj] missing inputs; keeping previous output", file=sys.stderr)
         return 0 if OUTPUT.exists() else 1
