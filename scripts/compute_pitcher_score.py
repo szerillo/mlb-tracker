@@ -532,6 +532,22 @@ def main() -> int:
           f"({n_rolling} with L5 rolling, {n_sparse} too sparse)", file=sys.stderr)
     print("[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
           file=sys.stderr)
+
+    # SP process index (Fable 2026-09-24): after unified_score is written, enrich
+    # pitcher_stats with proc_z + unified_proc (= unified_score − 0.09·proc_z, SP-only).
+    # Invoked here so it refreshes on every unified_score recompute without a separate
+    # workflow step; refresh_pitcher_proc.py is also runnable standalone.
+    try:
+        import importlib.util as _ilu
+        _pp = os.path.join(HERE, "refresh_pitcher_proc.py")
+        if os.path.exists(_pp):
+            _spec = _ilu.spec_from_file_location("refresh_pitcher_proc", _pp)
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            _mod.main()
+    except Exception as _pe:
+        print(f"[score] WARN: SP proc index step failed: {_pe}", file=sys.stderr)
+
     return 0
 
 

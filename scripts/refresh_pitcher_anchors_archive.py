@@ -62,6 +62,8 @@ SNAPSHOT_FIELDS = [
     # incumbent wFIP anchors
     "xera", "bot_era", "fip_proj", "fip_proj_n_sources",
     "xfip", "siera", "k_bb_pct", "unified_score", "unified_rolling",
+    # --- SP process index (Fable 2026-09-24); frozen daily so October grades the coef ---
+    "proc_z", "unified_proc",
     # --- pitch-model grades (Fable's #1 ask: previously unfrozen) ---
     "stuff_plus", "location_plus", "pitching_plus",
     # --- plate skills ---
