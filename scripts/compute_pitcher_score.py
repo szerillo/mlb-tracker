@@ -502,41 +502,11 @@ def main() -> int:
     with open(OUTPUT, "w") as f:
         json.dump(d, f, indent=2)
 
-    # --- Also emit a slim wFIP lookup for the Google-Sheet pull (name -> unified_score)
-    try:
-        def _wnorm(s):
-            s = unicodedata.normalize("NFKD", str(s or ""))
-            s = "".join(c for c in s if not unicodedata.combining(c)).lower()
-            s = "".join(c for c in s if c.isalpha() or c == " ")
-            return " ".join(s.split())
-        _wmap = {}
-        for _wk, _wv in pitchers.items():
-            _us = _wv.get("unified_score")
-            if _us is None:
-                continue
-            _nm = _wnorm(_wv.get("name", _wk))
-            if _nm:
-                _wmap[_nm] = round(float(_us), 2)
-        _wpath = os.path.join(HERE, "..", "data", "wfip_lookup.json")
-        with open(_wpath, "w") as _wf:
-            json.dump({
-                "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
-                "source": "pitcher_stats.json unified_score (wFIP composite)",
-                "n": len(_wmap),
-                "wfip": _wmap,
-            }, _wf)
-        print(f"[score] wrote wfip_lookup.json ({len(_wmap)} pitchers)")
-    except Exception as _we:
-        print(f"[score] WARN: wfip_lookup emit failed: {_we}", file=sys.stderr)
-    print(f"[score] scored {n_scored} pitchers "
-          f"({n_rolling} with L5 rolling, {n_sparse} too sparse)", file=sys.stderr)
-    print("[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
-          file=sys.stderr)
-
-    # SP process index (Fable 2026-09-24): after unified_score is written, enrich
-    # pitcher_stats with proc_z + unified_proc (= unified_score − 0.09·proc_z, SP-only).
-    # Invoked here so it refreshes on every unified_score recompute without a separate
-    # workflow step; refresh_pitcher_proc.py is also runnable standalone.
+    # SP process index (Fable 2026-09-24): enrich pitcher_stats on disk with proc_z +
+    # unified_proc (= unified_score − 0.09·proc_z, SP-only) BEFORE the wFIP lookup is
+    # emitted, so BOTH the app (index.html) and the sheet (wfip_lookup) use the
+    # process-adjusted SP RA9. Runs on every unified_score recompute; refresh_pitcher_proc.py
+    # is also standalone-runnable.
     try:
         import importlib.util as _ilu
         _pp = os.path.join(HERE, "refresh_pitcher_proc.py")
@@ -547,6 +517,45 @@ def main() -> int:
             _mod.main()
     except Exception as _pe:
         print(f"[score] WARN: SP proc index step failed: {_pe}", file=sys.stderr)
+
+    # --- Also emit a slim wFIP lookup for the Google-Sheet pull. Uses the process-adjusted
+    # --- SP RA9 (unified_proc) where present, raw unified_score otherwise. Re-reads the
+    # --- proc-enriched pitcher_stats from disk so unified_proc is included.
+    try:
+        def _wnorm(s):
+            s = unicodedata.normalize("NFKD", str(s or ""))
+            s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+            s = "".join(c for c in s if c.isalpha() or c == " ")
+            return " ".join(s.split())
+        try:
+            _src = json.loads(open(OUTPUT).read()).get("pitchers", pitchers)
+        except Exception:
+            _src = pitchers
+        _wmap = {}
+        for _wk, _wv in _src.items():
+            _us = _wv.get("unified_proc")
+            if _us is None:
+                _us = _wv.get("unified_score")
+            if _us is None:
+                continue
+            _nm = _wnorm(_wv.get("name", _wk))
+            if _nm:
+                _wmap[_nm] = round(float(_us), 2)
+        _wpath = os.path.join(HERE, "..", "data", "wfip_lookup.json")
+        with open(_wpath, "w") as _wf:
+            json.dump({
+                "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "source": "pitcher_stats.json unified_proc (wFIP composite, SP process-adjusted) / unified_score",
+                "n": len(_wmap),
+                "wfip": _wmap,
+            }, _wf)
+        print(f"[score] wrote wfip_lookup.json ({len(_wmap)} pitchers)")
+    except Exception as _we:
+        print(f"[score] WARN: wfip_lookup emit failed: {_we}", file=sys.stderr)
+    print(f"[score] scored {n_scored} pitchers "
+          f"({n_rolling} with L5 rolling, {n_sparse} too sparse)", file=sys.stderr)
+    print("[score] tiers: " + ", ".join(f"{l}={n}" for l, n in tier_counts.items()),
+          file=sys.stderr)
 
     return 0
 
