@@ -286,6 +286,45 @@ def _game_states(iso):
     return out
 
 
+# ── model constants stamp (Fable 9/25) ─────────────────────────────────────
+# Read Adjustments!J:K live so every daily snapshot records the exact γ /
+# LG / exponents that produced its WPs. The exponent refit and the LG
+# re-centre both need to know which constants were in force per archived row;
+# this makes each pregame_inputs/sheet_projections date self-describing.
+_CONST_LABELS = {
+    "OFFENSE_ELASTICITY":    "offense_elasticity",   # K2  γ
+    "LG_LINEUP_XR_FULL":     "lg_lineup_xr_full",     # K3
+    "LG_LINEUP_XR_F5":       "lg_lineup_xr_f5",       # K4
+    "WIN_EXP_BASE":          "win_exp_base",          # K5  e_base
+    "WIN_EXP_TOTAL_SLOPE":   "win_exp_total_slope",   # K6  e_slope
+    "F5_EXP":                "f5_exp",                # K7
+}
+
+def fetch_model_constants():
+    """Pull the six live model constants from the Adjustments tab (J label / K
+    value). Best-effort: a failure just omits the stamp, never blocks the run."""
+    try:
+        url = sheet_csv_url("", "Adjustments")
+        txt = fetch_sheet_text(url, "Adjustments")
+        rows = list(csv.reader(io.StringIO(txt)))
+    except Exception as e:
+        print(f"[sheet_projections] constants stamp skipped: {e}", file=sys.stderr)
+        return None
+    out = {}
+    for row in rows:
+        for ci, cell in enumerate(row):
+            lab = (cell or "").strip()
+            if lab in _CONST_LABELS and _CONST_LABELS[lab] not in out:
+                for cj in range(ci + 1, len(row)):
+                    v = _parse_float(row[cj])
+                    if v is not None:
+                        out[_CONST_LABELS[lab]] = v
+                        break
+    if len(out) < len(_CONST_LABELS):
+        print(f"[sheet_projections] constants stamp partial: got {sorted(out)}", file=sys.stderr)
+    return out or None
+
+
 def main():
     url = sheet_csv_url(SHEET_CSV_URL, "GAME UPLOADER")
     try:
@@ -419,13 +458,17 @@ def main():
               f"keeping previous fuller feed (won't clobber)")
         return 0
 
+    _constants = fetch_model_constants()
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "date": iso,
         "source": "Google Sheet GAME UPLOADER tab (Action Network expert upload format)",
         "n_games": len(games),
+        "constants": _constants,   # live Adjustments!K2:K7 stamp (Fable 9/25): γ, LG_full, LG_F5, e_base, e_slope, e_F5
         "games": games,
     }
+    if _constants:
+        print(f"[sheet_projections] constants stamp: {_constants}")
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w") as f:
         json.dump(payload, f, indent=2)
