@@ -185,6 +185,76 @@ def build_offense_side(lineup, opp_hand, park_off, bp_players, const=None):
     return {"off_f5": off_f5, "off_fg": off_fg, "fld": fld_sum, "bsr": bsr_sum}
 
 
+
+# ── Phase B: env (J2) + bullpen aggregate ──────────────────────────────────
+def build_env(home_park_factor, weather_adj, ump_favor):
+    """J2 = park (Adjustments 'New Factor' for the home park) + weather term +
+    ump term. Validated: Fenway 1.04 + (-0.12 * 0.7/0.62) + 0 = 0.904516."""
+    w = weather_adj or 0.0
+    wterm = w * (0.3 / 0.36) if w >= 0 else w * (0.7 / 0.62)
+    if ump_favor is None:
+        uterm = 0.0
+    else:
+        uterm = max(-0.012, min(0.012, ump_favor))   # sheet L6 = MEDIAN(-0.012, favor, 0.012)
+    return (home_park_factor or 1.0) + wterm + uterm
+
+
+def build_bullpen(arms):
+    """Team bullpen L4 RA = power-1.5 K-BB-weighted mean of the available arms
+    (sheet I35/I56). arms: list of {ra, kbb, fatigued}. Fatigue bumps RA +0.4 and
+    trims K-BB -0.04 (the sheet's IF(K=TRUE,...)). Excludes tonight's SP upstream."""
+    num = den = 0.0
+    n_fat = 0
+    for a in arms:
+        ra, kbb = a.get("ra"), a.get("kbb")
+        if ra is None or kbb is None:
+            continue
+        if a.get("fatigued"):
+            ra += 0.4; kbb = max(0.0, kbb - 0.04); n_fat += 1
+        w = kbb ** 1.5
+        num += ra * w; den += w
+    return {"pen_ra": (num / den if den else None), "n_fatigued": n_fat}
+
+
+
+# ── Phase B: full assembler ────────────────────────────────────────────────
+def project_matchup(mu, const=None):
+    """Assemble a full game projection from structured inputs and the bridge/repo
+    feeds, then call project_game(). `mu` carries:
+      away_lineup / home_lineup : [(name, pos), ...] batting order
+      away_sp / home_sp         : {ra, stamina, gs, ip}
+      away_arms / home_arms     : [{ra, kbb, fatigued}, ...]
+      away_park_off / home_park_off : each team's own PF-Adj (offense divisor)
+      home_park_factor          : Adjustments 'New Factor' for the game park
+      weather_adj, ump_favor    : J4, ump
+      tilt_away, tilt_home      : Tilt By Game (v3)
+      away_sp_hand / home_sp_hand : 'RHP'/'LHP'
+      bp_players                : batter_projected 'players' dict
+    """
+    c = const or DEFAULT_CONST
+    aoff = build_offense_side(mu["away_lineup"], mu["home_sp_hand"], mu["away_park_off"], mu["bp_players"], c)
+    hoff = build_offense_side(mu["home_lineup"], mu["away_sp_hand"], mu["home_park_off"], mu["bp_players"], c)
+    apen = build_bullpen(mu["away_arms"])
+    hpen = build_bullpen(mu["home_arms"])
+    env = build_env(mu["home_park_factor"], mu.get("weather_adj"), mu.get("ump_favor"))
+    g = {
+        "away_sp_ra": mu["away_sp"]["ra"], "home_sp_ra": mu["home_sp"]["ra"],
+        "away_stamina": mu["away_sp"]["stamina"], "home_stamina": mu["home_sp"]["stamina"],
+        "away_off_f5": aoff["off_f5"], "home_off_f5": hoff["off_f5"],
+        "away_off_fg": aoff["off_fg"], "home_off_fg": hoff["off_fg"],
+        "away_pen_ra": apen["pen_ra"], "home_pen_ra": hpen["pen_ra"],
+        "away_fld": aoff["fld"], "home_fld": hoff["fld"],
+        "away_bsr": aoff["bsr"], "home_bsr": hoff["bsr"],
+        "away_sp_gs": mu["away_sp"].get("gs"), "away_sp_ip": mu["away_sp"].get("ip"),
+        "home_sp_gs": mu["home_sp"].get("gs"), "home_sp_ip": mu["home_sp"].get("ip"),
+        "away_fatigued": apen["n_fatigued"], "home_fatigued": hpen["n_fatigued"],
+        "env": env, "tilt_away": mu.get("tilt_away", 0.0), "tilt_home": mu.get("tilt_home", 0.0),
+    }
+    out = project_game(g, c)
+    out["_intermediates"] = g
+    return out
+
+
 # ── self-test: reproduce the sheet's matchup-1 (gid 302442, CHC@BOS 2026-09-25) ──
 _SELFTEST_INPUT = {
     "away_sp_ra": 3.91, "home_sp_ra": 3.85,
