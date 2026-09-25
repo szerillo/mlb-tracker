@@ -3339,6 +3339,25 @@ function sheetProjForGame(game_pk){
   return null;
 }
 
+// Build a Win-Prob-tab projection straight from the sheet's `pro` block
+// (SHEET_PROJ: R9/S9 full-game runs, R10/S10 win prob, T9 total) — the exact
+// published number the scoreboard already prices off, so the Win Prob tab agrees
+// with the board and the sheet on every uploaded game. computePregame remains the
+// fallback for games the sheet has not uploaded yet.
+function _pgFromSheet(game){
+  try{
+    const sp = sheetProjForGame(game.gamePk);
+    if(!sp || sp.away_runs==null || sp.home_runs==null || sp.away_wp==null || sp.home_wp==null) return null;
+    return {
+      awayRuns: sp.away_runs, homeRuns: sp.home_runs, homeRunsAdj: sp.home_runs,
+      homeWP: sp.home_wp, awayWP: sp.away_wp,
+      total: (sp.total!=null ? sp.total : (sp.away_runs + sp.home_runs)),
+      confirmed: !!sp.locked,
+      _src: 'pro',
+    };
+  }catch(e){ return null; }
+}
+
 /* ── First-5-innings (F5) view ─────────────────────────────────────────
    FIVE_MODE swaps the scoreboard cards to show F5 total + F5 moneyline +
    edges, sourced from data/f5_projections.json (Sean's F5 uploader tab) and
@@ -9963,7 +9982,7 @@ function renderProjectionsTab() {
   const rows = [];
   for (const g of games) {
     let pg = null;
-    try { pg = computePregame(g); } catch (e) {}
+    try { pg = _pgFromSheet(g) || computePregame(g); } catch (e) {}
     if (!pg) continue;
     const away = teamAbbr(g.teams.away.team.name);
     const home = teamAbbr(g.teams.home.team.name);
@@ -10008,7 +10027,7 @@ function renderProjectionsTab() {
   };
 
   const body = rows.map(r => `<tr>
-    <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.g.gameDate)}</span>${r.pg.confirmed ? "" : ' <span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}</td>
+    <td class="proj-match">${r.away} @ ${r.home}<span class="proj-time">${fmtTime(r.g.gameDate)}</span>${r.pg.confirmed ? "" : ' <span class="sb-pg-flag" title="Projected lineup (not confirmed)">proj</span>'}${r.pg._src === 'pro' ? '' : ' <span class="sb-pg-flag" title="Pre-upload estimate — not the pro block; the sheet has not uploaded this game yet">est</span>'}</td>
     <td class="proj-mono" title="HFA-adjusted projected runs (home gets HFA bump). Total uses a slightly trimmed home value to account for home not batting in the 9th when leading.">${r.pg.awayRuns.toFixed(1)}–${r.pg.homeRuns.toFixed(1)}</td>
     <td class="proj-mono"><b>${fav(r)} ${favPct(r)}%</b></td>
     <td class="proj-mono proj-muted">${r.mktHomeWP != null ? (fav(r) + " " + Math.round((r.pg.homeWP >= 0.5 ? r.mktHomeWP : 1 - r.mktHomeWP) * 100) + "%") : "—"}</td>
