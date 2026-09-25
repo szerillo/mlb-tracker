@@ -112,8 +112,10 @@ def grade_date(date):
         f5_away_win = (f5a > f5h) if (f5a is not None and f5h is not None) else None
         gt5 = _grade_total(pro5, open5, close5, f5_total) if pro5 else None
         gm5 = _grade_ml(pro5, open5, close5, f5_away_win) if pro5 else None
+        native = s.get("native")   # engine-vs-sheet paired column (Fable 9/25 §4)
         if gt or gm or gt5 or gm5:
-            rows.append({**base, "total": gt, "ml": gm, "f5_total": gt5, "f5_ml": gm5})
+            rows.append({**base, "total": gt, "ml": gm, "f5_total": gt5, "f5_ml": gm5,
+                         "native": native})
     # sort biggest edge first
     def best_edge(r):
         e = 0

@@ -37,6 +37,12 @@ def main():
         except Exception:
             prior = {}
 
+    # Native engine output (compute_pro_projections) — the 4th column on the paired
+    # archive row (old-chain · sheet · native · close · result), Fable 9/25 §4.
+    try:
+        _native = json.loads((REPO_ROOT / "data" / "pro_projections.json").read_text()).get("games", {})
+    except Exception:
+        _native = {}
     merged = dict(prior)
     n_pro = 0
     for g in games_in:
@@ -61,6 +67,11 @@ def main():
             cur["pro"] = pro
             cur["pro_first_seen"] = now
             n_pro += 1
+        nat = _native.get(str(g.get("game_pk")))
+        if nat and not cur.get("native"):
+            cur["native"] = {"home_wp": nat.get("home_wp"), "away_wp": nat.get("away_wp"),
+                             "total": nat.get("total"), "away_runs": nat.get("away_runs"),
+                             "home_runs": nat.get("home_runs"), "seen": now}
         # F5 (Fable 9/25): keep the EARLIEST F5 open + pro and the LATEST F5 line,
         # mirroring the full-game capture, so compute_clv can grade F5 close/result.
         if g.get("open_f5") and not cur.get("open_f5"):
