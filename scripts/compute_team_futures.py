@@ -159,6 +159,31 @@ def main():
         except Exception as e:
             print(f"[team-futures] could not load sean projections: {e}", file=sys.stderr)
 
+    # 2026-09-25: single source of truth for the Bartolo October outlook. Overlay the
+    # v2 October engine's WS + pennant (data/v2_marginalized.json — the same feed the
+    # playoff-futures board's BARTOLO column reads) onto the sean slot for the playoff
+    # field, so Team Futures and the board agree. v2 prices WS + pennant only; wins /
+    # div / wc / playoff / reach_ds / reach_cs stay from the season sim. Non-field teams
+    # (~0% WS) keep their sim values. AZ->ARI reconciled to the app's abbreviations.
+    v2_file = REPO_ROOT / "data" / "v2_marginalized.json"
+    if v2_file.exists():
+        try:
+            _v2 = json.loads(v2_file.read_text())
+            _abn = lambda ab: {"AZ": "ARI"}.get(ab, ab)
+            _ws = _v2.get("ws") or {}
+            _pen = {**(_v2.get("al_pennant") or {}), **(_v2.get("nl_pennant") or {})}
+            for _ab, _p in _ws.items():
+                _k = _abn(_ab)
+                if _k in sean_data and sean_data[_k].get("wins") is not None:
+                    sean_data[_k]["ws_pct"] = round(_p * 100, 1)
+            for _ab, _p in _pen.items():
+                _k = _abn(_ab)
+                if _k in sean_data and sean_data[_k].get("wins") is not None:
+                    sean_data[_k]["ws_app_pct"] = round(_p * 100, 1)
+            print(f"[team-futures] overlaid v2 WS/pennant onto sean slot for {len(_ws)} field teams", file=sys.stderr)
+        except Exception as e:
+            print(f"[team-futures] v2 overlay skipped: {e}", file=sys.stderr)
+
     no_data = {}
     if NO_PLAYOFFS_FILE.exists():
         try:

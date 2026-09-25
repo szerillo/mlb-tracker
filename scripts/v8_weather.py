@@ -84,7 +84,7 @@ TEAM_TO_PARK = {
 BP_BASE = {
     "LAA":{"temp":77,"hum":51,"pres":1013,"carry":-48.00,"wr_out":-9.71,"wr_in":3.32,"of":"Small","cr":"Avg","cq":"Good","var":0.79,"runs":-1,"alt":160},
     "BAL":{"temp":76,"hum":59,"pres":1015,"carry":-69.00,"wr_out":1.92,"wr_in":0.62,"of":"Variable","cr":"Great","cq":"Good","var":1.41,"runs":9,"alt":130},
-    "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":2.0,"wr_in":1.20,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},
+    "BOS":{"temp":70,"hum":60,"pres":1015,"carry":-1.55,"wr_out":2.0,"wr_in":2.50,"of":"Variable","cr":"Good","cq":"Great","var":1.84,"runs":12,"alt":20},  # wr_in 1.20->2.50 (Fable 2026-09-25 Fenway backtest): BetLabs 2021-26, 118 in-wind games, fitted in-wind slope -0.132 R/mph (~7x league), cold+in-wind under 65%; close prices ~-0.074 R/mph. 2.50 matches the close (-12% at 23mph); NOT 3.9 (Yankee-artifact). Green Monster steepens, not damps.
     "CHW":{"temp":70,"hum":63,"pres":1015,"carry":-1.06,"wr_out":2.81,"wr_in":-0.38,"of":"Small","cr":"Bad","cq":"Avg","var":1.18,"runs":-3,"alt":596},
     "CLE":{"temp":70,"hum":65,"pres":1016,"carry":-77.00,"wr_out":0,"wr_in":0.75,"of":"Small","cr":"Avg","cq":"Poor","var":1.51,"runs":-3,"alt":582},
     "KC": {"temp":78,"hum":56,"pres":1014,"carry":23.00,"wr_out":3.2,"wr_in":7.0,"of":"X","cr":"Great","cq":"Good","var":1.21,"runs":7,"alt":750},

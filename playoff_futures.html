@@ -213,7 +213,9 @@ function render(){
     document.getElementById('srcnote').textContent = projSrc==='mine'
       ? "BARTOLO: Pennant + WS from the pre-registered October series model (v2); WC/LDS from the season sim."
       : "Composite: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and BARTOLO.";
-    document.getElementById('footnote').textContent='Odds to win each round · tap a header to sort';
+    document.getElementById('footnote').textContent = projSrc==='mine'
+      ? 'Odds to win each round · tap a header to sort · Model 70%+ series favourites have won 11 of 14 (2016–25) at a market average of 65%.'
+      : 'Odds to win each round · tap a header to sort';
     renderRounds();
   }
   requestAnimationFrame(fit);

@@ -1,0 +1,32 @@
+{
+ "name": "OPERATIVE_2026 (per-unit, regular-season slopes)",
+ "date": "2026-09-25",
+ "supersedes_for_pricing": "PREREG_2026_CONFIG.json (which remains the graded pre-registration)",
+ "rationale": "Sean 9/25: do not fit the amplitude to ~100 playoff series; set each term to the runs-per-unit slope measured on large regular-season samples, expressed per 2026 final-12 field SD so the engine is unchanged.",
+ "coef": {
+  "z_lineup_xwoba": 0.226,
+  "z_lu_kpct": -0.126,
+  "z_lu_oaa": -0.11,
+  "z_rot_oct": -0.13
+ },
+ "derivation": {
+  "z_lineup_xwoba": "0.0291 runs/game per .001 xwOBA (45,592 RS team-games 2016-25, t 19; = linear weights) x 7.8 pts field SD",
+  "z_lu_kpct": "-0.0722 runs/game per 1 pp K% (RS team-games, t -5.5) x 1.74 pp field SD",
+  "z_lu_oaa": "-0.00558 runs/game per team OAA (28,690 RS games, t -6.3); lu_oaa ~ team OAA / 11.5 -> -0.064 per lu_oaa unit x 1.724 field SD (unit mapping approximate)",
+  "z_rot_oct": "-0.0220 runs/game per starter Stuff point (28,690 RS games, t -9.9) x 5.9 field SD (rotation-average vs per-start stuff: same units, mapping approximate)"
+ },
+ "prereg_for_reference": {
+  "z_lineup_xwoba": 0.3662,
+  "z_lu_kpct": -0.15,
+  "z_lu_oaa": -0.1977,
+  "z_rot_oct": -0.3156
+ },
+ "offense_only_variant": {
+  "z_lineup_xwoba": 0.226,
+  "z_lu_kpct": -0.15,
+  "z_lu_oaa": -0.1977,
+  "z_rot_oct": -0.3156
+ },
+ "historical_series_check": "99 series 2016-25: pre-reg log-loss 0.6510, per-unit-all 0.6561 (P pre-reg better 0.82), offense-only 0.6623 (P 1.00). Per-unit is not fit to these series by construction.",
+ "refit": "November 2026: re-derive RS per-unit slopes on 2017-2026; field SDs recomputed per field automatically."
+}
