@@ -133,6 +133,18 @@ LEAGUE_DIV = {
     "LAD": ("NL","W"), "SD": ("NL","W"), "SF": ("NL","W"), "ARI": ("NL","W"), "COL": ("NL","W"),
 }
 
+# statsapi team ids, keyed by the abbreviations LEAGUE_DIV uses above. Emitted with
+# the seeding distribution (bracket_dist.json) so Fable's v2 October engine can price
+# each realization by id. AZ/ARI + ATH stay as the app's abbrs here; the v2 runner
+# re-labels by its own map on output.
+ABBR2ID = {
+    "NYY":147,"BOS":111,"TOR":141,"TB":139,"BAL":110,"CLE":114,"MIN":142,"DET":116,
+    "KC":118,"CWS":145,"HOU":117,"SEA":136,"TEX":140,"LAA":108,"ATH":133,"ATL":144,
+    "NYM":121,"PHI":143,"WSH":120,"MIA":146,"MIL":158,"CHC":112,"CIN":113,"STL":138,
+    "PIT":134,"LAD":119,"SD":135,"SF":137,"ARI":109,"COL":115,
+}
+BRACKET_OUT = REPO_ROOT / "data" / "bracket_dist.json"
+
 
 def _get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "mlb-tracker/1.0"})
@@ -426,6 +438,7 @@ def main():
     counts = {ab: {"div": 0, "wc": 0, "po": 0, "bye": 0, "ws_app": 0, "ws": 0, "ds": 0, "cs": 0,
                    "wins_sum": 0.0} for ab in LEAGUE_DIV}
     rng = random.Random(20260714)
+    bracket_counts = {}   # (al_seed_ids, nl_seed_ids) -> realization count, for v2 October pricing
     lg_teams = {lg: [ab for ab, (l, _) in LEAGUE_DIV.items() if l == lg]
                 for lg in ("AL", "NL")}
     for _ in range(N_SIMS):
@@ -437,6 +450,7 @@ def main():
         for ab in LEAGUE_DIV:
             counts[ab]["wins_sum"] += w[ab]
         finalists = {}
+        seeds_lg = {}
         for lg in ("AL", "NL"):
             divs = {}
             for ab in lg_teams[lg]:
@@ -450,6 +464,7 @@ def main():
             rest.sort(key=lambda x: (w[x], rng.random()), reverse=True)
             wcs = rest[:3]
             seeds = champs + wcs
+            seeds_lg[lg] = list(seeds)   # seed order 1..6
             for ab in champs: counts[ab]["div"] += 1
             for ab in wcs:    counts[ab]["wc"] += 1
             for ab in seeds:  counts[ab]["po"] += 1
@@ -466,6 +481,9 @@ def main():
             for ab in (ds1, ds2): counts[ab]["cs"] += 1
             hi, lo = (ds1, ds2) if (w[ds1], rng.random()) >= (w[ds2], rng.random()) else (ds2, ds1)
             finalists[lg] = duel(hi, lo, 7, (1, 1, 0, 0, 0, 1, 1))
+        _bk = (tuple(ABBR2ID[a] for a in seeds_lg["AL"]),
+               tuple(ABBR2ID[a] for a in seeds_lg["NL"]))
+        bracket_counts[_bk] = bracket_counts.get(_bk, 0) + 1
         al, nl = finalists["AL"], finalists["NL"]
         counts[al]["ws_app"] += 1; counts[nl]["ws_app"] += 1
         hi, lo = (al, nl) if (w[al], rng.random()) >= (w[nl], rng.random()) else (nl, al)
@@ -503,6 +521,19 @@ def main():
     }
     OUTPUT.write_text(json.dumps(payload, separators=(",", ":")))
     print(f"[sean-proj] wrote {OUTPUT} ({len(teams_out)} teams, {N_SIMS} sims)", file=sys.stderr)
+
+    # Seeding distribution for Fable's v2 October engine (run_v2_bracket.py). One row
+    # per distinct (AL seeds 1-6, NL seeds 1-6) realization with its count; statsapi
+    # team ids in seed order. The v2 runner prices each realization on the frozen
+    # 16-team field and marginalizes by count.
+    bracket_dist = sorted(
+        ([list(al), list(nl), n] for (al, nl), n in bracket_counts.items()),
+        key=lambda e: -e[2])
+    BRACKET_OUT.write_text(json.dumps(
+        {"generated_at": payload["generated_at"], "season": SEASON, "n_sims": N_SIMS,
+         "n_realizations": len(bracket_dist), "bracket_dist": bracket_dist},
+        separators=(",", ":")))
+    print(f"[sean-proj] wrote {BRACKET_OUT} ({len(bracket_dist)} distinct brackets)", file=sys.stderr)
     return 0
 
 

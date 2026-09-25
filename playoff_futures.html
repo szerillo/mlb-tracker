@@ -149,12 +149,25 @@ function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(d
 
 async function load(){
   try{
-    const [sean,tf]=await Promise.all([
+    const [sean,tf,v2]=await Promise.all([
       fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
-      fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json())
+      fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json()),
+      fetch(RAW+'v2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     const mine={},blend={},mkt={};
-    for(const[ab,t]of Object.entries(sean.teams)) mine[ab]=t;
+    for(const[ab,t]of Object.entries(sean.teams)) mine[ab]={...t};
+    // BARTOLO Pennant + WS come from Fable's pre-registered October engine
+    // (v2_marginalized.json: pre-registered NB series model, priced on the frozen
+    // 16-team field, marginalized over the season sim's seeding distribution). WC/LDS
+    // round-survival stay from the season sim (v2 prices pennant + WS only). Composite
+    // is untouched. AZ↔ARI reconciled for the board's abbreviations.
+    if(v2){
+      const V=ab=>({AZ:'ARI'}[ab]||ab);
+      const ws=v2.ws||{}, pen={...(v2.al_pennant||{}),...(v2.nl_pennant||{})};
+      for(const[ab,p]of Object.entries(ws)){ const k=V(ab); if(mine[k]) mine[k].ws_pct=+(p*100).toFixed(1); }
+      for(const[ab,p]of Object.entries(pen)){ const k=V(ab); if(mine[k]) mine[k].ws_app_pct=+(p*100).toFixed(1); }
+      window.__v2date=v2.date||'';
+    }
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
     DATA.mine=mine; DATA.blend=blend; MKT=mkt;
     const g=(sean.generated_at||'').slice(0,10);
@@ -186,7 +199,7 @@ function render(){
       const g=b.closest('.seg').dataset.grp, v=b.dataset.v;
       if(g==='model')edgeModel=v; else if(g==='lg')edgeLg=v; else edgeVig=v;
       render();});
-    const mn=edgeModel==='mine'?'BARTOLO':'Composite';
+    const mn=edgeModel==='mine'?'BARTOLO (v2 Oct engine)':'Composite';
     document.getElementById('srcnote').textContent = edgeVig==='novig'
       ? `${mn} vs market. Listed = best book price; Mkt% is de‑vigged (field normalized to 100%); Edge = ${mn} − no‑vig Mkt%.`
       : `${mn} vs market. Listed = best book price; Mkt% is the raw book implied %; Edge = ${mn} − Mkt%.`;
@@ -198,7 +211,7 @@ function render(){
     seg.innerHTML=segHTML([{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}], projSrc);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{projSrc=b.dataset.v;render();});
     document.getElementById('srcnote').textContent = projSrc==='mine'
-      ? "BARTOLO's Monte-Carlo playoff sim — odds to survive each round."
+      ? "BARTOLO: Pennant + WS from the pre-registered October series model (v2); WC/LDS from the season sim."
       : "Composite: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and BARTOLO.";
     document.getElementById('footnote').textContent='Odds to win each round · tap a header to sort';
     renderRounds();

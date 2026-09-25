@@ -1,0 +1,39 @@
+{
+ "version": "v2 (rot_oct)",
+ "supersedes": "v1 (rot_top2)",
+ "inputs": {
+  "z_lineup_xwoba": "lineup_features.csv:lineup_xwoba",
+  "z_lu_kpct": "lineups/ x statsapi (slot 1-0.03i, k=150PA)",
+  "z_lu_oaa": "def_team_features.csv:lu_oaa",
+  "z_rot_oct": "rotation_ratings.csv:rot_oct"
+ },
+ "standardize": "within-season z across the qualifying field, ddof=1",
+ "coef": {
+  "z_lineup_xwoba": 0.3662,
+  "z_lu_kpct": -0.15,
+  "z_lu_oaa": -0.1977,
+  "z_rot_oct": -0.3156
+ },
+ "se": {
+  "z_lineup_xwoba": 0.07,
+  "z_lu_kpct": 0.0992,
+  "z_lu_oaa": 0.0453,
+  "z_rot_oct": 0.0694
+ },
+ "raw_coef": {
+  "z_lineup_xwoba": 0.4369,
+  "z_lu_kpct": -0.15,
+  "z_lu_oaa": -0.2732,
+  "z_rot_oct": -0.2206
+ },
+ "intercept": 3.9914,
+ "var_over_mean": 2.1188,
+ "lam": 1.5456,
+ "n": 776,
+ "hfa_logit": 0.144,
+ "tracked_alternatives": [
+  "raw (unshrunk) coefficients",
+  "no rotation term"
+ ],
+ "note": "report the top three as a tie; the CHC/LAD/MIL ordering is not identified"
+}

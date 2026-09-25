@@ -1036,6 +1036,7 @@
   .plus-chip.good b { color: var(--tier-good); }
   .plus-chip.bad   { background: rgba(239, 143, 132, 0.1); color: var(--tier-bad); }
   .plus-chip.bad b  { color: var(--tier-bad); }
+  .proc-badge.good { color: var(--tier-good); } .proc-badge.bad { color: var(--tier-bad); }
   .plus-chip.worst { background: rgba(232, 93, 82, 0.13); color: var(--tier-worst); }
   .plus-chip.worst b { color: var(--tier-worst); }
   .m-sp-splits { width: 100%; margin-top: 0.55rem; border-collapse: collapse;
@@ -6956,18 +6957,44 @@ function renderSPStatRows(s, thr) {
   // 18 / botERA 17 / proj 15) gets its own row above the component-stat rows
   // because it's the single number that should anchor the card. Same wFIP
   // bands as the Rankings page (elite 3.25 / good 3.75 / bad 4.25 / worst 4.75).
-  var wfip = s.unified_score;
+  // wFIP headline — process-adjusted when Fable's SP process index is present
+  // (unified_adj = unified_score − 0.10·proc_z, SP-only). The adjusted number
+  // anchors the card; raw wFIP + proc_z sit beside it, with a ▲/▼ badge once
+  // recent form has moved past ±1 SD. The six component z's are on the Process row.
+  var wfipRaw = s.unified_score;
+  var pz = (typeof s.proc_z === 'number') ? s.proc_z : null;
+  var wfipAdj = (typeof s.unified_adj === 'number' && s.unified_adj < 10) ? s.unified_adj : null;
+  var wfipHead = (wfipAdj != null) ? wfipAdj : wfipRaw;
   var wfipPill = "";
-  if (wfip != null && wfip < 10) {
+  if (wfipHead != null && wfipHead < 10) {
     var wfipBands = thr.wfip || {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75};
-    var wfipCls = tier(wfip, wfipBands, false);
-    var wfipTitle = "Weighted FIP — lower is better.";
-    wfipPill = '<span class="plus-chip ' + wfipCls + '" style="font-size:0.9rem;font-weight:600;" title="' + wfipTitle.replace(/"/g,'&quot;') + '">wFIP <b>' + n2(wfip) + '</b></span>';
+    var wfipCls = tier(wfipHead, wfipBands, false);
+    var _adj = (wfipAdj != null);
+    var _lab = _adj ? 'wFIP (adj)' : 'wFIP';
+    var _badge = '';
+    if (pz != null && Math.abs(pz) > 1.0) {
+      var _up = pz > 0;   // higher proc_z = better recent process → lower wFIP(adj)
+      _badge = '<span class="proc-badge ' + (_up ? 'good' : 'bad') + '" style="margin-left:4px;font-weight:800;" title="Recent process ' + (_up ? 'trending up' : 'trending down') + ' (proc_z ' + (pz > 0 ? '+' : '') + pz.toFixed(2) + ')">' + (_up ? '▲' : '▼') + '</span>';
+    }
+    var _side = _adj ? ' <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">raw ' + n2(wfipRaw) + (pz != null ? ' · proc_z ' + (pz > 0 ? '+' : '') + pz.toFixed(2) : '') + '</span>' : '';
+    var _wt = 'Weighted FIP — lower is better.' + (_adj ? ' Process-adjusted: unified_adj = wFIP − 0.10·proc_z (SP-only, Fable SP process index).' : '');
+    wfipPill = '<span class="plus-chip ' + wfipCls + '" style="font-size:0.9rem;font-weight:600;" title="' + _wt.replace(/"/g,'&quot;') + '">' + _lab + ' <b>' + n2(wfipHead) + '</b>' + _badge + '</span>' + _side;
   }
   var wfipRow = wfipPill ? '<div class="m-sp-row"><div class="m-sp-row-label">Score</div><div class="m-sp-row-pills">' + wfipPill + '</div></div>' : '';
+  // Process row: the six standardized recent-vs-baseline component z's feeding
+  // proc_z, plus a one-line methodology note. Only when the index is present.
+  var procRow = '';
+  if (wfipAdj != null && s.proc_components) {
+    var pc = s.proc_components;
+    var comps = [['Velo','z_velo'],['Whiff','z_whiff'],['CSW','z_csw'],['K‑BB','z_kbb'],['SecV','z_sec_velo'],['P/14','z_pitches14']];
+    var zpill = function(lab, z){ if (z == null || isNaN(z)) return ''; var c = (z >= 0.5 ? 'good' : (z <= -0.5 ? 'bad' : '')); return '<span class="plus-chip ' + c + '" style="font-size:0.8rem;" title="' + lab + ' — recent-vs-baseline z (SD-scaled)">' + lab + ' <b>' + (z > 0 ? '+' : '') + (+z).toFixed(2) + '</b></span>'; };
+    var _pills = comps.map(function(c){ return zpill(c[0], pc[c[1]]); }).filter(Boolean).join('');
+    if (_pills) procRow = '<div class="m-sp-row"><div class="m-sp-row-label">Process</div><div class="m-sp-row-pills">' + _pills + '</div></div>'
+      + '<div class="m-sp-note" style="font-size:0.72rem;color:var(--muted);margin:2px 0 4px 34px;">Process index (last 14d vs prior 46d · 6 components · panel-SD scaled): proc_z ' + (pz != null ? (pz > 0 ? '+' : '') + pz.toFixed(2) : '—') + ' → RA9 ' + (pz != null ? ((-0.10 * pz) >= 0 ? '+' : '') + (-0.10 * pz).toFixed(2) : '—') + '.</div>';
+  }
   // Sean's ask: don't show IP outside the per-start box-score table. The wFIP
   // row and component pills are enough headline; raw IP just clutters the card.
-  return row("Actual", actual) + row("Expected", expected)
+  return wfipRow + procRow + row("Actual", actual) + row("Expected", expected)
        + row("Pitching Model", pitchingModel) + row("Avg. Projection", projections);
 }
 
@@ -7440,7 +7467,16 @@ function renderSPBox(name, teamAbbrStr) {
     <div class="m-sp-header">
       <span>${name}</span>
       <span class="team-abbr">${teamAbbrStr}</span>
-      ${(() => { const w=s.unified_score; if(w==null||w>=10) return ''; const wb=(thr.wfip||{elite:3.25,good:3.75,bad:4.25,worst:4.75}); const wc=tier(w,wb,false); return '<span class="m-sp-wfip '+wc+'" title="Weighted FIP — lower is better">wFIP <b>'+w.toFixed(2)+'</b></span>'; })()}
+      ${(() => {
+        const raw=s.unified_score, pz=(typeof s.proc_z==='number')?s.proc_z:null;
+        const adj=(typeof s.unified_adj==='number'&&s.unified_adj<10)?s.unified_adj:null;
+        const w=(adj!=null)?adj:raw; if(w==null||w>=10) return '';
+        const wb=(thr.wfip||{elite:3.25,good:3.75,bad:4.25,worst:4.75}); const wc=tier(w,wb,false);
+        const lab=(adj!=null)?'wFIP (adj)':'wFIP';
+        const bdg=(pz!=null&&Math.abs(pz)>1.0)?('<span class="proc-badge '+(pz>0?'good':'bad')+'" style="margin-left:3px;font-weight:800;">'+(pz>0?'▲':'▼')+'</span>'):'';
+        const tt=(adj!=null)?('Weighted FIP (process-adjusted) — lower is better. raw '+raw.toFixed(2)+(pz!=null?', proc_z '+(pz>0?'+':'')+pz.toFixed(2):'')):'Weighted FIP — lower is better';
+        return '<span class="m-sp-wfip '+wc+'" title="'+tt.replace(/"/g,'&quot;')+'">'+lab+' <b>'+w.toFixed(2)+'</b>'+bdg+'</span>';
+      })()}
       ${openerTag}${handTag}
       <span class="m-sp-rankbig">${(() => { const r = getSpRank(name); return r ? rankChipHtml(r.rank, r.total, 'sp') : ''; })()}</span>
     </div>
