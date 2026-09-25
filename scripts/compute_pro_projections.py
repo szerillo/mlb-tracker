@@ -139,6 +139,52 @@ def project_game(g, const=None):
     }
 
 
+
+# ── Phase B: offense + DEF from the Batter Projected bridge feed ────────────
+import math as _math, re as _re
+
+PA_F5 = [2.91, 2.78, 2.65, 2.51, 2.38, 2.27, 2.18, 2.10, 2.02]   # sum 21.8
+PA_FG = [4.81, 4.69, 4.57, 4.46, 4.35, 4.25, 4.14, 4.03, 3.92]
+BSR_PA_MULT = [1.104, 1.076, 1.049, 1.023, 0.998, 0.975, 0.95, 0.925, 0.9]  # mean-1
+
+
+def _bp_norm(s):
+    s = (s or "").lower().replace(".", "").replace("'", "")
+    s = _re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
+    return _re.sub(r"\s+", " ", s).strip()
+
+
+def build_offense_side(lineup, opp_hand, park_off, bp_players, const=None):
+    """Offense ratio (F5 + full) and DEF sums for one batting side, reproducing
+    the sheet's W36/AB36 (offense) and S36/AA36 (FLD/BSR).
+
+    lineup: list of (name, position) in batting order (up to 9).
+    opp_hand: "RHP" or "LHP" (the pitcher this side faces).
+    park_off: the batting team's own park run factor (Team Modifiers PF-Adj).
+    bp_players: batter_projected.json "players" dict (norm-key -> row).
+    """
+    c = const or DEFAULT_CONST
+    lg_f5, lg_fg = c["lg_lineup_xr_f5"], c["lg_lineup_xr_full"]
+    off5_num = offg_num = fld_sum = bsr_sum = 0.0
+    for i, (name, pos) in enumerate(lineup[:9]):
+        p = bp_players.get(_bp_norm(name))
+        if not p:
+            continue
+        plat = p["plat_vsR"] if opp_hand == "RHP" else p["plat_vsL"]
+        if plat is None:
+            plat = 1.0
+        run = p["xr"] * _math.sqrt(max(0.0, plat))
+        off5_num += run * PA_F5[i]
+        offg_num += run * PA_FG[i]
+        # FLD is zeroed for the DH (the sheet's IF(pos="DH",0,...)); BSR always counts.
+        if str(pos).upper() != "DH":
+            fld_sum += (p.get("fld") or 0.0)
+        bsr_sum += (p.get("bsr") or 0.0) * BSR_PA_MULT[i]
+    off_f5 = off5_num / sum(PA_F5) / (lg_f5 * park_off)
+    off_fg = offg_num / sum(PA_FG) / (lg_fg * park_off)
+    return {"off_f5": off_f5, "off_fg": off_fg, "fld": fld_sum, "bsr": bsr_sum}
+
+
 # ── self-test: reproduce the sheet's matchup-1 (gid 302442, CHC@BOS 2026-09-25) ──
 _SELFTEST_INPUT = {
     "away_sp_ra": 3.91, "home_sp_ra": 3.85,
