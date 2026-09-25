@@ -2783,7 +2783,17 @@ let BATSIDE_CACHE = {};
 async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${r.status} for ${url}`);
-  return r.json();
+  const t = await r.text();
+  try { return JSON.parse(t); }
+  catch (e) {
+    // Python-generated feeds can serialize NaN/Infinity as bare literals (json.dump
+    // default), which are invalid JSON and make a strict parse throw — nulling out an
+    // entire feed over one non-finite value. Coerce those value-position literals to
+    // null and retry, so a stray NaN in (say) a pitcher's proc component can't take
+    // down all of PITCHER_STATS.
+    return JSON.parse(t.replace(/([:\[,]\s*)NaN\b/g, '$1null')
+                       .replace(/([:\[,]\s*)-?Infinity\b/g, '$1null'));
+  }
 }
 
 async function loadStaticData() {

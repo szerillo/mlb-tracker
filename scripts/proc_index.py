@@ -18,6 +18,7 @@ post, BEFORE compute_pitcher_score.py (which reads the output via refresh_pitche
 Spec: SP_PROCESS_INDEX_SIX_SEASONS_2026-09-24.md §4/§6; IMPLEMENTATION_BRIEF §1.
 """
 import argparse, datetime as dt, io, json, os, sys
+import math
 from pathlib import Path
 import numpy as np, pandas as pd, requests
 
@@ -113,6 +114,13 @@ if __name__ == '__main__':
         print(f"[proc_index] Savant pull/compute failed: {e}; leaving previous sp_process.json", file=sys.stderr)
         sys.exit(0)
     assert abs(R.proc_z.mean()) < 0.35 and 0.6 < R.proc_z.std() < 1.4, f'proc_z distribution off: mean {R.proc_z.mean():.2f} sd {R.proc_z.std():.2f}'
-    json.dump({str(r.mlbam_id): r._asdict() for r in R.itertuples(index=False)}, open(a.out, 'w'), indent=1)
+    # NaN (missing components) must serialize as null, not the bare `NaN` literal
+    # json.dump emits by default — that is invalid JSON and breaks strict browser
+    # parses downstream (pitcher_stats.json feeds the app). allow_nan=False + a clean
+    # dict keeps sp_process.json valid JSON.
+    def _clean(v):
+        return None if isinstance(v, float) and not math.isfinite(v) else v
+    _rows = {str(r.mlbam_id): {k: _clean(v) for k, v in r._asdict().items()} for r in R.itertuples(index=False)}
+    json.dump(_rows, open(a.out, 'w'), indent=1, allow_nan=False)
     R.sort_values('proc_z', ascending=False).to_csv(a.out.replace('.json', '.csv'), index=False)
     print(f'{len(R)} starters indexed for {date}; proc_z mean {R.proc_z.mean():+.2f} sd {R.proc_z.std():.2f}', file=sys.stderr)

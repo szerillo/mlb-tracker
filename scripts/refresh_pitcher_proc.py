@@ -21,7 +21,7 @@ written, before the wFIP lookup is emitted); also runnable standalone.
 Spec: IMPLEMENTATION_BRIEF_for_BARTOLO_2026-09-24.md §1, SP_PROCESS_INDEX_SIX_SEASONS.
 """
 from __future__ import annotations
-import json, sys
+import json, math, sys
 from pathlib import Path
 
 REPO_ROOT  = Path(__file__).resolve().parent.parent
@@ -75,7 +75,10 @@ def main():
             ra9 = round(-PROC_COEF * pz, 3)
         p["proc_z"] = round(pz, 3)
         p["ra9_adj"] = ra9
-        p["proc_components"] = {k: r.get(k) for k in ZKEYS}
+        # NaN (missing velo etc.) must not leak into pitcher_stats.json: bare NaN is
+        # invalid JSON and nulls out the whole feed in a strict browser parse. Coerce
+        # any non-finite component to null.
+        p["proc_components"] = {k: (None if isinstance(r.get(k), float) and not math.isfinite(r.get(k)) else r.get(k)) for k in ZKEYS}
         us = _num(p.get("unified_score"))
         if us is not None and us < 10:                 # sane RA9-scale composite only
             p["unified_adj"] = round(us + ra9, 3)
