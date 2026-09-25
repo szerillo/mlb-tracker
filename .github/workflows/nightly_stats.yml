@@ -36,7 +36,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        run: pip install requests beautifulsoup4 lxml pandas pybaseball
+        run: pip install requests beautifulsoup4 lxml pandas numpy pyarrow pybaseball
 
       # ── PITCHERS ──────────────────────────────────────────────────────────
       - name: Refresh pitcher stats (FG dump)
@@ -82,6 +82,10 @@ jobs:
         continue-on-error: true
 
       # ── UNIFIED SCORES (must run AFTER all enrichments above) ────────────
+      - name: SP process index (Savant proc_z → data/sp_process.json)
+        run: python scripts/proc_index.py
+        continue-on-error: true
+
       - name: Compute unified pitcher score
         run: python scripts/compute_pitcher_score.py
         continue-on-error: true
