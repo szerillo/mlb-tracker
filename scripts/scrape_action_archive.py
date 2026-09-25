@@ -49,7 +49,7 @@ HERE = os.path.dirname(__file__)
 REPO_ROOT = os.path.dirname(HERE) if HERE.endswith("scripts") else HERE
 OUTPUT_DIR = os.path.join(REPO_ROOT, "data", "odds_archive")
 AN_API = ("https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb"
-          "?bookIds=15,30,1006,1,972,1005,939,1548,1929,1903,2789&date={yyyymmdd}&periods=event")
+          "?bookIds=15,30,1006,1,972,1005,939,1548,1929,1903,2789&date={yyyymmdd}&periods=event,firstfiveinnings")
 MLB_API = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={iso}"
 BOOK_OPEN = "30"
 BOOK_CONSENSUS = "15"
@@ -69,11 +69,11 @@ def _http_get(url: str, timeout: int = 30, retries: int = 3):
     raise last
 
 
-def _extract_market(markets: dict, book_id: str) -> dict:
+def _extract_market(markets: dict, book_id: str, period: str = "event") -> dict:
     book = markets.get(book_id)
     if not book:
         return {}
-    ev = book.get("event") or {}
+    ev = book.get(period) or {}
     out = {}
     ml = ev.get("moneyline") or []
     for e in ml:
@@ -91,10 +91,10 @@ def _extract_market(markets: dict, book_id: str) -> dict:
     return out
 
 
-def _extract_pro(game: dict) -> dict:
-    """Pull PRO projections from edge_projections.game. Returns empty dict
-    if PRO is unavailable (e.g. games with no model output)."""
-    ep = (game.get("edge_projections") or {}).get("game") or game.get("game_projections") or {}
+def _extract_pro(game: dict, period: str = "game") -> dict:
+    """Pull PRO projections from edge_projections.<period> (period="game" for the
+    full game, "firstfiveinnings" for F5). Returns empty dict if PRO is unavailable."""
+    ep = (game.get("edge_projections") or {}).get(period) or (game.get("game_projections") or {} if period == "game" else {})
     if not ep:
         return {}
     def _f(v):
@@ -140,6 +140,27 @@ def _mlb_game_pk_map(iso_date: str) -> dict:
     return out
 
 
+def _f5_final(game_pk):
+    """Score through 5 innings from the statsapi linescore (F5 result). Returns
+    (away5, home5) or (None, None) if fewer than 5 innings are recorded / no pk."""
+    if not game_pk:
+        return (None, None)
+    try:
+        d = _http_get(f"https://statsapi.mlb.com/api/v1/game/{game_pk}/linescore", timeout=15, retries=2)
+    except Exception:
+        return (None, None)
+    innings = d.get("innings") or []
+    if len([i for i in innings if i.get("num") is not None]) < 5:
+        return (None, None)
+    a = h = 0
+    for inn in innings:
+        if (inn.get("num") or 99) > 5:
+            continue
+        a += ((inn.get("away") or {}).get("runs") or 0)
+        h += ((inn.get("home") or {}).get("runs") or 0)
+    return (a, h)
+
+
 def scrape_date(iso_date: str) -> dict:
     yyyymmdd = iso_date.replace("-", "")
     data = _http_get(AN_API.format(yyyymmdd=yyyymmdd))
@@ -158,6 +179,9 @@ def scrape_date(iso_date: str) -> dict:
         box = g.get("boxscore") or {}
         actual_away = box.get("total_away_points") or box.get("away_score")
         actual_home = box.get("total_home_points") or box.get("home_score")
+        _status = (g.get("status_display") or g.get("status") or "")
+        _is_final = str(_status).lower() in ("final", "complete", "completed", "game over")
+        f5_away, f5_home = _f5_final(game_pk) if _is_final else (None, None)
         out_games.append({
             "an_event_id": g.get("id"),
             "game_pk": game_pk,
@@ -170,6 +194,13 @@ def scrape_date(iso_date: str) -> dict:
             "open":      _extract_market(markets, BOOK_OPEN),
             "consensus": _extract_market(markets, BOOK_CONSENSUS),
             "pro": _extract_pro(g),
+            # First-five-innings (F5) — same books/periods, for the exponent-refit
+            # F5 grading (Fable 9/25). Result = score through 5 from statsapi.
+            "open_f5":      _extract_market(markets, BOOK_OPEN, "firstfiveinnings"),
+            "consensus_f5": _extract_market(markets, BOOK_CONSENSUS, "firstfiveinnings"),
+            "pro_f5": _extract_pro(g, "firstfiveinnings"),
+            "actual_f5_away_runs": f5_away,
+            "actual_f5_home_runs": f5_home,
         })
     return {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",

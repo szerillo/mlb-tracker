@@ -5,6 +5,17 @@ For each Final game today (ET business day), resample batted-ball outcomes
 via the trained BattedBallModel, apply the HP-ump favor-runs adjustment,
 and emit per-game summary dicts to data/bartolo_wp.json.
 
+POST-GAME REPLAY, PRO-SEEDED (Fable 2026-09-25 ruling). This is an explicitly
+separate, labelled "post-game replay (pro-seeded)" product — NOT a pregame price,
+and it never competes with the board. Its game-start (t=0) state must be the pro
+number: the Monte-Carlo is seeded from the sheet's pro cells for that game
+(home_wp = S10 at lock; per-inning expected runs from the pro F5/L4 split:
+away F5 = R2/5, away L4 = (R9-R2)/4; home F5 = S2/5, home L4 = (X9-S2)/4), NOT from
+an internal run model. Seeded from pro, every replay opens at the pro WP and ends
+at 0/1, so the path grades the pro line rather than a second engine. `_pro_seed()`
+below assembles that seed and attaches it to the sim payload as `pro_seed`; the
+Phase-2 model must consume it as the t=0 baseline.
+
 GATED EXIT: if the model pickle (scripts/bartolo/bartolo_model.pkl) is not
 present â Phase 2 writes it â this script logs + exits 0 so the scheduled
 workflow stays green while we build up.
@@ -61,6 +72,40 @@ def _emit_stub(reason: str) -> None:
             pass
     OUTPUT.write_text(json.dumps(stub, indent=2))
     print(f"  wrote stub to {OUTPUT} (status: {stub['status']})")
+
+
+def _pro_seed(game_pk):
+    """Assemble the pro-seed for a game's replay (Fable 9/25): home win prob at
+    lock plus per-inning expected-run rates from the pro F5/L4 split. Reads the
+    published pro feeds (data/pro_projections.json when the internal engine is
+    live, else data/sheet_projections.json for full-game + data/f5_projections.json
+    for F5). Returns None if the pro number isn't available for this game."""
+    import json as _json
+    pk = str(game_pk)
+    def _load(rel):
+        p = REPO_ROOT / "data" / rel
+        try: return _json.loads(p.read_text())
+        except Exception: return {}
+    pro = (_load("pro_projections.json").get("games") or {}).get(pk)
+    if pro and pro.get("home_wp") is not None:
+        R9, X9 = pro.get("away_runs"), pro.get("home_runs_full9")
+        R2, S2 = pro.get("f5_away_runs"), pro.get("f5_home_runs")
+        home_wp = pro.get("home_wp")
+    else:
+        sp = (_load("sheet_projections.json").get("games") or {}).get(pk) or {}
+        f5 = (_load("f5_projections.json").get("games") or {}).get(pk) or {}
+        home_wp = sp.get("home_wp")
+        R9 = sp.get("away_runs")
+        X9 = (sp.get("home_runs") / 0.936) if sp.get("home_runs") is not None else None   # un-trim the 9th
+        R2, S2 = f5.get("away_runs"), f5.get("home_runs")
+    if home_wp is None or R9 is None or X9 is None or R2 is None or S2 is None:
+        return None
+    return {
+        "home_wp": home_wp, "away_wp": 1 - home_wp,
+        "away_rate_f5": R2 / 5.0, "away_rate_l4": max(0.0, (R9 - R2)) / 4.0,
+        "home_rate_f5": S2 / 5.0, "home_rate_l4": max(0.0, (X9 - S2)) / 4.0,
+        "source": "pro",
+    }
 
 
 def main() -> int:
@@ -162,6 +207,7 @@ def main() -> int:
             "actual_away_runs": g.away_runs,
             "actual_home_runs": g.home_runs,
             "statcast": gdf,
+            "pro_seed": _pro_seed(g.game_pk),   # t=0 baseline (Fable 9/25): seed the MC from the pro line, not an internal model
         }
         try:
             sim = run_simulation(payload, model, n_sims=10000, seed=42)

@@ -61,6 +61,15 @@ def main():
             cur["pro"] = pro
             cur["pro_first_seen"] = now
             n_pro += 1
+        # F5 (Fable 9/25): keep the EARLIEST F5 open + pro and the LATEST F5 line,
+        # mirroring the full-game capture, so compute_clv can grade F5 close/result.
+        if g.get("open_f5") and not cur.get("open_f5"):
+            cur["open_f5"] = g["open_f5"]
+        if g.get("consensus_f5"):
+            cur["last_f5"] = g["consensus_f5"]
+        pro_f5 = g.get("pro_f5") or {}
+        if (any(v is not None for v in pro_f5.values()) if pro_f5 else False) and not cur.get("pro_f5"):
+            cur["pro_f5"] = pro_f5
         merged[eid] = cur
 
     payload = {"date": today, "captured_at": now, "n_games": len(merged), "games": merged}

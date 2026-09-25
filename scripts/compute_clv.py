@@ -103,8 +103,17 @@ def grade_date(date):
                 "start_time": s.get("start_time"), "final": (None if aa is None else f"{aa}-{ah}")}
         gt = _grade_total(pro, open_m, close_m, actual_total)
         gm = _grade_ml(pro, open_m, close_m, away_win)
-        if gt or gm:
-            rows.append({**base, "total": gt, "ml": gm})
+        # F5 (Fable 9/25): same grading on the first-five-innings market/result.
+        pro5     = s.get("pro_f5")
+        open5    = s.get("open_f5") or a.get("open_f5")
+        close5   = a.get("consensus_f5") or s.get("last_f5")
+        f5a, f5h = a.get("actual_f5_away_runs"), a.get("actual_f5_home_runs")
+        f5_total = (f5a + f5h) if (f5a is not None and f5h is not None) else None
+        f5_away_win = (f5a > f5h) if (f5a is not None and f5h is not None) else None
+        gt5 = _grade_total(pro5, open5, close5, f5_total) if pro5 else None
+        gm5 = _grade_ml(pro5, open5, close5, f5_away_win) if pro5 else None
+        if gt or gm or gt5 or gm5:
+            rows.append({**base, "total": gt, "ml": gm, "f5_total": gt5, "f5_ml": gm5})
     # sort biggest edge first
     def best_edge(r):
         e = 0
@@ -120,8 +129,8 @@ def grade_date(date):
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     dates = sorted(p.stem for p in CLV_DIR.glob("*.json")) if CLV_DIR.exists() else []
-    agg = {"ml": {"dir_correct": 0, "dir_total": 0, "clv_sum": 0.0, "clv_n": 0, "win": 0, "loss": 0},
-           "total": {"dir_correct": 0, "dir_total": 0, "clv_sum": 0.0, "clv_n": 0, "win": 0, "loss": 0}}
+    _blank = lambda: {"dir_correct": 0, "dir_total": 0, "clv_sum": 0.0, "clv_n": 0, "win": 0, "loss": 0}
+    agg = {"ml": _blank(), "total": _blank(), "f5_ml": _blank(), "f5_total": _blank()}
     graded_dates = []
     for d in dates:
         res = grade_date(d)
@@ -129,13 +138,13 @@ def main():
         (OUT_DIR / f"{d}.json").write_text(json.dumps(res, indent=1))
         graded_dates.append(d)
         for r in res["games"]:
-            for mk in ("ml", "total"):
+            for mk in ("ml", "total", "f5_ml", "f5_total"):
                 v = r.get(mk)
                 if not v: continue
                 if v.get("direction") in ("correct", "wrong"):
                     agg[mk]["dir_total"] += 1
                     if v["direction"] == "correct": agg[mk]["dir_correct"] += 1
-                clv = v.get("clv_pct" if mk == "ml" else "clv_pts")
+                clv = v.get("clv_pct" if mk.endswith("ml") else "clv_pts")
                 if clv is not None:
                     agg[mk]["clv_sum"] += clv; agg[mk]["clv_n"] += 1
                 if v.get("result") == "win": agg[mk]["win"] += 1
@@ -147,7 +156,8 @@ def main():
                 "record": f"{a['win']}-{a['loss']}", "win": a["win"], "loss": a["loss"]}
     summary = {"generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
                "dates_graded": graded_dates,
-               "ml": summarize(agg["ml"]), "total": summarize(agg["total"])}
+               "ml": summarize(agg["ml"]), "total": summarize(agg["total"]),
+               "f5_ml": summarize(agg["f5_ml"]), "f5_total": summarize(agg["f5_total"])}
     SUMMARY.write_text(json.dumps(summary, indent=1))
     print(f"[compute-clv] graded {len(graded_dates)} dates: {graded_dates}", file=sys.stderr)
     print(f"  ML dir {summary['ml']['directional_pct']}% avgCLV {summary['ml']['avg_clv']} | "
