@@ -36,8 +36,25 @@ def main():
             "pf_adj_away": _f(row[2]) if len(row) > 2 else None,   # offense divisor batting away
             "pf_adj_home": _f(row[3]) if len(row) > 3 else None,   # offense divisor batting home
         }
+    # Tilt By Game (v3): GameID (= an_event_id) | away_tilt | home_tilt
+    tilt = {}
+    try:
+        turl = GVIZ.format(sid=SHEET_ID, tab=urllib.parse.quote("Tilt By Game"), cb=int(time.time()))
+        treq = urllib.request.Request(turl, headers={"User-Agent": UA, "Accept": "text/csv,*/*"})
+        with urllib.request.urlopen(treq, timeout=30) as r:
+            trows = list(csv.reader(io.StringIO(r.read().decode("utf-8", "replace"))))
+        for row in trows[1:]:
+            gid = (row[0] or "").strip() if row else ""
+            if not gid:
+                continue
+            gid = gid.split(".")[0]   # normalize 296198.0 -> 296198
+            tilt[gid] = {"away": _f(row[1]) if len(row) > 1 else None,
+                         "home": _f(row[2]) if len(row) > 2 else None}
+    except Exception as e:
+        print(f"[sheet_tables] tilt skipped: {e}", file=sys.stderr)
     payload = {"generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
-               "source": "Google Sheet 'Team Modifiers' tab", "n_teams": len(teams), "teams": teams}
+               "source": "Google Sheet 'Team Modifiers' + 'Tilt By Game' tabs",
+               "n_teams": len(teams), "n_tilt": len(tilt), "teams": teams, "tilt": tilt}
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w") as fh:
         json.dump(payload, fh, indent=1)

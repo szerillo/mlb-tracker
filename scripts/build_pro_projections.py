@@ -40,7 +40,8 @@ def _norm(s):
     s = re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 
-FATIGUE_STATES = {"REST", "FATIGUED", "UNAVAILABLE", "OUT"}   # +0.4 RA bump
+FATIGUE_STATES = {"TIRED"}          # +0.4 RA / -0.04 K-BB (sheet fatigue flag)
+EXCLUDE_STATES = {"LIKELY_OUT"}     # unavailable arms — drop from the pen
 
 def _team_key(full, keyed):
     """Match a statsapi full team name ('Chicago Cubs') to a nickname-keyed dict
@@ -68,6 +69,26 @@ def _sp_gs_ip(mlbam_id, season):
         pass
     return (None, None)
 
+def _hp_ump_favor(game_pk, umps, baseline):
+    """HP-ump favor for J2 (sheet L6): clamp(off_adj_shrunk - baseline, +/-0.012).
+    0 when the plate ump is unassigned (forward games)."""
+    try:
+        d = json.load(urllib.request.urlopen(
+            f"https://statsapi.mlb.com/api/v1/game/{game_pk}/feed/live", timeout=12))
+        offs = (d.get("liveData", {}).get("boxscore", {}) or {}).get("officials") or []
+        hp = next((o.get("official", {}).get("fullName") for o in offs
+                   if str(o.get("officialType", "")).lower().startswith("home")), None)
+        if not hp:
+            return None
+        u = umps.get(hp) or {}
+        adj = u.get("off_adj_shrunk")
+        if adj is None:
+            return None
+        return max(-0.012, min(0.012, adj - (baseline or 0.0)))
+    except Exception:
+        return None
+
+
 def main():
     bp   = _load("batter_projected.json").get("players", {})
     pp   = _load("pitcher_projected.json").get("pitchers", {})
@@ -75,7 +96,11 @@ def main():
     ps   = {_norm(k): v for k, v in _load("pitcher_stats.json").get("pitchers", {}).items()}
     pens = _load("bullpens_rr.json").get("teams", {})
     wx   = {str(g.get("game_pk")): g for g in _load("weather.json").get("games", [])}
-    tilt = _load("pitcher_split_tilt.json").get("games", {})
+    tilt_names = _load("pitcher_split_tilt.json").get("games", {})   # SP names per game
+    _st = _load("sheet_tables.json")
+    tilt_v3 = _st.get("tilt", {})                                     # Tilt By Game v3 (an_event_id -> {away,home})
+    _umpd = _load("umps.json"); umps = _umpd.get("umpires", {}); ump_base = _umpd.get("baseline")
+    sp_map = _load("sheet_projections.json").get("games", {})         # pk -> {an_event_id}
     lus  = {str(g.get("game_pk")): g for g in _load("lineups.json").get("games", [])}
     const = _load("sheet_projections.json").get("constants") or E.DEFAULT_CONST
     season = datetime.date.today().year
@@ -101,6 +126,8 @@ def main():
             nm = a.get("player")
             if not nm or _norm(nm) == _norm(sp_name):    # exclude tonight's SP
                 continue
+            if str(a.get("state", "")).upper() in EXCLUDE_STATES:   # LIKELY_OUT -> unavailable
+                continue
             praw = ps.get(_norm(nm)) or {}
             ra = praw.get("unified_score")
             kbb = (pp.get(_norm(nm)) or {}).get("kbb")
@@ -119,7 +146,7 @@ def main():
                 continue
             away_full, home_full = lg.get("away"), lg.get("home")
             # SPs from the tilt feed (has away_sp/home_sp) — falls back gracefully
-            t = tilt.get(pk, {})
+            t = tilt_names.get(pk, {})
             asp_name, hsp_name = t.get("away_sp"), t.get("home_sp")
             if not asp_name or not hsp_name:
                 continue
@@ -132,6 +159,9 @@ def main():
             w = wx.get(pk, {})
             wadj = ((w.get("v8") or {}).get("run_adj_pct"))
             wadj = (wadj / 100.0) if wadj is not None else 0.0
+            eid = str((sp_map.get(pk) or {}).get("an_event_id") or "").split(".")[0]
+            tv = tilt_v3.get(eid, {})
+            ump_favor = _hp_ump_favor(pk, umps, ump_base)
             mu = {
                 "away_lineup": [(p["name"], p.get("pos")) for p in au[:9]],
                 "home_lineup": [(p["name"], p.get("pos")) for p in hu[:9]],
@@ -139,11 +169,12 @@ def main():
                 "away_sp_hand": asp["hand"], "home_sp_hand": hsp["hand"],
                 "away_park_off": atm.get("pf_adj_away"), "home_park_off": htm.get("pf_adj_home"),
                 "home_park_factor": htm.get("runs_pf"),
-                "weather_adj": wadj, "ump_favor": None,
+                "weather_adj": wadj, "ump_favor": ump_favor,
                 "away_sp": asp, "home_sp": hsp,
                 "away_arms": arms_for(away_full, asp_name),
                 "home_arms": arms_for(home_full, hsp_name),
-                "tilt_away": t.get("away_tilt") or 0.0, "tilt_home": t.get("home_tilt") or 0.0,
+                "tilt_away": (tv.get("away") if tv.get("away") is not None else 0.0),
+                "tilt_home": (tv.get("home") if tv.get("home") is not None else 0.0),
             }
             o = E.project_matchup(mu, const)
             out_games[pk] = {
