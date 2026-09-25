@@ -3237,27 +3237,50 @@ async function loadSheetProjections(){
       // that appears on >1 gamePk and DROP it from the name bridge — those games
       // then resolve only by their own distinct an_event_id (via oddsForGame),
       // so an un-uploaded G2 correctly shows blank instead of G1's numbers.
-      const pkByName={}, _dhNames=new Set();
+      // Group today's schedule games by matchup, ordered by gameNumber (then start
+      // time). A doubleheader yields two gamePks under one "away@home" key; the
+      // old bridge DROPPED such keys entirely, so a freshly-uploaded G2 could
+      // never map to its gamePk live (it only appeared after the nightly
+      // sheet_projections snapshot). Instead we pair each matchup's schedule
+      // games to the Action Network events by chronological order — DH game 1 is
+      // always earlier than game 2 on both sides — so every an_event_id resolves
+      // to its OWN distinct gamePk. Single games (one each) map exactly as before.
+      const pkByMatch={};   // matchup -> [{pk, num, start}] sorted by (gameNumber, start)
       for(const g of CURRENT_GAMES){
         const a=_norm(g.teams&&g.teams.away&&g.teams.away.team&&g.teams.away.team.name);
         const h=_norm(g.teams&&g.teams.home&&g.teams.home.team&&g.teams.home.team.name);
         if(!(a&&h)) continue;
-        const key=a+'@'+h;
-        if(pkByName[key]!==undefined && pkByName[key]!==g.gamePk) _dhNames.add(key);
-        pkByName[key]=g.gamePk;
+        (pkByMatch[a+'@'+h]=pkByMatch[a+'@'+h]||[]).push({pk:g.gamePk, num:(g.gameNumber||1), start:String(g.gameDate||'')});
       }
-      for(const k of _dhNames) delete pkByName[k];   // ambiguous (doubleheader) — never name-bridge
+      Object.values(pkByMatch).forEach(arr=>arr.sort((x,y)=>(x.num-y.num)||x.start.localeCompare(y.start)));
       const _c2=(typeof AbortController!=='undefined')?new AbortController():null;
       const _t2=_c2?setTimeout(()=>_c2.abort(),7000):null;
       const _anr=await fetch('https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15&date='+_ymd+'&periods=event', _c2?{signal:_c2.signal}:undefined);
       if(_t2)clearTimeout(_t2);
       if(_anr.ok){
         const _aj=await _anr.json();
+        const anByMatch={};   // matchup -> [AN event] sorted by start_time
         for(const g of (_aj.games||[])){
           const tm={}; for(const t of (g.teams||[])) tm[t.id]=t.full_name;
           const a=_norm(tm[g.away_team_id]), h=_norm(tm[g.home_team_id]);
-          const pk=pkByName[a+'@'+h];
-          if(pk && g.id!=null && eid2pk[g.id]==null) eid2pk[g.id]=pk;
+          if(!(a&&h)||g.id==null) continue;
+          (anByMatch[a+'@'+h]=anByMatch[a+'@'+h]||[]).push(g);
+        }
+        for(const key in anByMatch){
+          const anArr=anByMatch[key].slice().sort((x,y)=>String(x.start_time||'').localeCompare(String(y.start_time||'')));
+          const pkArr=pkByMatch[key]||[];
+          // Only pair when the counts agree (1↔1 single game, or 2↔2 doubleheader).
+          // Chronological order == gameNumber order on both feeds, so index i pairs
+          // the i-th-earliest AN event to the i-th schedule game. If counts differ
+          // (a feed is missing one side of a DH) we skip the matchup rather than
+          // risk a collision — same safety the old drop rule gave, without the
+          // permanent DH blackout.
+          if(pkArr.length===anArr.length){
+            for(let i=0;i<anArr.length;i++){ const gid=anArr[i].id, pk=pkArr[i].pk;
+              if(gid!=null && pk!=null && eid2pk[gid]==null) eid2pk[gid]=pk; }
+          } else if(pkArr.length===1 && anArr.length===1){
+            if(eid2pk[anArr[0].id]==null) eid2pk[anArr[0].id]=pkArr[0].pk;
+          }
         }
       }
     }
@@ -10436,6 +10459,37 @@ async function renderPlayerFuturesTab(){
   }
 }
 
+// Canonical BARTOLO model map: the season-sim team projections with the v2
+// October engine (data/v2_marginalized.json) layered on top for WS / pennant /
+// round-survival — byte-for-byte the same overlay the Playoff Futures board
+// applies. Every in-app BARTOLO view (Playoff Picture, Team Futures) calls this
+// so the model column reads one number across tabs. Overlay runs once, cached.
+async function ensureSeanV2(){
+  if(window.__seanV2Done) return window.__seanProj||{};
+  if(window.__seanProj===undefined || window.__seanProj===null){
+    try{ const r=await fetch(`./data/sean_team_projections.json?cb=${Date.now()}`); const j=await r.json(); window.__seanProj=(j&&j.teams)||{}; }
+    catch(e){ window.__seanProj=null; }
+  }
+  const SEAN=window.__seanProj;
+  if(SEAN && Object.keys(SEAN).length){
+    try{
+      const r=await fetch(`./data/v2_marginalized.json?cb=${Date.now()}`);
+      const v2=r.ok?await r.json():null;
+      if(v2){
+        const V=ab=>({AZ:'ARI'}[ab]||ab);
+        const ws=v2.ws||{}, pen={...(v2.al_pennant||{}),...(v2.nl_pennant||{})};
+        const rds=v2.reach_ds||{}, rcs=v2.reach_cs||{};
+        for(const[ab,p]of Object.entries(ws)){ const k=V(ab); if(SEAN[k]) SEAN[k].ws_pct=+(p*100).toFixed(1); }
+        for(const[ab,p]of Object.entries(pen)){ const k=V(ab); if(SEAN[k]) SEAN[k].ws_app_pct=+(p*100).toFixed(1); }
+        if(Object.keys(rds).length) for(const[ab,p]of Object.entries(rds)){ const k=V(ab); if(SEAN[k]) SEAN[k].reach_ds_pct=+(p*100).toFixed(1); }
+        if(Object.keys(rcs).length) for(const[ab,p]of Object.entries(rcs)){ const k=V(ab); if(SEAN[k]) SEAN[k].reach_cs_pct=+(p*100).toFixed(1); }
+        window.__v2date=v2.date||'';
+      }
+    }catch(e){}
+  }
+  window.__seanV2Done=true;
+  return SEAN||{};
+}
 async function renderPlayoffsTab(){
   const root=document.getElementById('playoffs-root'); if(!root) return;
   if(!TEAM_FUTURES){
@@ -10444,11 +10498,7 @@ async function renderPlayoffsTab(){
   }
   // BARTOLO sim (playoff Monte-Carlo) — same file the Playoff Futures embed reads, from the
   // same team_futures run. Cached on window so the toggle can re-render without re-fetching.
-  if(window.__seanProj===undefined){
-    try{ const r=await fetch(`./data/sean_team_projections.json?cb=${Date.now()}`); const j=await r.json(); window.__seanProj=(j&&j.teams)||{}; }
-    catch(e){ window.__seanProj=null; }
-  }
-  const SEAN=window.__seanProj||{};
+  const SEAN=await ensureSeanV2()||{};
   const src=(window.__poSrc==='bartolo' && Object.keys(SEAN).length)?'bartolo':'composite';
   const S=t=>SEAN[t.abbr]||{};
   const nnum=v=>(v==null||isNaN(v))?null:+v;
@@ -10596,6 +10646,7 @@ async function renderWsRace(root) {
 async function renderFuturesTab() {
   const root = document.getElementById("futures-root");
   if (!root) return;
+  try{ await ensureSeanV2(); }catch(e){}   // BARTOLO model map (sean + v2 overlay)
   if (FUTURES_RENDERED && TEAM_FUTURES) { renderFuturesContent(root); return; }
   root.innerHTML = `<div class="loading">Loading team futures…</div>`;
   try {
@@ -10745,11 +10796,24 @@ function renderFuturesContent(root) {
     </div>`;
   };
   const starChip = (s) => s ? ` <span class="ft-stars">${s}</span>` : '';
+  // Source-aware: Composite = the 6-system blend (t.composite, precomputed edges).
+  // BARTOLO = the season-sim + v2 October overlay (window.__seanProj), so WS /
+  // pennant / round-survival read identically to the Playoff Futures board and the
+  // Playoff Picture tab. In BARTOLO mode Fair% comes from the sean slot and edges
+  // are recomputed model−market; win-total / division / playoff use the sim's
+  // season numbers, WS uses the v2 overlay.
+  const FTSRC = (window.__ftSrc==='bartolo' && window.__seanProj && Object.keys(window.__seanProj).length) ? 'bartolo' : 'composite';
   const rowFor = (t) => {
-    const c = t.composite || {};
     const m = t.market || {};
-    const e = t.edges || {};
-    const st = t.stars || {};
+    const sd = (FTSRC==='bartolo') ? ((window.__seanProj||{})[t.abbr]||null) : null;
+    const c = sd ? { wins: sd.wins, div_pct: sd.div_pct, playoff_pct: sd.playoff_pct, ws_pct: sd.ws_pct } : (t.composite || {});
+    const e = sd ? {
+      win_total:   (sd.wins!=null && m.win_total_line!=null)     ? +(sd.wins - m.win_total_line).toFixed(2) : null,
+      div_pct:     (sd.div_pct!=null && m.div_implied_pct!=null) ? +(sd.div_pct - m.div_implied_pct).toFixed(1) : null,
+      playoff_pct: (sd.playoff_pct!=null && m.playoff_implied_pct!=null) ? +(sd.playoff_pct - m.playoff_implied_pct).toFixed(1) : null,
+      ws_pct:      (sd.ws_pct!=null && m.ws_implied_pct!=null)   ? +(sd.ws_pct - m.ws_implied_pct).toFixed(1) : null
+    } : (t.edges || {});
+    const st = sd ? {} : (t.stars || {});
     const wtPctEdge = (e.win_total != null && m.win_total_line) ? (e.win_total / m.win_total_line * 100) : null;
     return `<tr>
       <td class="ft-team"><span class="ft-logo">${teamLogoByAbbr(t.abbr, 18)}</span><b>${t.abbr}</b> <span class="ft-name">${t.name}</span></td>
@@ -10760,8 +10824,8 @@ function renderFuturesContent(root) {
       <td>${mktCell(m.div_odds, m.div_implied_pct)}</td>
       <td class="${edgeCls(e.div_pct)}">${fmtPctEdge(e.div_pct)}${(e.div_pct>0)?starChip(st.div_pct):""}</td>
       <td class="ft-grp-sep">${fairCell(c.playoff_pct)}</td>
-      <td>${(e.playoff_best_side === 'N' && m.playoff_no_odds != null) ? mktCell(m.playoff_no_odds, m.playoff_no_implied_pct) : mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
-      <td>${binaryEdgeCell((e.playoff_best_pct != null ? e.playoff_best_pct : e.playoff_pct), st.playoff_pct, e.playoff_best_side)}</td>
+      <td>${(!sd && e.playoff_best_side === 'N' && m.playoff_no_odds != null) ? mktCell(m.playoff_no_odds, m.playoff_no_implied_pct) : mktCell(m.playoff_odds, m.playoff_implied_pct)}</td>
+      <td>${binaryEdgeCell((!sd && e.playoff_best_pct != null ? e.playoff_best_pct : e.playoff_pct), st.playoff_pct, (sd?null:e.playoff_best_side))}</td>
       <td class="ft-grp-sep">${fairCell(c.ws_pct)}</td>
       <td>${mktCell(m.ws_odds, m.ws_implied_pct)}</td>
       <td class="${edgeCls(e.ws_pct)}">${fmtPctEdge(e.ws_pct)}${(e.ws_pct>0)?starChip(st.ws_pct):""}</td>
@@ -10799,16 +10863,25 @@ function renderFuturesContent(root) {
     </table>
     </div>
   `).join("");
+  const ftSeg = '<div class="ft-src-toggle" style="display:inline-flex;border:1px solid var(--border,#2a3441);border-radius:8px;overflow:hidden;margin:0 10px 0 0;vertical-align:middle">'
+    + ['composite','bartolo'].map(function(v){ var on=(FTSRC===v); var lab=(v==='bartolo')?'BARTOLO':'Composite';
+        return '<button type="button" data-ftsrc="'+v+'" style="background:'+(on?'#1b232d':'transparent')+';color:'+(on?'#e6edf3':'#8b98a5')+';border:0;font-weight:700;font-size:.78rem;padding:6px 14px;cursor:pointer;font-family:inherit">'+lab+'</button>'; }).join('')
+    + '</div>';
+  const ftTitle = (FTSRC==='bartolo') ? 'BARTOLO model vs Market' : 'Composite vs Market';
+  const ftFairSrc = (FTSRC==='bartolo')
+    ? 'BARTOLO projection — season sim with the v2 October engine for WS (matches the Playoff Futures board)'
+    : 'composite projection (6-system blend)';
   root.innerHTML = `
     <div class="cf-tabs" role="tablist"><button type="button" data-g="wintotal">Win Total</button><button type="button" data-g="division" class="active">Division</button><button type="button" data-g="playoffs">Playoffs</button><button type="button" data-g="ws">World Series</button></div><div class="ft-header">
-      <div><b>Team Futures · Composite vs Market</b></div>
+      <div>${ftSeg}<b>Team Futures · ${ftTitle}</b></div>
       <div class="ft-meta">Projections: ${genAt} · Odds: ${oddsAt}</div>
       <div class="ft-legend">
-        <span><b>Fair %</b> = composite projection (top) and the American odds that match that probability (bottom). <b>Market %</b> = sportsbook implied % (top) and best-available American odds (bottom).</span>
+        <span><b>Fair %</b> = ${ftFairSrc} (top) and the American odds that match that probability (bottom). <b>Market %</b> = sportsbook implied % (top) and best-available American odds (bottom).</span>
       </div>
     </div>
     ${divHTML}
   `;
+  root.querySelectorAll('.ft-src-toggle button').forEach(function(b){ b.onclick=function(){ window.__ftSrc=b.dataset.ftsrc; renderFuturesContent(root); }; });
 }
 (function(){function _cfInit(){var fr=document.getElementById('futures-root'); if(fr&&!fr.dataset.cfg) fr.dataset.cfg='division';}if(document.readyState!=='loading')_cfInit();else document.addEventListener('DOMContentLoaded',_cfInit);document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.cf-tabs [data-g]');if(!b)return;var rt=b.closest('[data-cfg]')||document.getElementById('futures-root');if(rt){rt.dataset.cfg=b.dataset.g;rt.querySelectorAll('.cf-tabs [data-g]').forEach(function(x){x.classList.toggle('active',x===b);});}});})();
 
