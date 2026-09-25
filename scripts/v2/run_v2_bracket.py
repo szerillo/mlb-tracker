@@ -49,6 +49,7 @@ def price(bd, season=2026, min_weight=0.001, temperature=1.0, coef=None):
         return F.set_index('team') if 'team' in F.columns else F
     tot = sum(e[2] for e in bd)
     ws, al, nl = collections.defaultdict(float), collections.defaultdict(float), collections.defaultdict(float)
+    reach_cs, reach_ds = collections.defaultdict(float), collections.defaultdict(float)   # LCS / DS appearance, v2's own
     used = 0
     for a, n_, n in bd:
         if n / tot < min_weight: continue
@@ -65,13 +66,21 @@ def price(bd, season=2026, min_weight=0.001, temperature=1.0, coef=None):
             def _ps(x, y, best_of, a_hosts=True, _o=_orig, _b=temperature):
                 p = _o(x, y, best_of, a_hosts); l = np.log(p / (1 - p)) * _b; return 1.0 / (1.0 + np.exp(-l))
             pr.p_series = _ps
-        w, A, N = B.world_series(pr, a, n_)
+        w, A, N, r_cs, r_ds = B.world_series(pr, a, n_)
         for k, v in w.items(): ws[k] += v * n
         for k, v in A.items(): al[k] += v * n
         for k, v in N.items(): nl[k] += v * n
+        for k, v in r_cs.items(): reach_cs[k] += v * n
+        for k, v in r_ds.items(): reach_ds[k] += v * n
         used += 1
     norm = lambda d: {ABBR.get(k, str(k)): v / sum(d.values()) for k, v in sorted(d.items(), key=lambda x: -x[1])}
-    return dict(ws=norm(ws), al_pennant=norm(al), nl_pennant=norm(nl), n_realizations=used, date=dt.date.today().isoformat(), engine='v2 rot_oct', coef=(coef or M.COEF), series_temperature=temperature)
+    # Round survival is a per-team probability (not a share of a normalized field), so
+    # it is divided by the total priced weight, not renormalized to sum to 1.
+    _tw = sum(e[2] for e in bd if e[2] / tot >= min_weight) or 1
+    surv = lambda d: {ABBR.get(k, str(k)): v / _tw for k, v in sorted(d.items(), key=lambda x: -x[1])}
+    return dict(ws=norm(ws), al_pennant=norm(al), nl_pennant=norm(nl),
+                reach_cs=surv(reach_cs), reach_ds=surv(reach_ds),
+                n_realizations=used, date=dt.date.today().isoformat(), engine='v2 rot_oct', coef=(coef or M.COEF), series_temperature=temperature)
 
 
 if __name__ == '__main__':

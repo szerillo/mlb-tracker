@@ -164,8 +164,15 @@ async function load(){
     if(v2){
       const V=ab=>({AZ:'ARI'}[ab]||ab);
       const ws=v2.ws||{}, pen={...(v2.al_pennant||{}),...(v2.nl_pennant||{})};
+      const rds=v2.reach_ds||{}, rcs=v2.reach_cs||{};
       for(const[ab,p]of Object.entries(ws)){ const k=V(ab); if(mine[k]) mine[k].ws_pct=+(p*100).toFixed(1); }
       for(const[ab,p]of Object.entries(pen)){ const k=V(ab); if(mine[k]) mine[k].ws_app_pct=+(p*100).toFixed(1); }
+      // Round survival from the v2 engine too (when present), so the whole BARTOLO
+      // column reads one coherent model instead of borrowing WC/LDS from the season
+      // sim (which produced the cross-engine artifact where pennant/LDS implied an
+      // impossible LCS win rate). Falls back to the sim rounds if an older feed lacks them.
+      if(Object.keys(rds).length){ for(const[ab,p]of Object.entries(rds)){ const k=V(ab); if(mine[k]) mine[k].reach_ds_pct=+(p*100).toFixed(1); } }
+      if(Object.keys(rcs).length){ for(const[ab,p]of Object.entries(rcs)){ const k=V(ab); if(mine[k]) mine[k].reach_cs_pct=+(p*100).toFixed(1); } }
       window.__v2date=v2.date||'';
     }
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }

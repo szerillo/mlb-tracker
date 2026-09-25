@@ -180,7 +180,15 @@ def main():
                 _k = _abn(_ab)
                 if _k in sean_data and sean_data[_k].get("wins") is not None:
                     sean_data[_k]["ws_app_pct"] = round(_p * 100, 1)
-            print(f"[team-futures] overlaid v2 WS/pennant onto sean slot for {len(_ws)} field teams", file=sys.stderr)
+            # Round survival too (v2 reach_cs / reach_ds), when the feed carries it, so
+            # the Bartolo column is one coherent engine end to end (no pennant-over-sim-LDS
+            # artifact). Older feeds without these keys leave the sim rounds in place.
+            for _fld, _key in (("reach_cs", "reach_cs_pct"), ("reach_ds", "reach_ds_pct")):
+                for _ab, _p in (_v2.get(_fld) or {}).items():
+                    _k = _abn(_ab)
+                    if _k in sean_data and sean_data[_k].get("wins") is not None:
+                        sean_data[_k][_key] = round(_p * 100, 1)
+            print(f"[team-futures] overlaid v2 WS/pennant/rounds onto sean slot for {len(_ws)} field teams", file=sys.stderr)
         except Exception as e:
             print(f"[team-futures] v2 overlay skipped: {e}", file=sys.stderr)
 

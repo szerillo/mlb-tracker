@@ -71,32 +71,50 @@ class Pricer:
 
 
 def league_probs(pr, seeds):
-    """seeds: list of 6 team keys, index 0 = 1-seed. Returns {team: P(pennant)}."""
+    """seeds: list of 6 team keys, index 0 = 1-seed. Returns
+    (pennant, reach_lcs, reach_lds) as three {team: P} dicts. reach_lds =
+    P(play in the Division Series); reach_lcs = P(win the DS / play in the LCS);
+    pennant = P(win the LCS). The round marginals fall straight out of the same
+    enumeration, so the whole board reads one coherent engine instead of borrowing
+    earlier rounds from the season sim."""
     s = {i + 1: t for i, t in enumerate(seeds)}
     out = collections.defaultdict(float)
+    reach_lds = collections.defaultdict(float)
+    reach_lcs = collections.defaultdict(float)
     p36 = pr.p_series(s[3], s[6], WC_LEN, True)     # wild card, all games at higher seed
     p45 = pr.p_series(s[4], s[5], WC_LEN, True)
+    # DS appearance: 1/2 seeds bye straight in; 3-6 must win the wild-card round.
+    reach_lds[s[1]] += 1.0; reach_lds[s[2]] += 1.0
+    reach_lds[s[3]] += p36; reach_lds[s[6]] += 1 - p36
+    reach_lds[s[4]] += p45; reach_lds[s[5]] += 1 - p45
     for w36, q36 in ((s[3], p36), (s[6], 1 - p36)):
         for w45, q45 in ((s[4], p45), (s[5], 1 - p45)):
             pA = pr.p_series(s[1], w45, LDS_LEN, True)   # 1 seed hosts
             pB = pr.p_series(s[2], w36, LDS_LEN, True)   # 2 seed hosts
             for a, qa in ((s[1], pA), (w45, 1 - pA)):
                 for b, qb in ((s[2], pB), (w36, 1 - pB)):
+                    w = q36 * q45 * qa * qb
+                    reach_lcs[a] += w   # a and b are the two LCS participants
+                    reach_lcs[b] += w
                     pL = pr.p_series(a, b, LCS_LEN, pr.pct[a] >= pr.pct[b])
                     for champ, qc in ((a, pL), (b, 1 - pL)):
-                        out[champ] += q36 * q45 * qa * qb * qc
-    return dict(out)
+                        out[champ] += w * qc
+    return dict(out), dict(reach_lcs), dict(reach_lds)
 
 
 def world_series(pr, al_seeds, nl_seeds):
-    AL, NL = league_probs(pr, al_seeds), league_probs(pr, nl_seeds)
+    AL, al_lcs, al_lds = league_probs(pr, al_seeds)
+    NL, nl_lcs, nl_lds = league_probs(pr, nl_seeds)
     ws = collections.defaultdict(float)
     for a, pa in AL.items():
         for b, pb in NL.items():
             q = pr.p_series(a, b, WS_LEN, pr.pct[a] >= pr.pct[b])
             ws[a] += pa * pb * q
             ws[b] += pa * pb * (1 - q)
-    return dict(ws), AL, NL
+    reach_lcs = {**al_lcs, **nl_lcs}
+    reach_lds = {**al_lds, **nl_lds}
+    # AL and NL are the pennant dicts; return them plus the round marginals.
+    return dict(ws), AL, NL, reach_lcs, reach_lds
 
 
 def marginalize(bracket_dist, field_builder, pct, min_weight=0.002):
@@ -109,7 +127,7 @@ def marginalize(bracket_dist, field_builder, pct, min_weight=0.002):
         if n / total < min_weight: continue
         F = field_builder(al + nl)
         pr = Pricer(F, pct)
-        ws, _, _ = world_series(pr, al, nl)
+        ws, _, _, _, _ = world_series(pr, al, nl)
         for t, v in ws.items(): acc[t] += v * n
     s = sum(acc.values())
     return {t: v / s for t, v in acc.items()}
