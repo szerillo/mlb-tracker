@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T00:52:19Z",
+  "generated_at": "2026-09-25T02:56:00Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
@@ -9,27 +9,27 @@
     "n_games": 698,
     "our_temp_MAE_f": 2.24,
     "our_wind_MAE_mph": 2.41,
-    "our_winddir_MAE_deg": 33.15,
+    "our_winddir_MAE_deg": 33.11,
     "temp_head_to_head": {
       "n": 505,
-      "our_temp_MAE_f": 2.11,
+      "our_temp_MAE_f": 2.12,
       "bp_temp_MAE_f": 3.55
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 693,
-    "calibrated_slope_runs_per_pct": 0.0893,
+    "n_played": 697,
+    "calibrated_slope_runs_per_pct": 0.0892,
     "ours": {
-      "slope": 0.1572,
-      "r": 0.163,
-      "n": 693,
-      "realized_x": 1.76
+      "slope": 0.158,
+      "r": 0.167,
+      "n": 697,
+      "realized_x": 1.77
     },
     "bp": {
-      "slope": 0.1028,
-      "r": 0.148,
-      "n": 574,
-      "realized_x": 1.15
+      "slope": 0.1039,
+      "r": 0.153,
+      "n": 578,
+      "realized_x": 1.16
     }
   },
   "games": [
@@ -13869,7 +13869,7 @@
       "bp_temp_err": 2.200000000000003,
       "our_wind_err": 2.8,
       "our_dir_err": 10.0,
-      "total": null,
+      "total": 6,
       "our_adj": -12.6,
       "bp_adj": -15.0
     },
@@ -13889,7 +13889,7 @@
       "bp_temp_err": 0.20000000000000284,
       "our_wind_err": 2.5999999999999996,
       "our_dir_err": 6.5,
-      "total": null,
+      "total": 10,
       "our_adj": -10.6,
       "bp_adj": -14.0
     },
@@ -13917,18 +13917,18 @@
       "date": "2026-09-24",
       "pk": 824298,
       "venue": "Coors Field",
-      "obs_temp": 68.9,
+      "obs_temp": 69.8,
       "obs_wind": 8.4,
-      "obs_dir": 342.0,
+      "obs_dir": 349.0,
       "obs_src": "obs",
       "our_temp": 69.0,
       "our_wind": 8.0,
       "our_dir": 0,
       "bp_temp": 73.0,
-      "our_temp_err": 0.09999999999999432,
-      "bp_temp_err": 4.099999999999994,
+      "our_temp_err": 0.7999999999999972,
+      "bp_temp_err": 3.200000000000003,
       "our_wind_err": 0.40000000000000036,
-      "our_dir_err": 18.0,
+      "our_dir_err": 11.0,
       "total": 20,
       "our_adj": -11.2,
       "bp_adj": -3.0
@@ -13969,7 +13969,7 @@
       "bp_temp_err": 0.3999999999999986,
       "our_wind_err": 1.4000000000000004,
       "our_dir_err": 3.0,
-      "total": null,
+      "total": 1,
       "our_adj": -12.0,
       "bp_adj": -20.0
     },
@@ -13978,8 +13978,8 @@
       "pk": 824866,
       "venue": "Truist Park",
       "obs_temp": 69.2,
-      "obs_wind": 5.5,
-      "obs_dir": 23.0,
+      "obs_wind": 5.9,
+      "obs_dir": 44.0,
       "obs_src": "obs",
       "our_temp": 70.0,
       "our_wind": 6.0,
@@ -13987,9 +13987,9 @@
       "bp_temp": 68.0,
       "our_temp_err": 0.7999999999999972,
       "bp_temp_err": 1.2000000000000028,
-      "our_wind_err": 0.5,
-      "our_dir_err": 44.5,
-      "total": null,
+      "our_wind_err": 0.09999999999999964,
+      "our_dir_err": 23.5,
+      "total": 13,
       "our_adj": -6.6,
       "bp_adj": -11.0
     }
