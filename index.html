@@ -3035,9 +3035,9 @@ function _pgCountFatigued(team) {
 
 function _pgStaff(spName, team, oppLineupKbb) {
   const s = lookupPitcherStats(spName);
-  // SP RA9 base = process-adjusted unified_score when available (unified_proc =
-  // unified_score − 0.09·proc_z, Fable's SP process index, SP-only), else raw unified_score.
-  const _spBase = (s && s.unified_proc != null && s.unified_proc < 10) ? s.unified_proc
+  // SP RA9 base = process-adjusted wFIP when available (unified_adj = unified_score
+  // − 0.10·proc_z, Fable's SP process index, SP-only), else raw unified_score.
+  const _spBase = (s && s.unified_adj != null && s.unified_adj < 10) ? s.unified_adj
                 : (s && s.unified_score != null && s.unified_score < 10) ? s.unified_score : null;
   const spRA = _spBase != null ? _spBase : (s?.fip_proj ?? 4.30);
   const kbb = s?.k_bb_pct ?? 0.126;
