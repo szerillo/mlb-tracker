@@ -503,10 +503,10 @@ def main() -> int:
         json.dump(d, f, indent=2)
 
     # SP process index (Fable 2026-09-24): enrich pitcher_stats on disk with proc_z +
-    # unified_proc (= unified_score − 0.09·proc_z, SP-only) BEFORE the wFIP lookup is
-    # emitted, so BOTH the app (index.html) and the sheet (wfip_lookup) use the
-    # process-adjusted SP RA9. Runs on every unified_score recompute; refresh_pitcher_proc.py
-    # is also standalone-runnable.
+    # unified_adj (= unified_score − 0.10·proc_z, SP-only, from data/sp_process.json which
+    # proc_index.py builds daily off Savant) BEFORE the wFIP lookup is emitted, so BOTH the
+    # app (index.html) and the sheet (wfip_lookup) use the process-adjusted SP RA9.
+    # refresh_pitcher_proc.py is also standalone-runnable.
     try:
         import importlib.util as _ilu
         _pp = os.path.join(HERE, "refresh_pitcher_proc.py")
@@ -533,7 +533,7 @@ def main() -> int:
             _src = pitchers
         _wmap = {}
         for _wk, _wv in _src.items():
-            _us = _wv.get("unified_proc")
+            _us = _wv.get("unified_adj")
             if _us is None:
                 _us = _wv.get("unified_score")
             if _us is None:
