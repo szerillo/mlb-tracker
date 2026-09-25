@@ -233,6 +233,23 @@ jobs:
         run: python scripts/refresh_bullpens_rr.py
         continue-on-error: true
 
+      - name: Bridge feeds for internal projection engine
+        # Publish the sheet's Batter Projected (offense inputs), Pitcher Projected
+        # (SP stamina + K-BB) and Team Modifiers (park PF + offense divisors) so
+        # compute_pro_projections can reproduce the run chain without the sheet.
+        run: |
+          python scripts/refresh_batter_projected.py || true
+          python scripts/refresh_pitcher_projected.py || true
+          python scripts/refresh_sheet_tables.py || true
+        continue-on-error: true
+
+      - name: Build internal pro projections (Excel-free engine)
+        # data/pro_projections.json = the sheet's R2/S2/R9/S9/T9/S10 for every game,
+        # computed natively from the repo feeds (offense/SP/bullpen/park/weather/tilt).
+        # Reconciles to the live sheet at ~1pp win-prob. Runs last, after every feed.
+        run: python scripts/build_pro_projections.py
+        continue-on-error: true
+
       - name: Archive my sheet projections (daily snapshot of MY runs/totals)
         # data/sheet_projections.json is overwritten every run, so snapshot it
         # into the daily archive to build a per-day record of MY projected
