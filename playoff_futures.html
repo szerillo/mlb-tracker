@@ -149,34 +149,34 @@ function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(d
 
 async function load(){
   try{
-    const [sean,tf,v2]=await Promise.all([
+    const [sean,tf,v2,lane2]=await Promise.all([
       fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json()),
-      fetch(RAW+'v2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch(RAW+'v2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(RAW+'lane2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
-    const mine={},blend={},mkt={};
-    for(const[ab,t]of Object.entries(sean.teams)) mine[ab]={...t};
-    // BARTOLO Pennant + WS come from Fable's pre-registered October engine
-    // (v2_marginalized.json: pre-registered NB series model, priced on the frozen
-    // 16-team field, marginalized over the season sim's seeding distribution). WC/LDS
-    // round-survival stay from the season sim (v2 prices pennant + WS only). Composite
-    // is untouched. AZ↔ARI reconciled for the board's abbreviations.
-    if(v2){
-      const V=ab=>({AZ:'ARI'}[ab]||ab);
-      const ws=v2.ws||{}, pen={...(v2.al_pennant||{}),...(v2.nl_pennant||{})};
-      const rds=v2.reach_ds||{}, rcs=v2.reach_cs||{};
-      for(const[ab,p]of Object.entries(ws)){ const k=V(ab); if(mine[k]) mine[k].ws_pct=+(p*100).toFixed(1); }
-      for(const[ab,p]of Object.entries(pen)){ const k=V(ab); if(mine[k]) mine[k].ws_app_pct=+(p*100).toFixed(1); }
-      // Round survival from the v2 engine too (when present), so the whole BARTOLO
-      // column reads one coherent model instead of borrowing WC/LDS from the season
-      // sim (which produced the cross-engine artifact where pennant/LDS implied an
-      // impossible LCS win rate). Falls back to the sim rounds if an older feed lacks them.
-      if(Object.keys(rds).length){ for(const[ab,p]of Object.entries(rds)){ const k=V(ab); if(mine[k]) mine[k].reach_ds_pct=+(p*100).toFixed(1); } }
-      if(Object.keys(rcs).length){ for(const[ab,p]of Object.entries(rcs)){ const k=V(ab); if(mine[k]) mine[k].reach_cs_pct=+(p*100).toFixed(1); } }
-      window.__v2date=v2.date||'';
-    }
+    const blend={},mkt={};
+    // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
+    // season-sim base. Used for BOTH v2 (BARTOLO, lane 1) and the native game-sim
+    // roll-forward (lane 2). WC/LDS/pennant/WS come from the feed; wins/div/playoff
+    // stay from the season sim. AZ↔ARI reconciled for the board's abbreviations.
+    const overlay=(src)=>{
+      const m={}; for(const[ab,t]of Object.entries(sean.teams)) m[ab]={...t};
+      if(src){
+        const V=ab=>({AZ:'ARI'}[ab]||ab);
+        const ws=src.ws||{}, pen={...(src.al_pennant||{}),...(src.nl_pennant||{})};
+        const rds=src.reach_ds||{}, rcs=src.reach_cs||{};
+        for(const[ab,p]of Object.entries(ws)){ const k=V(ab); if(m[k]) m[k].ws_pct=+(p*100).toFixed(1); }
+        for(const[ab,p]of Object.entries(pen)){ const k=V(ab); if(m[k]) m[k].ws_app_pct=+(p*100).toFixed(1); }
+        if(Object.keys(rds).length){ for(const[ab,p]of Object.entries(rds)){ const k=V(ab); if(m[k]) m[k].reach_ds_pct=+(p*100).toFixed(1); } }
+        if(Object.keys(rcs).length){ for(const[ab,p]of Object.entries(rcs)){ const k=V(ab); if(m[k]) m[k].reach_cs_pct=+(p*100).toFixed(1); } }
+      }
+      return m;
+    };
+    window.__v2date=(v2&&v2.date)||'';
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
-    DATA.mine=mine; DATA.blend=blend; MKT=mkt;
+    DATA.mine=overlay(v2); DATA.gamesim=overlay(lane2); DATA.blend=blend; MKT=mkt;
+    window.__hasLane2=!!lane2;
     const g=(sean.generated_at||'').slice(0,10);
     document.getElementById('asof').textContent=g?('as of '+g):'';
     render();
@@ -215,13 +215,21 @@ function render(){
       +'Edge = model − Mkt% · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
     renderEdges();
   } else {
-    seg.innerHTML=segHTML([{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}], projSrc);
+    const _opts=[{v:'mine',lab:'BARTOLO'}];
+    if(window.__hasLane2) _opts.push({v:'gamesim',lab:'Game‑Sim'});
+    _opts.push({v:'blend',lab:'Composite'});
+    if(projSrc==='gamesim' && !window.__hasLane2) projSrc='mine';
+    seg.innerHTML=segHTML(_opts, projSrc);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{projSrc=b.dataset.v;render();});
     document.getElementById('srcnote').textContent = projSrc==='mine'
       ? "BARTOLO: Pennant + WS from the pre-registered October series model (v2); WC/LDS from the season sim."
+      : projSrc==='gamesim'
+      ? "Game‑Sim (lane 2, experimental): the native game-by-game engine rolled through the bracket — the actual SP each game, projected-October nines, rested pens. Logged next to v2 and graded on the October ledger; not the shipped number."
       : "Composite: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and BARTOLO.";
     document.getElementById('footnote').textContent = projSrc==='mine'
       ? 'Odds to win each round · tap a header to sort · Model 70%+ series favourites have won 11 of 14 (2016–25) at a market average of 65%.'
+      : projSrc==='gamesim'
+      ? 'Odds to win each round (game-sim roll-forward) · tap a header to sort · experimental — SP/lineup/pen per game, weather & ump neutral.'
       : 'Odds to win each round · tap a header to sort';
     renderRounds();
   }
