@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T19:08:45.389106Z",
+  "generated_at": "2026-09-26T01:57:06.952199Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -817,6 +817,52 @@
       "note": null
     },
     {
+      "game_pk": 822678,
+      "matchup": "New York Mets @ Washington Nationals",
+      "venue": "Nationals Park",
+      "game_time": "2026-09-26T16:35:00Z",
+      "is_dome": false,
+      "roof_open": null,
+      "roof_state": null,
+      "weather": {
+        "temp_f": 66,
+        "humidity_pct": 73,
+        "wind_speed_mph": 16,
+        "wind_dir": "N",
+        "precip_pct": 33,
+        "short_forecast": "Chance Rain Showers",
+        "start_time": "2026-09-26T13:00:00-04:00",
+        "game_window_temp_f": 66.7,
+        "game_window_humidity_pct": 72.1,
+        "first_pitch_temp_f": 66,
+        "wind_blended": true
+      },
+      "v8": {
+        "run_adj_pct": -10.0,
+        "capped": false,
+        "is_dome": false,
+        "components": {
+          "temp_delta": -11.3,
+          "t_adj_pct": -6.3,
+          "w_adj_pct": -3.6,
+          "dp_adj_pct": -0.4,
+          "p_adj_pct": 0.0,
+          "precip_adj_pct": 0.0,
+          "carry_pct": -0.3,
+          "wind": {
+            "out_component": -11.01,
+            "dir_rarity": 0.45,
+            "spd_rarity": 0.79
+          }
+        },
+        "model_pct": -10.0,
+        "pressure_source": "default",
+        "bp_pct": null,
+        "bp_blended": false
+      },
+      "note": null
+    },
+    {
       "game_pk": 824219,
       "matchup": "Pittsburgh Pirates @ Detroit Tigers",
       "venue": "Comerica Park",
@@ -827,15 +873,14 @@
       "weather": {
         "temp_f": 66,
         "humidity_pct": 58,
-        "wind_speed_mph": 7,
+        "wind_speed_mph": 8,
         "wind_dir": "NE",
         "precip_pct": 0,
         "short_forecast": "Sunny",
         "start_time": "2026-09-26T13:00:00-04:00",
         "game_window_temp_f": 68.0,
         "game_window_humidity_pct": 54.5,
-        "first_pitch_temp_f": 66,
-        "wind_blended": true
+        "first_pitch_temp_f": 66
       },
       "v8": {
         "run_adj_pct": -1.7,
@@ -850,7 +895,7 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 0.12,
+            "out_component": 0.14,
             "dir_rarity": 0.05,
             "spd_rarity": 0
           }
@@ -871,27 +916,26 @@
       "roof_open": true,
       "roof_state": "likely-open (weather)",
       "weather": {
-        "temp_f": 73.2,
-        "humidity_pct": 37,
+        "temp_f": 74.2,
+        "humidity_pct": 34,
         "wind_speed_mph": 3,
         "wind_dir": "E",
         "precip_pct": 0,
         "short_forecast": "",
         "start_time": "2026-09-26T19:00Z",
-        "game_window_temp_f": 73.2,
-        "game_window_humidity_pct": 35.4,
-        "first_pitch_temp_f": 73.2,
-        "wind_blended": true
+        "game_window_temp_f": 74.1,
+        "game_window_humidity_pct": 33.4,
+        "first_pitch_temp_f": 74.2
       },
       "v8": {
-        "run_adj_pct": -1.7,
+        "run_adj_pct": -1.5,
         "capped": false,
         "is_dome": true,
         "components": {
-          "temp_delta": 0.2,
-          "t_adj_pct": 0.1,
+          "temp_delta": 1.1,
+          "t_adj_pct": 0.3,
           "w_adj_pct": 0.0,
-          "dp_adj_pct": -1.9,
+          "dp_adj_pct": -2.0,
           "p_adj_pct": 0.0,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
@@ -901,53 +945,7 @@
             "spd_rarity": 0.79
           }
         },
-        "model_pct": -1.7,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
-    },
-    {
-      "game_pk": 822678,
-      "matchup": "New York Mets @ Washington Nationals",
-      "venue": "Nationals Park",
-      "game_time": "2026-09-26T20:05:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 67,
-        "humidity_pct": 73,
-        "wind_speed_mph": 15,
-        "wind_dir": "N",
-        "precip_pct": 60,
-        "short_forecast": "Light Rain Likely",
-        "start_time": "2026-09-26T16:00:00-04:00",
-        "game_window_temp_f": 66.7,
-        "game_window_humidity_pct": 73.4,
-        "first_pitch_temp_f": 67,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": -9.4,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -11.3,
-          "t_adj_pct": -6.8,
-          "w_adj_pct": -2.5,
-          "dp_adj_pct": -0.4,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0.0,
-          "carry_pct": -0.3,
-          "wind": {
-            "out_component": -7.52,
-            "dir_rarity": 0.45,
-            "spd_rarity": 0.79
-          }
-        },
-        "model_pct": -9.4,
+        "model_pct": -1.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -965,7 +963,7 @@
       "weather": {
         "temp_f": 65,
         "humidity_pct": 73,
-        "wind_speed_mph": 8,
+        "wind_speed_mph": 9,
         "wind_dir": "WSW",
         "precip_pct": 0,
         "short_forecast": "Mostly Sunny",
@@ -976,24 +974,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 1.4,
+        "run_adj_pct": 1.6,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -1.1,
           "t_adj_pct": -0.3,
-          "w_adj_pct": 2.0,
+          "w_adj_pct": 2.3,
           "dp_adj_pct": 0.3,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 6.94,
+            "out_component": 7.81,
             "dir_rarity": 0,
             "spd_rarity": 0
           }
         },
-        "model_pct": 1.4,
+        "model_pct": 1.6,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1009,37 +1007,37 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 60,
-        "humidity_pct": 87,
-        "wind_speed_mph": 13,
+        "temp_f": 59,
+        "humidity_pct": 89,
+        "wind_speed_mph": 12,
         "wind_dir": "SE",
-        "precip_pct": 90,
-        "short_forecast": "Light Rain",
+        "precip_pct": 98,
+        "short_forecast": "Rain Showers",
         "start_time": "2026-09-26T15:00:00-05:00",
-        "game_window_temp_f": 59.3,
-        "game_window_humidity_pct": 87.0,
-        "first_pitch_temp_f": 60,
+        "game_window_temp_f": 58.9,
+        "game_window_humidity_pct": 87.8,
+        "first_pitch_temp_f": 59,
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": -4.4,
+        "run_adj_pct": -4.5,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": -13.7,
-          "t_adj_pct": -4.1,
+          "temp_delta": -14.1,
+          "t_adj_pct": -4.3,
           "w_adj_pct": -0.0,
           "dp_adj_pct": 0.1,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0.0,
           "carry_pct": -0.3,
           "wind": {
-            "out_component": -3.45,
+            "out_component": -3.19,
             "dir_rarity": 0.6,
             "spd_rarity": 0.31
           }
         },
-        "model_pct": -4.4,
+        "model_pct": -4.5,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1103,15 +1101,14 @@
       "weather": {
         "temp_f": 75,
         "humidity_pct": 74,
-        "wind_speed_mph": 8,
+        "wind_speed_mph": 9,
         "wind_dir": "SE",
         "precip_pct": 15,
         "short_forecast": "Slight Chance Showers And Thunderstorms",
         "start_time": "2026-09-26T18:00:00-05:00",
         "game_window_temp_f": 72.5,
         "game_window_humidity_pct": 80.0,
-        "first_pitch_temp_f": 75,
-        "wind_blended": true
+        "first_pitch_temp_f": 75
       },
       "v8": {
         "run_adj_pct": -1.1,
@@ -1120,13 +1117,13 @@
         "components": {
           "temp_delta": -5.5,
           "t_adj_pct": -1.7,
-          "w_adj_pct": 0.0,
+          "w_adj_pct": -0.0,
           "dp_adj_pct": 0.7,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": 0.1,
           "wind": {
-            "out_component": 0.03,
+            "out_component": -0.0,
             "dir_rarity": 0.55,
             "spd_rarity": 0
           }
@@ -1149,8 +1146,8 @@
       "weather": {
         "temp_f": 63,
         "humidity_pct": 66,
-        "wind_speed_mph": 6,
-        "wind_dir": "ENE",
+        "wind_speed_mph": 5,
+        "wind_dir": "NE",
         "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
         "start_time": "2026-09-26T18:00:00-05:00",
@@ -1172,8 +1169,8 @@
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -0.78,
-            "dir_rarity": 0.5,
+            "out_component": -0.15,
+            "dir_rarity": 0.25,
             "spd_rarity": 0.04
           }
         },
@@ -1224,52 +1221,6 @@
           }
         },
         "model_pct": -7.6,
-        "pressure_source": "default",
-        "bp_pct": null,
-        "bp_blended": false
-      },
-      "note": null
-    },
-    {
-      "game_pk": 824705,
-      "matchup": "Chicago Cubs @ Boston Red Sox",
-      "venue": "Fenway Park",
-      "game_time": "2026-09-26T23:15:00Z",
-      "is_dome": false,
-      "roof_open": null,
-      "roof_state": null,
-      "weather": {
-        "temp_f": 56,
-        "humidity_pct": 90,
-        "wind_speed_mph": 20,
-        "wind_dir": "NE",
-        "precip_pct": 100,
-        "short_forecast": "Heavy Rain",
-        "start_time": "2026-09-26T19:00:00-04:00",
-        "game_window_temp_f": 55.6,
-        "game_window_humidity_pct": 90.4,
-        "first_pitch_temp_f": 56,
-        "wind_blended": true
-      },
-      "v8": {
-        "run_adj_pct": -14.0,
-        "capped": false,
-        "is_dome": false,
-        "components": {
-          "temp_delta": -14.4,
-          "t_adj_pct": -4.4,
-          "w_adj_pct": -8.2,
-          "dp_adj_pct": -0.4,
-          "p_adj_pct": 0.0,
-          "precip_adj_pct": 0.0,
-          "carry_pct": -0.0,
-          "wind": {
-            "out_component": -19.18,
-            "dir_rarity": 0.65,
-            "spd_rarity": 1.0
-          }
-        },
-        "model_pct": -14.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1331,37 +1282,36 @@
       "roof_open": null,
       "roof_state": null,
       "weather": {
-        "temp_f": 78,
-        "humidity_pct": 70,
+        "temp_f": 81,
+        "humidity_pct": 62,
         "wind_speed_mph": 5,
         "wind_dir": "W",
-        "precip_pct": 1,
+        "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
         "start_time": "2026-09-26T18:00:00-07:00",
-        "game_window_temp_f": 74.5,
-        "game_window_humidity_pct": 77.4,
-        "first_pitch_temp_f": 78,
-        "wind_blended": true
+        "game_window_temp_f": 76.9,
+        "game_window_humidity_pct": 70.4,
+        "first_pitch_temp_f": 81
       },
       "v8": {
-        "run_adj_pct": 1.0,
+        "run_adj_pct": 1.4,
         "capped": false,
         "is_dome": false,
         "components": {
-          "temp_delta": 2.5,
-          "t_adj_pct": 0.6,
+          "temp_delta": 4.9,
+          "t_adj_pct": 1.2,
           "w_adj_pct": 0.0,
           "dp_adj_pct": 1.2,
           "p_adj_pct": -0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": 0.04,
+            "out_component": 0.0,
             "dir_rarity": 1.0,
             "spd_rarity": 0.28
           }
         },
-        "model_pct": 1.0,
+        "model_pct": 1.4,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
@@ -1425,35 +1375,34 @@
       "weather": {
         "temp_f": 58,
         "humidity_pct": 72,
-        "wind_speed_mph": 6,
+        "wind_speed_mph": 7,
         "wind_dir": "N",
         "precip_pct": 0,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-09-26T19:00:00-07:00",
         "game_window_temp_f": 56.1,
         "game_window_humidity_pct": 75.6,
-        "first_pitch_temp_f": 58,
-        "wind_blended": true
+        "first_pitch_temp_f": 58
       },
       "v8": {
-        "run_adj_pct": -5.1,
+        "run_adj_pct": -5.0,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -14.9,
           "t_adj_pct": -5.1,
-          "w_adj_pct": -0.5,
+          "w_adj_pct": -0.3,
           "dp_adj_pct": -0.5,
           "p_adj_pct": 0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -2.86,
+            "out_component": -1.98,
             "dir_rarity": 0.95,
             "spd_rarity": 0
           }
         },
-        "model_pct": -5.1,
+        "model_pct": -5.0,
         "pressure_source": "default",
         "bp_pct": null,
         "bp_blended": false
