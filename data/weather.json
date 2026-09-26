@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-26T21:40:17.623535Z",
+  "generated_at": "2026-09-26T23:52:45.774947Z",
   "model_version": "v10",
   "source": "NWS (api.weather.gov) hourly forecast",
   "method_note": "V10: V9 per-park model + asymmetric HR->runs damper (positive adj 6*tanh(raw/6), Wrigley exempt; suppression untouched). Recalibrated on NWS temp/wind/dew/precip, with BallparkPal barometric pressure fed in as the air-density input and the published number weighted 0% toward BP's weather-only runs on games BP covers (v8.run_adj_pct = blended; v8.model_pct = pure model; v8.bp_pct = BP). Uncovered games are pure model. Retractable roofs treated as outdoor when the roof-schedule page marks the date Open. When the roof state is unknown, closed is assumed (headline 0) and a pure-model open-roof adjustment is emitted under open_v8 for a dual 'closed 0 \u00b7 open +X%' display.",
@@ -491,7 +491,7 @@
       "weather": {
         "temp_f": 79,
         "humidity_pct": 68,
-        "wind_speed_mph": 6,
+        "wind_speed_mph": 4,
         "wind_dir": "NW",
         "precip_pct": 2,
         "short_forecast": "Mostly Cloudy",
@@ -502,24 +502,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 2.2,
+        "run_adj_pct": 2.3,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": 3.9,
           "t_adj_pct": 0.9,
-          "w_adj_pct": -0.3,
+          "w_adj_pct": -0.1,
           "dp_adj_pct": 1.2,
           "p_adj_pct": 0.9,
           "precip_adj_pct": 0,
           "carry_pct": -0.0,
           "wind": {
-            "out_component": -2.12,
+            "out_component": -0.76,
             "dir_rarity": 1.0,
             "spd_rarity": 0.28
           }
         },
-        "model_pct": 2.2,
+        "model_pct": 2.3,
         "pressure_source": "BP",
         "bp_pct": 0,
         "bp_blended": false,
@@ -539,8 +539,8 @@
       "weather": {
         "temp_f": 75,
         "humidity_pct": 34,
-        "wind_speed_mph": 5,
-        "wind_dir": "SW",
+        "wind_speed_mph": 4,
+        "wind_dir": "SSW",
         "precip_pct": 0,
         "short_forecast": "Partly Cloudy",
         "start_time": "2026-09-26T19:00:00-07:00",
@@ -550,24 +550,24 @@
         "wind_blended": true
       },
       "v8": {
-        "run_adj_pct": 0.8,
+        "run_adj_pct": -0.3,
         "capped": false,
         "is_dome": false,
         "components": {
           "temp_delta": -9.5,
           "t_adj_pct": -3.0,
-          "w_adj_pct": 4.3,
+          "w_adj_pct": 3.2,
           "dp_adj_pct": -0.6,
           "p_adj_pct": 0.6,
           "precip_adj_pct": 0,
           "carry_pct": -0.5,
           "wind": {
-            "out_component": 5.0,
+            "out_component": 3.68,
             "dir_rarity": 0,
             "spd_rarity": 0.58
           }
         },
-        "model_pct": 0.8,
+        "model_pct": -0.3,
         "pressure_source": "BP",
         "bp_pct": 0,
         "bp_blended": false,
@@ -1141,14 +1141,15 @@
       "weather": {
         "temp_f": 67,
         "humidity_pct": 84,
-        "wind_speed_mph": 0,
-        "wind_dir": "",
-        "precip_pct": 1,
+        "wind_speed_mph": 2,
+        "wind_dir": "SSE",
+        "precip_pct": 7,
         "short_forecast": "Mostly Cloudy",
         "start_time": "2026-09-27T14:00:00-05:00",
         "game_window_temp_f": 67.9,
         "game_window_humidity_pct": 82.7,
-        "first_pitch_temp_f": 67
+        "first_pitch_temp_f": 67,
+        "wind_blended": true
       },
       "v8": {
         "run_adj_pct": -0.9,
@@ -1157,12 +1158,16 @@
         "components": {
           "temp_delta": -5.1,
           "t_adj_pct": -1.4,
-          "w_adj_pct": 0.0,
+          "w_adj_pct": -0.0,
           "dp_adj_pct": 1.1,
           "p_adj_pct": -0.3,
           "precip_adj_pct": 0,
           "carry_pct": -0.3,
-          "wind": null
+          "wind": {
+            "out_component": -0.05,
+            "dir_rarity": 0.6,
+            "spd_rarity": 0.82
+          }
         },
         "model_pct": -0.9,
         "pressure_source": "default",
@@ -1277,7 +1282,7 @@
         "wind_speed_mph": 5,
         "wind_dir": "E",
         "precip_pct": 0,
-        "short_forecast": "Mostly Sunny",
+        "short_forecast": "Sunny",
         "start_time": "2026-09-27T14:00:00-05:00",
         "game_window_temp_f": 66.4,
         "game_window_humidity_pct": 64.3,
