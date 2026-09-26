@@ -70,6 +70,15 @@ jobs:
         run: python scripts/v2/run_v2_bracket.py --bracket data/bracket_dist.json --out data/v2_marginalized.json
         continue-on-error: true
 
+      - name: Price lane-2 native game-sim bracket (playoff-futures Game-Sim toggle)
+        # Rolls the native game engine (compute_pro_projections.project_matchup) through
+        # the bracket game-by-game over the same bracket_dist seeding distribution.
+        # -> data/lane2_marginalized.json (same shape as v2). Reads the bridge feeds that
+        # refresh.yml commits; runs after v2 so bracket_dist is fresh. Lane 2, logged next
+        # to v2 (lane 1, shipped) for the October ledger.
+        run: python scripts/run_lane2_bracket.py
+        continue-on-error: true
+
       - name: Compute team futures aggregate
         run: python scripts/compute_team_futures.py
         env:
@@ -80,7 +89,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/bracket_dist.json data/v2_marginalized.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/bracket_dist.json data/v2_marginalized.json data/lane2_marginalized.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
