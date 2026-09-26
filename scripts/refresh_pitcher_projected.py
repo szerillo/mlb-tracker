@@ -8,6 +8,7 @@ Bridge now, native later (derive stamina from expected IP/GS).
 """
 from __future__ import annotations
 import csv, io, json, os, re, sys, time, urllib.parse, urllib.request, datetime
+import unicodedata
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUTPUT = os.path.join(REPO_ROOT, "data", "pitcher_projected.json")
 SHEET_ID = "1Dq9ma3W_YPOJJzq6ZnqivfaniEk8wZJw3gZvuDrH6DE"
@@ -15,7 +16,9 @@ GVIZ = "https://docs.google.com/spreadsheets/d/{sid}/gviz/tq?tqx=out:csv&sheet={
 UA = "Mozilla/5.0 (compatible; mlb-tracker/1.0)"
 
 def _norm(s):
-    s = (s or "").lower().replace(".", "").replace("'", "")
+    s = (s or "").lower()
+    s = "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))  # strip accents (Diaz/Diaz, Pena/Pena)
+    s = s.replace(".", "").replace("'", "")
     s = re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 

@@ -141,7 +141,7 @@ def project_game(g, const=None):
 
 
 # ── Phase B: offense + DEF from the Batter Projected bridge feed ────────────
-import math as _math, re as _re
+import math as _math, re as _re, unicodedata as _ud
 
 PA_F5 = [2.91, 2.78, 2.65, 2.51, 2.38, 2.27, 2.18, 2.10, 2.02]   # sum 21.8
 PA_FG = [4.81, 4.69, 4.57, 4.46, 4.35, 4.25, 4.14, 4.03, 3.92]
@@ -149,7 +149,9 @@ BSR_PA_MULT = [1.104, 1.076, 1.049, 1.023, 0.998, 0.975, 0.95, 0.925, 0.9]  # me
 
 
 def _bp_norm(s):
-    s = (s or "").lower().replace(".", "").replace("'", "")
+    s = (s or "").lower()
+    s = "".join(c for c in _ud.normalize("NFKD", s) if not _ud.combining(c))  # strip accents (Diaz->diaz, Pena->pena)
+    s = s.replace(".", "").replace("'", "")
     s = _re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
     return _re.sub(r"\s+", " ", s).strip()
 

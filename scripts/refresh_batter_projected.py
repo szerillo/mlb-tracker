@@ -19,6 +19,7 @@ Output: data/batter_projected.json = { "<normkey>": {name, xr, fld, bsr,
 """
 from __future__ import annotations
 import csv, io, json, os, re, sys, time, urllib.parse, urllib.request
+import unicodedata
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUTPUT = os.path.join(REPO_ROOT, "data", "batter_projected.json")
@@ -28,7 +29,9 @@ UA = "Mozilla/5.0 (compatible; mlb-tracker/1.0)"
 
 
 def _norm(s):
-    s = (s or "").lower().replace(".", "").replace("'", "")
+    s = (s or "").lower()
+    s = "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))  # strip accents (Diaz/Diaz, Pena/Pena)
+    s = s.replace(".", "").replace("'", "")
     s = re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 

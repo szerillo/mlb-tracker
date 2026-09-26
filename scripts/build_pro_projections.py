@@ -23,6 +23,7 @@ into the site exactly where sheet_projections.json does.
 """
 from __future__ import annotations
 import json, os, re, sys, urllib.request, datetime
+import unicodedata
 
 HERE = os.path.dirname(__file__)
 REPO = os.path.abspath(os.path.join(HERE, ".."))
@@ -36,7 +37,9 @@ def _load(name):
         return {}
 
 def _norm(s):
-    s = (s or "").lower().replace(".", "").replace("'", "")
+    s = (s or "").lower()
+    s = "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))  # strip accents (Diaz/Diaz, Pena/Pena)
+    s = s.replace(".", "").replace("'", "")
     s = re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 
