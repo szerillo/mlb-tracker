@@ -76,7 +76,7 @@ ADJ_FILE  = REPO_ROOT / "data" / "deadline_adjustments.json"
 OUTPUT    = REPO_ROOT / "data" / "sean_team_projections.json"
 
 N_SIMS   = 4000
-HFA      = 0.035          # home-field add-on, per game
+HFA      = 0.040          # home-field add-on, per game (4.0 pp WP, 2026-09-27)
 REPL_PCT = 0.294          # replacement-level win%
 SEASON   = datetime.date.today().year
 
