@@ -74,7 +74,7 @@
 /* Bracket tab */
 .brk{display:flex;align-items:stretch;justify-content:center;gap:2px;padding:6px 2px 12px;overflow-x:auto}
 .brk .wing{display:flex;flex:1;min-width:0;gap:2px}
-.brk .wing.nl{flex-direction:row-reverse}
+.brk .wing.nl{}
 .brk .col{display:flex;flex-direction:column;justify-content:space-around;flex:1;min-width:92px;gap:14px}
 .brk .col.lcs{flex:.45;align-items:center;justify-content:center;min-width:44px}
 .brk .rndlab{font-size:10px;letter-spacing:.04em;color:var(--mut,#8b96a5);text-align:center;text-transform:uppercase;margin-bottom:2px}
@@ -94,19 +94,32 @@
 .brktip h5{margin:0 0 5px;font-size:12px;color:#fff}
 .brktip .r{display:flex;justify-content:space-between;gap:16px;margin:2px 0;color:#cdd6e0}
 .brktip .r b{color:#fff}
+/* Methodology modal */
+.methov{position:fixed;inset:0;background:rgba(3,6,10,.66);z-index:100}
+.methbox{position:fixed;left:50%;transform:translateX(-50%);width:min(560px,92vw);max-height:80vh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px 20px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.methx{position:absolute;top:8px;right:10px;background:none;border:0;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.methh{margin:2px 0 12px;font-size:.95rem;font-weight:800}
+.methcard h4{margin:8px 0 6px;font-size:.9rem;color:var(--text)}
+.methcard p{margin:6px 0 0;color:#cdd6e0;font-size:.82rem;line-height:1.5}
+.methcard ul{margin:8px 0 0;padding-left:18px;color:#cdd6e0;font-size:.82rem}
+.methcard li{margin:3px 0}
+#methSeg{margin:0 0 4px}
 </style>
 </head>
 <body>
   <div class="head">
     <h1>2026 Playoff Futures</h1>
     <span class="as" id="asof"></span>
-    <a class="methlink hdr" href="methodology.html" target="_blank">Methodology ↗</a>
+    <a class="methlink hdr" href="javascript:void(0)" onclick="openMeth('',event)">Methodology</a>
   </div>
   <div class="tabs">
     <button class="tabbtn active" data-tab="proj">Projections</button>
     <button class="tabbtn" data-tab="edges">Edges</button>
-    <button class="tabbtn" data-tab="bracket">Bracket</button>
   </div>
+  <div id="brkSeg" class="segwrap" style="display:none"></div>
+  <div class="sub" id="brkNote" style="display:none"></div>
+  <div id="brkWrap" style="display:none"></div>
   <div id="seg"></div>
   <div class="sub" id="srcnote"></div>
   <div class="grid" id="roundGrid">
@@ -116,10 +129,17 @@
       <table data-lg="NL"><thead></thead><tbody></tbody></table></div>
   </div>
   <div id="mktWrap" style="display:none"></div>
-  <div id="brkWrap" style="display:none"></div>
   <div class="foot">
     <span id="cnt"></span>
     <span id="footnote"></span>
+  </div>
+  <div id="methOv" class="methov" style="display:none" onclick="if(event.target===this)closeMeth()">
+    <div class="methbox">
+      <button class="methx" onclick="closeMeth()" aria-label="Close">&times;</button>
+      <div class="methh">How the models work</div>
+      <div id="methSeg" class="segwrap"></div>
+      <div id="methBody"></div>
+    </div>
   </div>
 <script>
 const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
@@ -225,13 +245,11 @@ function segHTML(opts, cur){
 }
 function render(){
   document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===curTab));
-  const isEdges = curTab==='edges', isBrk = curTab==='bracket';
-  document.getElementById('roundGrid').style.display = (isEdges||isBrk)?'none':'grid';
+  const isEdges = curTab==='edges';
+  document.getElementById('roundGrid').style.display = isEdges?'none':'grid';
   document.getElementById('mktWrap').style.display = isEdges?'block':'none';
-  { const _bw=document.getElementById('brkWrap'); if(_bw)_bw.style.display=isBrk?'block':'none'; }
+  ['brkSeg','brkNote','brkWrap'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display=isEdges?'none':'';});
   const seg=document.getElementById('seg');
-  seg.className='seg';
-  if(isBrk){ renderBracketTab(); requestAnimationFrame(fit); return; }
   if(isEdges){
     if(edgeModel==='gamesim' && !window.__hasLane2) edgeModel='mine';
     seg.className='segwrap';
@@ -244,19 +262,21 @@ function render(){
       const g=b.closest('.seg').dataset.grp, v=b.dataset.v;
       if(g==='model')edgeModel=v; else if(g==='lg')edgeLg=v; else edgeVig=v;
       render();});
-    const mn=edgeModel==='mine'?'Playoff Fit':edgeModel==='gamesim'?'Game Sim':'Composite';
+    const mn=BMN[edgeModel], dv=edgeVig==='novig'?' (devig)':'';
     document.getElementById('srcnote').innerHTML =
-      `<b>${mn}</b> vs market · Listed = best book price · Mkt% = market implied${edgeVig==='novig'?' (devig)':''} · Fair = ${mn} implied odds · Edge = ${mn} − market. <a class="methlink" href="methodology.html" target="_blank">How these models work ↗</a>`;
+      `<b>${mn}</b> vs market · Listed = best book price · Mkt% = market implied${dv} · Fair = ${mn} implied odds · Edge = ${mn} − market implied${dv}. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${edgeModel}',event)">How these models work</a>`;
     document.getElementById('footnote').textContent =
       (edgeVig==='novig'?'Devig market % (field normalized to 100%). ':'Raw market implied %. ')
       +'★ marks bigger edges · tap a column to sort.';
     renderEdges();
   } else {
+    renderBracketSection();
     const _opts=[];
     if(window.__hasLane2) _opts.push({v:'gamesim',lab:'Game Sim'});
     _opts.push({v:'mine',lab:'Playoff Fit'});
     _opts.push({v:'blend',lab:'Composite'});
     if(projSrc==='gamesim' && !window.__hasLane2) projSrc='mine';
+    seg.className='seg';
     seg.innerHTML=segHTML(_opts, projSrc);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{projSrc=b.dataset.v;render();});
     document.getElementById('srcnote').innerHTML = (projSrc==='mine'
@@ -264,11 +284,11 @@ function render(){
       : projSrc==='gamesim'
       ? "<b>Game Sim</b>: the bracket played game by game, with the real starter each game and projected October lineups."
       : "<b>Composite</b>: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY, plus my Playoff Fit and Game Sim.")
-      + ' <a class="methlink" href="methodology.html" target="_blank">Methodology ↗</a>';
+      + ` <a class="methlink" href="javascript:void(0)" onclick="openMeth('${projSrc}',event)">Methodology</a>`;
     document.getElementById('footnote').textContent = projSrc==='mine'
-      ? 'Odds to win each round · tap a header to sort · Model 70%+ series favourites have won 11 of 14 (2016–25) at a market average of 65%.'
+      ? 'Odds to win each round · tap a header to sort · Model 70%+ series favourites have won 11 of 14 (2016-25) at a market average of 65%.'
       : projSrc==='gamesim'
-      ? 'Odds to win each round (game-sim roll-forward) · tap a header to sort · experimental — SP/lineup/pen per game, weather & ump neutral.'
+      ? 'Odds to win each round (game-sim roll-forward) · tap a header to sort.'
       : 'Odds to win each round · tap a header to sort';
     renderRounds();
   }
@@ -351,7 +371,7 @@ function renderEdges(){
       +`<td class="mdl">${fmt(r.model)}</td>`
       +`<td class="mut" title="${mn} implied fair odds">${r.fair!=null?fmtAm(r.fair):'<span class=dash>—</span>'}</td>`
       +edgeCell(r.edge)+`</tr>`).join('');
-    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— ${mn} vs market${edgeVig==='novig'?' · devig':''}</span></div>`
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">${mn} vs market${edgeVig==='novig'?' · devig':''}</span></div>`
       +`<div class="tblwrap"><table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
   }).join('');
   wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
@@ -382,19 +402,44 @@ function chip(ab,seed){
     `<span class="seed">${seed}</span><img src="${LOGO(ab)}" alt="" onerror="this.style.visibility='hidden'">`+
     `<span class="ab">${ab}</span><span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span></div>`;
 }
-function renderBracketTab(){
-  const seg=document.getElementById('seg'); seg.className='segwrap';
+function renderBracketSection(){
+  const seg=document.getElementById('brkSeg'); seg.className='segwrap';
   const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
   const mo=[]; if(window.__hasLane2)mo.push({v:'gamesim',lab:'Game Sim'}); mo.push({v:'mine',lab:'Playoff Fit'}); mo.push({v:'blend',lab:'Composite'});
   if(brkModel==='gamesim'&&!window.__hasLane2)brkModel='mine';
   const ro=[{v:'ds',lab:'LDS'},{v:'cs',lab:'LCS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
   seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Reach</span>`+grp('bround',ro,curRound);
   seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.closest('.seg').dataset.grp,v=b.dataset.v; if(g==='bmodel')brkModel=v; else curRound=v; render();});
-  document.getElementById('srcnote').innerHTML=`Each team's chance to reach the <b>${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="methodology.html" target="_blank">Methodology ↗</a>`;
-  document.getElementById('footnote').textContent='Bracket seeding from the season sim; percentages refresh through the day.';
-  document.getElementById('cnt').textContent='';
+  document.getElementById('brkNote').innerHTML=`Each team's chance to reach the <b>${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${brkModel}',event)">Methodology</a>`;
   renderBracket();
 }
+const METH={
+  gamesim:{tag:'Game Sim',title:'The bracket, played out',
+    body:`<p>Takes the actual playoff bracket and simulates it game by game, thousands of times, using the same game projection model that powers my Action PRO odds. For these speculative playoff games it assumes neutral weather and umpire effects and a rested bullpen for both teams.</p>`},
+  mine:{tag:'Playoff Fit',title:'Built for October',
+    body:`<p>My October-specific team model. It scores how each roster and pitching staff fits tournament baseball, calibrated on past postseasons and validated against real playoff series results and market prices. I screened a large set of candidate metrics and narrowed them to the <b>four components</b> that have most driven playoff success:</p><ul><li><b>Lineup quality</b>, lineup xwOBA</li><li><b>Lineup contact</b>, strikeout avoidance (K%)</li><li><b>Team defense</b>, Outs Above Average</li><li><b>Starting rotation</b>, October-weighted rotation strength</li></ul>`},
+  blend:{tag:'Composite',title:'The wisdom of the crowd',
+    body:`<p>An equal-weight blend of several independent forecasts (PECOTA, FanGraphs, ATC, THE BAT, OOPSY) alongside my own Game Sim and Playoff Fit projections. No single model dominates; the blend smooths out any one system's blind spot, which has proven the most reliable way to calibrate preseason win-total projections.</p>`}
+};
+let methSel='mine';
+function openMeth(model,ev){
+  methSel = model || (curTab==='edges'?edgeModel:projSrc) || 'mine';
+  if(methSel==='gamesim' && !window.__hasLane2) methSel='mine';
+  const ov=document.getElementById('methOv'); ov.style.display='block';
+  renderMeth();
+  const box=ov.querySelector('.methbox');
+  const y = ev && ev.clientY!=null ? Math.max(16, ev.clientY-24) : 60;
+  box.style.top = Math.min(y, Math.max(16, innerHeight-box.offsetHeight-16)) + 'px';
+}
+function closeMeth(){ document.getElementById('methOv').style.display='none'; }
+function renderMeth(){
+  const opts=[]; if(window.__hasLane2)opts.push({v:'gamesim',lab:'Game Sim'}); opts.push({v:'mine',lab:'Playoff Fit'}); opts.push({v:'blend',lab:'Composite'});
+  const seg=document.getElementById('methSeg'); seg.innerHTML=`<span class="seg" data-grp="m">${segHTML(opts,methSel)}</span>`;
+  seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{methSel=b.dataset.v;renderMeth();});
+  const m=METH[methSel];
+  document.getElementById('methBody').innerHTML=`<div class="methcard"><h4>${m.tag}: ${m.title}</h4>${m.body}</div>`;
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeMeth(); });
 function renderBracket(){
   const S=BRACKET, wrap=document.getElementById('brkWrap');
   if(!S.AL||!S.AL.length){ wrap.innerHTML='<div class="sub" style="padding:20px">Bracket loading.</div>'; return; }
