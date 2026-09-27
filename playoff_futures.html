@@ -105,6 +105,39 @@
 .methcard ul{margin:8px 0 0;padding-left:18px;color:#cdd6e0;font-size:.82rem}
 .methcard li{margin:3px 0}
 #methSeg{margin:0 0 4px}
+/* ── current-round series board ── */
+.secthd{font-size:.95rem;font-weight:600;color:#e6edf3;margin:2px 2px 8px}
+.secthd .sub2,.sub2{font-weight:400;color:#8b96a5;font-size:.74rem}
+.scardgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:0 0 14px}
+.scard{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:10px 12px}
+.shd{font-size:.72rem;color:#8b96a5;margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.lgtag{font-size:.62rem;font-weight:700;color:#0d1117;border-radius:4px;padding:1px 5px}
+.lgtag.al{background:#6aa9ff}.lgtag.nl{background:#39d98a}
+.srow{display:grid;grid-template-columns:74px 1fr 46px 46px 52px;align-items:center;gap:6px;margin:3px 0}
+.steam{display:flex;align-items:center;gap:4px;font-size:.8rem}
+.steam img{width:16px;height:16px;object-fit:contain}
+.ssd{color:#8b96a5;font-size:.68rem}
+.sbarwrap{position:relative;background:#0d1117;border:1px solid #232a34;border-radius:5px;height:16px;overflow:hidden}
+.sbar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#2b5a9e,#6aa9ff);border-radius:5px 0 0 5px}
+.sbpct{position:absolute;right:4px;top:0;line-height:16px;font-size:.66rem;color:#e6edf3;font-weight:600}
+.scell{text-align:center;font-size:.74rem;color:#cdd6e0}
+.scell .sk{font-size:.56rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em}
+.scell.edge.pos{color:#39d98a;font-weight:700}.scell.edge.neg{color:#f0616d}.scell.edge.flat{color:#8b96a5}
+.star{color:#f5c451;font-size:.62rem}
+.sxtra{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed #232a34}
+.sxk{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;min-width:74px}
+.chip{font-size:.68rem;color:#cdd6e0;background:#0d1117;border:1px solid #232a34;border-radius:4px;padding:1px 5px}
+.chip b{color:#e6edf3}.chip i{color:#8b96a5;font-style:normal;margin-left:3px}
+/* ── WS exacta ── */
+.exwrap{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:6px 12px;margin:0 0 14px}
+.exwrap summary{cursor:pointer;font-size:.9rem;font-weight:600;color:#e6edf3;padding:4px 0}
+.extbl{width:100%;border-collapse:collapse;margin-top:6px;font-size:.76rem}
+.extbl th{text-align:right;color:#8b96a5;font-weight:500;font-size:.66rem;padding:3px 6px;border-bottom:1px solid #232a34}
+.extbl th:first-child{text-align:left}
+.extbl td{padding:3px 6px;border-bottom:1px solid #1c222b;text-align:right;color:#cdd6e0}
+.ex1{text-align:left!important}.ex1 img{width:15px;height:15px;object-fit:contain;vertical-align:-2px;margin:0 1px}
+.ex1 .vs{color:#6a7480;font-size:.66rem;margin:0 2px}
+.exp{color:#e6edf3;font-weight:600}
 </style>
 </head>
 <body>
@@ -117,6 +150,7 @@
     <button class="tabbtn active" data-tab="proj">Projections</button>
     <button class="tabbtn" data-tab="edges">Edges</button>
   </div>
+  <div id="seriesRow" style="display:none"></div>
   <div id="brkSeg" class="segwrap" style="display:none"></div>
   <div class="sub" id="brkNote" style="display:none"></div>
   <div id="brkWrap" style="display:none"></div>
@@ -128,6 +162,7 @@
     <div class="lg"><div class="lghd nl"><span class="dot nl"></span>National League</div>
       <table data-lg="NL"><thead></thead><tbody></tbody></table></div>
   </div>
+  <div id="exactaWrap" style="display:none"></div>
   <div id="mktWrap" style="display:none"></div>
   <div class="foot">
     <span id="cnt"></span>
@@ -196,15 +231,83 @@ function modelEdgeCell(e, pct){
 // resize our own iframe to fit content on every render (fixes clipped 2nd table on tab switch)
 function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(document.body.scrollHeight+4)+'px'; }catch(e){} }
 
+// ── current-round series board + WS exacta ─────────────────────────────────
+const impAm=o=>o==null?null:(o<0?(-o)/((-o)+100):100/(o+100));   // American -> implied prob (0..1)
+const devig2=(oa,ob)=>{ const a=impAm(oa),b=impAm(ob); if(a==null||b==null) return [null,null]; const s=a+b; return [a/s,b/s]; };
+function seriesRowHTML(s, mkt){
+  const m=s.model, host=s.host;
+  const mml_a=mkt?mkt.ml_a:null, mml_b=mkt?mkt.ml_b:null;
+  const [dva,dvb]=devig2(mml_a,mml_b);           // devigged market implied
+  const line=(ab,seed,p,fairAm,mml,dv)=>{
+    const edge = dv!=null ? (p*100 - dv*100) : null;
+    const ecls = edge==null?'flat':(edge>=3?'pos':(edge<=-3?'neg':'flat'));
+    const etx  = edge==null?'—':((edge>0?'+':'')+edge.toFixed(1)+'%');
+    const star = edge!=null&&edge>=4?'★★':edge!=null&&edge>=2?'★':'';
+    return `<div class="srow">
+      <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b><span class="ssd">(${seed})</span></div>
+      <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
+      <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
+      <div class="scell"><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}</div>
+      <div class="scell edge ${ecls}"><div class="sk">Edge</div>${etx}${star?'<span class="star"> '+star+'</span>':''}</div>
+    </div>`;
+  };
+  // exact-result chips (model % ; market blank until scraper on)
+  const ex=m.exact||{}; const exOrder=Object.keys(ex);
+  const chip=k=>{ const [side,w,l]=k.split('-'); const who=side==='a'?s.a:s.b; return `<span class="chip"><b>${who}</b> ${w}-${l}<i>${(ex[k]*100).toFixed(0)}%</i></span>`; };
+  const spr=m.spread||{};
+  return `<div class="scard">
+    <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}</div>
+    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva)}
+    ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb)}
+    <div class="sxtra"><span class="sxk">Exact</span>${exOrder.map(chip).join('')}</div>
+    <div class="sxtra"><span class="sxk">Sweep −1.5g</span><span class="chip"><b>${s.a}</b><i>${((spr.a_minus_1_5||0)*100).toFixed(0)}%</i></span><span class="chip"><b>${s.b}</b><i>${((spr.b_minus_1_5||0)*100).toFixed(0)}%</i></span></div>
+  </div>`;
+}
+function RLABF(r){ return ({WC:'Wild Card',LDS:'Division Series',LCS:'Championship Series',WS:'World Series'}[r]||r); }
+function renderSeries(isEdges){
+  const el=document.getElementById('seriesRow'); if(!el) return;
+  const S=window.__series;
+  if(isEdges || !S || !S.series || !S.series.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const od=(window.__sodds&&window.__sodds.series)||[];
+  const mk=(s)=>od.find(o=>o.league===s.league&&o.a===s.a&&o.b===s.b)||null;
+  const hasMkt=od.some(o=>o.ml_a!=null);
+  el.style.display='block';
+  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b>
+     <span class="sub2">game-sim model · fair odds${hasMkt?' vs market':''}${hasMkt?'':' · market pending'}</span></div>
+    <div class="scardgrid">${S.series.map(s=>seriesRowHTML(s,mk(s))).join('')}</div>`;
+  fit();
+}
+function renderExacta(isEdges){
+  const el=document.getElementById('exactaWrap'); if(!el) return;
+  const S=window.__series;
+  if(isEdges || !S || !S.ws_exacta){ el.style.display='none'; el.innerHTML=''; return; }
+  const P=S.ws_exacta.pairings||[]; const od=(window.__sodds&&window.__sodds.ws_exacta&&window.__sodds.ws_exacta.pairings)||[];
+  const mkt=(al,nl)=>{ const f=od.find(o=>o.al===al&&o.nl===nl); return f?f.market:null; };
+  const rows=P.slice(0,18).map(p=>{
+    const mk=mkt(p.al,p.nl);
+    return `<tr><td class="ex1"><img src="${LOGO(p.al)}" onerror="this.style.visibility='hidden'"><b>${p.al}</b> <span class="vs">vs</span> <img src="${LOGO(p.nl)}" onerror="this.style.visibility='hidden'"><b>${p.nl}</b></td>
+      <td class="exp">${(p.reach_p*100).toFixed(1)}%</td><td class="exf">${fmtAm(p.fair)}</td>
+      <td class="exm">${mk!=null?fmtAm(mk):'<span class="dash">—</span>'}</td></tr>`;
+  }).join('');
+  el.style.display='block';
+  el.innerHTML=`<details class="exwrap"><summary>World Series matchups (exacta) — <span class="sub2">chance each AL×NL pairing reaches the WS</span></summary>
+    <table class="extbl"><thead><tr><th>Pairing</th><th>Reach %</th><th>Fair</th><th>Mkt</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="sub2" style="margin:6px 2px 0">Reach % = P(AL champ) × P(NL champ) from the game-sim marginals. Top 18 of 36 pairings.</div></details>`;
+  fit();
+}
+
 async function load(){
   try{
-    const [sean,tf,v2,lane2,bdist]=await Promise.all([
+    const [sean,tf,v2,lane2,bdist,series,sodds]=await Promise.all([
       fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'v2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(RAW+'lane2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch(RAW+'bracket_dist.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch(RAW+'bracket_dist.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(RAW+'lane2_series.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
+    window.__series=series; window.__sodds=sodds;
     const blend={},mkt={};
     // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
     // season-sim base. Used for BOTH v2 (BARTOLO, lane 1) and the native game-sim
@@ -249,6 +352,7 @@ function render(){
   document.getElementById('roundGrid').style.display = isEdges?'none':'grid';
   document.getElementById('mktWrap').style.display = isEdges?'block':'none';
   ['brkSeg','brkNote','brkWrap'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display=isEdges?'none':'';});
+  renderSeries(isEdges); renderExacta(isEdges);
   const seg=document.getElementById('seg');
   if(isEdges){
     if(edgeModel==='gamesim' && !window.__hasLane2) edgeModel='mine';
