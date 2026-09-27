@@ -69,16 +69,43 @@
   .dash{color:#3a4854}
   .foot{color:var(--muted);font-size:.7rem;margin-top:11px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .err{padding:16px;color:#ff8f8f}
+.methlink{color:#6aa9ff;text-decoration:none;font-size:11px;white-space:nowrap}.methlink:hover{text-decoration:underline}.methlink.hdr{margin-left:10px;vertical-align:middle}
+
+/* Bracket tab */
+.brk{display:flex;align-items:stretch;justify-content:center;gap:2px;padding:6px 2px 12px;overflow-x:auto}
+.brk .wing{display:flex;flex:1;min-width:0;gap:2px}
+.brk .wing.nl{flex-direction:row-reverse}
+.brk .col{display:flex;flex-direction:column;justify-content:space-around;flex:1;min-width:92px;gap:14px}
+.brk .col.lcs{flex:.45;align-items:center;justify-content:center;min-width:44px}
+.brk .rndlab{font-size:10px;letter-spacing:.04em;color:var(--mut,#8b96a5);text-align:center;text-transform:uppercase;margin-bottom:2px}
+.brk .pair{display:flex;flex-direction:column;gap:6px;justify-content:center}
+.chip{display:flex;align-items:center;gap:6px;background:var(--panel,#161b22);border:1px solid var(--line,#232a34);border-radius:8px;padding:5px 8px;position:relative;overflow:hidden;cursor:default}
+.chip.empty{opacity:.45;justify-content:center;font-size:11px;color:var(--mut,#8b96a5)}
+.chip img{width:22px;height:22px;object-fit:contain}
+.chip .seed{font-size:10px;color:var(--mut,#8b96a5);width:11px;text-align:center}
+.chip .ab{font-size:12px;font-weight:600;color:var(--tx,#e6edf3)}
+.chip .pct{margin-left:auto;font-size:12.5px;font-weight:700;color:#6aa9ff}
+.chip .fill{position:absolute;left:0;top:0;bottom:0;background:rgba(106,169,255,.12)}
+.chip>*{position:relative}
+.brk .center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:92px;padding:0 6px;text-align:center}
+.brk .center .champ{margin-top:6px;font-size:12px;color:var(--tx,#e6edf3)}
+.brk .center .champ b{color:#6aa9ff}
+.brktip{position:fixed;z-index:60;background:#0b1220;border:1px solid var(--line,#232a34);border-radius:8px;padding:8px 10px;font-size:12px;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,.55);min-width:158px}
+.brktip h5{margin:0 0 5px;font-size:12px;color:#fff}
+.brktip .r{display:flex;justify-content:space-between;gap:16px;margin:2px 0;color:#cdd6e0}
+.brktip .r b{color:#fff}
 </style>
 </head>
 <body>
   <div class="head">
     <h1>2026 Playoff Futures</h1>
     <span class="as" id="asof"></span>
+    <a class="methlink hdr" href="methodology.html" target="_blank">Methodology ↗</a>
   </div>
   <div class="tabs">
     <button class="tabbtn active" data-tab="proj">Projections</button>
     <button class="tabbtn" data-tab="edges">Edges</button>
+    <button class="tabbtn" data-tab="bracket">Bracket</button>
   </div>
   <div id="seg"></div>
   <div class="sub" id="srcnote"></div>
@@ -89,6 +116,7 @@
       <table data-lg="NL"><thead></thead><tbody></tbody></table></div>
   </div>
   <div id="mktWrap" style="display:none"></div>
+  <div id="brkWrap" style="display:none"></div>
   <div class="foot">
     <span id="cnt"></span>
     <span id="footnote"></span>
@@ -111,10 +139,11 @@ const MKTS=[
 ];
 // Edges tab: flat columns, one model at a time (Playoff-Picture style)
 const MCOLS=[
- {k:'odds',lab:'Listed'},{k:'mkt',lab:'Mkt%'},{k:'model',lab:'MODEL'},{k:'edge',lab:'Edge'},
+ {k:'odds',lab:'Listed'},{k:'mkt',lab:'Mkt%'},{k:'model',lab:'MODEL'},{k:'fair',lab:'Fair'},{k:'edge',lab:'Edge'},
 ];
 let DATA={mine:null,blend:null}, MKT={};
 let curTab='proj', projSrc='mine', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
+let curRound='ws', brkModel='mine'; let BRACKET={AL:[],NL:[]};
 let sortK='ws_pct', dir=-1;          // Projections tables
 let mSortK='edge', mDir=-1;          // Edges tables (default: biggest edge first)
 const num=v=>(v==null||isNaN(v))?null:+v;
@@ -149,11 +178,12 @@ function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(d
 
 async function load(){
   try{
-    const [sean,tf,v2,lane2]=await Promise.all([
+    const [sean,tf,v2,lane2,bdist]=await Promise.all([
       fetch(RAW+'sean_team_projections.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'team_futures.json?cb='+Date.now()).then(r=>r.json()),
       fetch(RAW+'v2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch(RAW+'lane2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch(RAW+'lane2_marginalized.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(RAW+'bracket_dist.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     const blend={},mkt={};
     // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
@@ -176,7 +206,12 @@ async function load(){
     window.__v2date=(v2&&v2.date)||'';
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
     DATA.mine=overlay(v2); DATA.gamesim=overlay(lane2); DATA.blend=blend; MKT=mkt;
+    if(lane2 && DATA.gamesim){ const FLDS=['ws_pct','ws_app_pct','reach_ds_pct','reach_cs_pct'];
+      for(const ab in DATA.blend){ const c=DATA.blend[ab], g=DATA.gamesim[ab]; if(!c||!g) continue;
+        FLDS.forEach(fl=>{ const cv=num(c[fl]), gv=num(g[fl]);
+          if(cv!=null&&gv!=null) c[fl]=+(((6*cv)+gv)/7).toFixed(1); else if(gv!=null&&cv==null) c[fl]=gv; }); } }
     window.__hasLane2=!!lane2;
+    BRACKET=modalSeeds(bdist&&bdist.bracket_dist);
     const g=(sean.generated_at||'').slice(0,10);
     document.getElementById('asof').textContent=g?('as of '+g):'';
     render();
@@ -190,43 +225,46 @@ function segHTML(opts, cur){
 }
 function render(){
   document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===curTab));
-  const isEdges = curTab==='edges';
-  document.getElementById('roundGrid').style.display = isEdges?'none':'grid';
+  const isEdges = curTab==='edges', isBrk = curTab==='bracket';
+  document.getElementById('roundGrid').style.display = (isEdges||isBrk)?'none':'grid';
   document.getElementById('mktWrap').style.display = isEdges?'block':'none';
+  { const _bw=document.getElementById('brkWrap'); if(_bw)_bw.style.display=isBrk?'block':'none'; }
   const seg=document.getElementById('seg');
   seg.className='seg';
+  if(isBrk){ renderBracketTab(); requestAnimationFrame(fit); return; }
   if(isEdges){
     if(edgeModel==='gamesim' && !window.__hasLane2) edgeModel='mine';
     seg.className='segwrap';
     const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
     seg.innerHTML=
-      grp('model',(window.__hasLane2?[{v:'mine',lab:'BARTOLO'},{v:'gamesim',lab:'Game‑Sim'},{v:'blend',lab:'Composite'}]:[{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}]),edgeModel)
+      grp('model',(window.__hasLane2?[{v:'gamesim',lab:'Game Sim'},{v:'mine',lab:'Playoff Fit'},{v:'blend',lab:'Composite'}]:[{v:'mine',lab:'Playoff Fit'},{v:'blend',lab:'Composite'}]),edgeModel)
       +grp('lg',[{v:'ALL',lab:'All'},{v:'AL',lab:'AL'},{v:'NL',lab:'NL'}],edgeLg)
-      +`<span class="seglab">Vig</span>`+grp('vig',[{v:'raw',lab:'Raw'},{v:'novig',lab:'No‑vig'}],edgeVig);
+      +`<span class="seglab">Vig</span>`+grp('vig',[{v:'raw',lab:'Raw'},{v:'novig',lab:'Devig'}],edgeVig);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
       const g=b.closest('.seg').dataset.grp, v=b.dataset.v;
       if(g==='model')edgeModel=v; else if(g==='lg')edgeLg=v; else edgeVig=v;
       render();});
-    const mn=edgeModel==='mine'?'BARTOLO (v2 Oct engine)':edgeModel==='gamesim'?'Game‑Sim (lane 2)':'Composite';
-    document.getElementById('srcnote').textContent = edgeVig==='novig'
-      ? `${mn} vs market. Listed = best book price; Mkt% is de‑vigged (field normalized to 100%); Edge = ${mn} − no‑vig Mkt%.`
-      : `${mn} vs market. Listed = best book price; Mkt% is the raw book implied %; Edge = ${mn} − Mkt%.`;
+    const mn=edgeModel==='mine'?'Playoff Fit':edgeModel==='gamesim'?'Game Sim':'Composite';
+    document.getElementById('srcnote').innerHTML =
+      `<b>${mn}</b> vs market · Listed = best book price · Mkt% = market implied${edgeVig==='novig'?' (devig)':''} · Fair = ${mn} implied odds · Edge = ${mn} − market. <a class="methlink" href="methodology.html" target="_blank">How these models work ↗</a>`;
     document.getElementById('footnote').textContent =
-      (edgeVig==='novig'?'No‑vig: market % normalized to 100% per field (pennant per league). ':'Raw book implied %. ')
-      +'Edge = model − Mkt% · ★ 0.5 / ★★ 2 / ★★★ 4 · tap a header to sort';
+      (edgeVig==='novig'?'Devig market % (field normalized to 100%). ':'Raw market implied %. ')
+      +'★ marks bigger edges · tap a column to sort.';
     renderEdges();
   } else {
-    const _opts=[{v:'mine',lab:'BARTOLO'}];
-    if(window.__hasLane2) _opts.push({v:'gamesim',lab:'Game‑Sim'});
+    const _opts=[];
+    if(window.__hasLane2) _opts.push({v:'gamesim',lab:'Game Sim'});
+    _opts.push({v:'mine',lab:'Playoff Fit'});
     _opts.push({v:'blend',lab:'Composite'});
     if(projSrc==='gamesim' && !window.__hasLane2) projSrc='mine';
     seg.innerHTML=segHTML(_opts, projSrc);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{projSrc=b.dataset.v;render();});
-    document.getElementById('srcnote').textContent = projSrc==='mine'
-      ? "BARTOLO: Pennant + WS from the pre-registered October series model (v2); WC/LDS from the season sim."
+    document.getElementById('srcnote').innerHTML = (projSrc==='mine'
+      ? "<b>Playoff Fit</b>: my October model of how each roster and staff fits a short series."
       : projSrc==='gamesim'
-      ? "Game‑Sim (lane 2, experimental): the native game-by-game engine rolled through the bracket — the actual SP each game, projected-October nines, rested pens. Logged next to v2 and graded on the October ledger; not the shipped number."
-      : "Composite: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY and BARTOLO.";
+      ? "<b>Game Sim</b>: the bracket played game by game, with the real starter each game and projected October lineups."
+      : "<b>Composite</b>: equal-weight blend of PECOTA, FanGraphs, ATC, THE BAT, OOPSY, plus my Playoff Fit and Game Sim.")
+      + ' <a class="methlink" href="methodology.html" target="_blank">Methodology ↗</a>';
     document.getElementById('footnote').textContent = projSrc==='mine'
       ? 'Odds to win each round · tap a header to sort · Model 70%+ series favourites have won 11 of 14 (2016–25) at a market average of 65%.'
       : projSrc==='gamesim'
@@ -272,7 +310,7 @@ function edgeCell(e){
 function renderEdges(){
   const wrap=document.getElementById('mktWrap');
   const src = edgeModel==='mine'?DATA.mine:edgeModel==='gamesim'?DATA.gamesim:DATA.blend;
-  const mn  = edgeModel==='mine'?'BARTOLO':edgeModel==='gamesim'?'Game‑Sim':'Composite';
+  const mn  = edgeModel==='mine'?'Playoff Fit':edgeModel==='gamesim'?'Game Sim':'Composite';
   const field = contenders(DATA.mine).map(([ab])=>ab);   // full field for devig sums
   let display = field.slice();
   if(edgeLg!=='ALL') display = display.filter(ab=>LEAGUE[ab]===edgeLg);
@@ -298,7 +336,7 @@ function renderEdges(){
       const mkt = edgeVig==='novig'?fair:raw;
       const odds=num((MKT[ab]||{})[M.odds]);
       const edge=(model!=null&&mkt!=null)?+(model-mkt).toFixed(1):null;
-      return {ab, odds, mkt, model, edge};
+      return {ab, odds, mkt, model, fair:pctToAmerican(model), edge};
     }).filter(r=>r.model!=null||r.mkt!=null);
     rows.sort((a,b)=>{const x=a[mSortK],y=b[mSortK];
       if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (x-y)*mDir;});
@@ -311,8 +349,9 @@ function renderEdges(){
       +`<td class="mut" title="best available book price">${r.odds!=null?fmtOdds(r.odds):'<span class=dash>—</span>'}</td>`
       +`<td class="mut">${fmt(r.mkt)}</td>`
       +`<td class="mdl">${fmt(r.model)}</td>`
+      +`<td class="mut" title="${mn} implied fair odds">${r.fair!=null?fmtAm(r.fair):'<span class=dash>—</span>'}</td>`
       +edgeCell(r.edge)+`</tr>`).join('');
-    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— ${mn} vs market${edgeVig==='novig'?' · no‑vig':''}</span></div>`
+    return `<div class="lg"><div class="lghd">${M.lab}<span class="mk">— ${mn} vs market${edgeVig==='novig'?' · devig':''}</span></div>`
       +`<div class="tblwrap"><table data-mkt="${M.key}"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
   }).join('');
   wrap.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
@@ -322,6 +361,68 @@ function renderEdges(){
   document.getElementById('cnt').textContent = anyN? (display.length+' teams · pennant + WS'+lgtxt)
     : (display.length+' teams · WS priced (pennant odds pending next refresh)'+lgtxt);
 }
+
+const ID2AB={139:'TB',114:'CLE',117:'HOU',140:'TEX',147:'NYY',111:'BOS',145:'CWS',158:'MIL',119:'LAD',144:'ATL',135:'SD',112:'CHC',143:'PHI',109:'ARI',108:'LAA',110:'BAL',113:'CIN',115:'COL',116:'DET',118:'KC',120:'WSH',121:'NYM',133:'ATH',134:'PIT',136:'SEA',137:'SF',138:'STL',141:'TOR',142:'MIN',146:'MIA'};
+function modalSeeds(bd){
+  const AL=[{},{},{},{},{},{}], NL=[{},{},{},{},{},{}];
+  (bd||[]).forEach(row=>{ const a=row[0],n=row[1],w=row[2]||1;
+    a.forEach((t,i)=>{AL[i][t]=(AL[i][t]||0)+w;}); n.forEach((t,i)=>{NL[i][t]=(NL[i][t]||0)+w;}); });
+  const pick=o=>{ let bt=null,bw=-1; for(const k in o){ if(o[k]>bw){bw=o[k];bt=+k;} } return bt==null?null:(ID2AB[bt]||('#'+bt)); };
+  return {AL:AL.map(pick), NL:NL.map(pick)};
+}
+const RKEY={ds:'reach_ds_pct',cs:'reach_cs_pct',pennant:'ws_app_pct',ws:'ws_pct'};
+const RLAB={ds:'LDS',cs:'LCS',pennant:'Pennant',ws:'World Series'};
+const BMN={mine:'Playoff Fit',gamesim:'Game Sim',blend:'Composite'};
+function brkData(){ return brkModel==='mine'?DATA.mine:brkModel==='gamesim'?DATA.gamesim:DATA.blend; }
+function chip(ab,seed){
+  if(!ab) return '<div class="chip empty">TBD</div>';
+  const d=(brkData()||{})[ab]||{}, pv=num(d[RKEY[curRound]]);
+  const w=pv==null?0:Math.max(0,Math.min(100,pv));
+  return `<div class="chip" data-ab="${ab}"><span class="fill" style="width:${w}%"></span>`+
+    `<span class="seed">${seed}</span><img src="${LOGO(ab)}" alt="" onerror="this.style.visibility='hidden'">`+
+    `<span class="ab">${ab}</span><span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span></div>`;
+}
+function renderBracketTab(){
+  const seg=document.getElementById('seg'); seg.className='segwrap';
+  const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
+  const mo=[]; if(window.__hasLane2)mo.push({v:'gamesim',lab:'Game Sim'}); mo.push({v:'mine',lab:'Playoff Fit'}); mo.push({v:'blend',lab:'Composite'});
+  if(brkModel==='gamesim'&&!window.__hasLane2)brkModel='mine';
+  const ro=[{v:'ds',lab:'LDS'},{v:'cs',lab:'LCS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
+  seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Reach</span>`+grp('bround',ro,curRound);
+  seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.closest('.seg').dataset.grp,v=b.dataset.v; if(g==='bmodel')brkModel=v; else curRound=v; render();});
+  document.getElementById('srcnote').innerHTML=`Each team's chance to reach the <b>${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="methodology.html" target="_blank">Methodology ↗</a>`;
+  document.getElementById('footnote').textContent='Bracket seeding from the season sim; percentages refresh through the day.';
+  document.getElementById('cnt').textContent='';
+  renderBracket();
+}
+function renderBracket(){
+  const S=BRACKET, wrap=document.getElementById('brkWrap');
+  if(!S.AL||!S.AL.length){ wrap.innerHTML='<div class="sub" style="padding:20px">Bracket loading.</div>'; return; }
+  const al=S.AL, nl=S.NL;
+  const wcPair=(s,seeds)=>`<div class="pair">${chip(s[seeds[0]-1],seeds[0])}${chip(s[seeds[1]-1],seeds[1])}</div>`;
+  const bye=(s,seed)=>`<div class="pair">${chip(s[seed-1],seed)}</div>`;
+  const alWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(al,[3,6])}${wcPair(al,[4,5])}</div>`;
+  const alDS=`<div class="col ds"><div class="rndlab">Division</div>${bye(al,2)}${bye(al,1)}</div>`;
+  const nlWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(nl,[3,6])}${wcPair(nl,[4,5])}</div>`;
+  const nlDS=`<div class="col ds"><div class="rndlab">Division</div>${bye(nl,2)}${bye(nl,1)}</div>`;
+  const md=brkData()||{}; let champ=null,cw=-1;
+  [...al,...nl].forEach(ab=>{ if(!ab)return; const v=num((md[ab]||{}).ws_pct); if(v!=null&&v>cw){cw=v;champ=ab;} });
+  const center=`<div class="center"><div class="rndlab">World Series</div>`+(champ?`<img src="${LOGO(champ)}" style="width:36px;height:36px;object-fit:contain" onerror="this.style.visibility='hidden'"><div class="champ"><b>${champ}</b> ${Math.round(cw)}%</div>`:'')+`</div>`;
+  wrap.innerHTML=`<div class="brk"><div class="wing al">${alWC}${alDS}<div class="col lcs"><div class="rndlab">ALCS</div></div></div>${center}<div class="wing nl"><div class="col lcs"><div class="rndlab">NLCS</div></div>${nlDS}${nlWC}</div></div>`;
+  let tip=null;
+  const moveTip=e=>{ if(!tip)return; tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px'; tip.style.top=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8)+'px'; };
+  wrap.querySelectorAll('.chip[data-ab]').forEach(c=>{
+    c.onmouseenter=e=>{ const ab=c.dataset.ab, d=(brkData()||{})[ab]||{};
+      tip=document.createElement('div'); tip.className='brktip';
+      const rr=(lab,k)=>{const v=num(d[k]); return `<div class="r"><span>${lab}</span><b>${v==null?'-':Math.round(v)+'%'}</b></div>`;};
+      tip.innerHTML=`<h5>${ab} path</h5>`+rr('Reach LDS','reach_ds_pct')+rr('Reach LCS','reach_cs_pct')+rr('Win Pennant','ws_app_pct')+rr('Win WS','ws_pct');
+      document.body.appendChild(tip); moveTip(e); };
+    c.onmousemove=moveTip;
+    c.onmouseleave=()=>{ if(tip){tip.remove();tip=null;} };
+  });
+  requestAnimationFrame(fit);
+}
+
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{curTab=b.dataset.tab;render();});
 load();
 </script>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Playoff Futures — Methodology</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--line:#232a34;--tx:#e6edf3;--mut:#8b96a5;--accent:#6aa9ff;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;font-size:15px}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin:0 0 22px}
+  .lead{color:#cdd6e0;font-size:14px;margin:0 0 20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px}
+  .card h2{font-size:16px;margin:0 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;color:var(--bg);border-radius:5px;padding:1px 7px}
+  .tag.gs{background:#a78bfa}.tag.pf{background:#6aa9ff}.tag.cp{background:#39d98a}
+  .card p{margin:6px 0 0;color:#cdd6e0;font-size:14px}
+  .card ul{margin:8px 0 0;padding-left:18px;color:#cdd6e0;font-size:14px}
+  .card li{margin:3px 0}
+  .legend{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:8px;font-size:13.5px}
+  .legend b{color:var(--tx)}.legend span{color:var(--mut)}
+  .foot{color:var(--mut);font-size:12px;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>How the Playoff Futures models work</h1>
+  <p class="sub">Three ways to price October. Pick one on the board, or compare them side by side.</p>
+
+  <p class="lead">Every number is a probability: a team's chance to reach a round, win the pennant, or win the World Series. Three engines produce those numbers, each answering the question a little differently.</p>
+
+  <div class="card">
+    <h2><span class="tag gs">Game Sim</span> The bracket, played out</h2>
+    <p>Takes the actual playoff bracket and simulates it game by game, thousands of times, using the same game projection model that powers my Action PRO odds. For these speculative playoff games it assumes neutral weather and umpire effects and a rested bullpen for both teams.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag pf">Playoff Fit</span> Built for October</h2>
+    <p>My October-specific team model. It scores how each roster and pitching staff fits tournament baseball, calibrated on past postseasons and validated against real playoff series results and market prices. I screened a large set of candidate metrics and narrowed them to the <b>four components</b> that have most driven playoff success:</p>
+    <ul>
+      <li><b>Lineup quality</b>, lineup xwOBA</li>
+      <li><b>Lineup contact</b>, strikeout avoidance (K%)</li>
+      <li><b>Team defense</b>, Outs Above Average</li>
+      <li><b>Starting rotation</b>, October-weighted rotation strength</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag cp">Composite</span> The wisdom of the crowd</h2>
+    <p>An equal-weight blend of several independent forecasts (PECOTA, FanGraphs, ATC, THE BAT, OOPSY) alongside my own <b>Game Sim</b> and <b>Playoff Fit</b> projections. No single model dominates; the blend smooths out any one system's blind spot, which has proven the most reliable way to calibrate preseason win-total projections. If you only want one column, this is the safest default.</p>
+  </div>
+
+  <div class="card">
+    <h2>Reading the Edges tab</h2>
+    <p>The Edges tab lines each model up against the betting market, per team:</p>
+    <div class="legend">
+      <b>Listed</b><span>The best available sportsbook price for that team.</span>
+      <b>Mkt%</b><span>That price converted to an implied probability.</span>
+      <b>Model %</b><span>The selected model's probability for that team.</span>
+      <b>Fair</b><span>The model's probability converted back into American odds, the price we'd call fair.</span>
+      <b>Edge</b><span>Model % minus market %. Positive means the model likes the team more than the market. ★ marks the bigger gaps.</span>
+    </div>
+    <p style="margin-top:12px"><b>Raw vs Devig.</b> A sportsbook builds a margin (the "vig") into its prices, so the implied odds across a whole field add up to more than 100%. <b>Raw</b> shows those book-implied percentages as-is. <b>Devig</b> strips the margin out. It normalizes the field back to 100% (per league for the pennant) so you see the market's true implied probability. Compare your edge against Devig for the cleaner read; Raw shows what's actually posted.</p>
+  </div>
+
+  <p class="foot">Probabilities update through the day as lineups, rotations, and prices move. Game Sim and Playoff Fit are logged side by side all October and graded against results; over time the ledger, not the label, decides which to trust.</p>
+</div>
+</body>
+</html>
