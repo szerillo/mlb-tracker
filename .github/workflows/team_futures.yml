@@ -79,6 +79,14 @@ jobs:
         run: python scripts/run_lane2_bracket.py
         continue-on-error: true
 
+      - name: Refresh series market odds (series ML; correct-score/spread/exacta framework)
+        # Reads data/lane2_series.json (emitted by run_lane2_bracket above) and writes
+        # data/series_odds.json: series moneyline live, correct-score/spread/WS-exacta
+        # blocks structured-but-gated (ENABLE_* flags in the script). Board merges by
+        # (league,a,b) and (al,nl); renders blank where a market is absent.
+        run: python scripts/refresh_series_odds.py
+        continue-on-error: true
+
       - name: Compute team futures aggregate
         run: python scripts/compute_team_futures.py
         env:
@@ -89,7 +97,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/bracket_dist.json data/v2_marginalized.json data/lane2_marginalized.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/bracket_dist.json data/v2_marginalized.json data/lane2_marginalized.json data/lane2_series.json data/series_odds.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
