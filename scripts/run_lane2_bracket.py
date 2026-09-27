@@ -55,7 +55,7 @@ def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine):
     for nm,pos,typ in roster:
         if pos!="P": continue
         p=ps.get(D._norm(nm)) or {}
-        ra=p.get("unified_adj") if p.get("unified_adj") is not None else p.get("unified_score")
+        ra=p.get("unified_adj")   # real starters only (relievers have unified_adj=None -> excluded)
         gs=(pp.get(D._norm(nm)) or {}).get("gs")
         sps.append((nm,ra,gs,p))
     # gs from statsapi season if missing — approximate via ip; keep those plausibly SP
