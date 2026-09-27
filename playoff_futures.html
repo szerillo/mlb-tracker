@@ -196,17 +196,18 @@ function render(){
   const seg=document.getElementById('seg');
   seg.className='seg';
   if(isEdges){
+    if(edgeModel==='gamesim' && !window.__hasLane2) edgeModel='mine';
     seg.className='segwrap';
     const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
     seg.innerHTML=
-      grp('model',[{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}],edgeModel)
+      grp('model',(window.__hasLane2?[{v:'mine',lab:'BARTOLO'},{v:'gamesim',lab:'Game‑Sim'},{v:'blend',lab:'Composite'}]:[{v:'mine',lab:'BARTOLO'},{v:'blend',lab:'Composite'}]),edgeModel)
       +grp('lg',[{v:'ALL',lab:'All'},{v:'AL',lab:'AL'},{v:'NL',lab:'NL'}],edgeLg)
       +`<span class="seglab">Vig</span>`+grp('vig',[{v:'raw',lab:'Raw'},{v:'novig',lab:'No‑vig'}],edgeVig);
     seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
       const g=b.closest('.seg').dataset.grp, v=b.dataset.v;
       if(g==='model')edgeModel=v; else if(g==='lg')edgeLg=v; else edgeVig=v;
       render();});
-    const mn=edgeModel==='mine'?'BARTOLO (v2 Oct engine)':'Composite';
+    const mn=edgeModel==='mine'?'BARTOLO (v2 Oct engine)':edgeModel==='gamesim'?'Game‑Sim (lane 2)':'Composite';
     document.getElementById('srcnote').textContent = edgeVig==='novig'
       ? `${mn} vs market. Listed = best book price; Mkt% is de‑vigged (field normalized to 100%); Edge = ${mn} − no‑vig Mkt%.`
       : `${mn} vs market. Listed = best book price; Mkt% is the raw book implied %; Edge = ${mn} − Mkt%.`;
@@ -270,8 +271,8 @@ function edgeCell(e){
 }
 function renderEdges(){
   const wrap=document.getElementById('mktWrap');
-  const src = edgeModel==='mine'?DATA.mine:DATA.blend;
-  const mn  = edgeModel==='mine'?'BARTOLO':'Composite';
+  const src = edgeModel==='mine'?DATA.mine:edgeModel==='gamesim'?DATA.gamesim:DATA.blend;
+  const mn  = edgeModel==='mine'?'BARTOLO':edgeModel==='gamesim'?'Game‑Sim':'Composite';
   const field = contenders(DATA.mine).map(([ab])=>ab);   // full field for devig sums
   let display = field.slice();
   if(edgeLg!=='ALL') display = display.filter(ab=>LEAGUE[ab]===edgeLg);
