@@ -169,10 +169,16 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .grc{min-width:36px;text-align:right;color:#e6edf3;font-weight:700}
 .grh .grc{color:#8b96a5;font-weight:700;font-size:.66rem}
 .srcpill{margin-left:6px;font-size:.6rem;font-weight:700;color:#0d1117;background:#5eead4;border-radius:4px;padding:1px 6px;vertical-align:1px}
-.pohdr{display:none;align-items:baseline;gap:9px;margin:0 2px 10px;padding-bottom:7px;border-bottom:1px solid var(--border,#232a34)}
-body.view-series .pohdr,body.view-bracket .pohdr,body.view-edges .pohdr{display:flex}
-.pohdr-b{font-weight:800;font-size:1rem;letter-spacing:.07em;color:#5eead4}
-.pohdr-t{font-weight:600;font-size:.86rem;color:#e6edf3}
+.pohdr{display:none;margin:0 2px 12px;padding-bottom:9px;border-bottom:1px solid #242e3a}
+body.view-series .pohdr,body.view-bracket .pohdr,body.view-edges .pohdr{display:block}
+.pohdr .brand{display:flex;align-items:center;gap:.6rem;margin:0}
+.pohdr .brand-logo{flex-shrink:0;width:62px;height:62px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.pohdr .brand-text{display:flex;flex-direction:column;gap:.1rem}
+.pohdr .brand-text h1{font-size:1.15rem;margin:0;color:#e6edf3;font-weight:800;letter-spacing:.02em}
+.pohdr .brand-tagline{font-size:.72rem;color:#9aa4b2;font-style:italic;letter-spacing:.04em;line-height:1.3}
+.pohdr .hdr-built{display:block;font-size:.78rem;color:#9aa4b2;margin-top:.1rem;line-height:1.2}
+.pohdr .hdr-built .hdr-sep{display:none}
+.pohdr .hdr-handle{color:#5eead4;text-decoration:none;font-weight:700}
 .sxtra{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed #232a34}
 .sxk{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;min-width:74px}
 .chip{font-size:.68rem;color:#cdd6e0;background:#0d1117;border:1px solid #232a34;border-radius:4px;padding:1px 5px}
@@ -219,7 +225,63 @@ body.view-series .pohdr,body.view-bracket .pohdr,body.view-edges .pohdr{display:
     <button class="tabbtn active" data-tab="proj">Projections</button>
     <button class="tabbtn" data-tab="edges">Edges</button>
   </div>
-  <div id="poHdr" class="pohdr"><span class="pohdr-b">BARTOLO</span><span class="pohdr-t"></span></div>
+  <div id="poHdr" class="pohdr">
+<div class="brand">
+    <!-- Pancho the baseball donkey — Colón's childhood pet, reimagined as a chonky mascot -->
+    <svg class="brand-logo" viewBox="0 0 100 100" width="84" height="84" aria-hidden="true">
+      <!-- Pancho, the Chonky Baseball Donkey (floating, Action check on the belly) -->
+      <defs><clipPath id="ballclip"><circle cx="50" cy="57" r="31"/></clipPath></defs>
+      <!-- chonky little legs -->
+      <g stroke="#5f6166" stroke-width="0.7">
+        <rect x="30" y="76" width="11" height="18" rx="4.5" fill="#8d8f94"/>
+        <rect x="43" y="78" width="11" height="16" rx="4.5" fill="#9da0a5"/>
+        <rect x="56" y="78" width="11" height="16" rx="4.5" fill="#9da0a5"/>
+        <rect x="69" y="76" width="11" height="18" rx="4.5" fill="#8d8f94"/>
+      </g>
+      <rect x="30" y="90" width="11" height="4" rx="1.7" fill="#2a3340"/>
+      <rect x="43" y="90" width="11" height="4" rx="1.7" fill="#2a3340"/>
+      <rect x="56" y="90" width="11" height="4" rx="1.7" fill="#2a3340"/>
+      <rect x="69" y="90" width="11" height="4" rx="1.7" fill="#2a3340"/>
+      <!-- tail -->
+      <path d="M 81 53 q 13 1 12 -12 q 5 9 -2 17 q -5 4 -10 1 z" fill="#8d8f94" stroke="#5f6166" stroke-width="0.8"/>
+      <!-- neck stub (behind belly) -->
+      <path d="M 30 34 q 10 0 12 9 q -2 9 -12 8 q -7 -1 -7 -12 q 0 -10 7 -12 z" fill="#9da0a5"/>
+      <!-- big chonky baseball belly -->
+      <circle cx="50" cy="57" r="31" fill="#f7f2e7" stroke="#2a2018" stroke-width="1.8"/>
+      <g clip-path="url(#ballclip)">
+        <path d="M 25 38 Q 38 57 25 76" fill="none" stroke="#c0392b" stroke-width="1.9" stroke-dasharray="2.8,2.6" stroke-linecap="round"/>
+        <path d="M 75 38 Q 62 57 75 76" fill="none" stroke="#c0392b" stroke-width="1.9" stroke-dasharray="2.8,2.6" stroke-linecap="round"/>
+      </g>
+      <!-- Action checkmark on the belly -->
+      <path d="M 40 57 l 6.5 7.5 l 15 -17" fill="none" stroke="#13b06b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- ear (back) -->
+      <path d="M 35 22 L 40 7 Q 43 16 40 26 Z" fill="#83868b" stroke="#5f6166" stroke-width="0.9"/>
+      <path d="M 36 22 L 38.7 12 Q 39.8 17 39 23 Z" fill="#e0a3a8"/>
+      <!-- head -->
+      <ellipse cx="28" cy="31" rx="13.5" ry="10.5" fill="#9da0a5" stroke="#5f6166" stroke-width="1"/>
+      <!-- ear (front) -->
+      <path d="M 21 22 L 16 5 Q 24 12 26 23 Z" fill="#9da0a5" stroke="#5f6166" stroke-width="0.9"/>
+      <path d="M 21.5 21 L 18.5 10 Q 23 15 24.5 22 Z" fill="#e0a3a8"/>
+      <!-- snout -->
+      <ellipse cx="15" cy="35" rx="8.5" ry="6" fill="#c7c2b8" stroke="#5f6166" stroke-width="0.9"/>
+      <ellipse cx="11" cy="35" rx="1.4" ry="1.05" fill="#3a3a3a"/>
+      <path d="M 9.5 39 Q 13 41 16 39" fill="none" stroke="#3a3a3a" stroke-width="1" stroke-linecap="round"/>
+      <!-- eye -->
+      <circle cx="31" cy="29" r="3.2" fill="#fff" stroke="#2a2018" stroke-width="0.7"/>
+      <circle cx="31.5" cy="29" r="2" fill="#1d1d1d"/>
+      <circle cx="32.4" cy="28.1" r="0.75" fill="#fff"/>
+      <!-- ball cap -->
+      <path d="M 17 23 Q 22 11 35 15 Q 39 17 39 23 Q 28 20 17 23 Z" fill="#002D72" stroke="#001a45" stroke-width="0.8"/>
+      <path d="M 17 23 Q 6 23 3 28 Q 11 26 19 25 Z" fill="#001f54" stroke="#001a45" stroke-width="0.7"/>
+      <circle cx="27.5" cy="14.5" r="1.6" fill="#13b06b"/>
+    </svg>
+    <div class="brand-text">
+      <h1>B.A.R.T.O.L.O.</h1>
+      <div class="brand-tagline">Baseball Analytic Research Tool Optimized for Longterm Outcomes</div>
+      <span class="hdr-built"><span class="hdr-sep"> · </span>Built by <a href="https://twitter.com/SeanZerillo" target="_blank" rel="noopener" class="hdr-handle">@SeanZerillo</a></span>
+    </div>
+  </div>
+  </div>
   <div id="seriesRow" style="display:none"></div>
   <div id="brkSeg" class="segwrap" style="display:none"></div>
   <div class="sub" id="brkNote" style="display:none"></div>
@@ -280,7 +342,6 @@ const VIEW=_EP.get('view')||'';
 const SERIESSEL=_EP.get('series')||'';   // e.g. "NYY-BOS", "BOS-NYY", or "NYY"
 if(VIEW){ try{document.body.classList.add('view-'+VIEW);}catch(e){} if(VIEW==='series')curTab='proj'; if(VIEW==='edges')curTab='edges'; }
 if(SERIESSEL){ try{document.body.classList.add('view-series','view-series-one');}catch(e){} curTab='proj'; }
-(function(){var t=({series:'Playoff Series Win Probability',bracket:'Playoff Bracket',edges:'Edges \u2014 Model vs Market'})[VIEW]||(SERIESSEL?'Playoff Series Win Probability':'');var h=document.getElementById('poHdr');if(h&&t){var e=h.querySelector('.pohdr-t');if(e)e.textContent=t;}})();
 function seriesMatch(s){
   if(!SERIESSEL) return true;
   const want=SERIESSEL.toUpperCase().split(/[-,_+ ]+/).filter(Boolean);
