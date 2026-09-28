@@ -57,47 +57,28 @@ jobs:
         run: python scripts/compute_sean_team_projections.py
         continue-on-error: true
 
-      # ── v2 OCTOBER ENGINE (Fable, pre-registered) ────────────────────────
-      # compute_sean_team_projections.py above now also emits data/bracket_dist.json
-      # (the seeding distribution). run_v2_bracket prices each realization on the
-      # frozen 16-team field and marginalizes → data/v2_marginalized.json, which is
-      # the BARTOLO column on the playoff-futures board.
-      - name: Install v2 engine deps
-        run: pip install numpy pandas scipy requests
-        continue-on-error: true
-
-      - name: Price v2 October bracket (BARTOLO playoff futures)
-        run: python scripts/v2/run_v2_bracket.py --bracket data/bracket_dist.json --out data/v2_marginalized.json
-        continue-on-error: true
-
-      - name: Price lane-2 native game-sim bracket (playoff-futures Game-Sim toggle)
-        # Rolls the native game engine (compute_pro_projections.project_matchup) through
-        # the bracket game-by-game over the same bracket_dist seeding distribution.
-        # -> data/lane2_marginalized.json (same shape as v2). Reads the bridge feeds that
-        # refresh.yml commits; runs after v2 so bracket_dist is fresh. Lane 2, logged next
-        # to v2 (lane 1, shipped) for the October ledger.
+      - name: Price lane-2 native game-sim bracket (+ series / grid / team-proj feeds)
+        # Reads the locked data/bracket_dist.json; emits data/lane2_marginalized.json
+        # (Game-Sim toggle), data/lane2_series.json (current-round series board),
+        # data/lane2_grid.json (all-matchups grid for the live updater),
+        # data/lane2_team_proj.json (rotation/pen/offense ranks). Higher-seed LCS /
+        # better-record WS home field; HFA at the shipped 52.5%.
         run: python scripts/run_lane2_bracket.py
         continue-on-error: true
 
-      - name: Refresh series market odds (series ML; correct-score/spread/exacta framework)
-        # Reads data/lane2_series.json (emitted by run_lane2_bracket above) and writes
-        # data/series_odds.json: series moneyline live, correct-score/spread/WS-exacta
-        # blocks structured-but-gated (ENABLE_* flags in the script). Board merges by
-        # (league,a,b) and (al,nl); renders blank where a market is absent.
+      - name: Refresh series market odds (best price across books)
         run: python scripts/refresh_series_odds.py
         continue-on-error: true
 
       - name: Compute team futures aggregate
         run: python scripts/compute_team_futures.py
-        env:
-          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         continue-on-error: true
 
       - name: Commit changed data (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/bracket_dist.json data/v2_marginalized.json data/lane2_marginalized.json data/lane2_series.json data/lane2_grid.json data/lane2_team_proj.json data/series_odds.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/lane2_marginalized.json data/lane2_series.json data/lane2_grid.json data/lane2_team_proj.json data/series_odds.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
