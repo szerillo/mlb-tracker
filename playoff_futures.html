@@ -145,6 +145,7 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .gmrow{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:6px;font-size:.72rem;color:#cdd6e0;padding:2px 0}
 .gmg{color:#8b96a5;font-weight:600}
 .gmm{color:#e6edf3}.gmat{color:#6a7480}
+.spr{font-style:normal;color:#5eead4;font-size:.6rem;font-weight:700;letter-spacing:.02em}
 .gmwp{color:#8b96a5;font-size:.68rem}
 .pjwrap{margin:8px 0 2px}
 .pjrow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;font-size:.72rem;color:#cdd6e0;padding:2px 0}
@@ -323,8 +324,9 @@ function seriesRowHTML(s, mkt){
   const spr=m.spread||{};
   // projected SP per game
   const gms=s.games||[];
+  const spn=(nm,rk)=>`${nm}${rk?` <i class="spr">SP#${rk}</i>`:''}`;
   const gmRows=gms.map(g=>`<div class="gmrow"><span class="gmg">G${g.g}</span>
-      <span class="gmm">${g.away_sp} <span class="gmat">@</span> ${g.home_sp}</span>
+      <span class="gmm">${spn(g.away_sp,g.away_sp_rank)} <span class="gmat">@</span> ${spn(g.home_sp,g.home_sp_rank)}</span>
       <span class="gmwp">${g.home} ${(g.home_wp*100).toFixed(0)}%</span></div>`).join('');
   const rk=n=>n==null?'':` <i>#${n}</i>`;
   const pj=s.proj;
@@ -370,20 +372,28 @@ function renderSeries(isEdges){
 }
 function renderExacta(isEdges){
   const el=document.getElementById('exactaWrap'); if(!el) return;
-  const S=window.__series;
-  if(isEdges || !S || !S.ws_exacta){ el.style.display='none'; el.innerHTML=''; return; }
-  const P=S.ws_exacta.pairings||[]; const od=(window.__sodds&&window.__sodds.ws_exacta&&window.__sodds.ws_exacta.pairings)||[];
-  const mkt=(al,nl)=>{ const f=od.find(o=>o.al===al&&o.nl===nl); return f?f.market:null; };
-  const rows=P.slice(0,18).map(p=>{
+  const md=brkData();   // exacta follows the bracket model toggle (each model has its own pennant %)
+  const al=(BRACKET.AL||[]).filter(Boolean), nl=(BRACKET.NL||[]).filter(Boolean);
+  if(isEdges || !md || !al.length || !nl.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const pen=ab=>num((md[ab]||{}).ws_app_pct);   // P(win pennant) = reach WS, in %
+  const pairs=[];
+  al.forEach(a=>{ const pa=pen(a); if(pa==null) return;
+    nl.forEach(n=>{ const pn=pen(n); if(pn==null) return;
+      pairs.push({al:a,nl:n,reach:pa*pn/100}); }); });   // %·%/100 → % of both reaching the WS
+  if(!pairs.length){ el.style.display='none'; el.innerHTML=''; return; }
+  pairs.sort((x,y)=>y.reach-x.reach);
+  const od=(window.__sodds&&window.__sodds.ws_exacta&&window.__sodds.ws_exacta.pairings)||[];
+  const mkt=(a,n)=>{ const f=od.find(o=>o.al===a&&o.nl===n); return f?f.market:null; };
+  const rows=pairs.slice(0,18).map(p=>{
     const mk=mkt(p.al,p.nl);
     return `<tr><td class="ex1"><img src="${LOGO(p.al)}" onerror="this.style.visibility='hidden'"><b>${p.al}</b> <span class="vs">vs</span> <img src="${LOGO(p.nl)}" onerror="this.style.visibility='hidden'"><b>${p.nl}</b></td>
-      <td class="exp">${(p.reach_p*100).toFixed(1)}%</td><td class="exf">${fmtAm(p.fair)}</td>
+      <td class="exp">${p.reach.toFixed(1)}%</td><td class="exf">${fmtAm(pctToAmerican(p.reach))}</td>
       <td class="exm">${mk!=null?fmtAm(mk):'<span class="dash">—</span>'}</td></tr>`;
   }).join('');
   el.style.display='block';
-  el.innerHTML=`<details class="exwrap"><summary>World Series matchups (exacta) — <span class="sub2">chance each AL×NL pairing reaches the WS</span></summary>
+  el.innerHTML=`<details class="exwrap"><summary>World Series matchups (exacta) — <span class="sub2">chance each AL×NL pairing reaches the WS · ${BMN[brkModel]}</span></summary>
     <table class="extbl"><thead><tr><th>Pairing</th><th>Reach %</th><th>Fair</th><th>Mkt</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="sub2" style="margin:6px 2px 0">Reach % = P(AL champ) × P(NL champ) from the game-sim marginals. Top 18 of 36 pairings.</div></details>`;
+    <div class="sub2" style="margin:6px 2px 0">Reach % = P(AL champ) × P(NL champ) from the <b>${BMN[brkModel]}</b> pennant odds. Switch the bracket model to reprice. Top 18 of 36 pairings.</div></details>`;
   fit();
 }
 
