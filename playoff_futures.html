@@ -153,6 +153,16 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .pjk{color:#8b96a5}
 .pjv{min-width:56px;text-align:right;color:#e6edf3}
 .pjv i{color:#8b96a5;font-style:normal;font-size:.64rem}
+/* stacked exact-result / margin block with implied odds */
+.stk{margin:8px 0 2px;border-top:1px dashed #232a34;padding-top:6px}
+.stkh{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;margin:0 0 4px;display:flex;justify-content:space-between;gap:8px}
+.stkk{color:#4a5563;text-transform:none;letter-spacing:0}
+.exr{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;font-size:.74rem;padding:2px 0}
+.exrl{color:#cdd6e0}
+.exrp{color:#e6edf3;font-weight:600;min-width:32px;text-align:right}
+.exro{color:#8b96a5;min-width:42px;text-align:right}
+.exrm{color:#5eead4;min-width:42px;text-align:right}
+.srcpill{margin-left:6px;font-size:.6rem;font-weight:700;color:#0d1117;background:#5eead4;border-radius:4px;padding:1px 6px;vertical-align:1px}
 .sxtra{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed #232a34}
 .sxk{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;min-width:74px}
 .chip{font-size:.68rem;color:#cdd6e0;background:#0d1117;border:1px solid #232a34;border-radius:4px;padding:1px 5px}
@@ -328,20 +338,16 @@ function seriesRowHTML(s, mkt){
   const gmRows=gms.map(g=>`<div class="gmrow"><span class="gmg">G${g.g}</span>
       <span class="gmm">${spn(g.away_sp,g.away_sp_rank)} <span class="gmat">@</span> ${spn(g.home_sp,g.home_sp_rank)}</span>
       <span class="gmwp">${g.home} ${(g.home_wp*100).toFixed(0)}%</span></div>`).join('');
-  const rk=n=>n==null?'':` <i>#${n}</i>`;
-  const pj=s.proj;
-  const projBlock=(pj&&pj.a&&pj.b)?`<div class="pjwrap">
-      <div class="sxk2">Team projections (rank of ${pj.n} playoff teams)</div>
-      <div class="pjrow pjhd"><span class="pjk"></span><span class="pjv">${s.a}</span><span class="pjv">${s.b}</span></div>
-      <div class="pjrow"><span class="pjk">Rotation wFIP</span><span class="pjv">${pj.a.staff_v??'—'}${rk(pj.a.rot_rank)}</span><span class="pjv">${pj.b.staff_v??'—'}${rk(pj.b.rot_rank)}</span></div>
-      <div class="pjrow"><span class="pjk">Bullpen RA</span><span class="pjv">${pj.a.pen_v??'—'}${rk(pj.a.pen_rank)}</span><span class="pjv">${pj.b.pen_v??'—'}${rk(pj.b.pen_rank)}</span></div>
-      <div class="pjrow"><span class="pjk">Lineup off</span><span class="pjv">${pj.a.off_v??'—'}${rk(pj.a.off_rank)}</span><span class="pjv">${pj.b.off_v??'—'}${rk(pj.b.off_rank)}</span></div>
-    </div>`:'';
+  const exRow=(lab,p,mk)=>`<div class="exr"><span class="exrl">${lab}</span><span class="exrp">${(p*100).toFixed(0)}%</span><span class="exro">${fmtAm(pctToAmerican(p*100))}</span><span class="exrm">${mk!=null?fmtAm(mk):''}</span></div>`;
+  const exM=(mkt&&mkt.exact)||{}, spM=(mkt&&mkt.spread)||{};
+  const exactBlock = exOrder.length ? `<div class="stk"><div class="stkh">Exact result <span class="stkk">model% · fair${(mkt&&mkt.exact)?' · mkt':''}</span></div>
+    ${exOrder.map(k=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k]);}).join('')}</div>` : '';
+  const sweepBlock = `<div class="stk"><div class="stkh">Series margin <span class="stkk">model% · fair${(mkt&&mkt.spread)?' · mkt':''}</span></div>
+    ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`;
   const details = `<details class="sdet"><summary>Game detail &amp; props</summary>
     ${gmRows?`<div class="gmwrap"><div class="sxk2">Projected starters (host win% per game)</div>${gmRows}</div>`:''}
-    ${projBlock}
-    <div class="sxtra"><span class="sxk">Exact</span>${exOrder.map(chip).join('')}</div>
-    <div class="sxtra"><span class="sxk">Sweep −1.5g</span><span class="chip"><b>${s.a}</b><i>${((spr.a_minus_1_5||0)*100).toFixed(0)}%</i></span><span class="chip"><b>${s.b}</b><i>${((spr.b_minus_1_5||0)*100).toFixed(0)}%</i></span></div>
+    ${exactBlock}
+    ${sweepBlock}
   </details>`;
   const favA=m.p_a>=m.p_b, fp=favA?m.p_a:m.p_b, ft=favA?s.a:s.b, ff=favA?m.ml_a:m.ml_b;
   const take = Math.abs(m.p_a-0.5)<0.02
@@ -364,8 +370,8 @@ function renderSeries(isEdges){
   const mk=(s)=>od.find(o=>o.league===s.league&&o.a===s.a&&o.b===s.b)||null;
   const hasMkt=od.some(o=>o.ml_a!=null);
   el.style.display='block';
-  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b>
-     <span class="sub2">how likely each team is to win its current series, and where our number differs from the betting market</span></div>
+  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b><span class="srcpill">Game Sim</span>
+     <span class="sub2">game-by-game sim of the current series; win %, fair odds, and edge vs the betting market</span></div>
     <div class="slegend"><span><i class="lgbar"></i> Bar = win chance</span><span><b>Fair</b> = our price</span><span><b>Mkt</b> = book price</span><span><b>Edge</b> = our value vs book</span><span>★ = bigger edge</span></div>
     <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');})()}</div>`;
   fit();
