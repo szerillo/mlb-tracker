@@ -108,11 +108,22 @@
 /* ── current-round series board ── */
 .secthd{font-size:.95rem;font-weight:600;color:#e6edf3;margin:2px 2px 8px}
 .secthd .sub2,.sub2{font-weight:400;color:#8b96a5;font-size:.74rem}
-.scardgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:0 0 14px}
-.scard{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:10px 12px}
+.scardgrid{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 14px}
+@media(min-width:640px){.scardgrid{grid-template-columns:1fr 1fr}}
+.scard{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:12px 14px}
 .shd{font-size:.72rem;color:#8b96a5;margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .lgtag{font-size:.62rem;font-weight:700;color:#0d1117;border-radius:4px;padding:1px 5px}
 .lgtag.al{background:#6aa9ff}.lgtag.nl{background:#39d98a}
+.slive{margin-left:auto;color:#f5c451;font-weight:700;font-size:.68rem;letter-spacing:.02em}
+.slive::first-letter{color:#e5484d}
+/* standalone embeds: ?view=series (series cards + exacta only) / ?view=bracket (bracket + tables only) */
+body.view-series .head,body.view-series .tabs,body.view-series #brkSeg,body.view-series #brkNote,body.view-series #brkWrap,body.view-series #seg,body.view-series #srcnote,body.view-series #roundGrid,body.view-series #mktWrap,body.view-series .foot{display:none!important}
+body.view-series{padding:0;margin:0}
+body.view-bracket .head,body.view-bracket .tabs,body.view-bracket #seriesRow,body.view-bracket #exactaWrap,body.view-bracket #mktWrap{display:none!important}
+/* ?series=… single-series embed: just the one card, no legend/header/exacta */
+body.view-series-one #exactaWrap,body.view-series-one .slegend,body.view-series-one .secthd{display:none!important}
+body.view-series-one .scardgrid{grid-template-columns:1fr!important;margin:0!important}
+body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .srow{display:grid;grid-template-columns:74px 1fr 46px 46px 52px;align-items:center;gap:6px;margin:3px 0}
 .steam{display:flex;align-items:center;gap:4px;font-size:.8rem}
 .steam img{width:16px;height:16px;object-fit:contain}
@@ -124,10 +135,47 @@
 .scell .sk{font-size:.56rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em}
 .scell.edge.pos{color:#39d98a;font-weight:700}.scell.edge.neg{color:#f0616d}.scell.edge.flat{color:#8b96a5}
 .star{color:#f5c451;font-size:.62rem}
+.sdet{margin-top:8px;border-top:1px dashed #232a34;padding-top:4px}
+.sdet summary{cursor:pointer;font-size:.68rem;color:#8b96a5;text-transform:uppercase;letter-spacing:.03em;padding:3px 0;list-style:none}
+.sdet summary::-webkit-details-marker{display:none}
+.sdet summary::before{content:'▸ ';color:#6a7480}
+.sdet[open] summary::before{content:'▾ '}
+.gmwrap{margin:4px 0 2px}
+.sxk2{font-size:.58rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;margin:2px 0 4px}
+.gmrow{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:6px;font-size:.72rem;color:#cdd6e0;padding:2px 0}
+.gmg{color:#8b96a5;font-weight:600}
+.gmm{color:#e6edf3}.gmat{color:#6a7480}
+.gmwp{color:#8b96a5;font-size:.68rem}
+.pjwrap{margin:8px 0 2px}
+.pjrow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;font-size:.72rem;color:#cdd6e0;padding:2px 0}
+.pjrow.pjhd{color:#8b96a5;font-size:.64rem;border-bottom:1px solid #232a34;padding-bottom:3px;margin-bottom:2px}
+.pjk{color:#8b96a5}
+.pjv{min-width:56px;text-align:right;color:#e6edf3}
+.pjv i{color:#8b96a5;font-style:normal;font-size:.64rem}
 .sxtra{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed #232a34}
 .sxk{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;min-width:74px}
 .chip{font-size:.68rem;color:#cdd6e0;background:#0d1117;border:1px solid #232a34;border-radius:4px;padding:1px 5px}
 .chip b{color:#e6edf3}.chip i{color:#8b96a5;font-style:normal;margin-left:3px}
+.stake{font-size:.76rem;color:#cdd6e0;margin:7px 2px 2px;padding-top:6px;border-top:1px dashed #232a34}
+.stake b{color:#e6edf3}
+.slegend{display:flex;flex-wrap:wrap;gap:10px;margin:0 2px 10px;font-size:.66rem;color:#8b96a5}
+.slegend b{color:#cdd6e0;font-weight:600}
+.slegend .lgbar{display:inline-block;width:14px;height:8px;border-radius:3px;background:linear-gradient(90deg,#2b5a9e,#6aa9ff);vertical-align:1px;margin-right:2px}
+.srow.fav .steam b{color:#fff;font-weight:700}
+.srow.dog .steam b{color:#9aa4b0;font-weight:500}
+/* mobile: tighten series cards on small phones */
+@media(max-width:380px){
+  .srow{grid-template-columns:54px 1fr 32px 32px 40px;gap:4px}
+  .scell{font-size:.66rem}.steam{font-size:.72rem}.steam img{width:14px;height:14px}.sbpct{font-size:.6rem}.stake{font-size:.72rem}
+}
+/* mobile: stack the bracket vertically instead of horizontal scroll */
+@media(max-width:640px){
+  .brk{flex-direction:column;overflow-x:visible;gap:10px;align-items:stretch}
+  .brk .wing{flex-direction:column;gap:10px}
+  .brk .col{min-width:0}
+  .brk .col.lcs{min-width:0;flex:none}
+  .brk .center{min-width:0;padding:8px 0;border-top:1px dashed #232a34;border-bottom:1px dashed #232a34}
+}
 /* ── WS exacta ── */
 .exwrap{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:6px 12px;margin:0 0 14px}
 .exwrap summary{cursor:pointer;font-size:.9rem;font-weight:600;color:#e6edf3;padding:4px 0}
@@ -198,6 +246,18 @@ const MCOLS=[
 ];
 let DATA={mine:null,blend:null}, MKT={};
 let curTab='proj', projSrc='mine', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
+// standalone embed views: ?view=series | ?view=bracket | ?series=NYY-BOS (single series)
+const _EP=new URLSearchParams(location.search);
+const VIEW=_EP.get('view')||'';
+const SERIESSEL=_EP.get('series')||'';   // e.g. "NYY-BOS", "BOS-NYY", or "NYY"
+if(VIEW){ try{document.body.classList.add('view-'+VIEW);}catch(e){} if(VIEW==='series')curTab='proj'; }
+if(SERIESSEL){ try{document.body.classList.add('view-series','view-series-one');}catch(e){} curTab='proj'; }
+function seriesMatch(s){
+  if(!SERIESSEL) return true;
+  const want=SERIESSEL.toUpperCase().split(/[-,_+ ]+/).filter(Boolean);
+  const pair=[String(s.a).toUpperCase(),String(s.b).toUpperCase()];
+  return want.every(w=>pair.includes(w));
+}
 let curRound='ws', brkModel='mine'; let BRACKET={AL:[],NL:[]};
 let sortK='ws_pct', dir=-1;          // Projections tables
 let mSortK='edge', mDir=-1;          // Edges tables (default: biggest edge first)
@@ -238,12 +298,12 @@ function seriesRowHTML(s, mkt){
   const m=s.model, host=s.host;
   const mml_a=mkt?mkt.ml_a:null, mml_b=mkt?mkt.ml_b:null;
   const [dva,dvb]=devig2(mml_a,mml_b);           // devigged market implied
-  const line=(ab,seed,p,fairAm,mml,dv)=>{
+  const line=(ab,seed,p,fairAm,mml,dv,isFav)=>{
     const edge = dv!=null ? (p*100 - dv*100) : null;
     const ecls = edge==null?'flat':(edge>=3?'pos':(edge<=-3?'neg':'flat'));
     const etx  = edge==null?'—':((edge>0?'+':'')+edge.toFixed(1)+'%');
     const star = edge!=null&&edge>=4?'★★':edge!=null&&edge>=2?'★':'';
-    return `<div class="srow">
+    return `<div class="srow ${isFav?'fav':'dog'}">
       <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b><span class="ssd">(${seed})</span></div>
       <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
@@ -255,12 +315,36 @@ function seriesRowHTML(s, mkt){
   const ex=m.exact||{}; const exOrder=Object.keys(ex);
   const chip=k=>{ const [side,w,l]=k.split('-'); const who=side==='a'?s.a:s.b; return `<span class="chip"><b>${who}</b> ${w}-${l}<i>${(ex[k]*100).toFixed(0)}%</i></span>`; };
   const spr=m.spread||{};
-  return `<div class="scard">
-    <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}</div>
-    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva)}
-    ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb)}
+  // projected SP per game
+  const gms=s.games||[];
+  const gmRows=gms.map(g=>`<div class="gmrow"><span class="gmg">G${g.g}</span>
+      <span class="gmm">${g.away_sp} <span class="gmat">@</span> ${g.home_sp}</span>
+      <span class="gmwp">${g.home} ${(g.home_wp*100).toFixed(0)}%</span></div>`).join('');
+  const rk=n=>n==null?'':` <i>#${n}</i>`;
+  const pj=s.proj;
+  const projBlock=(pj&&pj.a&&pj.b)?`<div class="pjwrap">
+      <div class="sxk2">Team projections (rank of ${pj.n} playoff teams)</div>
+      <div class="pjrow pjhd"><span class="pjk"></span><span class="pjv">${s.a}</span><span class="pjv">${s.b}</span></div>
+      <div class="pjrow"><span class="pjk">Rotation wFIP</span><span class="pjv">${pj.a.staff_v??'—'}${rk(pj.a.rot_rank)}</span><span class="pjv">${pj.b.staff_v??'—'}${rk(pj.b.rot_rank)}</span></div>
+      <div class="pjrow"><span class="pjk">Bullpen RA</span><span class="pjv">${pj.a.pen_v??'—'}${rk(pj.a.pen_rank)}</span><span class="pjv">${pj.b.pen_v??'—'}${rk(pj.b.pen_rank)}</span></div>
+      <div class="pjrow"><span class="pjk">Lineup off</span><span class="pjv">${pj.a.off_v??'—'}${rk(pj.a.off_rank)}</span><span class="pjv">${pj.b.off_v??'—'}${rk(pj.b.off_rank)}</span></div>
+    </div>`:'';
+  const details = `<details class="sdet"><summary>Game detail &amp; props</summary>
+    ${gmRows?`<div class="gmwrap"><div class="sxk2">Projected starters (host win% per game)</div>${gmRows}</div>`:''}
+    ${projBlock}
     <div class="sxtra"><span class="sxk">Exact</span>${exOrder.map(chip).join('')}</div>
     <div class="sxtra"><span class="sxk">Sweep −1.5g</span><span class="chip"><b>${s.a}</b><i>${((spr.a_minus_1_5||0)*100).toFixed(0)}%</i></span><span class="chip"><b>${s.b}</b><i>${((spr.b_minus_1_5||0)*100).toFixed(0)}%</i></span></div>
+  </details>`;
+  const favA=m.p_a>=m.p_b, fp=favA?m.p_a:m.p_b, ft=favA?s.a:s.b, ff=favA?m.ml_a:m.ml_b;
+  const take = Math.abs(m.p_a-0.5)<0.02
+    ? `Coin flip — about 50/50 to win the series.`
+    : `<b>${ft}</b> favored, ~${Math.round(fp*100)}% to win the series (fair ${fmtAm(ff)}).`;
+  return `<div class="scard">
+    <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
+    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
+    ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA)}
+    <div class="stake">${take}</div>
+    ${details}
   </div>`;
 }
 function RLABF(r){ return ({WC:'Wild Card',LDS:'Division Series',LCS:'Championship Series',WS:'World Series'}[r]||r); }
@@ -273,8 +357,9 @@ function renderSeries(isEdges){
   const hasMkt=od.some(o=>o.ml_a!=null);
   el.style.display='block';
   el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b>
-     <span class="sub2">game-sim model · fair odds${hasMkt?' vs market':''}${hasMkt?'':' · market pending'}</span></div>
-    <div class="scardgrid">${S.series.map(s=>seriesRowHTML(s,mk(s))).join('')}</div>`;
+     <span class="sub2">how likely each team is to win its current series, and where our number differs from the betting market</span></div>
+    <div class="slegend"><span><i class="lgbar"></i> Bar = win chance</span><span><b>Fair</b> = our price</span><span><b>Mkt</b> = book price</span><span><b>Edge</b> = our value vs book</span><span>★ = bigger edge</span></div>
+    <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');})()}</div>`;
   fit();
 }
 function renderExacta(isEdges){
@@ -495,7 +580,7 @@ function modalSeeds(bd){
   return {AL:AL.map(pick), NL:NL.map(pick)};
 }
 const RKEY={ds:'reach_ds_pct',cs:'reach_cs_pct',pennant:'ws_app_pct',ws:'ws_pct'};
-const RLAB={ds:'LDS',cs:'LCS',pennant:'Pennant',ws:'World Series'};
+const RLAB={ds:'Wild Card round',cs:'Division Series',pennant:'Pennant',ws:'World Series'};
 const BMN={mine:'Playoff Fit',gamesim:'Game Sim',blend:'Composite'};
 function brkData(){ return brkModel==='mine'?DATA.mine:brkModel==='gamesim'?DATA.gamesim:DATA.blend; }
 function chip(ab,seed){
@@ -511,10 +596,10 @@ function renderBracketSection(){
   const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
   const mo=[]; if(window.__hasLane2)mo.push({v:'gamesim',lab:'Game Sim'}); mo.push({v:'mine',lab:'Playoff Fit'}); mo.push({v:'blend',lab:'Composite'});
   if(brkModel==='gamesim'&&!window.__hasLane2)brkModel='mine';
-  const ro=[{v:'ds',lab:'LDS'},{v:'cs',lab:'LCS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
-  seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Reach</span>`+grp('bround',ro,curRound);
+  const ro=[{v:'ds',lab:'WC'},{v:'cs',lab:'LDS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
+  seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Win</span>`+grp('bround',ro,curRound);
   seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.closest('.seg').dataset.grp,v=b.dataset.v; if(g==='bmodel')brkModel=v; else curRound=v; render();});
-  document.getElementById('brkNote').innerHTML=`Each team's chance to reach the <b>${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${brkModel}',event)">Methodology</a>`;
+  document.getElementById('brkNote').innerHTML=`Each team's chance to <b>win the ${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${brkModel}',event)">Methodology</a>`;
   renderBracket();
 }
 const METH={
@@ -544,6 +629,9 @@ function renderMeth(){
   document.getElementById('methBody').innerHTML=`<div class="methcard"><h4>${m.tag}: ${m.title}</h4>${m.body}</div>`;
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeMeth(); });
+// recompute embed iframe height whenever a collapsible (series detail / exacta) opens or closes
+document.addEventListener('toggle',e=>{ if(e.target&&e.target.tagName==='DETAILS') requestAnimationFrame(fit); }, true);
+addEventListener('resize',()=>requestAnimationFrame(fit));
 function renderBracket(){
   const S=BRACKET, wrap=document.getElementById('brkWrap');
   if(!S.AL||!S.AL.length){ wrap.innerHTML='<div class="sub" style="padding:20px">Bracket loading.</div>'; return; }
@@ -564,7 +652,7 @@ function renderBracket(){
     c.onmouseenter=e=>{ const ab=c.dataset.ab, d=(brkData()||{})[ab]||{};
       tip=document.createElement('div'); tip.className='brktip';
       const rr=(lab,k)=>{const v=num(d[k]); return `<div class="r"><span>${lab}</span><b>${v==null?'-':Math.round(v)+'%'}</b></div>`;};
-      tip.innerHTML=`<h5>${ab} path</h5>`+rr('Reach LDS','reach_ds_pct')+rr('Reach LCS','reach_cs_pct')+rr('Win Pennant','ws_app_pct')+rr('Win WS','ws_pct');
+      tip.innerHTML=`<h5>${ab} path</h5>`+rr('Win WC','reach_ds_pct')+rr('Win LDS','reach_cs_pct')+rr('Win Pennant','ws_app_pct')+rr('Win WS','ws_pct');
       document.body.appendChild(tip); moveTip(e); };
     c.onmousemove=moveTip;
     c.onmouseleave=()=>{ if(tip){tip.remove();tip=null;} };
