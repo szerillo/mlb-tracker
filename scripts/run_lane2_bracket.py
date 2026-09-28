@@ -177,6 +177,17 @@ def emit_series_detail(packs, bd, cnt, N, bp, const, cache):
     al,nl,_=max(bd,key=lambda x:x[2])
     # per-team projection ranks across the playoff field: rotation wFIP (top-3 staff),
     # bullpen RA, lineup offense. Rendered in the series expander (collapsed on mobile).
+    grd={D._norm(k):v for k,v in _load("grades_v2.json").get("by_name",{}).items()}
+    def team_grades(nine):
+        # team offense grades = mean percentile of the nine, per Savant category (scoreboard feed)
+        cats={"con":"con_pct","pow":"power_pct","eye":"eye_pct","bsr":"bsr_pct","def":"fld_pct"}
+        acc={c:[] for c in cats}
+        for nm,_pos in nine:
+            g=grd.get(D._norm(nm))
+            if not g: continue
+            for c,f in cats.items():
+                if g.get(f) is not None: acc[c].append(g[f])
+        return {c:(round(sum(v)/len(v)) if v else None) for c,v in acc.items()}
     tp={}
     for tid in list(al)+list(nl):
         P=packs[tid]
@@ -187,7 +198,7 @@ def emit_series_detail(packs, bd, cnt, N, bp, const, cache):
         try: off=E.build_offense_side(P["nine"],"RHP",P.get("pf_home",1.0),bp,const).get("off_fg")
         except Exception: off=None
         tp[P["abbr"]]={"rot":[{"name":r["name"],"wfip":round(r["ra"],2)} for r in rot],
-                       "staff":staff,"pen":pen,"off":off}
+                       "staff":staff,"pen":pen,"off":off,"grades":team_grades(P["nine"])}
     def _rank(k,low):
         vals=[(a,tp[a][k]) for a in tp if tp[a].get(k) is not None]
         return {a:i+1 for i,(a,_) in enumerate(sorted(vals,key=lambda x:x[1],reverse=not low))}
