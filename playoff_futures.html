@@ -341,9 +341,9 @@ function seriesRowHTML(s, mkt){
   // projected SP per game
   const gms=s.games||[];
   const spn=(nm,rk)=>`${nm}${rk?` <i class="spr">SP#${rk}</i>`:''}`;
+  // per-game projected odds hidden by request (2026-09-28): show probables only, not our forward game pricing
   const gmRows=gms.map(g=>`<div class="gmrow"><span class="gmg">G${g.g}</span>
-      <span class="gmm">${spn(g.away_sp,g.away_sp_rank)} <span class="gmat">@</span> ${spn(g.home_sp,g.home_sp_rank)}</span>
-      <span class="gmwp">${g.home} ${(g.home_wp*100).toFixed(0)}%</span></div>`).join('');
+      <span class="gmm">${spn(g.away_sp,g.away_sp_rank)} <span class="gmat">@</span> ${spn(g.home_sp,g.home_sp_rank)}</span></div>`).join('');
   // team grades (from scoreboard grades feed): percentile -> letter
   const g2l=p=>p==null?'—':(p>=93?'A+':p>=85?'A':p>=78?'A-':p>=70?'B+':p>=62?'B':p>=55?'B-':p>=47?'C+':p>=40?'C':p>=32?'C-':p>=24?'D+':p>=15?'D':'D-');
   const pjx=s.proj, ga=pjx&&pjx.a&&pjx.a.grades, gb=pjx&&pjx.b&&pjx.b.grades;
