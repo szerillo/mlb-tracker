@@ -101,7 +101,9 @@ def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine, proj_rot=None, s
         if ra is None or kb is None: continue
         arms.append({"ra":ra,"kbb":kb,"fatigued":False})   # rested, no depletion (§3)
     tm=tabl.get(abbr.lower()) or D._team_key(full,tabl) or {}
-    return {"abbr":abbr,"full":full,"nine":nine,"rotation":rotation,"arms":arms,
+    try: pen_ra=E.build_bullpen(arms).get("pen_ra")
+    except Exception: pen_ra=None
+    return {"abbr":abbr,"full":full,"nine":nine,"rotation":rotation,"arms":arms,"pen_ra":pen_ra,
             "runs_pf":tm.get("runs_pf") or 1.0,"pf_away":tm.get("pf_adj_away") or 1.0,"pf_home":tm.get("pf_adj_home") or 1.0}
 
 def game_home_wp(home, away, h_idx, a_idx, bp, const, cache, bullpen_game=False):
@@ -109,10 +111,15 @@ def game_home_wp(home, away, h_idx, a_idx, bp, const, cache, bullpen_game=False)
     if key in cache: return cache[key]
     hsp=home["rotation"][h_idx % len(home["rotation"])]; asp=away["rotation"][a_idx % len(away["rotation"])]
     if bullpen_game:
-        # deciding game (G3/G5/G7): cap both starters to the 5-inning floor so the pen
-        # covers 6-9 — a bullpen game, which rewards the deeper pen and adds variance.
-        hsp={**hsp,"stamina":min(hsp.get("stamina",0.58),0.555)}
-        asp={**asp,"stamina":min(asp.get("stamina",0.58),0.555)}
+        # deciding game (G3 / G5 / G7): starter goes ~3 IP, the pen covers ~6, so blend the
+        # starter's run-prevention heavily toward the team's bullpen RA and floor the stamina.
+        # Rewards the deeper/higher-quality pen (e.g. SD, pen #1) and adds series variance.
+        WSP=0.34   # ~3 of 9 innings from the starter, ~6 from the pen
+        hp=home.get("pen_ra"); ap=away.get("pen_ra"); hra=hsp.get("ra"); ara=asp.get("ra")
+        hsp={**hsp,"stamina":min(hsp.get("stamina",0.58),0.555),
+             "ra":(WSP*hra+(1-WSP)*hp) if (hp is not None and hra is not None) else hra}
+        asp={**asp,"stamina":min(asp.get("stamina",0.58),0.555),
+             "ra":(WSP*ara+(1-WSP)*ap) if (ap is not None and ara is not None) else ara}
     mu={"away_lineup":away["nine"],"home_lineup":home["nine"],"bp_players":bp,
         "away_sp_hand":asp["hand"],"home_sp_hand":hsp["hand"],
         "away_park_off":away["pf_away"],"home_park_off":home["pf_home"],"home_park_factor":home["runs_pf"],
