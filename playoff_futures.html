@@ -117,9 +117,9 @@
 .slive{margin-left:auto;color:#f5c451;font-weight:700;font-size:.68rem;letter-spacing:.02em}
 .slive::first-letter{color:#e5484d}
 /* standalone embeds: ?view=series (series cards + exacta only) / ?view=bracket (bracket + tables only) */
-body.view-series .head,body.view-series .tabs,body.view-series #brkSeg,body.view-series #brkNote,body.view-series #brkWrap,body.view-series #seg,body.view-series #srcnote,body.view-series #roundGrid,body.view-series #mktWrap,body.view-series .foot{display:none!important}
+body.view-series .head,body.view-series .tabs,body.view-series #brkSeg,body.view-series #brkNote,body.view-series #brkWrap,body.view-series #seg,body.view-series #srcnote,body.view-series #roundGrid,body.view-series #exactaWrap,body.view-series #mktWrap,body.view-series .foot{display:none!important}
 body.view-series{padding:0;margin:0}
-body.view-bracket .head,body.view-bracket .tabs,body.view-bracket #seriesRow,body.view-bracket #exactaWrap,body.view-bracket #mktWrap{display:none!important}
+body.view-bracket .head,body.view-bracket .tabs,body.view-bracket #seriesRow,body.view-bracket #mktWrap{display:none!important}
 /* ?series=… single-series embed: just the one card, no legend/header/exacta */
 body.view-series-one #exactaWrap,body.view-series-one .slegend,body.view-series-one .secthd{display:none!important}
 body.view-series-one .scardgrid{grid-template-columns:1fr!important;margin:0!important}
@@ -227,6 +227,12 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 <script>
 const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
 const LOGO=ab=>'https://a.espncdn.com/i/teamlogos/mlb/500/'+({CWS:'chw',ATH:'ath',WSH:'wsh'}[ab]||ab.toLowerCase())+'.png';
+// team bar colors — tuned to stay visible on the dark panel (lightened where the primary is too dark)
+const TEAMCOLOR={NYY:'#4a90d9',BOS:'#bd3039',TB:'#8fbce6',CLE:'#e31937',HOU:'#eb6e1f',CWS:'#c4ced4',
+ TOR:'#1d6fe0',BAL:'#ff7f32',MIN:'#4a90d9',DET:'#4a7fb5',KC:'#2e6db4',SEA:'#2e8b9e',TEX:'#2e5aac',LAA:'#c8102e',ATH:'#efb21e',
+ MIL:'#ffc52f',LAD:'#3b7dd8',ATL:'#ce1141',SD:'#ffc425',CHC:'#3b5fc0',PHI:'#e81828',NYM:'#ff5910',WSH:'#e4002b',
+ MIA:'#00a3e0',CIN:'#c6011f',STL:'#c41e3a',PIT:'#fdb827',SF:'#fd5a1e',ARI:'#a71930',COL:'#6c4fa1'};
+const barColor=ab=>TEAMCOLOR[ab]||'#6aa9ff';
 const LEAGUE={NYY:'AL',BOS:'AL',TOR:'AL',TB:'AL',BAL:'AL',CLE:'AL',MIN:'AL',DET:'AL',KC:'AL',CWS:'AL',
  HOU:'AL',SEA:'AL',TEX:'AL',LAA:'AL',ATH:'AL',ATL:'NL',NYM:'NL',PHI:'NL',WSH:'NL',MIA:'NL',MIL:'NL',
  CHC:'NL',CIN:'NL',STL:'NL',PIT:'NL',LAD:'NL',SD:'NL',SF:'NL',ARI:'NL',COL:'NL'};
@@ -305,7 +311,7 @@ function seriesRowHTML(s, mkt){
     const star = edge!=null&&edge>=4?'★★':edge!=null&&edge>=2?'★':'';
     return `<div class="srow ${isFav?'fav':'dog'}">
       <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b><span class="ssd">(${seed})</span></div>
-      <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
+      <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${barColor(ab)}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
       <div class="scell"><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}</div>
       <div class="scell edge ${ecls}"><div class="sk">Edge</div>${etx}${star?'<span class="star"> '+star+'</span>':''}</div>
@@ -341,8 +347,8 @@ function seriesRowHTML(s, mkt){
     : `<b>${ft}</b> favored, ~${Math.round(fp*100)}% to win the series (fair ${fmtAm(ff)}).`;
   return `<div class="scard">
     <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
-    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
     ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA)}
+    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
     <div class="stake">${take}</div>
     ${details}
   </div>`;
