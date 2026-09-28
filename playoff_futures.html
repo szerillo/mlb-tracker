@@ -120,6 +120,9 @@
 body.view-series .head,body.view-series .tabs,body.view-series #brkSeg,body.view-series #brkNote,body.view-series #brkWrap,body.view-series #seg,body.view-series #srcnote,body.view-series #roundGrid,body.view-series #exactaWrap,body.view-series #mktWrap,body.view-series .foot{display:none!important}
 body.view-series{padding:0;margin:0}
 body.view-bracket .head,body.view-bracket .tabs,body.view-bracket #seriesRow,body.view-bracket #mktWrap{display:none!important}
+/* ?view=edges: only the Edges tab (model-vs-market) */
+body.view-edges .head,body.view-edges .tabs,body.view-edges #seriesRow,body.view-edges #brkSeg,body.view-edges #brkNote,body.view-edges #brkWrap,body.view-edges #roundGrid,body.view-edges #exactaWrap,body.view-edges .foot{display:none!important}
+body.view-edges{padding:0;margin:0}
 /* ?series=… single-series embed: just the one card, no legend/header/exacta */
 body.view-series-one #exactaWrap,body.view-series-one .slegend,body.view-series-one .secthd{display:none!important}
 body.view-series-one .scardgrid{grid-template-columns:1fr!important;margin:0!important}
@@ -162,6 +165,9 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .exrp{color:#e6edf3;font-weight:600;min-width:32px;text-align:right}
 .exro{color:#8b96a5;min-width:42px;text-align:right}
 .exrm{color:#5eead4;min-width:42px;text-align:right}
+.exr.gr{grid-template-columns:1fr auto auto}
+.grc{min-width:36px;text-align:right;color:#e6edf3;font-weight:700}
+.grh .grc{color:#8b96a5;font-weight:700;font-size:.66rem}
 .srcpill{margin-left:6px;font-size:.6rem;font-weight:700;color:#0d1117;background:#5eead4;border-radius:4px;padding:1px 6px;vertical-align:1px}
 .sxtra{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed #232a34}
 .sxk{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;min-width:74px}
@@ -267,7 +273,7 @@ let curTab='proj', projSrc='mine', edgeLg='ALL', edgeModel='mine', edgeVig='raw'
 const _EP=new URLSearchParams(location.search);
 const VIEW=_EP.get('view')||'';
 const SERIESSEL=_EP.get('series')||'';   // e.g. "NYY-BOS", "BOS-NYY", or "NYY"
-if(VIEW){ try{document.body.classList.add('view-'+VIEW);}catch(e){} if(VIEW==='series')curTab='proj'; }
+if(VIEW){ try{document.body.classList.add('view-'+VIEW);}catch(e){} if(VIEW==='series')curTab='proj'; if(VIEW==='edges')curTab='edges'; }
 if(SERIESSEL){ try{document.body.classList.add('view-series','view-series-one');}catch(e){} curTab='proj'; }
 function seriesMatch(s){
   if(!SERIESSEL) return true;
@@ -338,6 +344,13 @@ function seriesRowHTML(s, mkt){
   const gmRows=gms.map(g=>`<div class="gmrow"><span class="gmg">G${g.g}</span>
       <span class="gmm">${spn(g.away_sp,g.away_sp_rank)} <span class="gmat">@</span> ${spn(g.home_sp,g.home_sp_rank)}</span>
       <span class="gmwp">${g.home} ${(g.home_wp*100).toFixed(0)}%</span></div>`).join('');
+  // team grades (from scoreboard grades feed): percentile -> letter
+  const g2l=p=>p==null?'—':(p>=93?'A+':p>=85?'A':p>=78?'A-':p>=70?'B+':p>=62?'B':p>=55?'B-':p>=47?'C+':p>=40?'C':p>=32?'C-':p>=24?'D+':p>=15?'D':'D-');
+  const pjx=s.proj, ga=pjx&&pjx.a&&pjx.a.grades, gb=pjx&&pjx.b&&pjx.b.grades;
+  const gradeRow=(lab,a,b)=>`<div class="exr gr"><span class="exrl">${lab}</span><span class="grc">${g2l(a)}</span><span class="grc">${g2l(b)}</span></div>`;
+  const gradesBlock=(ga&&gb)?`<div class="stk"><div class="stkh">Team grades <span class="stkk">bullpen #${pjx.a.pen_rank}/#${pjx.b.pen_rank} of ${pjx.n}</span></div>
+    <div class="exr gr grh"><span class="exrl"></span><span class="grc">${s.a}</span><span class="grc">${s.b}</span></div>
+    ${gradeRow('Contact',ga.con,gb.con)}${gradeRow('Power',ga.pow,gb.pow)}${gradeRow('Eye',ga.eye,gb.eye)}${gradeRow('Baserun',ga.bsr,gb.bsr)}${gradeRow('Defense',ga['def'],gb['def'])}</div>`:'';
   const exRow=(lab,p,mk)=>`<div class="exr"><span class="exrl">${lab}</span><span class="exrp">${(p*100).toFixed(0)}%</span><span class="exro">${fmtAm(pctToAmerican(p*100))}</span><span class="exrm">${mk!=null?fmtAm(mk):''}</span></div>`;
   const exM=(mkt&&mkt.exact)||{}, spM=(mkt&&mkt.spread)||{};
   const exactBlock = exOrder.length ? `<div class="stk"><div class="stkh">Exact result <span class="stkk">model% · fair${(mkt&&mkt.exact)?' · mkt':''}</span></div>
@@ -346,18 +359,15 @@ function seriesRowHTML(s, mkt){
     ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`;
   const details = `<details class="sdet"><summary>Game detail &amp; props</summary>
     ${gmRows?`<div class="gmwrap"><div class="sxk2">Projected starters (host win% per game)</div>${gmRows}</div>`:''}
+    ${gradesBlock}
     ${exactBlock}
     ${sweepBlock}
   </details>`;
-  const favA=m.p_a>=m.p_b, fp=favA?m.p_a:m.p_b, ft=favA?s.a:s.b, ff=favA?m.ml_a:m.ml_b;
-  const take = Math.abs(m.p_a-0.5)<0.02
-    ? `Coin flip — about 50/50 to win the series.`
-    : `<b>${ft}</b> favored, ~${Math.round(fp*100)}% to win the series (fair ${fmtAm(ff)}).`;
+  const favA=m.p_a>=m.p_b;
   return `<div class="scard">
     <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
     ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA)}
     ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
-    <div class="stake">${take}</div>
     ${details}
   </div>`;
 }
@@ -370,9 +380,7 @@ function renderSeries(isEdges){
   const mk=(s)=>od.find(o=>o.league===s.league&&o.a===s.a&&o.b===s.b)||null;
   const hasMkt=od.some(o=>o.ml_a!=null);
   el.style.display='block';
-  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b><span class="srcpill">Game Sim</span>
-     <span class="sub2">game-by-game sim of the current series; win %, fair odds, and edge vs the betting market</span></div>
-    <div class="slegend"><span><i class="lgbar"></i> Bar = win chance</span><span><b>Fair</b> = our price</span><span><b>Mkt</b> = book price</span><span><b>Edge</b> = our value vs book</span><span>★ = bigger edge</span></div>
+  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b><span class="srcpill">Game Sim</span></div>
     <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');})()}</div>`;
   fit();
 }
