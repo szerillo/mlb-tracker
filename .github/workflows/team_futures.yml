@@ -57,14 +57,16 @@ jobs:
         run: python scripts/compute_sean_team_projections.py
         continue-on-error: true
 
-      - name: Price lane-2 native game-sim bracket (+ series / grid / team-proj feeds)
-        # Reads the locked data/bracket_dist.json; emits data/lane2_marginalized.json
-        # (Game-Sim toggle), data/lane2_series.json (current-round series board),
-        # data/lane2_grid.json (all-matchups grid for the live updater),
-        # data/lane2_team_proj.json (rotation/pen/offense ranks). Higher-seed LCS /
-        # better-record WS home field; HFA at the shipped 52.5%.
-        run: python scripts/run_lane2_bracket.py
-        continue-on-error: true
+      # DISABLED for October (2026-09-28): the lane-2 feeds (lane2_marginalized/series/
+      # grid/team_proj.json) are hand-maintained STATIC v4 output, priced off the live
+      # sheet by Fable and transformed via build_lane2_from_v4.py. The repo offense feed
+      # (batter_projected.json) is ~10% light + per-player platoon, so run_lane2_bracket
+      # here does NOT reproduce the validated v4 numbers and would clobber them. Re-enable
+      # once batter_projected is rebuilt to the sheet (durable fix). Live in-round updates
+      # still run via refresh_series_live in odds_refresh.yml (reads the static grid).
+      # - name: Price lane-2 native game-sim bracket
+      #   run: python scripts/run_lane2_bracket.py
+      #   continue-on-error: true
 
       - name: Refresh series market odds (best price across books)
         run: python scripts/refresh_series_odds.py
@@ -78,7 +80,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/lane2_marginalized.json data/lane2_series.json data/lane2_grid.json data/lane2_team_proj.json data/series_odds.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/series_odds.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
