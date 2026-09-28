@@ -232,6 +232,7 @@ const PO_FIXED = [
   {label:"🏆 Full playoff board", meta:"bracket + series + reach tables", src:PO_PAGE, defH:1200, initH:2200, id:"bartolo-po-board"},
   {label:"📊 Series win-prob row", meta:"current-round series cards + WS exacta", src:PO_PAGE+"?view=series", defH:760, initH:1300, id:"bartolo-po-series"},
   {label:"🗺️ Bracket only", meta:"bracket + reach % tables (no series cards)", src:PO_PAGE+"?view=bracket", defH:720, initH:1300, id:"bartolo-po-bracket"},
+  {label:"🎯 Edges", meta:"model vs market — pennant + World Series", src:PO_PAGE+"?view=edges", defH:900, initH:1500, id:"bartolo-po-edges"},
 ];
 function poCardHTML(o){
   const sep=o.src.includes('?')?'&':'?';
