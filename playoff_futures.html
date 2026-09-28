@@ -268,7 +268,7 @@ const MCOLS=[
  {k:'odds',lab:'Listed'},{k:'mkt',lab:'Mkt%'},{k:'model',lab:'MODEL'},{k:'fair',lab:'Fair'},{k:'edge',lab:'Edge'},
 ];
 let DATA={mine:null,blend:null}, MKT={};
-let curTab='proj', projSrc='gamesim', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
+let curTab='proj', projSrc='gamesim', edgeLg='ALL', edgeModel='gamesim', edgeVig='raw';
 // standalone embed views: ?view=series | ?view=bracket | ?series=NYY-BOS (single series)
 const _EP=new URLSearchParams(location.search);
 const VIEW=_EP.get('view')||'';
