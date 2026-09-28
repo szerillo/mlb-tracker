@@ -333,7 +333,7 @@ function seriesRowHTML(s, mkt){
     const etx  = edge==null?'—':((edge>0?'+':'')+edge.toFixed(1)+'%');
     const star = edge!=null&&edge>=4?'★★':edge!=null&&edge>=2?'★':'';
     return `<div class="srow ${isFav?'fav':'dog'}">
-      <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b><span class="ssd">(${seed})</span></div>
+      <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b>${seed!=null?`<span class="ssd">(${seed})</span>`:''}</div>
       <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${barColor(ab)}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
       <div class="scell"><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}</div>
