@@ -47,7 +47,8 @@ def _roster(team_id):
         return [(p["person"]["fullName"], p["position"]["abbreviation"], p["position"]["type"]) for p in d.get("roster",[])]
     except Exception: return []
 
-def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine):
+def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine, proj_rot=None, sprank=None):
+    proj_rot=proj_rot or {}; sprank=sprank or {}
     abbr=TEAM[team_id]; full=FULL.get(abbr, abbr)
     roster=_roster(team_id)
     # rotation: top-4 SP by unified_adj, >=15 GS
@@ -62,8 +63,22 @@ def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine):
     rot=[s for s in sps if s[1] is not None]
     rot.sort(key=lambda s:(s[1] if s[1] is not None else 9))
     rotation=[{"name":s[0],"ra":s[1],"stamina":(pp.get(D._norm(s[0])) or {}).get("stamina") or 0.58,
-               "hand":"LHP" if (s[3].get("hand")=="L") else "RHP","gs":s[2],"ip":s[3].get("ip")}
-              for s in rot[:4]] or [{"name":"TBD","ra":4.3,"stamina":0.58,"hand":"RHP","gs":30,"ip":180}]
+               "hand":"LHP" if (s[3].get("hand")=="L") else "RHP","gs":s[2],"ip":s[3].get("ip"),
+               "rank":sprank.get(D._norm(s[0]))}
+              for s in rot[:4]] or [{"name":"TBD","ra":4.3,"stamina":0.58,"hand":"RHP","gs":30,"ip":180,"rank":None}]
+    # rotation override: data/projected_rotation.json lets Sean set the exact G1..G4 order
+    # (fixes auto-pick misses, e.g. SD ace Pivetta, PHI Luzardo). Stats resolve by name;
+    # a name with no unified_adj falls back to 4.3 so it never silently drops.
+    if proj_rot.get(abbr):
+        ov=[]
+        for nm in proj_rot[abbr][:4]:
+            p=ps.get(D._norm(nm)) or {}
+            ov.append({"name":nm,"ra":(p.get("unified_adj") if p.get("unified_adj") is not None else 4.3),
+                       "stamina":(pp.get(D._norm(nm)) or {}).get("stamina") or 0.58,
+                       "hand":"LHP" if (p.get("hand")=="L") else "RHP",
+                       "gs":(pp.get(D._norm(nm)) or {}).get("gs"),"ip":p.get("ip"),
+                       "rank":sprank.get(D._norm(nm))})
+        if ov: rotation=ov
     # nine
     if proj_nine.get(abbr):
         nine=[(x["name"], x.get("pos","")) for x in proj_nine[abbr]][:9]
@@ -89,10 +104,15 @@ def build_pack(team_id, bp, pp, ps, pens, tabl, hit, proj_nine):
     return {"abbr":abbr,"full":full,"nine":nine,"rotation":rotation,"arms":arms,
             "runs_pf":tm.get("runs_pf") or 1.0,"pf_away":tm.get("pf_adj_away") or 1.0,"pf_home":tm.get("pf_adj_home") or 1.0}
 
-def game_home_wp(home, away, h_idx, a_idx, bp, const, cache):
-    key=(home["abbr"],away["abbr"],h_idx,a_idx)
+def game_home_wp(home, away, h_idx, a_idx, bp, const, cache, bullpen_game=False):
+    key=(home["abbr"],away["abbr"],h_idx,a_idx,bullpen_game)
     if key in cache: return cache[key]
     hsp=home["rotation"][h_idx % len(home["rotation"])]; asp=away["rotation"][a_idx % len(away["rotation"])]
+    if bullpen_game:
+        # deciding game (G3/G5/G7): cap both starters to the 5-inning floor so the pen
+        # covers 6-9 — a bullpen game, which rewards the deeper pen and adds variance.
+        hsp={**hsp,"stamina":min(hsp.get("stamina",0.58),0.555)}
+        asp={**asp,"stamina":min(asp.get("stamina",0.58),0.555)}
     mu={"away_lineup":away["nine"],"home_lineup":home["nine"],"bp_players":bp,
         "away_sp_hand":asp["hand"],"home_sp_hand":hsp["hand"],
         "away_park_off":away["pf_away"],"home_park_off":home["pf_home"],"home_park_factor":home["runs_pf"],
@@ -110,10 +130,11 @@ def sim_series(hi, lo, best_of, bp, const, cache, rng):
     hw=lw=0
     for g in range(best_of):
         hidx=(g); aidx=(g)  # rotation slot = game number, each side
+        dec=(g==best_of-1)   # deciding game -> bullpen game
         if home_is_hi[g]:
-            p_home=game_home_wp(hi,lo,hidx,aidx,bp,const,cache); hi_wins = rng.random()<p_home
+            p_home=game_home_wp(hi,lo,hidx,aidx,bp,const,cache,dec); hi_wins = rng.random()<p_home
         else:
-            p_home=game_home_wp(lo,hi,hidx,aidx,bp,const,cache); hi_wins = rng.random()>=p_home
+            p_home=game_home_wp(lo,hi,hidx,aidx,bp,const,cache,dec); hi_wins = rng.random()>=p_home
         if hi_wins: hw+=1
         else: lw+=1
         if hw==need or lw==need: break
@@ -132,7 +153,8 @@ def _series_dist(A, B, best_of, bp, const, cache):
     else: home_is_A=[True,True,False,False,False,True,True]
     pw=[]
     for g in range(best_of):
-        p_home = game_home_wp(A,B,g,g,bp,const,cache) if home_is_A[g] else 1-game_home_wp(B,A,g,g,bp,const,cache)
+        dec=(g==best_of-1)   # deciding game -> bullpen game
+        p_home = game_home_wp(A,B,g,g,bp,const,cache,dec) if home_is_A[g] else 1-game_home_wp(B,A,g,g,bp,const,cache,dec)
         pw.append(p_home)
     out={}
     def rec(i,a,b,pr):
@@ -180,11 +202,13 @@ def emit_series_detail(packs, bd, cnt, N, bp, const, cache):
         # per-game SP matchups (bo3: all at higher seed A; rotation slot = game index)
         games=[]
         for g in range(best_of):
-            hsp=A["rotation"][g % len(A["rotation"])]["name"]
-            asp=B["rotation"][g % len(B["rotation"])]["name"]
-            hw=game_home_wp(A,B,g,g,bp,const,cache)
+            dec=(g==best_of-1)   # deciding game -> bullpen game
+            he=A["rotation"][g % len(A["rotation"])]; ae=B["rotation"][g % len(B["rotation"])]
+            hw=game_home_wp(A,B,g,g,bp,const,cache,dec)
             games.append({"g":g+1,"home":A["abbr"],"away":B["abbr"],
-                          "home_sp":hsp,"away_sp":asp,"home_wp":round(hw,4)})
+                          "home_sp":he["name"],"away_sp":ae["name"],
+                          "home_sp_rank":he.get("rank"),"away_sp_rank":ae.get("rank"),
+                          "home_wp":round(hw,4)})
         reach_ds[A["abbr"]]=round(pA,4); reach_ds[B["abbr"]]=round(1-pA,4)
         return {"round":"WC","league":league,"best_of":best_of,"host":A["abbr"],
             "a":A["abbr"],"b":B["abbr"],"seed_a":i+1,"seed_b":j+1,
@@ -220,12 +244,13 @@ def _games_for(A, B, best_of, bp, const, cache):
     else: home_is_A=[True,True,False,False,False,True,True]
     games=[]
     for g in range(best_of):
+        dec=(g==best_of-1)   # deciding game -> bullpen game
         if home_is_A[g]:
-            hsp=A["rotation"][g%len(A["rotation"])]["name"]; asp=B["rotation"][g%len(B["rotation"])]["name"]
-            hw=game_home_wp(A,B,g,g,bp,const,cache); games.append({"g":g+1,"home":A["abbr"],"away":B["abbr"],"home_sp":hsp,"away_sp":asp,"home_wp":round(hw,4)})
+            he=A["rotation"][g%len(A["rotation"])]; ae=B["rotation"][g%len(B["rotation"])]
+            hw=game_home_wp(A,B,g,g,bp,const,cache,dec); games.append({"g":g+1,"home":A["abbr"],"away":B["abbr"],"home_sp":he["name"],"away_sp":ae["name"],"home_sp_rank":he.get("rank"),"away_sp_rank":ae.get("rank"),"home_wp":round(hw,4)})
         else:
-            hsp=B["rotation"][g%len(B["rotation"])]["name"]; asp=A["rotation"][g%len(A["rotation"])]["name"]
-            hw=game_home_wp(B,A,g,g,bp,const,cache); games.append({"g":g+1,"home":B["abbr"],"away":A["abbr"],"home_sp":hsp,"away_sp":asp,"home_wp":round(hw,4)})
+            he=B["rotation"][g%len(B["rotation"])]; ae=A["rotation"][g%len(A["rotation"])]
+            hw=game_home_wp(B,A,g,g,bp,const,cache,dec); games.append({"g":g+1,"home":B["abbr"],"away":A["abbr"],"home_sp":he["name"],"away_sp":ae["name"],"home_sp_rank":he.get("rank"),"away_sp_rank":ae.get("rank"),"home_wp":round(hw,4)})
     return games
 
 # Final 2026 regular-season W% (audit 2026-09-27). WS home field is by record (cross-league),
@@ -285,6 +310,10 @@ def main():
     tabl=_load("sheet_tables.json").get("teams",{})
     hit={D._norm(k):v for k,v in _load("hitters.json").get("hitters",{}).items()}
     proj_nine=_load("projected_nine.json").get("teams",{}) if os.path.exists(os.path.join(REPO,"data","projected_nine.json")) else {}
+    proj_rot=_load("projected_rotation.json").get("teams",{}) if os.path.exists(os.path.join(REPO,"data","projected_rotation.json")) else {}
+    # league-wide SP rank by wFIP (unified_adj); relievers have unified_adj=None so this is SP-only
+    _sps=sorted([(k,v.get("unified_adj")) for k,v in ps.items() if v.get("unified_adj") is not None], key=lambda x:x[1])
+    sprank={k:i+1 for i,(k,_) in enumerate(_sps)}
     const=_load("sheet_projections.json").get("constants") or E.DEFAULT_CONST
     # HFA held at the shipped ±4% runs (~52.5% home on even teams), per the 2026-09-27
     # audit: that matches 2023-26 data (52.8% pooled, 53.9% postseason). No override.
@@ -296,7 +325,7 @@ def main():
     for al,nl,w in bd: ids.update(al); ids.update(nl)
     packs={}
     for tid in ids:
-        try: packs[tid]=build_pack(tid,bp,pp,ps,pens,tabl,hit,proj_nine)
+        try: packs[tid]=build_pack(tid,bp,pp,ps,pens,tabl,hit,proj_nine,proj_rot,sprank)
         except Exception as e: print(f"  pack fail {tid}: {e}",file=sys.stderr)
     wpcache={}; rng=random.Random(42)
     N=1500

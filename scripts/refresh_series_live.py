@@ -113,7 +113,9 @@ def build_series(gtype, matchup_key, grid_idx, wins):
     pAsw=sum(v for (a,b),v in d.items() if a==need and b==0)
     pBsw=sum(v for (a,b),v in d.items() if b==need and a==0)
     gm=[{"g":i+1,"home":x['home'],"away":x['away'],
-         "home_sp":x.get('home_sp'),"away_sp":x.get('away_sp'),"home_wp":round(x['home_wp'],4)}
+         "home_sp":x.get('home_sp'),"away_sp":x.get('away_sp'),
+         "home_sp_rank":x.get('home_sp_rank'),"away_sp_rank":x.get('away_sp_rank'),
+         "home_wp":round(x['home_wp'],4)}
         for i,x in enumerate(games)]
     decided=aw+bw
     if decided==0: state=None
