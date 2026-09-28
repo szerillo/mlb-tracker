@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B.A.R.T.O.L.O. — Embed Builder</title>
+<style>
+  :root{ --bg:#0a0e13; --panel:#141a22; --panel2:#1b232d; --border:#243240; --text:#e6edf3; --muted:#8b98a5; --accent:#5eead4; --good:#6fdc7e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;padding:18px;max-width:860px;margin:0 auto;}
+  h1{font-size:1.25rem;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:.85rem;margin-bottom:16px}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  input[type=date],input[type=number]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:1rem}
+  button{cursor:pointer;font-family:inherit}
+  .copy{background:var(--accent);color:#06302b;border:0;border-radius:7px;padding:7px 12px;font-weight:700;font-size:.82rem}
+  .copy:active{transform:translateY(1px)}
+  .copy.done{background:var(--good)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .card .m{font-weight:600}
+  .card .meta{color:var(--muted);font-size:.78rem;margin-top:2px}
+  .slate{border-color:var(--accent)}
+  .opts{display:flex;gap:8px;align-items:center}
+  select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:.78rem}
+  .note{color:var(--muted);font-size:.8rem;margin:18px 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  pre{background:#0c1218;border:1px solid var(--border);border-radius:8px;padding:12px;overflow:auto;font-size:.74rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word}
+  .row{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .empty{color:var(--muted);padding:20px;text-align:center}
+  a{color:var(--accent)}
+  .acts{display:flex;gap:8px;align-items:center}
+  .mview{color:var(--accent);font-size:.78rem;text-decoration:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;white-space:nowrap}
+  .mview:hover{border-color:var(--accent)}
+  .tabs{display:flex;gap:4px;margin:4px 0 16px;border-bottom:1px solid var(--border)}
+  .tabbtn{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:700;font-size:.92rem;padding:9px 14px;margin-bottom:-1px}
+  .tabbtn.active{color:var(--text);border-bottom-color:var(--accent)}
+  .shot-games{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+  .shot-chip{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.8rem;font-weight:600}
+  .shot-chip.active{border-color:var(--accent);color:var(--accent)}
+  .shot-frame{width:100%;height:1500px;border:1px solid var(--border);border-radius:10px;background:#0d1117;display:block}
+</style>
+</head>
+<body>
+  <h1>B.A.R.T.O.L.O. — Embed Builder</h1>
+  <div class="sub">Pick a date, then hit <b>Copy</b> on the full slate or any game and paste it into your post. The default <b>Compatible</b> layout is a plain, script-free iframe, so it works even in visual / rich-text editors (Action Network, WordPress visual mode, most CMSs) that strip out &lt;script&gt; tags. It carries <code>data-autoresize="true"</code> so platforms that support it grow the frame to fit; otherwise it shows at the height you set with a scrollbar, so nothing is ever cut off and nothing below it overlaps. Tap <b>📱 Mobile</b> to preview the phone layout.</div>
+  <div class="sub" style="margin-top:.4rem;font-size:.78rem;opacity:.85">Want the frame to auto-fit its content exactly (no inner scrollbar)? Switch Layout to <b>Auto-grow w/ script</b> — but that only works in a true <b>Custom HTML</b> block that preserves &lt;script&gt; tags. If a signup form or ad still shows on top, that element is a page-level plugin overlay and must be turned off for the post.</div>
+
+  <div class="bar">
+    <label>Date <input type="date" id="date"></label>
+    <div class="opts">Layout
+      <select id="mode">
+        <option value="clean">Compatible — works in visual editors (recommended)</option>
+        <option value="script">Auto-grow w/ script (Custom HTML only)</option>
+        <option value="fixed">Fixed height, no scroll</option>
+      </select>
+    </div>
+    <label>Height <input type="number" id="height" min="300" step="50" placeholder="auto" style="width:92px"></label>
+    <button class="copy" id="reload" style="background:var(--panel2);color:var(--text)">Reload</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-panel="embeds">Embed codes</button>
+    <button class="tabbtn" data-panel="playoffs">&#127942; Playoffs</button>
+    <button class="tabbtn" data-panel="shots">&#128248; Screenshots</button>
+  </div>
+
+  <div id="panel-embeds">
+  <div class="card slate" id="slateCard">
+    <div><div class="m">📋 Full slate scoreboard</div><div class="meta" id="slateMeta">all games for the selected date</div></div>
+    <div class="acts">
+      <a class="mview" id="slateMobile" target="_blank" rel="noopener" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="slate">Copy</button>
+    </div>
+  </div>
+
+  <div id="games"><div class="empty">Loading games…</div></div>
+
+  <div class="note">🏆 Player Futures — award models (one embed per market)</div>
+  <div id="pfCards"></div>
+
+  <div class="note">Optional — only needed for the <b>Auto-grow w/ script</b> layout if you prefer one shared listener instead of the per-embed one.</div>
+  <pre id="listener"></pre>
+  <div class="row"><button class="copy" id="copyListener">Copy listener</button></div>
+  </div><!-- /panel-embeds -->
+
+  <div id="panel-shots" hidden>
+    <div class="sub">Pick a game, then tap a section button in the preview to download a PNG — matchup, lineups, bullpens, SP, or weather/park/ump. Uses the date above.</div>
+    <div class="shot-games" id="shotGames"><div class="empty">Loading games…</div></div>
+    <iframe id="shotFrame" class="shot-frame" title="Section screenshots"></iframe>
+  </div>
+
+  <div id="panel-playoffs" hidden>
+    <div class="sub">Postseason embeds from the Playoff Futures board. Each updates automatically as rounds and scores change — the single-series embeds re-point to whoever is playing that slot. Layout/Height above apply here too.</div>
+    <div class="note">Whole board & sections</div>
+    <div id="poFixed"></div>
+    <div class="note">Individual series — current round</div>
+    <div id="poSeries"><div class="empty">Loading series…</div></div>
+  </div>
+
+<script>
+const BASE = "https://mlb-tracker-256.pages.dev/";
+const API  = "https://statsapi.mlb.com/api/v1";
+const $ = s => document.querySelector(s);
+function todayISO(){ // US Eastern date
+  const f=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+  return f.format(new Date());
+}
+const LISTENER = `<script>
+window.addEventListener('message', function(e){
+  if(!e.data || e.data.type!=='mlb-tracker-resize') return;
+  document.querySelectorAll('iframe').forEach(function(f){
+    if(f.contentWindow===e.source){ f.style.setProperty('height',(e.data.height+8)+'px','important'); }
+  });
+});
+<\/script>`;
+$("#listener").textContent = LISTENER;
+
+function iframeMeta(kind, g, mkt, extra){
+  const date = $("#date").value;
+  if(kind==='slate')   return {src:BASE+`?embed=scoreboard&date=${date}`, title:"MLB Scoreboard "+date, id:"bartolo-slate-"+date, defH:1200, initH:1900};
+  if(kind==='pf')      return {src:BASE+`?embed=player-futures&market=${mkt}`, title:"BARTOLO "+mkt+" model", id:"bartolo-pf-"+mkt, defH:820, initH:1050};
+  if(kind==='playoff') return {src:extra.src, title:extra.title, id:extra.id, defH:extra.defH||900, initH:extra.initH||1500};
+  return {src:BASE+`?embed=game&pk=${g.gamePk}&date=${date}`, title:g.label, id:"bartolo-game-"+g.gamePk, defH:900, initH:1150};
+}
+function iframeFor(kind, g, mkt, extra){
+  const mode = $("#mode").value;
+  const meta = iframeMeta(kind, g, mkt, extra);
+  const hIn = parseInt($("#height").value,10);
+  const h = (hIn && hIn>=300) ? hIn : meta.defH;
+  const src = meta.src, title = meta.title, id = meta.id;
+
+  // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
+  // (TinyMCE, Action Network, WordPress visual mode) strip <script>, which is
+  // why the script-based auto-resize silently failed in those. data-autoresize
+  // lets hosts that support it grow the frame; scrolling="auto" + a generous
+  // height is the reliable fallback so nothing is cut off or overlapped.
+  if(mode==='clean'){
+    return `<iframe style="border:none;width:100%;min-height:400px;" src="${src}" width="100%" height="${h}" frameborder="0" scrolling="auto" data-autoresize="true" title="${title}"></iframe>`;
+  }
+  // FIXED: same plain iframe but no inner scrollbar (clips overflow at height).
+  if(mode==='fixed'){
+    return `<iframe style="border:none;width:100%;min-height:400px;" src="${src}" width="100%" height="${h}" frameborder="0" scrolling="no" data-autoresize="true" title="${title}"></iframe>`;
+  }
+
+  // SCRIPT (advanced): hardened wrapper + scoped resize listener so the frame
+  // fits its content exactly and the article grows with it. Only works in a true
+  // Custom HTML block that PRESERVES <script> tags. The wrapper sits at max
+  // z-index in its own stacking context with an opaque bg + !important sizing
+  // resets so plugin-injected ads / email forms / fitVids/oEmbed video boxes
+  // can't render over it or force it into a fixed aspect-ratio box.
+  const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
+  const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
+  const initH = meta.initH;
+  const wid = id+"-wrap";
+  return `<div class="bartolo-embed" id="${wid}" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">
+  <iframe id="${id}" src="${src}" scrolling="no" title="${title}" style="${IF(initH)}"></iframe>
+</div>
+<script>(function(){
+  var ID="${id}", WID="${wid}", H=${initH};
+  function fix(){
+    var f=document.getElementById(ID); if(!f) return;
+    var w=document.getElementById(WID), p=f.parentElement;
+    while(p && p!==w){ p.style.cssText="position:static!important;padding:0!important;margin:0!important;height:auto!important;max-width:none!important;width:auto!important;display:block!important;background:transparent!important;aspect-ratio:auto!important"; p=p.parentElement; }
+    var st=f.style;
+    st.setProperty("position","relative","important"); st.setProperty("width","100%","important");
+    st.setProperty("max-width","100%","important"); st.setProperty("height",H+"px","important");
+    st.setProperty("max-height","none","important"); st.setProperty("aspect-ratio","auto","important");
+    st.setProperty("inset","auto","important");
+    if(w){ w.style.setProperty("z-index","2147483647","important"); w.style.setProperty("position","relative","important"); w.style.setProperty("isolation","isolate","important"); w.style.setProperty("background","#0d1117","important"); }
+  }
+  window.addEventListener("message",function(e){
+    var f=document.getElementById(ID);
+    if(f && e && e.data && e.data.type==="mlb-tracker-resize" && e.source===f.contentWindow){ H=e.data.height+8; fix(); }
+  });
+  [0,200,600,1500,3500].forEach(function(t){setTimeout(fix,t);});
+})();<\/script>`;
+}
+
+async function copyText(txt, btn){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const old=btn.textContent; btn.textContent='Copied ✓'; btn.classList.add('done');
+  setTimeout(()=>{btn.textContent=old; btn.classList.remove('done');},1400);
+}
+
+let GAMES=[];
+function abbr(t){ return t.abbreviation || (t.name||'').split(' ').slice(-1)[0]; }
+async function load(){
+  const date=$("#date").value;
+  $("#games").innerHTML='<div class="empty">Loading games…</div>';
+  $("#slateMeta").textContent='all games for '+date;
+  $("#slateMobile").href = BASE+`?embed=scoreboard&date=${date}&mobile=1`;
+  try{
+    const r=await fetch(`${API}/schedule?sportId=1&date=${date}`);
+    const d=await r.json();
+    const games=[]; (d.dates||[]).forEach(day=>(day.games||[]).forEach(g=>games.push(g)));
+    GAMES=games.map(g=>({gamePk:g.gamePk, label:`${abbr(g.teams.away.team)} @ ${abbr(g.teams.home.team)}`,
+       away:g.teams.away.team.name, home:g.teams.home.team.name,
+       time:new Date(g.gameDate).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})+' ET'}));
+    render();
+    renderShotGames();
+  }catch(e){ $("#games").innerHTML='<div class="empty">Could not load schedule. Try Reload.</div>'; }
+}
+function render(){
+  if(!GAMES.length){ $("#games").innerHTML='<div class="empty">No games scheduled this date.</div>'; return; }
+  const date=$("#date").value;
+  $("#games").innerHTML = GAMES.map((g,i)=>`<div class="card">
+    <div><div class="m">${g.away} @ ${g.home}</div><div class="meta">${g.time} · game id ${g.gamePk}</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${BASE}?embed=game&pk=${g.gamePk}&date=${date}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="game" data-i="${i}">Copy</button>
+    </div>
+  </div>`).join('');
+}
+const PF_MARKETS = [
+  ['AL_MVP','AL MVP'], ['NL_MVP','NL MVP'],
+  ['AL_CY','AL Cy Young'], ['NL_CY','NL Cy Young'],
+  ['AL_ROY','AL Rookie of the Year'], ['NL_ROY','NL Rookie of the Year'],
+];
+function renderPF(){
+  const box=document.getElementById('pfCards'); if(!box) return;
+  box.innerHTML = PF_MARKETS.map(function(m){ return `<div class="card">
+    <div><div class="m">🏆 ${m[1]}</div><div class="meta">award model · model % · market · edge</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${BASE}?embed=player-futures&market=${m[0]}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="pf" data-mkt="${m[0]}">Copy</button>
+    </div>
+  </div>`; }).join('');
+}
+// ── Playoffs tab ────────────────────────────────────────────────────────────
+const PO_PAGE = BASE+"playoff_futures.html";
+const PO_FIXED = [
+  {label:"🏆 Full playoff board", meta:"bracket + series + reach tables", src:PO_PAGE, defH:1200, initH:2200, id:"bartolo-po-board"},
+  {label:"📊 Series win-prob row", meta:"current-round series cards + WS exacta", src:PO_PAGE+"?view=series", defH:760, initH:1300, id:"bartolo-po-series"},
+  {label:"🗺️ Bracket only", meta:"bracket + reach % tables (no series cards)", src:PO_PAGE+"?view=bracket", defH:720, initH:1300, id:"bartolo-po-bracket"},
+];
+function poCardHTML(o){
+  const sep=o.src.includes('?')?'&':'?';
+  return `<div class="card">
+    <div><div class="m">${o.label}</div><div class="meta">${o.meta}</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${o.src}${sep}mobile=1" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="playoff" data-src="${o.src}" data-title="${o.label.replace(/[^\w ]/g,'').trim()}" data-id="${o.id}" data-defh="${o.defH}" data-inith="${o.initH}">Copy</button>
+    </div></div>`;
+}
+function renderPlayoffFixed(){ const b=document.getElementById('poFixed'); if(b) b.innerHTML=PO_FIXED.map(poCardHTML).join(''); }
+let PO_LOADED=false;
+async function loadPlayoffSeries(){
+  const box=document.getElementById('poSeries'); if(!box) return;
+  try{
+    const r=await fetch(BASE+"data/lane2_series.json?cb="+Date.now());
+    const d=await r.json();
+    const rl=d.round_label||'';
+    const rows=(d.series||[]).map(s=>{ const key=s.a+'-'+s.b, lg=s.league||'', st=s.state?' · '+s.state:'';
+      return `<div class="card">
+        <div><div class="m">${lg} ${rl}: ${s.a} vs ${s.b}</div><div class="meta">single-series card${st}</div></div>
+        <div class="acts">
+          <a class="mview" target="_blank" rel="noopener" href="${PO_PAGE}?series=${key}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
+          <button class="copy" data-kind="playoff" data-src="${PO_PAGE}?series=${key}" data-title="${s.a} vs ${s.b} series" data-id="bartolo-po-${key}" data-defh="380" data-inith="900">Copy</button>
+        </div></div>`; }).join('');
+    box.innerHTML = rows || '<div class="empty">No active series yet (pre–Wild Card).</div>';
+  }catch(e){ box.innerHTML='<div class="empty">Could not load the series feed.</div>'; }
+  PO_LOADED=true;
+}
+let SHOT_PK=null;
+function renderShotGames(){
+  const box=document.getElementById('shotGames'); if(!box) return;
+  if(!GAMES.length){ box.innerHTML='<div class="empty">No games scheduled this date.</div>'; const f=document.getElementById('shotFrame'); if(f)f.removeAttribute('src'); return; }
+  box.innerHTML = GAMES.map((g,i)=>`<button class="shot-chip" data-pk="${g.gamePk}">${g.away} @ ${g.home}</button>`).join('');
+  if(!GAMES.some(g=>String(g.gamePk)===String(SHOT_PK))) SHOT_PK=GAMES[0].gamePk;
+  selectShotGame(SHOT_PK);
+}
+function selectShotGame(pk){
+  SHOT_PK=pk;
+  const date=$("#date").value;
+  document.querySelectorAll('#shotGames .shot-chip').forEach(c=>c.classList.toggle('active', String(c.dataset.pk)===String(pk)));
+  const f=document.getElementById('shotFrame');
+  if(f) f.src = BASE+`?shot=1&pk=${pk}&date=${date}`;
+}
+document.getElementById('shotGames').addEventListener('click', e=>{
+  const c=e.target.closest('.shot-chip'); if(!c) return; selectShotGame(c.dataset.pk);
+});
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const panel=btn.dataset.panel;
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b===btn));
+    document.getElementById('panel-embeds').hidden = (panel!=='embeds');
+    document.getElementById('panel-shots').hidden = (panel!=='shots');
+    document.getElementById('panel-playoffs').hidden = (panel!=='playoffs');
+    if(panel==='shots' && GAMES.length && !SHOT_PK) renderShotGames();
+    if(panel==='playoffs' && !PO_LOADED) loadPlayoffSeries();
+  });
+});
+document.addEventListener('click', e=>{
+  const b=e.target.closest('.copy'); if(!b) return;
+  if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
+  const kind=b.dataset.kind; if(!kind) return;
+  const g = kind==='game' ? GAMES[+b.dataset.i] : null;
+  const extra = kind==='playoff' ? {src:b.dataset.src,title:b.dataset.title,id:b.dataset.id,defH:+b.dataset.defh,initH:+b.dataset.inith} : null;
+  copyText(iframeFor(kind,g,b.dataset.mkt,extra), b);
+});
+$("#date").value=todayISO();
+$("#date").addEventListener('change',load);
+$("#mode").addEventListener('change',()=>{}); // affects next copy
+$("#reload").addEventListener('click',load);
+renderPF();
+renderPlayoffFixed();
+load();
+</script>
+</body>
+</html>
