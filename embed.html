@@ -37,12 +37,6 @@
   .shot-chip{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.8rem;font-weight:600}
   .shot-chip.active{border-color:var(--accent);color:var(--accent)}
   .shot-frame{width:100%;height:1500px;border:1px solid var(--border);border-radius:10px;background:#0d1117;display:block}
-  .shot-sections{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 12px;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;position:sticky;top:0;z-index:5}
-  .shot-seclabel{color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-right:2px}
-  .shot-secbtn{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:.82rem;font-weight:600}
-  .shot-secbtn:hover{border-color:var(--accent);color:var(--accent)}
-  .shot-secbtn:active{transform:translateY(1px)}
-  .shot-secbtn.flash{background:var(--good);color:#06302b;border-color:var(--good)}
 </style>
 </head>
 <body>
@@ -65,8 +59,8 @@
 
   <div class="tabs">
     <button class="tabbtn active" data-panel="embeds">Embed codes</button>
+    <button class="tabbtn" data-panel="playoffs">&#127942; Playoffs</button>
     <button class="tabbtn" data-panel="shots">&#128248; Screenshots</button>
-    <button class="tabbtn" data-panel="pm">&#162; Prediction market</button>
   </div>
 
   <div id="panel-embeds">
@@ -81,7 +75,7 @@
   <div id="games"><div class="empty">Loading games…</div></div>
 
   <div class="note">🏆 Player Futures — award models (one embed per market)</div>
-  <div id="pfCards"></div><div class="note" style="margin-top:14px">Team Futures — season-long projections vs market</div><div class="card slate" id="tfAl"><div><div class="m">AL — all divisions</div><div class="meta">Win total / division / playoffs / WS, all AL</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=al&m=1">Mobile</a><button class="copy" data-kind="al">Copy</button></div></div><div class="card slate" id="tfAlE"><div><div class="m">AL East</div><div class="meta">AL East only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=aleast&m=1">Mobile</a><button class="copy" data-kind="div-aleast">Copy</button></div></div><div class="card slate" id="tfAlC"><div><div class="m">AL Central</div><div class="meta">AL Central only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=alcentral&m=1">Mobile</a><button class="copy" data-kind="div-alcentral">Copy</button></div></div><div class="card slate" id="tfAlW"><div><div class="m">AL West</div><div class="meta">AL West only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=alwest&m=1">Mobile</a><button class="copy" data-kind="div-alwest">Copy</button></div></div><div class="card slate" id="tfNl"><div><div class="m">NL — all divisions</div><div class="meta">Win total / division / playoffs / WS, all NL</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=nl&m=1">Mobile</a><button class="copy" data-kind="nl">Copy</button></div></div><div class="card slate" id="tfNlE"><div><div class="m">NL East</div><div class="meta">NL East only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=nleast&m=1">Mobile</a><button class="copy" data-kind="div-nleast">Copy</button></div></div><div class="card slate" id="tfNlC"><div><div class="m">NL Central</div><div class="meta">NL Central only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=nlcentral&m=1">Mobile</a><button class="copy" data-kind="div-nlcentral">Copy</button></div></div><div class="card slate" id="tfNlW"><div><div class="m">NL West</div><div class="meta">NL West only</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=futures&division=nlwest&m=1">Mobile</a><button class="copy" data-kind="div-nlwest">Copy</button></div></div><div class="card slate" id="tfPo"><div><div class="m">Playoff picture</div><div class="meta">Playoff odds by league + World Series</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" title="Preview the phone layout" href="/?embed=playoffs&m=1">Mobile</a><button class="copy" data-kind="playoffs">Copy</button></div></div>
+  <div id="pfCards"></div>
 
   <div class="note">Optional — only needed for the <b>Auto-grow w/ script</b> layout if you prefer one shared listener instead of the per-embed one.</div>
   <pre id="listener"></pre>
@@ -89,22 +83,17 @@
   </div><!-- /panel-embeds -->
 
   <div id="panel-shots" hidden>
-    <div class="sub">Pick a game — its matchup view opens in the preview below. Then click a <b>Screenshot</b> button (they stay pinned to the top as you scroll) to download that section as a PNG. Uses the date above.</div>
+    <div class="sub">Pick a game, then tap a section button in the preview to download a PNG — matchup, lineups, bullpens, SP, or weather/park/ump. Uses the date above.</div>
     <div class="shot-games" id="shotGames"><div class="empty">Loading games…</div></div>
-    <div class="shot-sections" id="shotSections">
-      <span class="shot-seclabel">Screenshot</span>
-      <button class="shot-secbtn" data-sec="Matchup">Matchup</button>
-      <button class="shot-secbtn" data-sec="Weather">Weather · Park · Umps</button>
-      <button class="shot-secbtn" data-sec="Starting">Starting Pitchers</button>
-      <button class="shot-secbtn" data-sec="Bullpen">Bullpens</button>
-      <button class="shot-secbtn" data-sec="Lineup">Lineups</button>
-    </div>
     <iframe id="shotFrame" class="shot-frame" title="Section screenshots"></iframe>
   </div>
 
-  <div id="panel-pm" hidden>
-    <div class="sub">Prediction-market / Kalshi embeds - cents pricing only, no American odds anywhere. Same layouts as the main embeds; copy the full slate or any game.</div>
-    <div id="pmGames"><div class="empty">Loading games...</div></div>
+  <div id="panel-playoffs" hidden>
+    <div class="sub">Postseason embeds from the Playoff Futures board. Each updates automatically as rounds and scores change — the single-series embeds re-point to whoever is playing that slot. Layout/Height above apply here too.</div>
+    <div class="note">Whole board & sections</div>
+    <div id="poFixed"></div>
+    <div class="note">Individual series — current round</div>
+    <div id="poSeries"><div class="empty">Loading series…</div></div>
   </div>
 
 <script>
@@ -125,20 +114,19 @@ window.addEventListener('message', function(e){
 <\/script>`;
 $("#listener").textContent = LISTENER;
 
-function iframeFor(kind, g, mkt, pm){
-  const mode = $("#mode").value;
+function iframeMeta(kind, g, mkt, extra){
   const date = $("#date").value;
+  if(kind==='slate')   return {src:BASE+`?embed=scoreboard&date=${date}`, title:"MLB Scoreboard "+date, id:"bartolo-slate-"+date, defH:1200, initH:1900};
+  if(kind==='pf')      return {src:BASE+`?embed=player-futures&market=${mkt}`, title:"BARTOLO "+mkt+" model", id:"bartolo-pf-"+mkt, defH:820, initH:1050};
+  if(kind==='playoff') return {src:extra.src, title:extra.title, id:extra.id, defH:extra.defH||900, initH:extra.initH||1500};
+  return {src:BASE+`?embed=game&pk=${g.gamePk}&date=${date}`, title:g.label, id:"bartolo-game-"+g.gamePk, defH:900, initH:1150};
+}
+function iframeFor(kind, g, mkt, extra){
+  const mode = $("#mode").value;
+  const meta = iframeMeta(kind, g, mkt, extra);
   const hIn = parseInt($("#height").value,10);
-  const h = (hIn && hIn>=300) ? hIn : (kind==='slate'?1200:kind==='pf'?820:900);
-  let src, title, id;
-  if(kind==='slate'){ var _auto=(date===todayISO()); src = _auto ? BASE+`?embed=scoreboard` : BASE+`?embed=scoreboard&date=${date}`; title = _auto ? "MLB Scoreboard (today)" : "MLB Scoreboard "+date; id = _auto ? "bartolo-slate" : "bartolo-slate-"+date; }  // auto-roll: today's slate omits the date so the same iframe advances daily
-  else if(kind==='pf'){ src = BASE+`?embed=player-futures&market=${mkt}`; title="BARTOLO "+mkt+" model"; id="bartolo-pf-"+mkt; }
-  else if(kind==='al'){ src = BASE+'?embed=al'; title='Bartolo — AL team futures'; id='bartolo-al'; }
-  else if(kind==='nl'){ src = BASE+'?embed=nl'; title='Bartolo — NL team futures'; id='bartolo-nl'; }
-  else if(kind==='playoffs'){ src = BASE+'?embed=playoffs'; title='Bartolo — playoff picture'; id='bartolo-playoffs'; } else if(kind && kind.indexOf('div-')===0){ var _dv=kind.slice(4); src = BASE+'?embed=futures&division='+_dv; title='Bartolo — '+_dv+' futures'; id='bartolo-'+kind; }
-  else { src = BASE+`?embed=game&pk=${g.gamePk}&date=${date}`; title=g.label; id="bartolo-game-"+g.gamePk; }
-
-  if(pm) src += (src.indexOf("?")>-1?"&":"?")+"pm=1";
+  const h = (hIn && hIn>=300) ? hIn : meta.defH;
+  const src = meta.src, title = meta.title, id = meta.id;
 
   // CLEAN (default): a plain, script-free iframe. Visual / rich-text editors
   // (TinyMCE, Action Network, WordPress visual mode) strip <script>, which is
@@ -161,7 +149,7 @@ function iframeFor(kind, g, mkt, pm){
   // can't render over it or force it into a fixed aspect-ratio box.
   const open = `<div class="bartolo-embed" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">`;
   const IF = (extraH) => `position:relative!important;display:block!important;width:100%!important;max-width:100%!important;height:${extraH}px;border:0!important;margin:0!important;padding:0!important;background:#0d1117!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;`;
-  const initH = kind==='slate' ? 1900 : kind==='pf' ? 1050 : 1150;
+  const initH = meta.initH;
   const wid = id+"-wrap";
   return `<div class="bartolo-embed" id="${wid}" style="position:relative;z-index:2147483647;isolation:isolate;background:#0d1117;overflow:hidden;border-radius:8px;margin:0 0 1.2rem;">
   <iframe id="${id}" src="${src}" scrolling="no" title="${title}" style="${IF(initH)}"></iframe>
@@ -210,7 +198,6 @@ async function load(){
        time:new Date(g.gameDate).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})+' ET'}));
     render();
     renderShotGames();
-    renderPM();
   }catch(e){ $("#games").innerHTML='<div class="empty">Could not load schedule. Try Reload.</div>'; }
 }
 function render(){
@@ -239,12 +226,40 @@ function renderPF(){
     </div>
   </div>`; }).join('');
 }
-function renderPM(){
-  var box=document.getElementById("pmGames"); if(!box) return;
-  var date=$("#date").value;
-  var slate='<div class="card slate"><div><div class="m">Full slate - prediction-market prices</div><div class="meta">cents only, no American odds</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" href="'+BASE+'?embed=scoreboard&date='+date+'&pm=1&mobile=1">Mobile</a><button class="copy" data-kind="slate" data-pm="1">Copy</button></div></div>';
-  var games = GAMES.length ? GAMES.map(function(g,i){ return '<div class="card"><div><div class="m">'+g.away+' @ '+g.home+'</div><div class="meta">'+g.time+' - cents prices</div></div><div class="acts"><a class="mview" target="_blank" rel="noopener" href="'+BASE+'?embed=game&pk='+g.gamePk+'&date='+date+'&pm=1&mobile=1">Mobile</a><button class="copy" data-kind="game" data-i="'+i+'" data-pm="1">Copy</button></div></div>'; }).join('') : '<div class="empty">No games scheduled this date.</div>';
-  box.innerHTML = slate + games;
+// ── Playoffs tab ────────────────────────────────────────────────────────────
+const PO_PAGE = BASE+"playoff_futures.html";
+const PO_FIXED = [
+  {label:"🏆 Full playoff board", meta:"bracket + series + reach tables", src:PO_PAGE, defH:1200, initH:2200, id:"bartolo-po-board"},
+  {label:"📊 Series win-prob row", meta:"current-round series cards + WS exacta", src:PO_PAGE+"?view=series", defH:760, initH:1300, id:"bartolo-po-series"},
+  {label:"🗺️ Bracket only", meta:"bracket + reach % tables (no series cards)", src:PO_PAGE+"?view=bracket", defH:720, initH:1300, id:"bartolo-po-bracket"},
+];
+function poCardHTML(o){
+  const sep=o.src.includes('?')?'&':'?';
+  return `<div class="card">
+    <div><div class="m">${o.label}</div><div class="meta">${o.meta}</div></div>
+    <div class="acts">
+      <a class="mview" target="_blank" rel="noopener" href="${o.src}${sep}mobile=1" title="Preview the phone layout">📱 Mobile</a>
+      <button class="copy" data-kind="playoff" data-src="${o.src}" data-title="${o.label.replace(/[^\w ]/g,'').trim()}" data-id="${o.id}" data-defh="${o.defH}" data-inith="${o.initH}">Copy</button>
+    </div></div>`;
+}
+function renderPlayoffFixed(){ const b=document.getElementById('poFixed'); if(b) b.innerHTML=PO_FIXED.map(poCardHTML).join(''); }
+let PO_LOADED=false;
+async function loadPlayoffSeries(){
+  const box=document.getElementById('poSeries'); if(!box) return;
+  try{
+    const r=await fetch(BASE+"data/lane2_series.json?cb="+Date.now());
+    const d=await r.json();
+    const rl=d.round_label||'';
+    const rows=(d.series||[]).map(s=>{ const key=s.a+'-'+s.b, lg=s.league||'', st=s.state?' · '+s.state:'';
+      return `<div class="card">
+        <div><div class="m">${lg} ${rl}: ${s.a} vs ${s.b}</div><div class="meta">single-series card${st}</div></div>
+        <div class="acts">
+          <a class="mview" target="_blank" rel="noopener" href="${PO_PAGE}?series=${key}&mobile=1" title="Preview the phone layout">📱 Mobile</a>
+          <button class="copy" data-kind="playoff" data-src="${PO_PAGE}?series=${key}" data-title="${s.a} vs ${s.b} series" data-id="bartolo-po-${key}" data-defh="380" data-inith="900">Copy</button>
+        </div></div>`; }).join('');
+    box.innerHTML = rows || '<div class="empty">No active series yet (pre–Wild Card).</div>';
+  }catch(e){ box.innerHTML='<div class="empty">Could not load the series feed.</div>'; }
+  PO_LOADED=true;
 }
 let SHOT_PK=null;
 function renderShotGames(){
@@ -264,24 +279,15 @@ function selectShotGame(pk){
 document.getElementById('shotGames').addEventListener('click', e=>{
   const c=e.target.closest('.shot-chip'); if(!c) return; selectShotGame(c.dataset.pk);
 });
-document.getElementById('shotSections').addEventListener('click', e=>{
-  const b=e.target.closest('.shot-secbtn'); if(!b) return;
-  const key=(b.dataset.sec||'').toLowerCase();
-  const f=document.getElementById('shotFrame');
-  let fdoc=null; try{ fdoc=f&&f.contentDocument; }catch(err){}
-  const target = fdoc ? [...fdoc.querySelectorAll('button')].find(x=>/📸/.test(x.textContent||'') && (x.textContent||'').toLowerCase().includes(key)) : null;
-  if(target){ target.click(); }
-  b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'), target?650:300);
-});
 document.querySelectorAll('.tabbtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const panel=btn.dataset.panel;
     document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b===btn));
     document.getElementById('panel-embeds').hidden = (panel!=='embeds');
     document.getElementById('panel-shots').hidden = (panel!=='shots');
-    document.getElementById('panel-pm').hidden = (panel!=='pm');
-    if(panel==='pm') renderPM();
+    document.getElementById('panel-playoffs').hidden = (panel!=='playoffs');
     if(panel==='shots' && GAMES.length && !SHOT_PK) renderShotGames();
+    if(panel==='playoffs' && !PO_LOADED) loadPlayoffSeries();
   });
 });
 document.addEventListener('click', e=>{
@@ -289,16 +295,16 @@ document.addEventListener('click', e=>{
   if(b.id==='copyListener'){ copyText(LISTENER,b); return; }
   const kind=b.dataset.kind; if(!kind) return;
   const g = kind==='game' ? GAMES[+b.dataset.i] : null;
-  copyText(iframeFor(kind,g,b.dataset.mkt, b.dataset.pm==="1"), b);
+  const extra = kind==='playoff' ? {src:b.dataset.src,title:b.dataset.title,id:b.dataset.id,defH:+b.dataset.defh,initH:+b.dataset.inith} : null;
+  copyText(iframeFor(kind,g,b.dataset.mkt,extra), b);
 });
 $("#date").value=todayISO();
 $("#date").addEventListener('change',load);
 $("#mode").addEventListener('change',()=>{}); // affects next copy
 $("#reload").addEventListener('click',load);
 renderPF();
+renderPlayoffFixed();
 load();
 </script>
-<!-- prediction-market embeds handled by the dedicated tab above -->
-
 </body>
 </html>
