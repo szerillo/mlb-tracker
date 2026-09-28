@@ -158,9 +158,9 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .pjv i{color:#8b96a5;font-style:normal;font-size:.64rem}
 /* stacked exact-result / margin block with implied odds */
 .stk{margin:8px 0 2px;border-top:1px dashed #232a34;padding-top:6px}
-.stkh{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;margin:0 0 4px;display:flex;justify-content:space-between;gap:8px}
+.stkh{font-size:.6rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em;margin:0 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline}
 .stkk{color:#4a5563;text-transform:none;letter-spacing:0}
-.exr{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;font-size:.74rem;padding:2px 0}
+.exr{display:grid;grid-template-columns:1fr 46px 60px 54px;gap:8px;align-items:center;font-size:.74rem;padding:2px 0}
 .exrl{color:#cdd6e0}
 .exrp{color:#e6edf3;font-weight:600;min-width:32px;text-align:right}
 .exro{color:#8b96a5;min-width:42px;text-align:right}
@@ -268,7 +268,7 @@ const MCOLS=[
  {k:'odds',lab:'Listed'},{k:'mkt',lab:'Mkt%'},{k:'model',lab:'MODEL'},{k:'fair',lab:'Fair'},{k:'edge',lab:'Edge'},
 ];
 let DATA={mine:null,blend:null}, MKT={};
-let curTab='proj', projSrc='mine', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
+let curTab='proj', projSrc='gamesim', edgeLg='ALL', edgeModel='mine', edgeVig='raw';
 // standalone embed views: ?view=series | ?view=bracket | ?series=NYY-BOS (single series)
 const _EP=new URLSearchParams(location.search);
 const VIEW=_EP.get('view')||'';
@@ -281,7 +281,7 @@ function seriesMatch(s){
   const pair=[String(s.a).toUpperCase(),String(s.b).toUpperCase()];
   return want.every(w=>pair.includes(w));
 }
-let curRound='ws', brkModel='mine'; let BRACKET={AL:[],NL:[]};
+let curRound='ws', brkModel='gamesim'; let BRACKET={AL:[],NL:[]};
 let sortK='ws_pct', dir=-1;          // Projections tables
 let mSortK='edge', mDir=-1;          // Edges tables (default: biggest edge first)
 const num=v=>(v==null||isNaN(v))?null:+v;
@@ -357,9 +357,7 @@ function seriesRowHTML(s, mkt){
     ${exOrder.map(k=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k]);}).join('')}</div>` : '';
   const sweepBlock = `<div class="stk"><div class="stkh">Series margin <span class="stkk">model% · fair${(mkt&&mkt.spread)?' · mkt':''}</span></div>
     ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`;
-  const details = `<details class="sdet"><summary>Game detail &amp; props</summary>
-    ${gmRows?`<div class="gmwrap"><div class="sxk2">Projected starters (host win% per game)</div>${gmRows}</div>`:''}
-    ${gradesBlock}
+  const details = `<details class="sdet"><summary>Series props</summary>
     ${exactBlock}
     ${sweepBlock}
   </details>`;
@@ -444,6 +442,7 @@ async function load(){
     window.__v2date=(v2&&v2.date)||'';
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
     DATA.mine=overlay(v2); DATA.gamesim=overlay(lane2); DATA.blend=blend; MKT=mkt;
+    ['ARI','TEX'].forEach(x=>{ delete DATA.mine[x]; delete DATA.gamesim[x]; delete DATA.blend[x]; delete MKT[x]; });  // eliminated — off the projections/edges board
     if(lane2 && DATA.gamesim){ const FLDS=['ws_pct','ws_app_pct','reach_ds_pct','reach_cs_pct'];
       for(const ab in DATA.blend){ const c=DATA.blend[ab], g=DATA.gamesim[ab]; if(!c||!g) continue;
         FLDS.forEach(fl=>{ const cv=num(c[fl]), gv=num(g[fl]);
