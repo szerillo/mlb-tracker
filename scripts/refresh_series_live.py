@@ -28,6 +28,8 @@ SERIES=os.path.join(DATA,"lane2_series.json")    # board feed (we overwrite this
 TPROJ=os.path.join(DATA,"lane2_team_proj.json")  # per-team rotation/pen/offense ranks
 
 AL={'TB','CLE','HOU','NYY','BOS','CWS'}; NL={'MIL','LAD','ATL','SD','CHC','PHI'}
+TEAMAB={139:'TB',114:'CLE',145:'CWS',117:'HOU',147:'NYY',111:'BOS',158:'MIL',119:'LAD',144:'ATL',135:'SD',112:'CHC',143:'PHI',140:'TEX',109:'ARI'}
+SEED={}  # abbr -> seed no (1..6), filled from bracket_dist in main()
 BEST_OF={'F':3,'D':5,'L':7,'W':7}
 ROUND_CODE={'F':'WC','D':'LDS','L':'LCS','W':'WS'}
 ROUND_LABEL={'WC':'Wild Card','LDS':'Division Series','LCS':'Championship Series','WS':'World Series'}
@@ -123,7 +125,7 @@ def build_series(gtype, matchup_key, grid_idx, wins):
     elif bw>aw:    state=f"{B} leads {bw}-{aw}"
     else:          state=f"Series tied {aw}-{aw}"
     return {"round":ROUND_CODE[gtype],"league":"AL" if A in AL else "NL","best_of":bo,"host":A,
-            "a":A,"b":B,"games":gm,"state":state,"live":decided>0,
+            "a":A,"b":B,"seed_a":SEED.get(A),"seed_b":SEED.get(B),"games":gm,"state":state,"live":decided>0,
             "wins":{"a":aw,"b":bw},
             "model":{"p_a":round(pA,4),"ml_a":american(pA),"p_b":round(1-pA,4),"ml_b":american(1-pA),
                      "exact":exact,"spread":{"a_minus_1_5":round(pAsw,4),"b_minus_1_5":round(pBsw,4)}},
@@ -134,6 +136,14 @@ def main():
     if not os.path.exists(GRID):
         print(f"[series_live] no grid at {GRID}; leaving lane2_series.json as-is", file=sys.stderr); return 0
     season=datetime.date.today().year
+    try:
+        bd=json.load(open(os.path.join(DATA,"bracket_dist.json"))).get("bracket_dist") or []
+        if bd:
+            al_ids,nl_ids,_=max(bd,key=lambda x:x[2])
+            for i,tid in enumerate(al_ids): SEED[TEAMAB.get(tid,str(tid))]=i+1
+            for i,tid in enumerate(nl_ids): SEED[TEAMAB.get(tid,str(tid))]=i+1
+    except Exception as e:
+        print(f"[series_live] seed map failed: {e}", file=sys.stderr)
     grid,idx=load_grid()
     state=series_state(season)
     if not state:
