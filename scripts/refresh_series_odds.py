@@ -39,6 +39,11 @@ ENABLE_WS_EXACTA     = False
 # Action Network futures/series endpoint (series ML posts here per round).
 AN_HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.actionnetwork.com/"}
 
+# Kalshi public markets (no auth) — postseason SERIES winner markets live here:
+#   KXMLBSERIES-<YY><AWAY><HOME><ROUND>-<TEAM>  (one binary market per team, yes = that team wins the series)
+# yes_bid/yes_ask are in dollars = implied probability; mid is the market's series win prob.
+KALSHI_SERIES_URL = "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXMLBSERIES&status=open&limit=1000"
+
 
 def _get(url, timeout=25):
     return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=AN_HEADERS), timeout=timeout))
@@ -56,6 +61,11 @@ def _dec(o):
     """American -> decimal payout (bigger = better price for the bettor)."""
     if o is None: return None
     return 1 + (o/100.0 if o > 0 else 100.0/(-o))
+
+def _american(p):
+    """implied prob (0..1) -> American odds."""
+    if p is None or p <= 0 or p >= 1: return None
+    return round(-100*p/(1-p)) if p >= 0.5 else round(100*(1-p)/p)
 
 def _best(cands):
     """cands = [(american, book)]; return (american, book) with the best payout."""
@@ -88,30 +98,39 @@ BOOKS = [("AN", _bk_actionnetwork), ("FanDuel", _bk_fanduel),
          ("DraftKings", _bk_draftkings), ("BetOnline", _bk_betonline)]
 
 def fetch_series_ml(series):
-    """Best price across books per side -> {(league,a,b): {ml_a,ml_b,book}}.
-    LIVE block: polls every book in BOOKS, keeps the best payout for each side and
-    records which book. Books that return nothing (unmapped / market not posted) are
-    simply skipped, so cells stay blank until a real price appears."""
+    """Series moneyline from Kalshi's public KXMLBSERIES winner markets (real market prices).
+    Each active series posts two binary markets (one per team); yes bid/ask in dollars = implied
+    prob, mid = market series win prob. Matched to our (league,a,b) by team abbreviation. Any
+    series whose Kalshi market is not posted yet stays blank."""
     if not ENABLE_SERIES_ML:
         return {}
-    per_book = {}
-    for name, fn in BOOKS:
+    try:
+        data = _get(KALSHI_SERIES_URL)
+    except Exception as e:
+        print(f"[series_odds] Kalshi series-ML fetch failed: {e}", file=sys.stderr)
+        return {}
+    # event_ticker -> {team_abbr: mid_prob}
+    ev = {}
+    for m in data.get("markets", []):
+        tk = m.get("ticker", "")
+        team = tk.split("-")[-1]
         try:
-            per_book[name] = fn(series) or {}
-        except Exception as e:
-            print(f"[series_odds] {name} series-ML fetch failed: {e}", file=sys.stderr)
-            per_book[name] = {}
-    out = {}
-    for s in series:
-        key = (s["league"], s["a"], s["b"])
-        a_cands = [(per_book[nm].get(key, {}).get("a"), nm) for nm, _ in BOOKS]
-        b_cands = [(per_book[nm].get(key, {}).get("b"), nm) for nm, _ in BOOKS]
-        ba, bka = _best(a_cands); bb, bkb = _best(b_cands)
-        if ba is None and bb is None:
+            bid = float(m.get("yes_bid_dollars") or 0); ask = float(m.get("yes_ask_dollars") or 0)
+        except (TypeError, ValueError):
             continue
-        out[key] = {"ml_a": ba, "ml_b": bb, "book": bka or bkb}
+        mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else (bid or ask)
+        if not (0 < mid < 1):
+            continue
+        ev.setdefault(m.get("event_ticker", tk[:-len(team)-1] if team else tk), {})[team] = mid
+    out = {}
+    for s_ in series:
+        a, b = s_["a"], s_["b"]
+        for teams in ev.values():
+            if a in teams and b in teams:
+                out[(s_["league"], a, b)] = {"ml_a": _american(teams[a]),
+                                             "ml_b": _american(teams[b]), "book": "Kalshi"}
+                break
     return out
-
 
 def fetch_correct_score(series):
     """{(league,a,b): {'a-2-0':odds, 'a-2-1':odds, 'b-2-1':odds, 'b-2-0':odds, ...}}"""
@@ -161,7 +180,7 @@ def main():
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Action Network series/futures (series ML); correct-score / spread / exacta pending",
+        "source": "Kalshi KXMLBSERIES (series ML); correct-score / spread / exacta pending",
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA},
         "round": (model or {}).get("round"),
