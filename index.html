@@ -2178,7 +2178,7 @@ body.embed-mode.embed-futures #tab-futures,
   /* ?embed=sbcard — single scoreboard card inside the playoff series embed */
   body.embed-sbcard > header, body.embed-sbcard .hdr-meta { display: none !important; }
   body.embed-sbcard #tab-scoreboard { padding: 0 !important; }
-  body.embed-sbcard .apx-grid.sbcard-grid { grid-template-columns: 1fr !important; margin: 0 !important; gap: 0 !important; }
+  body.embed-mode.embed-sbcard .apx-grid.apx-detailed.sbcard-grid:not(.m-apx-wrap) { grid-template-columns: 1fr !important; margin: 0 !important; gap: 0 !important; }
   body.embed-sbcard .sbcard-grid .apx-card { width: 100% !important; max-width: none !important; padding: 8px 12px !important; box-sizing: border-box; }
   html:has(body.embed-sbcard), body.embed-mode.embed-sbcard { background: transparent !important; }
   body.embed-sbcard #tab-scoreboard, body.embed-sbcard #scoreboard-list, body.embed-sbcard main { background: transparent !important; padding: 0 !important; margin: 0 !important; }

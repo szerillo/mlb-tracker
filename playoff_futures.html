@@ -483,7 +483,7 @@ function seriesRowHTML(s, mkt){
   // sweep: de-vig against the same exact-score set (2-0 prices ARE the -1.5g prices in a bo3)
   const pdvSide=side=>{ if(!exOrder.length||!exOrder.every(q=>exM[q]!=null)) return spM[side+'_minus_1_5']!=null?impAm(spM[side+'_minus_1_5']):null;
     return exOrder.reduce((t,k,i)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=2)?exDv[i]:0);},0); };
-  const sweepBlock = `<div class="stk">${blkHead('Series margin')}
+  const sweepBlock = `<div class="stk">${blkHead('Margin')}
     ${exRow(`${s.a} −1.5g`,spr.a_minus_1_5||0,spM.a_minus_1_5,pdvSide('a'),barColor(s.a))}${exRow(`${s.b} −1.5g`,spr.b_minus_1_5||0,spM.b_minus_1_5,pdvSide('b'),barColor(s.b))}</div>`
     + (()=>{ const bo=s.best_of||3, gM=(mkt&&mkt.games)||{}; const line=gM.line!=null?gM.line:bo-0.5;
         const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
