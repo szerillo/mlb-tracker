@@ -1036,6 +1036,9 @@
   .plus-chip.good b { color: var(--tier-good); }
   .plus-chip.bad   { background: rgba(239, 143, 132, 0.1); color: var(--tier-bad); }
   .plus-chip.bad b  { color: var(--tier-bad); }
+  .apx-series{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;font-size:.7rem;color:var(--muted);margin:1px 0 4px;text-align:center}
+  .apx-series-lbl{font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.03em}
+  .apx-series-proj b{color:var(--text)}
   .proc-badge.good { color: var(--tier-good); } .proc-badge.bad { color: var(--tier-bad); }
   .plus-chip.worst { background: rgba(232, 93, 82, 0.13); color: var(--tier-worst); }
   .plus-chip.worst b { color: var(--tier-worst); }
@@ -2172,6 +2175,11 @@ body.embed-mode.embed-futures #tab-futures,
   /* Embeds: attribution is already in the top brand header (hdr-built) — hide
      the footer byline so "Built by @SeanZerillo" isn't shown twice. */
   body.embed-mode > footer { display: none !important; }
+  /* ?embed=sbcard — single scoreboard card inside the playoff series embed */
+  body.embed-sbcard > header, body.embed-sbcard .hdr-meta { display: none !important; }
+  body.embed-sbcard #tab-scoreboard { padding: 0 !important; }
+  body.embed-sbcard .sbcard-grid { grid-template-columns: 1fr !important; margin: 0 !important; }
+
   body.embed-mode .footer-detail { display: none !important; }
   /* Embeds: force LINEUPS and BULLPENS to stack (full info needs full width). */
   body.embed-mode .m-lineup-grid,
@@ -2435,7 +2443,7 @@ body.embed-mode.embed-futures #tab-futures,
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  <script>(function(){try{var p=new URLSearchParams(location.search);var e=p.get('embed');if(!e)return;document.body.classList.add('embed-mode','embed-'+e);if(p.get('mobile')==='1'||p.get('m')==='1')document.body.classList.add('force-mobile');var m=p.get('market');if(m){m=m.replace(/[^A-Za-z0-9_-]/g,'');var s=document.createElement('style');s.textContent='#tab-player-futures .pf-section{display:none!important}#tab-player-futures #pf-'+m+'{display:block!important}';(document.head||document.documentElement).appendChild(s);}}catch(_){}})();</script>
+  <script>(function(){try{var p=new URLSearchParams(location.search);var e=p.get('embed');if(!e)return;document.body.classList.add('embed-mode','embed-'+e);if(e==='sbcard'){window.SB_ONLY_PK=p.get('pk');document.body.classList.add('embed-scoreboard');}if(p.get('mobile')==='1'||p.get('m')==='1')document.body.classList.add('force-mobile');var m=p.get('market');if(m){m=m.replace(/[^A-Za-z0-9_-]/g,'');var s=document.createElement('style');s.textContent='#tab-player-futures .pf-section{display:none!important}#tab-player-futures #pf-'+m+'{display:block!important}';(document.head||document.documentElement).appendChild(s);}}catch(_){}})();</script>
 
 <header>
   <div class="brand">
@@ -3555,6 +3563,35 @@ function _apxEdgeBar(g){
   return '<div class="apx-edgebar">'+ml+tot+'</div>';
 }
 
+
+// ── Postseason: series label + Game Sim series projection on each game card ──
+let PO_SERIES = null;
+async function loadPOSeries(){
+  try { PO_SERIES = await fetchJSON('data/lane2_series.json?t=' + Date.now()); } catch (e) { PO_SERIES = null; }
+}
+function _isPostseason(g){ return !!(g && ['F','D','L','W'].includes(g.gameType)); }
+const _PO_AB = {CHW:'CWS', SDP:'SD', TBR:'TB', KCR:'KC', SFG:'SF', WSN:'WSH', AZ:'ARI'};
+function _poAb(g, side){ const t = g.teams[side].team; const a = t.abbreviation || teamAbbr(t.name); return _PO_AB[a] || a; }
+function poSeriesStripHTML(g){
+  if (!_isPostseason(g)) return '';
+  const ss = g.seriesStatus || {};
+  const round = (g.seriesDescription || ss.description || ss.shortDescription || 'Postseason').replace(/ Game \d+$/,'');
+  const gn = g.seriesGameNumber || ss.gameNumber || null;
+  let res = (ss.result || '').trim();
+  if (/tied 0-0/i.test(res)) res = '';
+  const lbl = [round.replace(/ Series$/,''), gn ? ('Game ' + gn) : '', res].filter(Boolean).join(' · ');
+  let proj = '';
+  try {
+    const A = _poAb(g,'away'), H = _poAb(g,'home');
+    const s = PO_SERIES && (PO_SERIES.series || []).find(x => (x.a===A && x.b===H) || (x.a===H && x.b===A));
+    if (s && s.model) {
+      const favA = s.model.p_a >= 0.5, fav = favA ? s.a : s.b, p = favA ? s.model.p_a : s.model.p_b, ml = favA ? s.model.ml_a : s.model.ml_b;
+      proj = ' <span class="apx-series-proj">Series: <b>' + fav + ' ' + (p*100).toFixed(1) + '%</b> (' + (ml>0?'+':'') + ml + ')</span>';
+    }
+  } catch (e) {}
+  return '<div class="apx-series"><span class="apx-series-lbl">' + lbl + '</span>' + proj + '</div>';
+}
+
 function apxCardHTML(g, opts){
   const away=g.teams.away.team.name, home=g.teams.home.team.name;
   const aAb=g.teams.away.team.abbreviation||teamAbbr(away);
@@ -3577,7 +3614,7 @@ function apxCardHTML(g, opts){
   const luChip = isFinal ? wpChip : (luStatus==='conf' ? '<span class="apx-lu conf">&#10003; Confirmed</span>' : '<span class="apx-lu proj">&#9733; Projected</span>');
   let _park=''; try{ const _pa=(typeof hostParkAbbr==='function')?hostParkAbbr(g):hAb; _park=(g.venue&&g.venue.name)|| ((typeof parkFactorFor==='function'&&parkFactorFor(_pa))?parkFactorFor(_pa).venue:'') || ''; }catch(e){}
   const _timeTxt=(isFinal?status:fmtTime(g.gameDate).replace(/ [AP]M/,''));
-  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span></div>';
+  const head='<div class="apx-head2"><span class="apx-hspace"></span><span class="apx-time2"><span class="apx-park-nm">'+(_park?(_park+' · '):'')+'</span>'+_timeTxt+'</span></div>'+poSeriesStripHTML(g);
   // Park factor keys off the HOST park, not the nominal home club — for the ASG
   // the "home team" is the NL All-Stars, which maps to no stadium, so the PF chip
   // read "—". hostParkAbbr() resolves it to the actual venue (CBP -> PHI).
@@ -3853,7 +3890,7 @@ async function bootShotMode(params){
   document.body.classList.add('embed-mode','embed-scoreboard','shot-mode');
   if(params.get('mobile')==='1'||params.get('m')==='1') document.body.classList.add('force-mobile');
   const reqDate=params.get('date');
-  try{ await loadForDate(reqDate||today()); }catch(e){ console.error('shot load failed',e); }
+  try{ await loadForDate(reqDate||await nextSlateDate(today())); }catch(e){ console.error('shot load failed',e); }
   try{ await loadSheetProjections(); }catch(e){}
   const pk=params.get('pk'); const matchup=(params.get('matchup')||'').toUpperCase();
   let game=null;
@@ -3866,6 +3903,14 @@ async function bootShotMode(params){
 
 function renderScoreboard(){
   const el=document.getElementById("scoreboard-list");
+  // ?embed=sbcard&pk=… : one game card only (used inside the playoff series embed)
+  if(window.SB_ONLY_PK){
+    const one=CURRENT_GAMES.filter(x=>String(x.gamePk)===String(window.SB_ONLY_PK));
+    if(!one.length){ el.innerHTML='<div class="empty">Game not on the board yet.</div>'; return; }
+    el.innerHTML='<div class="apx-grid sbcard-grid" id="apx-grid">'+one.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>';
+    el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=()=>{ const g=CURRENT_GAMES.find(x=>x.gamePk===parseInt(c.dataset.pk,10)); if(g)openModal(g); }; });
+    return;
+  }
   if(!CURRENT_GAMES.length){ el.innerHTML='<div class="empty">No games scheduled today.</div>'; return; }
   const f5seg='<div class="apx-modeseg" id="apx-modeseg" role="tablist" aria-label="Scoreboard view">'+
       '<button class="apx-modeseg-btn'+(!FIVE_MODE?' active':'')+'" data-f5="0" role="tab" aria-selected="'+(!FIVE_MODE)+'">Full Game</button>'+
@@ -4448,7 +4493,7 @@ function fatigueBreakdown(days, format="days", labels=null) {
 // MLB API
 // ============================================================================
 async function getSchedule(date) {
-  const d = await fetchJSON(`${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season))`);
+  const d = await fetchJSON(`${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season)),seriesStatus`);
   return d.dates?.[0]?.games || [];
 }
 // One-shot fetch for game live data: officials, battingOrder for both sides,
@@ -4634,7 +4679,17 @@ function umpAtRotationOffset(officials, totalOffset) {
 // ============================================================================
 let VIEW_DATE = null;
 
-async function loadToday() { return loadForDate(today()); }
+// Off days (e.g. the day between the regular season and the Wild Card round) roll the
+// tool forward to the next date that actually has games; explicit date picks are untouched.
+async function nextSlateDate(start) {
+  const s0 = start || today(); let d = s0;
+  for (let i = 0; i < 7; i++) {
+    try { const gs = await getSchedule(d); if (gs && gs.length) return d; } catch (e) { return s0; }
+    d = addDays(d, 1);
+  }
+  return s0;
+}
+async function loadToday() { return loadForDate(await nextSlateDate(today())); }
 
 async function loadForDate(date) {
   VIEW_DATE = date;
@@ -4651,6 +4706,7 @@ async function loadForDate(date) {
   loadSheetProjections().then(() => { try { if (typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
   // F5 (first-5) projections + odds, also in the background.
   if (typeof loadF5 === 'function') { loadF5().catch(() => {}); }
+  loadPOSeries().then(() => { try { if (CURRENT_GAMES && CURRENT_GAMES.some(_isPostseason) && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
   // Load the team list up front so team-rank grades (OFF/DEF/BSR) match the
   // Rankings tab and populate on the scoreboard; re-render when ready.
   if (typeof fetchAllTeams === 'function') { fetchAllTeams().then(() => { try { if (typeof _ensureTeamRankGrades === 'function') _ensureTeamRankGrades(); if (typeof CURRENT_GAMES !== 'undefined' && CURRENT_GAMES && CURRENT_GAMES.length && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {}); }
@@ -7016,7 +7072,7 @@ function renderSPStatRows(s, thr) {
   var wfipRaw = s.unified_score;
   var pz = (typeof s.proc_z === 'number') ? s.proc_z : null;
   var wfipAdj = (typeof s.unified_adj === 'number' && s.unified_adj < 10) ? s.unified_adj : null;
-  var wfipHead = (wfipAdj != null) ? wfipAdj : wfipRaw;
+  var wfipHead = wfipRaw;   // display = Rankings wFIP; process adj stays inside the run projection only
   var wfipPill = "";
   if (wfipHead != null && wfipHead < 10) {
     var wfipBands = thr.wfip || {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75};
@@ -7528,7 +7584,7 @@ function renderSPBox(name, teamAbbrStr) {
       ${(() => {
         const raw=s.unified_score, pz=(typeof s.proc_z==='number')?s.proc_z:null;
         const adj=(typeof s.unified_adj==='number'&&s.unified_adj<10)?s.unified_adj:null;
-        const w=(adj!=null)?adj:raw; if(w==null||w>=10) return '';
+        const w=raw; if(w==null||w>=10) return '';
         const wb=(thr.wfip||{elite:3.25,good:3.75,bad:4.25,worst:4.75}); const wc=tier(w,wb,false);
         const lab='wFIP';
         const bdg=false?('<span class="proc-badge '+(pz>0?'good':'bad')+'" style="margin-left:3px;font-weight:800;">'+(pz>0?'▲':'▼')+'</span>'):'';
@@ -8136,6 +8192,19 @@ function renderRankingsTab() {
 //   SP Rank: 20% each xFIP / SIERA / xERA / botERA / K-BB% · starters only
 //   Bullpen Rank: team avg of same 5 metrics · non-starters only
 // Each cache keyed by normalized name (SP) or team abbr (bullpen).
+// Shared SP eligibility for the season wFIP ranking. Used by BOTH the Rankings
+// page and the rank chips on pitcher profiles / modals / scoreboard so the
+// number and the rank always agree with the Rankings table.
+function _spSeasonEligible(k, s) {
+  if (!isStarter(k)) return false;
+  if (typeof isOpener === 'function' && isOpener(k)) return false;
+  const ip = s.ip || 0, gs = s.gs || 0;
+  if (ip < 10) return false;
+  if (gs >= 1 && (gs < 3 || (ip / gs) < 3.5)) return false;
+  const present = [rollComp(s, 'xfip'), rollComp(s, 'siera'), s.xera, s.bot_era, s.k_bb_pct, s.fip_proj]
+    .filter(v => v != null).length;
+  return present >= 3;
+}
 let SP_RANK_CACHE = null;      // { byKey: Map<normName, {rank, total}>, total: N }
 let BP_RANK_CACHE = null;      // { byAbbr: Map<abbr, {rank, total}>, total: N }
 
@@ -8164,11 +8233,7 @@ function computeSPRanks() {
   // chip can show a deeper rank (more arms in pool), but at least it never blanks.
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
-    if (!isStarter(k)) return;
-    if (isOpener(k)) return;
-    const present = [rollComp(s, 'xfip'), rollComp(s, 'siera'), s.xera, s.bot_era, s.k_bb_pct]
-      .filter(v => v != null).length;
-    if (present < 3) return;
+    if (!_spSeasonEligible(k, s)) return;   // identical gate to the Rankings page (Sean 9/29)
     pool.push({ key: k, wfip: s.unified_score });
   });
   if (!pool.length) return { byKey: new Map(), total: 0 };
@@ -8569,14 +8634,8 @@ function renderSPRankings(pitchers, nameToTeam) {
     // additionally require GS≥3 and IP/GS≥3.5 to knock out openers. When GS
     // is null (FG dump omitted it), trust isStarter() alone.
     Object.entries(pitchers).forEach(([k, s]) => {
-      if (!isStarter(k)) return;
+      if (!_spSeasonEligible(k, s)) return;
       const ip = s.ip || 0;
-      const gs = s.gs || 0;
-      if (ip < 10) return;
-      if (gs >= 1) {
-        if (gs < 3) return;
-        if ((ip / gs) < 3.5) return;
-      }
       const metrics = {
         xfip: rollComp(s, 'xfip'),
         siera: rollComp(s, 'siera'),
@@ -10945,7 +11004,7 @@ document.querySelectorAll(".lu-view-btn").forEach(btn => {
 // ============================================================================
 // LIFECYCLE
 // ============================================================================
-document.getElementById("todayBtn").onclick    = () => loadForDate(today());
+document.getElementById("todayBtn").onclick    = () => loadToday();
 document.getElementById("prevDayBtn").onclick  = () => loadForDate(addDays(VIEW_DATE || today(), -1));
 document.getElementById("nextDayBtn").onclick  = () => loadForDate(addDays(VIEW_DATE || today(), 1));
 document.getElementById("refreshBtn").onclick  = () => loadForDate(VIEW_DATE || today());

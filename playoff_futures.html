@@ -138,6 +138,7 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .scell .sk{font-size:.56rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em}
 .scell.edge.pos{color:#39d98a;font-weight:700}.scell.edge.neg{color:#f0616d}.scell.edge.flat{color:#8b96a5}
 .star{color:#f5c451;font-size:.62rem}
+.sbgame{margin:8px -4px 2px}.sbgame iframe{width:100%;border:0;display:block;height:150px;border-radius:8px;background:transparent}
 .sdet{margin-top:8px;border-top:1px dashed #232a34;padding-top:4px}
 .sdet summary{cursor:pointer;font-size:.68rem;color:#8b96a5;text-transform:uppercase;letter-spacing:.03em;padding:3px 0;list-style:none}
 .sdet summary::-webkit-details-marker{display:none}
@@ -168,6 +169,7 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .exr.gr{grid-template-columns:1fr auto auto}
 .grc{min-width:36px;text-align:right;color:#e6edf3;font-weight:700}
 .grh .grc{color:#8b96a5;font-weight:700;font-size:.66rem}
+.srcplain{font-weight:400;color:#8b96a5;font-size:.85em}
 .srcpill{margin-left:6px;font-size:.6rem;font-weight:700;color:#0d1117;background:#5eead4;border-radius:4px;padding:1px 6px;vertical-align:1px}
 .pohdr{display:none;margin:0 2px 12px;padding-bottom:9px;border-bottom:1px solid #242e3a}
 body.view-series .pohdr,body.view-bracket .pohdr,body.view-edges .pohdr{display:block}
@@ -384,6 +386,43 @@ function fit(){ try{ if(window.frameElement) window.frameElement.style.height=(d
 // ── current-round series board + WS exacta ─────────────────────────────────
 const impAm=o=>o==null?null:(o<0?(-o)/((-o)+100):100/(o+100));   // American -> implied prob (0..1)
 const devig2=(oa,ob)=>{ const a=impAm(oa),b=impAm(ob); if(a==null||b==null) return [null,null]; const s=a+b; return [a/s,b/s]; };
+
+// ── Series embed only: today's (or the next) game card from the live scoreboard ──
+// Same rollover rule as the scoreboard: a game stays up all of its ET calendar day
+// (live and final), then the card moves to the series' next scheduled game.
+const SB_BASE=(location.protocol==='file:'?'https://mlb-tracker-256.pages.dev/':'');
+const _PO_TMAP={CHW:'CWS',SDP:'SD',TBR:'TB',KCR:'KC',SFG:'SF',WSN:'WSH',AZ:'ARI',ATH:'ATH'};
+function etToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function isSeriesEmbed(){ return document.body.classList.contains('view-series'); }
+async function loadPOGames(){
+  if(!isSeriesEmbed()) return;
+  try{
+    const t=etToday(), e=new Date(Date.now()+12*864e5).toISOString().slice(0,10);
+    const r=await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameType=F,D,L,W&startDate=${t}&endDate=${e}&hydrate=team`);
+    const j=await r.json(); const out=[];
+    (j.dates||[]).forEach(d=>(d.games||[]).forEach(g=>{
+      const ab=x=>{const a=(x.team.abbreviation||'').toUpperCase(); return _PO_TMAP[a]||a;};
+      out.push({pk:g.gamePk,date:g.officialDate||d.date,a:ab(g.teams.away),h:ab(g.teams.home),n:g.seriesGameNumber||null,status:(g.status||{}).abstractGameState,det:(g.status||{}).detailedState||''});
+    }));
+    window.__poGames=out;
+  }catch(err){ window.__poGames=[]; }
+}
+function nextGameFor(s){
+  const L=window.__poGames||[]; const t=etToday();
+  const V=x=>(_PO_TMAP[x]||x);
+  const pair=[V(s.a),V(s.b)];
+  return L.filter(g=>g.date>=t && !/cancel/i.test(g.det||'') && pair.includes(g.a) && pair.includes(g.h)).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:(x.n||0)-(y.n||0))[0]||null;
+}
+function sbGameSlot(s){
+  if(!isSeriesEmbed()) return '';
+  const g=nextGameFor(s); if(!g) return '';
+  return `<div class="sbgame"><iframe loading="lazy" scrolling="no" title="${s.b} at ${s.a} game card" data-pk="${g.pk}" src="${SB_BASE}index.html?embed=sbcard&pk=${g.pk}&date=${g.date}"></iframe></div>`;
+}
+// size each card iframe from the scoreboard's own resize messages
+addEventListener('message',ev=>{
+  const d=ev.data; if(!d||d.type!=='mlb-tracker-resize'||!d.height) return;
+  document.querySelectorAll('.sbgame iframe').forEach(f=>{ if(f.contentWindow===ev.source){ f.style.height=Math.min(Math.max(d.height,90),2600)+'px'; requestAnimationFrame(fit); } });
+});
 function seriesRowHTML(s, mkt){
   const m=s.model, host=s.host;
   const mml_a=mkt?mkt.ml_a:null, mml_b=mkt?mkt.ml_b:null;
@@ -423,7 +462,12 @@ function seriesRowHTML(s, mkt){
   const exactBlock = exOrder.length ? `<div class="stk"><div class="stkh">Exact result <span class="stkk">model% · fair${(mkt&&mkt.exact)?' · mkt':''}</span></div>
     ${exOrder.map(k=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k]);}).join('')}</div>` : '';
   const sweepBlock = `<div class="stk"><div class="stkh">Series margin <span class="stkk">model% · fair${(mkt&&mkt.spread)?' · mkt':''}</span></div>
-    ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`;
+    ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`
+    + (()=>{ const bo=s.best_of||3, gM=(mkt&&mkt.games)||{}; const line=gM.line!=null?gM.line:bo-0.5;
+        const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
+        if(!exOrder.length) return '';
+        return `<div class="stk"><div class="stkh">Total games <span class="stkk">model% · fair${mkt&&mkt.games?' · mkt':''}</span></div>
+          ${exRow(`Over ${line} games`,pOver,gM.over)}${exRow(`Under ${line} games`,1-pOver,gM.under)}</div>`; })();
   const details = `<details class="sdet"><summary>Series props</summary>
     ${exactBlock}
     ${sweepBlock}
@@ -433,6 +477,7 @@ function seriesRowHTML(s, mkt){
     <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
     ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA)}
     ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
+    ${sbGameSlot(s)}
     ${details}
   </div>`;
 }
@@ -445,7 +490,7 @@ function renderSeries(isEdges){
   const mk=(s)=>od.find(o=>o.league===s.league&&o.a===s.a&&o.b===s.b)||null;
   const hasMkt=od.some(o=>o.ml_a!=null);
   el.style.display='block';
-  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b><span class="srcpill">Game Sim</span></div>
+  el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b> <span class="srcplain">(Game Sim)</span></div>
     <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');})()}</div>`;
   fit();
 }
@@ -488,6 +533,7 @@ async function load(){
       fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     window.__series=series; window.__sodds=sodds;
+    await loadPOGames();
     const blend={},mkt={};
     // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
     // season-sim base. Used for BOTH v2 (BARTOLO, lane 1) and the native game-sim
