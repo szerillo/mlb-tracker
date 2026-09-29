@@ -2178,7 +2178,10 @@ body.embed-mode.embed-futures #tab-futures,
   /* ?embed=sbcard — single scoreboard card inside the playoff series embed */
   body.embed-sbcard > header, body.embed-sbcard .hdr-meta { display: none !important; }
   body.embed-sbcard #tab-scoreboard { padding: 0 !important; }
-  body.embed-sbcard .sbcard-grid { grid-template-columns: 1fr !important; margin: 0 !important; }
+  body.embed-sbcard .apx-grid.sbcard-grid { grid-template-columns: 1fr !important; margin: 0 !important; gap: 0 !important; }
+  body.embed-sbcard .sbcard-grid .apx-card { width: 100% !important; max-width: none !important; padding: 8px 12px !important; box-sizing: border-box; }
+  html:has(body.embed-sbcard), body.embed-mode.embed-sbcard { background: transparent !important; }
+  body.embed-sbcard #tab-scoreboard, body.embed-sbcard #scoreboard-list, body.embed-sbcard main { background: transparent !important; padding: 0 !important; margin: 0 !important; }
 
   body.embed-mode .footer-detail { display: none !important; }
   /* Embeds: force LINEUPS and BULLPENS to stack (full info needs full width). */
@@ -3907,7 +3910,7 @@ function renderScoreboard(){
   if(window.SB_ONLY_PK){
     const one=CURRENT_GAMES.filter(x=>String(x.gamePk)===String(window.SB_ONLY_PK));
     if(!one.length){ el.innerHTML='<div class="empty">Game not on the board yet.</div>'; return; }
-    el.innerHTML='<div class="apx-grid sbcard-grid" id="apx-grid">'+one.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>';
+    el.innerHTML='<div class="apx-grid apx-detailed sbcard-grid" id="apx-grid">'+one.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join('')+'</div>';
     el.querySelectorAll(".apx-card.sb-clickable").forEach(c=>{ c.onclick=()=>{ const g=CURRENT_GAMES.find(x=>x.gamePk===parseInt(c.dataset.pk,10)); if(g)openModal(g); }; });
     return;
   }
@@ -11060,7 +11063,8 @@ document.addEventListener("click", hitTrendDelegate);
     let bottom = 0;
     const cands = [
       document.querySelector('.modal-bg.active'),
-      document.querySelector('body.embed-mode > footer')
+      document.querySelector('body.embed-mode > footer'),
+      document.querySelector('body.embed-sbcard #scoreboard-list')
     ];
     for (const el of cands) {
       if (!el) continue;

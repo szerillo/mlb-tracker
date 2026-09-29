@@ -139,6 +139,7 @@ body.view-series-one .scardgrid>*:nth-child(n+2){display:none}
 .scell.edge.pos{color:#39d98a;font-weight:700}.scell.edge.neg{color:#f0616d}.scell.edge.flat{color:#8b96a5}
 .star{color:#f5c451;font-size:.62rem}
 .sbgame{margin:8px -4px 2px}.sbgame iframe{width:100%;border:0;display:block;height:150px;border-radius:8px;background:transparent}
+.prow{margin:2px 0}.prow .plab{font-size:.72rem;color:#cdd6e0;white-space:nowrap}.prowh{margin:0 0 2px}.prowh .ph{font-size:.56rem;color:#6a7480;text-transform:uppercase;letter-spacing:.03em}.prow .sbarwrap{height:14px}
 .sdet{margin-top:8px;border-top:1px dashed #232a34;padding-top:4px}
 .sdet summary{cursor:pointer;font-size:.68rem;color:#8b96a5;text-transform:uppercase;letter-spacing:.03em;padding:3px 0;list-style:none}
 .sdet summary::-webkit-details-marker{display:none}
@@ -426,7 +427,10 @@ addEventListener('message',ev=>{
 function seriesRowHTML(s, mkt){
   const m=s.model, host=s.host;
   const mml_a=mkt?mkt.ml_a:null, mml_b=mkt?mkt.ml_b:null;
-  const [dva,dvb]=devig2(mml_a,mml_b);           // devigged market implied
+  // Market prices are real BUY prices (ask / 1-bid, fee in) when series_odds.price_type==='buy':
+  // compare the model straight to what it costs to back each side (no de-vig -> each side has its own edge).
+  const BUY=!!(window.__sodds&&window.__sodds.price_type==='buy');
+  const [dva,dvb]=BUY?[impAm(mml_a),impAm(mml_b)]:devig2(mml_a,mml_b);
   const line=(ab,seed,p,fairAm,mml,dv,isFav)=>{
     const edge = dv!=null ? (p*100 - dv*100) : null;
     const ecls = edge==null?'flat':(edge>=3?'pos':(edge<=-3?'neg':'flat'));
@@ -457,17 +461,36 @@ function seriesRowHTML(s, mkt){
   const gradesBlock=(ga&&gb)?`<div class="stk"><div class="stkh">Team grades <span class="stkk">bullpen #${pjx.a.pen_rank}/#${pjx.b.pen_rank} of ${pjx.n}</span></div>
     <div class="exr gr grh"><span class="exrl"></span><span class="grc">${s.a}</span><span class="grc">${s.b}</span></div>
     ${gradeRow('Contact',ga.con,gb.con)}${gradeRow('Power',ga.pow,gb.pow)}${gradeRow('Eye',ga.eye,gb.eye)}${gradeRow('Baserun',ga.bsr,gb.bsr)}${gradeRow('Defense',ga['def'],gb['def'])}</div>`:'';
-  const exRow=(lab,p,mk)=>`<div class="exr"><span class="exrl">${lab}</span><span class="exrp">${(p*100).toFixed(0)}%</span><span class="exro">${fmtAm(pctToAmerican(p*100))}</span><span class="exrm">${mk!=null?fmtAm(mk):''}</span></div>`;
+  // Props rows share the series-ML row grid (label · model bar · Fair · Mkt · Edge) so the
+  // columns sit directly under the series pricing. Market % is de-vigged within each block.
+  const dvSet=(ams)=>{ if(BUY) return ams.map(o=>o==null?null:impAm(o)); const ps=ams.map(impAm); if(ps.some(x=>x==null)) return ams.map(o=>o==null?null:impAm(o)); const t=ps.reduce((x,y)=>x+y,0); return ps.map(x=>x/t); };
+  const exRow=(lab,p,mk,pdv,col)=>{
+    const ed=(pdv!=null)?(p-pdv)*100:null;
+    const ec=ed==null?'':(ed>=1?'pos':(ed<=-1?'neg':'flat'));
+    const etx=ed==null?'<span class="dash">—</span>':((ed>0?'+':'')+ed.toFixed(1)+'%');
+    return `<div class="srow prow"><div class="steam plab">${lab}</div>
+      <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${col||'#3b4656'}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
+      <div class="scell">${fmtAm(pctToAmerican(p*100))}</div>
+      <div class="scell">${mk!=null?fmtAm(mk):'<span class="dash">—</span>'}</div>
+      <div class="scell edge ${ec}">${etx}</div></div>`;
+  };
+  const blkHead=(t)=>`<div class="srow prowh"><div class="steam plab ph">${t}</div><div class="ph" style="text-align:left">Model</div><div class="scell"><div class="sk">Fair</div></div><div class="scell"><div class="sk">Mkt</div></div><div class="scell"><div class="sk">Edge</div></div></div>`;
   const exM=(mkt&&mkt.exact)||{}, spM=(mkt&&mkt.spread)||{};
-  const exactBlock = exOrder.length ? `<div class="stk"><div class="stkh">Exact result <span class="stkk">model% · fair${(mkt&&mkt.exact)?' · mkt':''}</span></div>
-    ${exOrder.map(k=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k]);}).join('')}</div>` : '';
-  const sweepBlock = `<div class="stk"><div class="stkh">Series margin <span class="stkk">model% · fair${(mkt&&mkt.spread)?' · mkt':''}</span></div>
-    ${exRow(`${s.a} sweep (−1.5g)`,spr.a_minus_1_5||0,spM.a_minus_1_5)}${exRow(`${s.b} sweep (−1.5g)`,spr.b_minus_1_5||0,spM.b_minus_1_5)}</div>`
+  const colOf=k=>barColor(k.startsWith('a')?s.a:s.b);
+  const exDv=dvSet(exOrder.map(k=>exM[k]));
+  const exactBlock = exOrder.length ? `<div class="stk">${blkHead('Exact result')}
+    ${exOrder.map((k,i)=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k],(exM[k]!=null&&exOrder.every(q=>exM[q]!=null))?exDv[i]:(exM[k]!=null?impAm(exM[k]):null),colOf(k));}).join('')}</div>` : '';
+  // sweep: de-vig against the same exact-score set (2-0 prices ARE the -1.5g prices in a bo3)
+  const pdvSide=side=>{ if(!exOrder.length||!exOrder.every(q=>exM[q]!=null)) return spM[side+'_minus_1_5']!=null?impAm(spM[side+'_minus_1_5']):null;
+    return exOrder.reduce((t,k,i)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=2)?exDv[i]:0);},0); };
+  const sweepBlock = `<div class="stk">${blkHead('Series margin')}
+    ${exRow(`${s.a} −1.5g`,spr.a_minus_1_5||0,spM.a_minus_1_5,pdvSide('a'),barColor(s.a))}${exRow(`${s.b} −1.5g`,spr.b_minus_1_5||0,spM.b_minus_1_5,pdvSide('b'),barColor(s.b))}</div>`
     + (()=>{ const bo=s.best_of||3, gM=(mkt&&mkt.games)||{}; const line=gM.line!=null?gM.line:bo-0.5;
         const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
         if(!exOrder.length) return '';
-        return `<div class="stk"><div class="stkh">Total games <span class="stkk">model% · fair${mkt&&mkt.games?' · mkt':''}</span></div>
-          ${exRow(`Over ${line} games`,pOver,gM.over)}${exRow(`Under ${line} games`,1-pOver,gM.under)}</div>`; })();
+        const [dO,dU]=BUY?[impAm(gM.over),impAm(gM.under)]:devig2(gM.over,gM.under);
+        return `<div class="stk">${blkHead('Total games')}
+          ${exRow(`Over ${line}`,pOver,gM.over,dO)}${exRow(`Under ${line}`,1-pOver,gM.under,dU)}</div>`; })();
   const details = `<details class="sdet"><summary>Series props</summary>
     ${exactBlock}
     ${sweepBlock}
