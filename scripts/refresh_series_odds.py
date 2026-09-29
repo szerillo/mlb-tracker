@@ -62,10 +62,34 @@ def _kalshi(series_ticker):
             bid = float(m.get("yes_bid_dollars") or 0); ask = float(m.get("yes_ask_dollars") or 0)
         except (TypeError, ValueError):
             continue
+        m["_bid"], m["_ask"] = bid, ask
         mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else (bid or ask)
         if 0 < mid < 1:
             out.append((m, mid))
     return out
+
+
+FEE = 0.07   # Kalshi taker fee coefficient: fee per contract = 0.07 * p * (1 - p)
+
+def _cost(p):
+    """What it actually costs to BUY a contract at price p (dollars), fee included, as a prob."""
+    if p is None or p <= 0 or p >= 1:
+        return None
+    return min(p + FEE * p * (1 - p), 0.995)
+
+def _buy_yes(m):
+    """Cost to back YES = the yes ask (+fee). None when nobody is offering."""
+    a = m.get("_ask") or 0
+    return _cost(a) if 0 < a < 1 else None
+
+def _buy_no(m):
+    """Cost to back NO = 1 - yes bid (+fee)."""
+    b = m.get("_bid") or 0
+    return _cost(1 - b) if 0 < b < 1 else None
+
+def _best_cost(*cs):
+    cs = [c for c in cs if c is not None]
+    return min(cs) if cs else None
 
 
 def _event_code(m):
@@ -138,37 +162,25 @@ BOOKS = [("AN", _bk_actionnetwork), ("FanDuel", _bk_fanduel),
          ("DraftKings", _bk_draftkings), ("BetOnline", _bk_betonline)]
 
 def fetch_series_ml(series):
-    """Series moneyline from Kalshi's public KXMLBSERIES winner markets (real market prices).
-    Each active series posts two binary markets (one per team); yes bid/ask in dollars = implied
-    prob, mid = market series win prob. Matched to our (league,a,b) by team abbreviation. Any
-    series whose Kalshi market is not posted yet stays blank."""
+    """Series moneyline from Kalshi KXMLBSERIES. Each series posts TWO binaries (one per team).
+    Price shown for each side = the cheapest way to actually back it, fee included:
+        back A = min( A yes-ask , 1 - B yes-bid )   (buy A yes, or buy B no)
+    so each side carries its own real price (and the spread/fee), not a mirrored midpoint."""
     if not ENABLE_SERIES_ML:
         return {}
-    try:
-        data = _get(KALSHI_SERIES_URL)
-    except Exception as e:
-        print(f"[series_odds] Kalshi series-ML fetch failed: {e}", file=sys.stderr)
-        return {}
-    # event_ticker -> {team_abbr: mid_prob}
     ev = {}
-    for m in data.get("markets", []):
-        tk = m.get("ticker", "")
-        team = tk.split("-")[-1]
-        try:
-            bid = float(m.get("yes_bid_dollars") or 0); ask = float(m.get("yes_ask_dollars") or 0)
-        except (TypeError, ValueError):
-            continue
-        mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else (bid or ask)
-        if not (0 < mid < 1):
-            continue
-        ev.setdefault(m.get("event_ticker", tk[:-len(team)-1] if team else tk), {})[team] = mid
+    for m, mid in _kalshi("KXMLBSERIES"):
+        team = KALSHI_AB.get(m.get("ticker", "").split("-")[-1], m.get("ticker", "").split("-")[-1])
+        ev.setdefault(_event_code(m), {})[team] = m
     out = {}
     for s_ in series:
         a, b = s_["a"], s_["b"]
         for teams in ev.values():
             if a in teams and b in teams:
-                out[(s_["league"], a, b)] = {"ml_a": _american(teams[a]),
-                                             "ml_b": _american(teams[b]), "book": "Kalshi"}
+                ma, mb = teams[a], teams[b]
+                ca = _best_cost(_buy_yes(ma), _buy_no(mb))
+                cb = _best_cost(_buy_yes(mb), _buy_no(ma))
+                out[(s_["league"], a, b)] = {"ml_a": _american(ca), "ml_b": _american(cb), "book": "Kalshi"}
                 break
     return out
 
@@ -186,8 +198,9 @@ def fetch_correct_score(series):
         suf = m.get("ticker", "").split("-")[-1]
         team, w, l = KALSHI_AB.get(suf[:-2], suf[:-2]), suf[-2], suf[-1]
         side = "a" if team == s_["a"] else ("b" if team == s_["b"] else None)
-        if side and w.isdigit() and l.isdigit():
-            _EXACT_PROB.setdefault((s_["league"], s_["a"], s_["b"]), {})[f"{side}-{w}-{l}"] = mid
+        c = _buy_yes(m)
+        if side and w.isdigit() and l.isdigit() and c is not None:
+            _EXACT_PROB.setdefault((s_["league"], s_["a"], s_["b"]), {})[f"{side}-{w}-{l}"] = c
     return {k: {kk: _american(p) for kk, p in v.items()} for k, v in _EXACT_PROB.items()}
 
 
@@ -201,7 +214,7 @@ def fetch_spread(series):
         d = {}
         for side in ("a", "b"):
             p = sum(v for k, v in ex.items() if k.startswith(side + "-") and int(k.split("-")[1]) - int(k.split("-")[2]) >= 2)
-            if p > 0:
+            if p > 0:   # bo3: exactly the 2-0 contract's cost; bo5+: sum of the qualifying contracts' costs
                 d[f"{side}_minus_1_5"] = _american(min(p, 0.99))
         if d:
             out[key] = d
@@ -219,7 +232,7 @@ def fetch_games_ou(series):
             continue
         n = m.get("ticker", "").split("-")[-1]
         line = (int(n) - 0.5) if n.isdigit() else m.get("floor_strike")
-        out[(s_["league"], s_["a"], s_["b"])] = {"line": line, "over": _american(mid), "under": _american(1 - mid)}
+        out[(s_["league"], s_["a"], s_["b"])] = {"line": line, "over": _american(_buy_yes(m)), "under": _american(_buy_no(m))}
     return out
 
 
@@ -237,7 +250,7 @@ def fetch_ws_exacta(pairings):
     for m, mid in _kalshi("KXTEAMSINWS"):
         suf = m.get("ticker", "").split("-")[-1]
         if suf in want:
-            out[want[suf]] = _american(mid)
+            out[want[suf]] = _american(_buy_yes(m))
     return out
 
 
@@ -271,6 +284,7 @@ def main():
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
         "source": "Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games), KXTEAMSINWS (WS matchup)",
+        "price_type": "buy",   # every market price = real cost to back that side (ask / 1-bid, Kalshi fee included); do NOT de-vig
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},
         "round": (model or {}).get("round"),
