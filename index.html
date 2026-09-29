@@ -11047,7 +11047,9 @@ document.addEventListener("click", hitTrendDelegate);
 
   // --- Embed mode ---
   document.body.classList.add('embed-mode', 'embed-' + embed);
-  APX_DETAILED = false;   // embeds open in COMPACT view; toggle flips to detailed
+  // Postseason slates are 2-4 games: web embeds open in DETAILED view (Sean 9/29).
+  // Phones (?mobile=1 or a narrow iframe) stay COMPACT; the toggle still flips either way.
+  APX_DETAILED = !(params.get('mobile') === '1' || params.get('m') === '1' || (window.innerWidth || 1000) < 600);
   if (params.get('mobile') === '1' || params.get('m') === '1') document.body.classList.add('force-mobile');
 
   // postMessage auto-resize. ResizeObserver covers most cases; the burst poll
