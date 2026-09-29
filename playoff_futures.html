@@ -394,7 +394,7 @@ const devig2=(oa,ob)=>{ const a=impAm(oa),b=impAm(ob); if(a==null||b==null) retu
 const SB_BASE=(location.protocol==='file:'?'https://mlb-tracker-256.pages.dev/':'');
 const _PO_TMAP={CHW:'CWS',SDP:'SD',TBR:'TB',KCR:'KC',SFG:'SF',WSN:'WSH',AZ:'ARI',ATH:'ATH'};
 function etToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
-function isSeriesEmbed(){ return document.body.classList.contains('view-series'); }
+function isSeriesEmbed(){ return document.body.classList.contains('view-series-one'); }   // single-series embeds only (?series=...); the full series board stays card-free
 async function loadPOGames(){
   if(!isSeriesEmbed()) return;
   try{
