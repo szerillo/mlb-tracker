@@ -32,9 +32,10 @@ OUT        = os.path.join(DATA, "series_odds.json")
 
 # ── enable flags: flip on as each book/source is confirmed ──────────────────
 ENABLE_SERIES_ML     = True
-ENABLE_CORRECT_SCORE = False
-ENABLE_SPREAD        = False
-ENABLE_WS_EXACTA     = False
+ENABLE_CORRECT_SCORE = True    # Kalshi KXMLBSERIESSCORE (exact series score)
+ENABLE_SPREAD        = True    # derived from the same exact-score markets (-1.5g = win by 2+)
+ENABLE_WS_EXACTA     = True    # Kalshi KXTEAMSINWS (WS pairing = both teams reach the WS)
+ENABLE_GAMES_OU      = True    # Kalshi KXMLBSERIESGAMES (series total games over/under)
 
 # Action Network futures/series endpoint (series ML posts here per round).
 AN_HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.actionnetwork.com/"}
@@ -43,6 +44,45 @@ AN_HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.actionnetwork
 #   KXMLBSERIES-<YY><AWAY><HOME><ROUND>-<TEAM>  (one binary market per team, yes = that team wins the series)
 # yes_bid/yes_ask are in dollars = implied probability; mid is the market's series win prob.
 KALSHI_SERIES_URL = "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXMLBSERIES&status=open&limit=1000"
+KALSHI_MKT = "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker={}&status=open&limit=1000"
+KALSHI_AB = {"AZ": "ARI"}   # Kalshi team code -> board abbreviation
+
+
+def _kalshi(series_ticker):
+    """All open markets for a Kalshi series ticker, as (market, mid_prob) pairs. Mid of
+    yes bid/ask (dollars = implied prob); one-sided books fall back to whichever side exists."""
+    try:
+        data = _get(KALSHI_MKT.format(series_ticker))
+    except Exception as e:
+        print(f"[series_odds] Kalshi {series_ticker} fetch failed: {e}", file=sys.stderr)
+        return []
+    out = []
+    for m in data.get("markets", []):
+        try:
+            bid = float(m.get("yes_bid_dollars") or 0); ask = float(m.get("yes_ask_dollars") or 0)
+        except (TypeError, ValueError):
+            continue
+        mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else (bid or ask)
+        if 0 < mid < 1:
+            out.append((m, mid))
+    return out
+
+
+def _event_code(m):
+    """KXMLBSERIESSCORE-26CWSHOUWC-HOU21 -> '26CWSHOUWC'."""
+    parts = (m.get("event_ticker") or m.get("ticker", "")).split("-")
+    return parts[1] if len(parts) > 1 else ""
+
+
+def _series_for_event(code, series):
+    """Match a Kalshi event code (contains both team codes) to one of our series."""
+    for s_ in series:
+        ka = {v: k for k, v in KALSHI_AB.items()}
+        a, b = ka.get(s_["a"], s_["a"]), ka.get(s_["b"], s_["b"])
+        body = code[2:]   # drop the 2-digit year
+        if (body.startswith(a + b) or body.startswith(b + a)):
+            return s_
+    return None
 
 
 def _get(url, timeout=25):
@@ -132,25 +172,73 @@ def fetch_series_ml(series):
                 break
     return out
 
+_EXACT_PROB = {}   # (league,a,b) -> {'a-2-0': mid_prob, ...}; shared by exact + spread
+
 def fetch_correct_score(series):
-    """{(league,a,b): {'a-2-0':odds, 'a-2-1':odds, 'b-2-1':odds, 'b-2-0':odds, ...}}"""
+    """{(league,a,b): {'a-2-0':odds, 'a-2-1':odds, 'b-2-1':odds, 'b-2-0':odds, ...}} from Kalshi
+    KXMLBSERIESSCORE (one binary per exact result; ticker suffix = TEAM + wins + losses)."""
     if not ENABLE_CORRECT_SCORE:
         return {}
-    return {}
+    for m, mid in _kalshi("KXMLBSERIESSCORE"):
+        s_ = _series_for_event(_event_code(m), series)
+        if not s_:
+            continue
+        suf = m.get("ticker", "").split("-")[-1]
+        team, w, l = KALSHI_AB.get(suf[:-2], suf[:-2]), suf[-2], suf[-1]
+        side = "a" if team == s_["a"] else ("b" if team == s_["b"] else None)
+        if side and w.isdigit() and l.isdigit():
+            _EXACT_PROB.setdefault((s_["league"], s_["a"], s_["b"]), {})[f"{side}-{w}-{l}"] = mid
+    return {k: {kk: _american(p) for kk, p in v.items()} for k, v in _EXACT_PROB.items()}
 
 
 def fetch_spread(series):
-    """{(league,a,b): {'a_minus_1_5':odds,'b_minus_1_5':odds,'a_minus_2_5':odds,...}}"""
+    """{(league,a,b): {'a_minus_1_5':odds,'b_minus_1_5':odds}}  -1.5 games = win the series by 2+,
+    i.e. the sum of that side's exact-score markets with (wins - losses) >= 2. Needs fetch_correct_score first."""
     if not ENABLE_SPREAD:
         return {}
-    return {}
+    out = {}
+    for key, ex in _EXACT_PROB.items():
+        d = {}
+        for side in ("a", "b"):
+            p = sum(v for k, v in ex.items() if k.startswith(side + "-") and int(k.split("-")[1]) - int(k.split("-")[2]) >= 2)
+            if p > 0:
+                d[f"{side}_minus_1_5"] = _american(min(p, 0.99))
+        if d:
+            out[key] = d
+    return out
+
+
+def fetch_games_ou(series):
+    """{(league,a,b): {'line': 2.5, 'over': odds, 'under': odds}} from Kalshi KXMLBSERIESGAMES."""
+    if not ENABLE_GAMES_OU:
+        return {}
+    out = {}
+    for m, mid in _kalshi("KXMLBSERIESGAMES"):
+        s_ = _series_for_event(_event_code(m), series)
+        if not s_:
+            continue
+        n = m.get("ticker", "").split("-")[-1]
+        line = (int(n) - 0.5) if n.isdigit() else m.get("floor_strike")
+        out[(s_["league"], s_["a"], s_["b"])] = {"line": line, "over": _american(mid), "under": _american(1 - mid)}
+    return out
 
 
 def fetch_ws_exacta(pairings):
-    """{(al,nl): odds} WS pairing / matchup market."""
+    """{(al,nl): odds} from Kalshi KXTEAMSINWS (the WS matchup = both teams win their pennant).
+    Ticker suffix is the two team codes concatenated, e.g. KXTEAMSINWS-26-TBLAD."""
     if not ENABLE_WS_EXACTA:
         return {}
-    return {}
+    ka = {v: k for k, v in KALSHI_AB.items()}
+    want = {}
+    for p in pairings:
+        al, nl = ka.get(p["al"], p["al"]), ka.get(p["nl"], p["nl"])
+        want[al + nl] = (p["al"], p["nl"]); want[nl + al] = (p["al"], p["nl"])
+    out = {}
+    for m, mid in _kalshi("KXTEAMSINWS"):
+        suf = m.get("ticker", "").split("-")[-1]
+        if suf in want:
+            out[want[suf]] = _american(mid)
+    return out
 
 
 # ── assemble ────────────────────────────────────────────────────────────────
@@ -162,6 +250,7 @@ def main():
     ml  = fetch_series_ml(series_in)
     cs  = fetch_correct_score(series_in)
     sp  = fetch_spread(series_in)
+    ou  = fetch_games_ou(series_in)
     ex  = fetch_ws_exacta(pairings_in)
 
     series_out = []
@@ -173,6 +262,7 @@ def main():
             "ml_a": m.get("ml_a"), "ml_b": m.get("ml_b"), "book": m.get("book"),
             "exact":  cs.get(key),      # dict or None
             "spread": sp.get(key),      # dict or None
+            "games":  ou.get(key),      # {'line','over','under'} or None
         })
 
     pairings_out = [{"al": p["al"], "nl": p["nl"], "market": ex.get((p["al"], p["nl"]))}
@@ -180,9 +270,9 @@ def main():
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Kalshi KXMLBSERIES (series ML); correct-score / spread / exacta pending",
+        "source": "Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games), KXTEAMSINWS (WS matchup)",
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
-                    "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA},
+                    "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},
         "round": (model or {}).get("round"),
         "series": series_out,
         "ws_exacta": {"pairings": pairings_out},
@@ -190,6 +280,9 @@ def main():
     os.makedirs(DATA, exist_ok=True)
     open(OUT, "w").write(json.dumps(out, indent=1))
     n_ml = sum(1 for s in series_out if s["ml_a"] is not None)
+    n_ex = sum(1 for s in series_out if s["exact"]); n_ou = sum(1 for s in series_out if s["games"])
+    n_px = sum(1 for p in pairings_out if p["market"] is not None)
+    print(f"[series_odds] exact {n_ex} · games o/u {n_ou} · WS pairings priced {n_px}")
     print(f"[series_odds] wrote series_odds.json | {len(series_out)} series ({n_ml} with live ML), "
           f"{len(pairings_out)} pairings | enabled={out['enabled']}")
     return 0
