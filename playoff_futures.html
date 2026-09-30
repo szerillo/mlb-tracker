@@ -464,7 +464,11 @@ function seriesRowHTML(s, mkt){
   // Props rows share the series-ML row grid (label · model bar · Fair · Mkt · Edge) so the
   // columns sit directly under the series pricing. Market % is de-vigged within each block.
   const dvSet=(ams)=>{ if(BUY) return ams.map(o=>o==null?null:impAm(o)); const ps=ams.map(impAm); if(ps.some(x=>x==null)) return ams.map(o=>o==null?null:impAm(o)); const t=ps.reduce((x,y)=>x+y,0); return ps.map(x=>x/t); };
+  // outcomes the series can no longer produce (e.g. trailing team -1.5g / 2-0) are hidden
+  const _w=s.wins||{a:0,b:0};
+  const possible=(side,w,l)=>{ const mine=side==='a'?_w.a:_w.b, theirs=side==='a'?_w.b:_w.a; return mine<=w && theirs<=l; };
   const exRow=(lab,p,mk,pdv,col)=>{
+    if(!(p>0.0005)) return '';
     const ed=(pdv!=null)?(p-pdv)*100:null;
     const ec=ed==null?'':(ed>=1?'pos':(ed<=-1?'neg':'flat'));
     const etx=ed==null?'<span class="dash">—</span>':((ed>0?'+':'')+ed.toFixed(1)+'%');
@@ -479,12 +483,12 @@ function seriesRowHTML(s, mkt){
   const colOf=k=>barColor(k.startsWith('a')?s.a:s.b);
   const exDv=dvSet(exOrder.map(k=>exM[k]));
   const exactBlock = exOrder.length ? `<div class="stk">${blkHead('Exact result')}
-    ${exOrder.map((k,i)=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;return exRow(`${who} ${w}-${l}`,ex[k],exM[k],(exM[k]!=null&&exOrder.every(q=>exM[q]!=null))?exDv[i]:(exM[k]!=null?impAm(exM[k]):null),colOf(k));}).join('')}</div>` : '';
+    ${exOrder.map((k,i)=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;if(!possible(side,+w,+l))return '';return exRow(`${who} ${w}-${l}`,ex[k],exM[k],(exM[k]!=null&&exOrder.every(q=>exM[q]!=null))?exDv[i]:(exM[k]!=null?impAm(exM[k]):null),colOf(k));}).join('')}</div>` : '';
   // sweep: de-vig against the same exact-score set (2-0 prices ARE the -1.5g prices in a bo3)
   const pdvSide=side=>{ if(!exOrder.length||!exOrder.every(q=>exM[q]!=null)) return spM[side+'_minus_1_5']!=null?impAm(spM[side+'_minus_1_5']):null;
     return exOrder.reduce((t,k,i)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=2)?exDv[i]:0);},0); };
   const sweepBlock = `<div class="stk">${blkHead('Margin')}
-    ${exRow(`${s.a} −1.5g`,spr.a_minus_1_5||0,spM.a_minus_1_5,pdvSide('a'),barColor(s.a))}${exRow(`${s.b} −1.5g`,spr.b_minus_1_5||0,spM.b_minus_1_5,pdvSide('b'),barColor(s.b))}</div>`
+    ${_w.b>0?'':exRow(`${s.a} −1.5g`,spr.a_minus_1_5||0,spM.a_minus_1_5,pdvSide('a'),barColor(s.a))}${_w.a>0?'':exRow(`${s.b} −1.5g`,spr.b_minus_1_5||0,spM.b_minus_1_5,pdvSide('b'),barColor(s.b))}</div>`
     + (()=>{ const bo=s.best_of||3, gM=(mkt&&mkt.games)||{}; const line=gM.line!=null?gM.line:bo-0.5;
         const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
         if(!exOrder.length) return '';
