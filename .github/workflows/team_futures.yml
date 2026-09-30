@@ -98,5 +98,8 @@ jobs:
           fi
 
       - name: FanGraphs snapshot freshness check
+        # Warn-only in October: the futures data above still commits; a stale WAR / pitch-model
+        # snapshot should flag, not turn the whole run red.
         if: always()
+        continue-on-error: true
         run: python scripts/check_fg_freshness.py

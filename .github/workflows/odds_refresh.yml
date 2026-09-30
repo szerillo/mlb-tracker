@@ -69,7 +69,16 @@ jobs:
         # every started series priced from its current score. Rewrites data/v2_marginalized.json.
         run: |
           pip install -q numpy pandas scipy
+          snap='import json;d=json.load(open("data/v2_marginalized.json"));print(d.get("ws"),d.get("reach_ds"))'
+          before=$(python -c "$snap" 2>/dev/null)
           python scripts/v2/v2_live.py
+          after=$(python -c "$snap" 2>/dev/null)
+          # A game went final (bracket odds moved): rebuild the Composite now, not tomorrow.
+          # FORCE_RUN bypasses compute_team_futures' once-a-day guard. Uses whatever FG/PECOTA
+          # snapshot is in data/ (those refresh via the Chrome pull / morning run).
+          if [ "$before" != "$after" ]; then
+            FORCE_RUN=1 python scripts/compute_team_futures.py || true
+          fi
         continue-on-error: true
 
       - name: Refresh series market odds (best price across books)
@@ -80,7 +89,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/series_odds.json || true
+          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/team_futures.json data/series_odds.json || true
           if git diff --cached --quiet; then
             echo "No odds change."
           else
