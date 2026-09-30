@@ -102,10 +102,11 @@ def extract_relievers(box):
             pos = ((p.get("position") or {}).get("abbreviation") or "P")
             if pos != "P":
                 continue
-            if gs > 0:
-                continue  # exclude true starters
-            if pitches >= 50:
-                continue  # exclude bulk/opener-follower starts (gs=0 but heavy load)
+            outs = int(s.get("outs") or 0)
+            if gs > 0 and not (outs <= 6 or pitches < 45):
+                continue  # exclude true starters; keep openers (<=2 IP or <45 pitches)
+            # gs == 0: every relief outing counts, including long/bulk relief
+            # (Grant Taylor 54p on 9/29 was previously dropped by a >=50 cap).
             name = norm(p.get("person", {}).get("fullName", "?"))
             rps[name] = pitches
         res[tn] = rps

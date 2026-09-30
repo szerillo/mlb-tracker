@@ -165,6 +165,8 @@ def _avail_state(days):
         return ("TIRED", 0.52, 0.30)
     if 0 < d1 < 20:
         return ("CAUTION", 0.94, 0.0)
+    if d2 >= 40:  # long relief two days ago (e.g. 54p bulk outing) -> still limited
+        return ("TIRED", 0.52, 0.30)
     if apps3 >= 2:
         return ("CAUTION", 0.57, 0.0)
     return ("FRESH", 1.0, 0.0)
