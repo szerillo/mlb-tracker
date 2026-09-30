@@ -52,8 +52,7 @@ def main():
     ws,A,N,rcs,rds=B.world_series(pr,al,nl)
     ab=lambda d:{ABBR.get(k,str(k)):round(v,4) for k,v in sorted(d.items(),key=lambda x:-x[1])}
     out=dict(ws=ab(ws),al_pennant=ab(A),nl_pennant=ab(N),reach_cs=ab(rcs),reach_ds=ab(rds),n_realizations=1,
-             date=dt.date.today().isoformat(),engine='v2 rot_oct (live conditional)',coef=M.COEF,series_temperature=1.0,
-             as_of=dt.datetime.utcnow().replace(microsecond=0).isoformat()+'+00:00')
+             date=dt.date.today().isoformat(),engine='v2 rot_oct (live conditional)',coef=M.COEF,series_temperature=1.0)
     json.dump(out,open(os.path.join(DATA,'v2_marginalized.json'),'w'),indent=1)
     live=sum(1 for w in ST.values() if sum(w.values())>0)
     print(f"[v2_live] priced actual bracket, {live} series with results -> v2_marginalized.json")
