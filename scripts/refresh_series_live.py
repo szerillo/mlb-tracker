@@ -90,6 +90,58 @@ def current_round(state):
             return gt   # this round still has an undecided series -> it's current
     return cur          # else the last round that had games (may all be done)
 
+
+# ── live bracket walk: re-price every future round conditional on results so far ──
+MARG=os.path.join(DATA,"lane2_marginalized.json")
+AL_SEEDS=['TB','CLE','HOU','NYY','BOS','CWS']; NL_SEEDS=['MIL','LAD','ATL','SD','CHC','PHI']
+def _grid_idx2(grid):
+    idx={}
+    for k,o in grid.get("game_grid",grid).items():
+        parts=k.split(' '); idx[(frozenset({parts[0],parts[2]}),int(parts[3][2]))]=(parts[0],o)
+    return idx
+def _p_from_games(games,A,aw,bw):
+    need=len(games)//2+1; pw=[g['home_wp'] if g['home']==A else 1-g['home_wp'] for g in games]; out=[0.0]
+    def rec(i,a,b,pr):
+        if a==need: out[0]+=pr; return
+        if b==need or i>=len(pw): return
+        rec(i+1,a+1,b,pr*pw[i]); rec(i+1,a,b+1,pr*(1-pw[i]))
+    rec(aw+bw,aw,bw,1.0); return out[0]
+def rebuild_marginalized(grid,state):
+    """Exact bracket walk over the all-matchups grid. Any series with games already played
+    (any round) is priced conditional on its current score; decided series are 1/0."""
+    idx=_grid_idx2(grid)
+    live={}
+    for gt,b in state.items():
+        for key,v in b.items(): live[(key,BEST_OF[gt])]=v['wins']
+    def P(x,y,bo):
+        A,o=idx[(frozenset({x,y}),bo)]; B=y if A==x else x
+        w=live.get((frozenset({x,y}),bo),{})
+        p=_p_from_games(o['games'],A,w.get(A,0),w.get(B,0))
+        return p if A==x else 1-p
+    out={"reach_ds":{},"reach_cs":{},"al_pennant":{},"nl_pennant":{},"ws":{}}
+    for L,pk in ((AL_SEEDS,'al_pennant'),(NL_SEEDS,'nl_pennant')):
+        s={i+1:t for i,t in enumerate(L)}
+        p36=P(s[3],s[6],3); p45=P(s[4],s[5],3)
+        out["reach_ds"].update({s[1]:1.0,s[2]:1.0,s[3]:p36,s[6]:1-p36,s[4]:p45,s[5]:1-p45})
+        rc={t:0.0 for t in L}; pen={t:0.0 for t in L}
+        for w45,q45 in ((s[4],p45),(s[5],1-p45)):
+            for w36,q36 in ((s[3],p36),(s[6],1-p36)):
+                q=q45*q36; pA=P(s[1],w45,5); pB=P(s[2],w36,5)
+                for x,qx in ((s[1],pA),(w45,1-pA)):
+                    for y,qy in ((s[2],pB),(w36,1-pB)):
+                        qq=q*qx*qy
+                        if qq==0: continue
+                        rc[x]+=qq; rc[y]+=qq; pl=P(x,y,7); pen[x]+=qq*pl; pen[y]+=qq*(1-pl)
+        out["reach_cs"].update(rc); out[pk]=pen
+    ws={}
+    for a,pa in out["al_pennant"].items():
+        for n,pn in out["nl_pennant"].items():
+            if pa*pn==0: continue
+            p=P(a,n,7); ws[a]=ws.get(a,0)+pa*pn*p; ws[n]=ws.get(n,0)+pa*pn*(1-p)
+    out["ws"]={t:ws.get(t,0.0) for t in AL_SEEDS+NL_SEEDS}
+    for k in out: out[k]={t:round(v,4) for t,v in out[k].items()}
+    return out
+
 # ── grid lookup ──────────────────────────────────────────────────────────────
 def load_grid():
     g=json.load(open(GRID))
@@ -160,12 +212,29 @@ def main():
     tp=(json.load(open(TPROJ)).get("teams",{}) if os.path.exists(TPROJ) else {})
     if tp:
         for s in series: s["proj"]={"n":len(tp),"a":tp.get(s["a"]),"b":tp.get(s["b"])}
-    # keep the existing exacta block if present
+    # re-price the whole bracket (reach DS/CS, pennant, WS) conditional on results so far
     prev=json.load(open(SERIES)) if os.path.exists(SERIES) else {}
+    exacta=prev.get("ws_exacta",{})
+    try:
+        m=rebuild_marginalized(grid,state)
+        old=json.load(open(MARG)) if os.path.exists(MARG) else {}
+        m.update({"engine":old.get("engine","lane2"),"source":"refresh_series_live (live bracket walk over lane2_grid)",
+                  "scenario":old.get("scenario"),"as_of":datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"+00:00"})
+        open(MARG,"w").write(json.dumps(m,indent=1))
+        pairs=[]
+        for a,pa in m["al_pennant"].items():
+            for n,pn in m["nl_pennant"].items():
+                p=pa*pn
+                if p>0: pairs.append({"al":a,"nl":n,"reach_p":round(p,4),"fair":american(p),"market":None})
+        pairs.sort(key=lambda x:-x["reach_p"])
+        exacta={"al_pennant":m["al_pennant"],"nl_pennant":m["nl_pennant"],"pairings":pairs}
+        print("[series_live] bracket re-walked -> lane2_marginalized.json")
+    except Exception as e:
+        print(f"[series_live] bracket walk skipped: {e}", file=sys.stderr)
     out={"generated_at":datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"+00:00",
          "engine":"lane2 live (refresh_series_live)","round":ROUND_CODE[gt],
          "round_label":ROUND_LABEL[ROUND_CODE[gt]],"series":series,
-         "ws_exacta":prev.get("ws_exacta",{})}
+         "ws_exacta":exacta}
     open(SERIES,"w").write(json.dumps(out,indent=1))
     live=sum(1 for s in series if s["live"])
     print(f"[series_live] round={ROUND_CODE[gt]} | {len(series)} series ({live} in progress) -> lane2_series.json")
