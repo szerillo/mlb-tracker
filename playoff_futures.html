@@ -586,7 +586,7 @@ async function load(){
     window.__hasLane2=!!lane2;
     BRACKET=modalSeeds(bdist&&bdist.bracket_dist);
     const g=(sean.generated_at||'').slice(0,10);
-    document.getElementById('asof').textContent=g?('as of '+g):'';
+    // 'as of' stamp removed (Sean 9/30): it read the season-sim date, which is stale in October
     render();
   }catch(e){ document.getElementById('roundGrid').innerHTML='<div class="err">Could not load feed: '+e.message+'</div>'; }
 }
