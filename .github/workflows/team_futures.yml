@@ -31,6 +31,10 @@ permissions:
 jobs:
   futures:
     runs-on: ubuntu-latest
+    env:
+      # Manual "Run workflow" forces a full recompute (bypasses the once-a-day guard in
+      # compute_team_futures.py) so the Composite picks up postseason results immediately.
+      FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v5
