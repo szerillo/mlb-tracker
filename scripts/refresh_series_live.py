@@ -219,7 +219,7 @@ def main():
         m=rebuild_marginalized(grid,state)
         old=json.load(open(MARG)) if os.path.exists(MARG) else {}
         m.update({"engine":old.get("engine","lane2"),"source":"refresh_series_live (live bracket walk over lane2_grid)",
-                  "scenario":old.get("scenario"),"as_of":datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"+00:00"})
+                  "scenario":old.get("scenario")})
         open(MARG,"w").write(json.dumps(m,indent=1))
         pairs=[]
         for a,pa in m["al_pennant"].items():
