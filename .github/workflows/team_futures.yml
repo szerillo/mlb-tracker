@@ -72,6 +72,16 @@ jobs:
       #   run: python scripts/run_lane2_bracket.py
       #   continue-on-error: true
 
+      - name: Live series + bracket re-price (Game Sim, conditional on results)
+        run: python scripts/refresh_series_live.py
+        continue-on-error: true
+
+      - name: Playoff Fit (v2) live re-price
+        run: |
+          pip install -q numpy pandas scipy requests
+          python scripts/v2/v2_live.py
+        continue-on-error: true
+
       - name: Refresh series market odds (best price across books)
         run: python scripts/refresh_series_odds.py
         continue-on-error: true
@@ -84,7 +94,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/series_odds.json 2>/dev/null || true
+          git add data/team_projections.json data/team_futures_odds.json data/team_no_playoff_odds.json data/team_futures.json data/sean_team_projections.json data/series_odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
