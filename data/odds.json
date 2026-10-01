@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-30T20:58:43.407262Z",
+  "generated_at": "2026-10-01T00:00:38.931393Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260930&periods=event",
   "date": "2026-09-30",
-  "n_games": 4,
+  "n_games": 5,
   "games": [
     {
       "game_pk": 849841,
       "an_event_id": 302580,
       "matchup": "Philadelphia Phillies @ Atlanta Braves",
       "start_time": "2026-09-30T18:00:00.000Z",
-      "status": "End 9th",
+      "status": "Final - 10",
       "moneyline": {
         "away": {
           "odds": -107,
@@ -80,7 +80,7 @@
       "an_event_id": 302581,
       "matchup": "Chicago White Sox @ Houston Astros",
       "start_time": "2026-09-30T21:00:00.000Z",
-      "status": "scheduled",
+      "status": "Top 9th",
       "moneyline": {
         "away": {
           "odds": 130,
@@ -142,7 +142,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 849848,
@@ -211,7 +212,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 849842,
@@ -238,21 +240,21 @@
           "book": "BetRivers"
         },
         "home": {
-          "odds": 159,
+          "odds": 160,
           "line": -1.5,
-          "book": "Caesars"
+          "book": "Fanatics"
         }
       },
       "total": {
         "over": {
           "odds": 105,
           "line": 7.5,
-          "book": "BetMGM"
+          "book": "bet365"
         },
         "under": {
           "odds": -118,
           "line": 7.5,
-          "book": "Caesars"
+          "book": "BetMGM"
         }
       },
       "team_total": {
@@ -260,25 +262,84 @@
           "line": 3.5,
           "over": {
             "odds": 108,
-            "book": "BetRivers"
+            "book": "FanDuel"
           },
           "under": {
-            "odds": -132,
-            "book": "FanDuel"
+            "odds": -125,
+            "book": "BetMGM"
           },
           "source": "posted"
         },
         "home": {
           "line": 3.5,
           "over": {
-            "odds": -127,
-            "book": "BetRivers"
+            "odds": -125,
+            "book": "BetMGM"
           },
           "under": {
             "odds": 100,
             "book": "DraftKings"
           },
           "source": "posted"
+        }
+      }
+    },
+    {
+      "game_pk": 849844,
+      "an_event_id": 303091,
+      "matchup": "Philadelphia Phillies @ Atlanta Braves",
+      "start_time": "2026-10-01T18:00:00.000Z",
+      "status": "scheduled",
+      "moneyline": {
+        "away": {
+          "odds": -110,
+          "line": 0,
+          "book": "Fanatics"
+        },
+        "home": {
+          "odds": -100,
+          "line": 0,
+          "book": "FanDuel"
+        }
+      },
+      "run_line": {
+        "away": {
+          "odds": 156,
+          "line": -1.5,
+          "book": "Caesars"
+        },
+        "home": {
+          "odds": -175,
+          "line": 1.5,
+          "book": "BetRivers"
+        }
+      },
+      "total": {
+        "over": {
+          "odds": 101,
+          "line": 7.5,
+          "book": "Caesars"
+        },
+        "under": {
+          "odds": -115,
+          "line": 7.5,
+          "book": "BetRivers"
+        }
+      },
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "implied": 3.79,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 3.5,
+          "implied": 3.71,
+          "over": null,
+          "under": null,
+          "source": "implied"
         }
       }
     }
