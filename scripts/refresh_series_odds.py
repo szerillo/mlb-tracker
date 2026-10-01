@@ -150,24 +150,76 @@ def _best(cands):
 # All are best-effort and wrapped so a failure (endpoint moved, geo-block, market
 # not posted yet) yields {} rather than crashing the run. Confirm each endpoint's
 # exact path + JSON shape against a live posted market, then it feeds automatically.
-def _bk_actionnetwork(series):
-    # AN aggregates books; series/futures live under a scoreboard-style endpoint.
-    # TODO(confirm): map AN postseason series market ids -> teams once WC posts.
-    return {}
-def _bk_fanduel(series):
-    # FanDuel Sportsbook API (sbapi.<region>.sportsbook.fanduel.com). Geo-gated;
-    # TODO(confirm): market catalog id for "<Team> to win the series".
-    return {}
-def _bk_draftkings(series):
-    # DraftKings eventgroup API (sportsbook-nash.draftkings.com/...).
-    # TODO(confirm): subcategory "Series Winner" offer ids.
-    return {}
-def _bk_betonline(series):
-    # BetOnline (BOL) sports API. TODO(confirm): postseason series market path.
-    return {}
+# Action Network futures API: one call returns the "Playoff Series - <round> - To Win" market for
+# every US book it tracks (DraftKings, FanDuel, Caesars, BetMGM, bet365, Fanatics, BetRivers ...).
+AN_FUT_LIST = "https://api.actionnetwork.com/web/v1/leagues/8/futures/available"
+AN_FUT      = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds={}"
+# AN book id -> brand (state variants collapse to one brand; best price per brand kept)
+AN_BOOKS = {68: "DraftKings", 1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel", 1006: "FanDuel",
+            123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
+            972: "BetRivers", 2988: "Fanatics", 247: "Unibet", 1902: "Resorts World", 1903: "Bally Bet"}
+AN_AB = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "ARI": "ARI"}
 
-BOOKS = [("AN", _bk_actionnetwork), ("FanDuel", _bk_fanduel),
-         ("DraftKings", _bk_draftkings), ("BetOnline", _bk_betonline)]
+def _imp(o):
+    return None if o is None else (100.0/(o+100) if o > 0 else -o/(-o+100.0))
+
+def _an_series_odds():
+    """[ {team: {brand: american}} per open playoff-series 'To Win' market ] (one dict per AN market,
+    so a Wild Card price can never leak into a Division Series price for the same team)."""
+    try:
+        types = [f["type"] for f in _get(AN_FUT_LIST).get("futures", [])
+                 if "playoff_series" in f.get("type", "") or "championship_series" in f.get("type", "")]
+    except Exception as e:
+        print(f"[series_odds] AN futures list failed: {e}", file=sys.stderr); return []
+    ids = ",".join(str(i) for i in AN_BOOKS)
+    mkts = []
+    for t in types:
+        try:
+            d = _get(AN_FUT.format(t, ids))
+        except Exception as e:
+            print(f"[series_odds] AN {t} failed: {e}", file=sys.stderr); continue
+        tm = {x["id"]: AN_AB.get(x.get("abbr"), x.get("abbr")) for x in d.get("teams", [])}
+        by_team = {}
+        for bk in d.get("books", []):
+            brand = AN_BOOKS.get(bk.get("book_id"))
+            if not brand: continue
+            for o in bk.get("odds", []):
+                ab, money = tm.get(o.get("team_id")), o.get("money")
+                if not ab or money is None: continue
+                cur = by_team.setdefault(ab, {}).get(brand)
+                if cur is None or _dec(money) > _dec(cur):
+                    by_team[ab][brand] = money
+        mkts.append(by_team)
+    return mkts
+
+def _bk_actionnetwork(series):
+    mkts = _an_series_odds()
+    out = {}
+    for s_ in series:
+        a, b = s_["a"], s_["b"]
+        for bt in mkts:
+            if a not in bt or b not in bt: continue
+            A, B = {}, {}
+            for brand in set(bt[a]) & set(bt[b]):
+                # a book's two sides must form a sane two-way market (overround 0-15%); drops stale/settling lines
+                tot = _imp(bt[a][brand]) + _imp(bt[b][brand])
+                if 1.0 <= tot <= 1.15:
+                    A[brand], B[brand] = bt[a][brand], bt[b][brand]
+            # cross-book sanity: drop a book whose no-vig A% sits >8 pts off the median of the others
+            # (stale or mid-settlement line; e.g. a book still showing pre-Game-2 prices)
+            if len(A) >= 3:
+                nv = {k: _imp(A[k]) / (_imp(A[k]) + _imp(B[k])) for k in A}
+                for k in list(A):
+                    others = sorted(v for kk, v in nv.items() if kk != k)
+                    med = others[len(others)//2] if len(others) % 2 else (others[len(others)//2-1] + others[len(others)//2]) / 2
+                    if abs(nv[k] - med) > 0.08:
+                        print(f"[series_odds] drop stale {k} {a}-{b}: {nv[k]:.3f} vs median {med:.3f}", file=sys.stderr)
+                        A.pop(k); B.pop(k)
+            if A:
+                out[(s_["league"], a, b)] = {"a": A, "b": B}
+            break
+    if out: print(f"[series_odds] Action Network series ML: {len(out)} series, books={sorted({k for v in out.values() for k in v['a']})}")
+    return out
 
 def fetch_series_ml(series):
     """Series moneyline from Kalshi KXMLBSERIES. Each series posts TWO binaries (one per team).
@@ -190,6 +242,21 @@ def fetch_series_ml(series):
                 cb = _best_cost(_buy_yes(mb), _buy_no(ma))
                 out[(s_["league"], a, b)] = {"ml_a": _american(ca), "ml_b": _american(cb), "book": "Kalshi"}
                 break
+    # sportsbooks via Action Network: best available price per side across Kalshi + books
+    try:
+        bk = _bk_actionnetwork(series)
+    except Exception as e:
+        print(f"[series_odds] book merge skipped: {e}", file=sys.stderr); bk = {}
+    for key, v in bk.items():
+        cur = out.setdefault(key, {"ml_a": None, "ml_b": None, "book": None})
+        books = {"a": dict(v["a"]), "b": dict(v["b"])}
+        if cur.get("ml_a") is not None: books["a"]["Kalshi"] = cur["ml_a"]
+        if cur.get("ml_b") is not None: books["b"]["Kalshi"] = cur["ml_b"]
+        for side in ("a", "b"):
+            o, name = _best([(o, n) for n, o in books[side].items()])
+            cur[f"ml_{side}"] = o; cur[f"book_{side}"] = name
+        cur["book"] = cur.get("book_a") if cur.get("book_a") == cur.get("book_b") else "best"
+        cur["books"] = books
     return out
 
 _EXACT_PROB = {}   # (league,a,b) -> {'a-2-0': mid_prob, ...}; shared by exact + spread
@@ -305,6 +372,8 @@ def main():
         series_out.append({
             "league": s["league"], "a": s["a"], "b": s["b"],
             "ml_a": m.get("ml_a"), "ml_b": m.get("ml_b"), "book": m.get("book"),
+            "book_a": m.get("book_a", m.get("book")), "book_b": m.get("book_b", m.get("book")),
+            "books": m.get("books"),   # {'a': {brand: odds}, 'b': {...}} incl. Kalshi
             "exact":  cs.get(key),      # dict or None
             "spread": sp.get(key),      # dict or None
             "games":  ou.get(key),      # {'line','over','under'} or None
@@ -315,7 +384,7 @@ def main():
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
+        "source": "Series ML: best of Kalshi KXMLBSERIES + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
         "price_type": "buy",   # every market price = real cost to back that side (ask / 1-bid, Kalshi fee included); do NOT de-vig
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},
