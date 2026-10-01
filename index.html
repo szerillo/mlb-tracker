@@ -2289,6 +2289,8 @@ body.embed-mode.embed-futures #tab-futures,
   body.embed-mode .apx-grid.apx-detailed:not(.m-apx-wrap) {
     grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)) !important; gap: 10px !important;
   }
+  /* one game on the slate: center the card at a normal width instead of pinning it left / stretching it */
+  .apx-grid.apx-single:not(.m-apx-wrap), body.embed-mode .apx-grid.apx-single:not(.m-apx-wrap), body.embed-mode .apx-grid.apx-detailed.apx-single:not(.m-apx-wrap) { grid-template-columns: minmax(0, 720px) !important; justify-content: center !important; }
   body.embed-mode .apx-grid:not(.m-apx-wrap) .apx-card { max-width: 100% !important; container-type: normal !important; padding: 3px 7px !important; }
 
   /* head: start time at top (both views); stack time then badge, centered */
@@ -3587,7 +3589,9 @@ function poSeriesStripHTML(g){
   try {
     const A = _poAb(g,'away'), H = _poAb(g,'home');
     const s = PO_SERIES && (PO_SERIES.series || []).find(x => (x.a===A && x.b===H) || (x.a===H && x.b===A));
-    if (s && s.model) {
+    const _w0 = (s && s.wins) || {a:0, b:0}, _need0 = s && s.games ? Math.floor(s.games.length/2) + 1 : 0;
+    const _decider = !!(s && _need0 && (_w0.a||0) === _need0 - 1 && (_w0.b||0) === _need0 - 1);
+    if (s && s.model && !_decider) {
       // Price the series off THIS game's Action PRO win prob (the number on the card) plus the
       // series model for the games after it. In a deciding game (WC G3 / LDS G5 / LCS-WS G7) this is
       // exactly the card's WP. Final/in-progress games fall back to the series feed.
@@ -3938,7 +3942,7 @@ function renderScoreboard(){
       '<button class="apx-modeseg-btn'+(FIVE_MODE?' active':'')+'" data-f5="1" role="tab" aria-selected="'+(FIVE_MODE)+'">First 5 <span class="apx-modeseg-sub">F5</span></button>'+
     '</div>';
   const toolbar='<div class="apx-toolbar apx-toolbar-top">'+f5seg+'<div class="apx-toolbar-right"><button class="apx-toggle gloss-trigger" type="button" style="margin-right:6px;">&#9432; Glossary</button><button class="apx-toggle" id="apx-toggle">'+(APX_DETAILED?'Compact view':'Detailed view')+'</button></div></div>';
-  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+(FIVE_MODE?' apx-grid-f5':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
+  el.innerHTML=toolbar+'<div class="apx-grid'+(APX_DETAILED?' apx-detailed':'')+(FIVE_MODE?' apx-grid-f5':'')+(CURRENT_GAMES.length===1?' apx-single':'')+'" id="apx-grid">'+CURRENT_GAMES.map(g=>{try{return apxCardHTML(g);}catch(e){return '';}}).join("")+'</div>'+'<div class="apx-toolbar" style="justify-content:center;margin-top:12px;"><button class="apx-toggle" id="apx-png-bottom">Save PNG</button></div>';
   const tg=document.getElementById('apx-toggle');
   if(tg)tg.onclick=()=>{APX_DETAILED=!APX_DETAILED;const grid=document.getElementById('apx-grid');if(grid)grid.classList.toggle('apx-detailed',APX_DETAILED);tg.textContent=APX_DETAILED?'Compact view':'Detailed view';};
   const mseg=document.getElementById('apx-modeseg');

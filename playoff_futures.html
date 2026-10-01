@@ -591,6 +591,58 @@ function renderExacta(isEdges){
   fit();
 }
 
+
+// ── Today's Action PRO game WP (published GAME UPLOADER CSV, same source the scoreboard reads) ──
+// The next game of a series is re-priced off the uploaded number so the series cards and bracket
+// agree with the game card immediately, without waiting for the Odds Refresh workflow.
+const SHEET_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P/pub?gid=580753288&single=true&output=csv";
+const _AN_AB={CHW:'CWS',SDP:'SD',TBR:'TB',AZ:'ARI'};
+function _csvRows(t){const R=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}
+  else if(ch==='"')q=true;else if(ch===','){r.push(c);c='';}else if(ch==='\n'){r.push(c);R.push(r);r=[];c='';}else if(ch!=='\r')c+=ch;}
+  if(c!==''||r.length){r.push(c);R.push(r);}return R;}
+async function loadTodayWP(){
+  const out={};   // "HOME|AWAY" -> home_wp, scheduled games only
+  try{
+    const et=new Date(Date.now()-4*3600e3).toISOString().slice(0,10);
+    const to=ms=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return {signal:c.signal};};
+    const [csv,an]=await Promise.all([
+      fetch(SHEET_CSV_URL+'&t='+Date.now(),to(8000)).then(r=>r.ok?r.text():'').catch(()=>''),
+      fetch('https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15&periods=event&date='+et.replace(/-/g,''),to(8000)).then(r=>r.ok?r.json():null).catch(()=>null)]);
+    if(!csv||!an) return out;
+    const ev={}; (an.games||[]).forEach(g=>{ if(String(g.status||'').toLowerCase()!=='scheduled') return;
+      const tm={}; (g.teams||[]).forEach(t=>tm[t.id]=_AN_AB[t.abbr]||t.abbr); ev[g.id]={a:tm[g.away_team_id],h:tm[g.home_team_id]}; });
+    const rows=_csvRows(csv); if(!rows.length) return out;
+    const hdr=rows[0].map(x=>x.trim().toLowerCase()), ix=n=>hdr.indexOf(n);
+    for(const r of rows.slice(1)){ const gid=+r[ix('game_id')], hw=parseFloat(r[ix('home_win_p')]);
+      if(!gid||!(hw>0&&hw<1)||!ev[gid]) continue;
+      const dt=r.find(x=>/^\d{1,2}\/\d{1,2}\/\d{4}$/.test((x||'').trim()));
+      if(dt){const [m,d,y]=dt.trim().split('/'); if(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`!==et) continue;}
+      out[ev[gid].h+'|'+ev[gid].a]=hw; }
+  }catch(e){}
+  return out;
+}
+const _NEXTKEYS={WC:['reach_ds','reach_cs','pen','ws'],LDS:['reach_cs','pen','ws'],LCS:['pen','ws'],WS:['ws']};
+function applyTodayWP(series,lane2,TW){
+  if(!series||!series.series||!Object.keys(TW).length) return;
+  for(const s of series.series){
+    const gs=s.games||[], w=s.wins||{a:0,b:0}, nx=(w.a||0)+(w.b||0);
+    if(nx>=gs.length) continue;
+    const key=gs[nx].home+'|'+gs[nx].away; if(TW[key]==null) continue;
+    const g2=gs.map(x=>({...x})); g2[nx].home_wp=TW[key]; g2[nx].src='action_pro_today';
+    const need=Math.floor(gs.length/2)+1, pw=g2.map(x=>x.home===s.a?x.home_wp:1-x.home_wp), dist={};
+    const rec=(i,a,b,p)=>{ if(a===need||b===need||i>=pw.length){const k=a>b?`a-${a}-${b}`:`b-${b}-${a}`;dist[k]=(dist[k]||0)+p;return;}
+      rec(i+1,a+1,b,p*pw[i]); rec(i+1,a,b+1,p*(1-pw[i])); };
+    rec(nx,w.a||0,w.b||0,1);
+    const pA=Object.entries(dist).reduce((t,[k,v])=>t+(k[0]==='a'?v:0),0), old=s.model.p_a;
+    const am=q=>q>=.5?-Math.round(100*q/(1-q)):Math.round(100*(1-q)/q);
+    const ex={}; Object.keys(s.model.exact||dist).forEach(k=>ex[k]=+(dist[k]||0).toFixed(4)); Object.keys(dist).forEach(k=>ex[k]=+dist[k].toFixed(4));
+    s.games=g2; s.model={...s.model,p_a:+pA.toFixed(4),p_b:+(1-pA).toFixed(4),ml_a:am(pA),ml_b:am(1-pA),exact:ex};
+    // carry the change through the bracket: every later-round % for a team scales with its series win %
+    if(lane2&&old>0&&old<1){ const pk=s.league==='AL'?'al_pennant':'nl_pennant';
+      for(const [t,r] of [[s.a,pA/old],[s.b,(1-pA)/(1-old)]]) (_NEXTKEYS[s.round]||[]).forEach(k=>{ const kk=k==='pen'?pk:k; if(lane2[kk]&&lane2[kk][t]!=null) lane2[kk][t]=+(lane2[kk][t]*r).toFixed(4); }); }
+  }
+}
 async function load(){
   try{
     const [sean,tf,v2,lane2,bdist,series,sodds]=await Promise.all([
@@ -602,6 +654,7 @@ async function load(){
       fetch(RAW+'lane2_series.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
+    try{ applyTodayWP(series,lane2,await loadTodayWP()); }catch(e){}
     window.__series=series; window.__sodds=sodds; window.__lane2=lane2;
     await loadPOGames();
     const blend={},mkt={};
