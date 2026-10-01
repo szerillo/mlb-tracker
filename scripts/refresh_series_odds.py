@@ -77,13 +77,21 @@ def _cost(p):
         return None
     return min(p + FEE * p * (1 - p), 0.995)
 
+MAX_SPREAD = 0.30   # bid/ask wider than this = no real market yet (empty book shows 0.00/0.99)
+
+def _dead(m):
+    a = m.get("_ask") or 0; b = m.get("_bid") or 0
+    return (a - b) > MAX_SPREAD
+
 def _buy_yes(m):
     """Cost to back YES = the yes ask (+fee). None when nobody is offering."""
+    if _dead(m): return None
     a = m.get("_ask") or 0
     return _cost(a) if 0 < a < 1 else None
 
 def _buy_no(m):
     """Cost to back NO = 1 - yes bid (+fee)."""
+    if _dead(m): return None
     b = m.get("_bid") or 0
     return _cost(1 - b) if 0 < b < 1 else None
 
@@ -218,6 +226,22 @@ def fetch_spread(series):
                 d[f"{side}_minus_1_5"] = _american(min(p, 0.99))
         if d:
             out[key] = d
+    # direct series-spread markets (KXMLBSERIESSPREAD-<event>-<TEAM><n>: TEAM wins by n+ = -(n-0.5)g).
+    # Back "TEAM -x.5" = buy YES; back "OPP +x.5" = buy NO on the same contract. Overrides the exact-sum proxy.
+    for m, mid in _kalshi("KXMLBSERIESSPREAD"):
+        s_ = _series_for_event(_event_code(m), series)
+        if not s_:
+            continue
+        suf = m.get("ticker", "").split("-")[-1]
+        team, n = KALSHI_AB.get(suf[:-1], suf[:-1]), suf[-1]
+        if not n.isdigit() or team not in (s_["a"], s_["b"]):
+            continue
+        side = "a" if team == s_["a"] else "b"; opp = "b" if side == "a" else "a"
+        lab = f"{int(n)-1}_5"
+        d = out.setdefault((s_["league"], s_["a"], s_["b"]), {})
+        cy, cn = _buy_yes(m), _buy_no(m)
+        if cy is not None: d[f"{side}_minus_{lab}"] = _american(cy)
+        if cn is not None: d[f"{opp}_plus_{lab}"] = _american(cn)
     return out
 
 
@@ -232,7 +256,15 @@ def fetch_games_ou(series):
             continue
         n = m.get("ticker", "").split("-")[-1]
         line = (int(n) - 0.5) if n.isdigit() else m.get("floor_strike")
-        out[(s_["league"], s_["a"], s_["b"])] = {"line": line, "over": _american(_buy_yes(m)), "under": _american(_buy_no(m))}
+        ov, un = _american(_buy_yes(m)), _american(_buy_no(m))
+        if ov is None and un is None:
+            continue
+        o = out.setdefault((s_["league"], s_["a"], s_["b"]), {"ladder": {}})
+        o["ladder"][str(line)] = {"over": ov, "under": un}
+    # keep the legacy single-line fields (lowest line) for older board builds
+    for o in out.values():
+        ln = sorted(o["ladder"], key=float)[0]
+        o.update({"line": float(ln), **o["ladder"][ln]})
     return out
 
 
@@ -283,7 +315,7 @@ def main():
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games), KXTEAMSINWS (WS matchup)",
+        "source": "Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
         "price_type": "buy",   # every market price = real cost to back that side (ask / 1-bid, Kalshi fee included); do NOT de-vig
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},

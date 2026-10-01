@@ -56,6 +56,7 @@ def cond_dist(games, teamA, aw, bw):
     rec(start,aw,bw,1.0); return out,need
 
 # ── statsapi live state ──────────────────────────────────────────────────────
+STARTED=set()
 def series_state(season):
     """Return {gtype: {frozenset(abbrs): {'wins':{ab:n},'played':n,'games':[...]}}}"""
     st={}
@@ -71,6 +72,7 @@ def series_state(season):
                 if not a or not h: continue
                 key=frozenset({a,h})
                 b=buckets.setdefault(key,{'wins':{a:0,h:0},'played':0})
+                if g['status'].get('abstractGameState')!='Preview': STARTED.add(str(g['gamePk']))
                 if g['status']['detailedState']=='Final':
                     sa=g['teams']['away'].get('score'); sh=g['teams']['home'].get('score')
                     if sa is not None and sh is not None:
@@ -116,7 +118,10 @@ def rebuild_marginalized(grid,state):
     def P(x,y,bo):
         A,o=idx[(frozenset({x,y}),bo)]; B=y if A==x else x
         w=live.get((frozenset({x,y}),bo),{})
-        p=_p_from_games(o['games'],A,w.get(A,0),w.get(B,0))
+        gs=o['games']; nx=w.get(A,0)+w.get(B,0)
+        if nx<len(gs) and (gs[nx]['home'],gs[nx]['away']) in TODAY_WP:
+            gs=[dict(z) for z in gs]; gs[nx]['home_wp']=TODAY_WP[(gs[nx]['home'],gs[nx]['away'])]
+        p=_p_from_games(gs,A,w.get(A,0),w.get(B,0))
         return p if A==x else 1-p
     out={"reach_ds":{},"reach_cs":{},"al_pennant":{},"nl_pennant":{},"ws":{}}
     for L,pk in ((AL_SEEDS,'al_pennant'),(NL_SEEDS,'nl_pennant')):
@@ -152,6 +157,24 @@ def load_grid():
         idx[(frozenset(teams),bo)]=(k.split(' v ')[0],obj['games'])
     return g,idx
 
+# Today's Action PRO game projection (sheet GAME UPLOADER) overrides the grid for the NEXT game of a
+# series, so the series price agrees with the game card (a deciding game = exactly the card's WP).
+FULLNAME={'Tampa Bay Rays':'TB','Cleveland Guardians':'CLE','Chicago White Sox':'CWS','Houston Astros':'HOU',
+  'New York Yankees':'NYY','Boston Red Sox':'BOS','Milwaukee Brewers':'MIL','Los Angeles Dodgers':'LAD',
+  'Atlanta Braves':'ATL','San Diego Padres':'SD','Chicago Cubs':'CHC','Philadelphia Phillies':'PHI'}
+TODAY_WP={}   # (home, away) -> home_wp, today's pregame games only
+def load_today_wp(started):
+    try:
+        sp=json.load(open(os.path.join(DATA,"sheet_projections.json")))
+        et=(datetime.datetime.utcnow()-datetime.timedelta(hours=4)).date().isoformat()
+        if sp.get("date")!=et: return
+        for pk,g in (sp.get("games") or {}).items():
+            if str(pk) in started: continue
+            h=FULLNAME.get(g.get("home_team")); a=FULLNAME.get(g.get("away_team"))
+            if h and a and g.get("home_wp") is not None: TODAY_WP[(h,a)]=float(g["home_wp"])
+    except Exception as e:
+        print(f"[series_live] today WP override skipped: {e}", file=sys.stderr)
+
 def build_series(gtype, matchup_key, grid_idx, wins):
     bo=BEST_OF[gtype]
     ent=grid_idx.get((matchup_key,bo))
@@ -159,13 +182,29 @@ def build_series(gtype, matchup_key, grid_idx, wins):
     A,games=ent
     B=[t for t in matchup_key if t!=A][0] if len(matchup_key)==2 else games[0]['away']
     aw=wins.get(A,0); bw=wins.get(B,0)
+    nx=aw+bw
+    if nx<len(games) and (games[nx]['home'],games[nx]['away']) in TODAY_WP:
+        games=[dict(x) for x in games]
+        games[nx]['home_wp']=TODAY_WP[(games[nx]['home'],games[nx]['away'])]; games[nx]['src']='action_pro_today'
+
     d,need=cond_dist(games,A,aw,bw)
     pA=sum(v for (a,b),v in d.items() if a==need)
     exact={}
     for (a,b),p in sorted(d.items(),key=lambda x:(-x[0][0],x[0][1])):
         exact[(f"a-{a}-{b}" if a>b else f"b-{b}-{a}")]=round(p,4)
-    pAsw=sum(v for (a,b),v in d.items() if a==need and b==0)
-    pBsw=sum(v for (a,b),v in d.items() if b==need and a==0)
+    # series spreads: -1.5g = win by 2+, -2.5g = win by 3+ (bo5/bo7); +x.5 = 1 - opponent's -x.5
+    spread={}
+    for side,ix in (("a",0),("b",1)):
+        for m_,lab in ((2,"1_5"),(3,"2_5")):
+            if m_>need: continue
+            spread[f"{side}_minus_{lab}"]=round(sum(v for k,v in d.items() if k[ix]==need and k[ix]-k[1-ix]>=m_),4)
+    for lab in ("1_5","2_5"):
+        if f"a_minus_{lab}" in spread:
+            spread[f"a_plus_{lab}"]=round(1-spread[f"b_minus_{lab}"],4); spread[f"b_plus_{lab}"]=round(1-spread[f"a_minus_{lab}"],4)
+    # total games over/under at every half line
+    tg={}
+    for n in range(need, 2*need-1):
+        tg[str(n+0.5)]=round(sum(v for (a,b),v in d.items() if a+b>n),4)
     gm=[{"g":i+1,"home":x['home'],"away":x['away'],
          "home_sp":x.get('home_sp'),"away_sp":x.get('away_sp'),
          "home_sp_rank":x.get('home_sp_rank'),"away_sp_rank":x.get('away_sp_rank'),
@@ -180,7 +219,7 @@ def build_series(gtype, matchup_key, grid_idx, wins):
             "a":A,"b":B,"seed_a":SEED.get(A),"seed_b":SEED.get(B),"games":gm,"state":state,"live":decided>0,
             "wins":{"a":aw,"b":bw},
             "model":{"p_a":round(pA,4),"ml_a":american(pA),"p_b":round(1-pA,4),"ml_b":american(1-pA),
-                     "exact":exact,"spread":{"a_minus_1_5":round(pAsw,4),"b_minus_1_5":round(pBsw,4)}},
+                     "exact":exact,"spread":spread,"games_over":tg},
             "market":{"ml_a":None,"ml_b":None,"exact":None,"spread":None}}
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -201,13 +240,24 @@ def main():
     if not state:
         print("[series_live] no postseason games yet; pass-through (pregame WC feed unchanged)")
         return 0
+    load_today_wp(STARTED)
     gt=current_round(state); buckets=state[gt]
     series=[]
+    nxt=ROUND_ORDER[ROUND_ORDER.index(gt)+1] if gt!='W' else None
+    nb=state.get(nxt,{}) if nxt else {}
+    need=BEST_OF[gt]//2+1
+    # teams already through to the next round -> their decided current-round series drop off the
+    # board and the next-round series (once both teams are known) shows instead
     for key,b in buckets.items():
+        done=max(b['wins'].values() or [0])>=need
+        if done and any(key & k2 for k2 in nb): continue
         s=build_series(gt,key,idx,b['wins'])
         if s: series.append(s)
-    # order AL then NL, host first
-    series.sort(key=lambda s:(s["league"]!="AL", s["host"]))
+    for key,b in nb.items():
+        s=build_series(nxt,key,idx,b['wins'])
+        if s: series.append(s)
+    # order: round, then AL before NL, host first
+    series.sort(key=lambda s:(ROUND_ORDER.index([k for k,v in ROUND_CODE.items() if v==s["round"]][0]), s["league"]!="AL", s["host"]))
     # attach per-team projection ranks (rotation/bullpen/offense) from the engine's feed
     tp=(json.load(open(TPROJ)).get("teams",{}) if os.path.exists(TPROJ) else {})
     if tp:
@@ -233,7 +283,7 @@ def main():
         print(f"[series_live] bracket walk skipped: {e}", file=sys.stderr)
     out={"generated_at":datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"+00:00",
          "engine":"lane2 live (refresh_series_live)","round":ROUND_CODE[gt],
-         "round_label":ROUND_LABEL[ROUND_CODE[gt]],"series":series,
+         "round_label":" / ".join(dict.fromkeys(ROUND_LABEL[s_["round"]] for s_ in series)) or ROUND_LABEL[ROUND_CODE[gt]],"series":series,
          "ws_exacta":exacta}
     open(SERIES,"w").write(json.dumps(out,indent=1))
     live=sum(1 for s in series if s["live"])
