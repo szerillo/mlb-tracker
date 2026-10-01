@@ -38,57 +38,63 @@ def main():
 
     # F5 tab has total/win%/ML but no team-run split, so require 'total' (not away_score).
     all_rows = parse_sheet_csv(text, None, require_col="total")
-    iso = pick_slate_date(all_rows)
-    rows = [r for r in all_rows if (r.get("date") or iso) == iso]
-    print(f"[f5_projections] slate date {iso} ({len(rows)} F5 projection rows)")
-    an_teams, pk_map = build_id_maps(iso)
-
-    used_pks = set()
-
-    def _resolve_pk(a, h, an_start):
-        cand = [c for c in (pk_map.get((_nick(a), _nick(h))) or []) if c["pk"] not in used_pks]
-        if not cand:
-            return None
-        if len(cand) == 1:
-            gpk = cand[0]["pk"]
-        else:
-            ant = _parse_dt(an_start)
-            gpk = (cand[0]["pk"] if ant is None else
-                   min(cand, key=lambda c: abs((c["dt"] - ant).total_seconds()) if c["dt"] else 9e18)["pk"])
-        used_pks.add(gpk)
-        return gpk
-
+    # Publish EVERY uploaded slate from today forward, not just the date with the most rows.
+    # (10/1: the tab held tonight's 1 game + Saturday's 3 pre-filled games, the "most rows" rule
+    # picked Saturday and tonight's F5 projection never reached the board.) Each date resolves
+    # against its own schedule/AN map; the board keys by gamePk, so dates can't collide.
+    today = _et_today().isoformat()
+    dates = sorted({r.get("date") for r in all_rows if r.get("date") and r.get("date") >= today}) \
+            or [pick_slate_date(all_rows)]
+    iso = dates[0]
     games = {}
-    n_join = n_miss = 0
-    for row in sorted(rows, key=lambda r: str((an_teams.get(r["game_id"]) or (None, None, ""))[2] or "")):
-        nm = an_teams.get(row["game_id"])
-        if not nm or not nm[0] or not nm[1]:
-            n_miss += 1; continue
-        a, h, an_start = nm
-        gpk = _resolve_pk(a, h, an_start)
-        if gpk is None:
-            n_miss += 1; continue
-        games[str(gpk)] = {
-            "an_event_id": row["game_id"],
-            "away_team": a, "home_team": h,
-            "away_runs": row["away_runs"], "home_runs": row["home_runs"],
-            "total": row["total"],
-            "away_wp": row["away_wp"], "home_wp": row["home_wp"],
-            "ml_away": row["ml_away"], "ml_home": row["ml_home"],
-        }
-        n_join += 1
+    n_join = n_miss = n_sched = 0
+    for d in dates:
+        rows = [r for r in all_rows if (r.get("date") or iso) == d]
+        print(f"[f5_projections] slate date {d} ({len(rows)} F5 projection rows)")
+        an_teams, pk_map = build_id_maps(d)
+        n_sched += sum(len(v) for v in pk_map.values())
+        used_pks = set()
 
-    # Don't let an empty run (tab still being filled) wipe a good live feed —
-    # keep the previous non-empty snapshot instead.
-    n_sched = sum(len(v) for v in pk_map.values())
-    if keep_previous(OUTPUT, iso, n_join, n_sched):
-        print(f"[f5_projections] only {n_join}/{n_sched} games joined for {iso}; "
-              f"keeping previous fuller feed (won't clobber)")
+        def _resolve_pk(a, h, an_start):
+            cand = [c for c in (pk_map.get((_nick(a), _nick(h))) or []) if c["pk"] not in used_pks]
+            if not cand:
+                return None
+            if len(cand) == 1:
+                gpk = cand[0]["pk"]
+            else:
+                ant = _parse_dt(an_start)
+                gpk = (cand[0]["pk"] if ant is None else
+                       min(cand, key=lambda c: abs((c["dt"] - ant).total_seconds()) if c["dt"] else 9e18)["pk"])
+            used_pks.add(gpk)
+            return gpk
+
+        for row in sorted(rows, key=lambda r: str((an_teams.get(r["game_id"]) or (None, None, ""))[2] or "")):
+            nm = an_teams.get(row["game_id"])
+            if not nm or not nm[0] or not nm[1]:
+                n_miss += 1; continue
+            a, h, an_start = nm
+            gpk = _resolve_pk(a, h, an_start)
+            if gpk is None:
+                n_miss += 1; continue
+            games[str(gpk)] = {
+                "an_event_id": row["game_id"], "date": d,
+                "away_team": a, "home_team": h,
+                "away_runs": row["away_runs"], "home_runs": row["home_runs"],
+                "total": row["total"],
+                "away_wp": row["away_wp"], "home_wp": row["home_wp"],
+                "ml_away": row["ml_away"], "ml_home": row["ml_home"],
+            }
+            n_join += 1
+
+    # Don't let an empty run (tab still being filled) wipe a good live feed.
+    if n_join == 0 and keep_previous(OUTPUT, iso, n_join, n_sched):
+        print(f"[f5_projections] 0 games joined for {dates}; keeping previous feed (won't clobber)")
         return 0
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "date": iso,
+        "dates": dates,
         "source": "Google Sheet F5 UPLOADER tab (Action Network expert upload format, first 5 innings)",
         "n_games": len(games),
         "games": games,
