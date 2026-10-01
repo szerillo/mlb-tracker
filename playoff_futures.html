@@ -455,7 +455,7 @@ function seriesRowHTML(s, mkt){
       <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b>${seed!=null?`<span class="ssd">(${seed})</span>`:''}</div>
       <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${barColor(ab)}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
-      <div class="scell"${tip?` title="Best price. ${tip}"`:''}><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}${mml!=null&&bk&&bk!=='best'?`<div class="sbk">${BKAB[bk]||bk}</div>`:''}</div>
+      <div class="scell"${tip?` title="Best price. ${tip}"`:''}><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}${mml!=null&&bk&&bk!=='best'?`<div class="sbk">${(m=>m?(BKAB[m[1]]||m[1])+' ML':(BKAB[bk]||bk))(String(bk).match(/^(.*) G\d ML$/))}</div>`:''}</div>
       <div class="scell edge ${ecls}"><div class="sk">Edge</div>${etx}${star?'<span class="star"> '+star+'</span>':''}</div>
     </div>`;
   };
