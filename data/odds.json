@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T00:00:38.931393Z",
+  "generated_at": "2026-10-01T03:32:59.309870Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20260930&periods=event",
   "date": "2026-09-30",
@@ -80,7 +80,7 @@
       "an_event_id": 302581,
       "matchup": "Chicago White Sox @ Houston Astros",
       "start_time": "2026-09-30T21:00:00.000Z",
-      "status": "Top 9th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 130,
@@ -150,7 +150,7 @@
       "an_event_id": 302517,
       "matchup": "Boston Red Sox @ New York Yankees",
       "start_time": "2026-10-01T00:00:00.000Z",
-      "status": "scheduled",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 120,
@@ -220,7 +220,7 @@
       "an_event_id": 302543,
       "matchup": "Chicago Cubs @ San Diego Padres",
       "start_time": "2026-10-01T02:00:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 4th",
       "moneyline": {
         "away": {
           "odds": 125,
@@ -282,7 +282,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 849844,
@@ -309,9 +310,9 @@
           "book": "Caesars"
         },
         "home": {
-          "odds": -175,
+          "odds": -166,
           "line": 1.5,
-          "book": "BetRivers"
+          "book": "FanDuel"
         }
       },
       "total": {
@@ -321,25 +322,35 @@
           "book": "Caesars"
         },
         "under": {
-          "odds": -115,
+          "odds": -118,
           "line": 7.5,
-          "book": "BetRivers"
+          "book": "FanDuel"
         }
       },
       "team_total": {
         "away": {
           "line": 3.5,
-          "implied": 3.79,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": -121,
+            "book": "BetRivers"
+          },
+          "under": {
+            "odds": 104,
+            "book": "FanDuel"
+          },
+          "source": "posted"
         },
         "home": {
           "line": 3.5,
-          "implied": 3.71,
-          "over": null,
-          "under": null,
-          "source": "implied"
+          "over": {
+            "odds": -105,
+            "book": "BetRivers"
+          },
+          "under": {
+            "odds": -122,
+            "book": "BetRivers"
+          },
+          "source": "posted"
         }
       }
     }
