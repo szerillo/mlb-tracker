@@ -243,6 +243,102 @@ def _game_ml_today():
                                     hm: (ml["home"]["odds"], ml["home"].get("book") or "best")}
     return out
 
+
+# ── Pinnacle (guest API, no auth): sharp series ML for every open series ──
+PIN_MATCHUPS = "https://guest.api.arcadia.pinnacle.com/0.1/leagues/246/matchups"
+PIN_MARKETS  = "https://guest.api.arcadia.pinnacle.com/0.1/leagues/246/markets/straight"
+def _pinnacle_series():
+    """{frozenset({a,b}): {team: american}} from Pinnacle 'Series Prices' specials."""
+    out = {}
+    try:
+        ms = _get(PIN_MATCHUPS); mk = _get(PIN_MARKETS)
+    except Exception as e:
+        print(f"[series_odds] Pinnacle fetch failed: {e}", file=sys.stderr); return out
+    sp = {m["id"]: {p["id"]: FULLNAME.get(p.get("name")) for p in m.get("participants", [])}
+          for m in ms if m.get("type") == "special" and (m.get("special") or {}).get("category") == "Series Prices"}
+    for x in mk:
+        parts = sp.get(x.get("matchupId"))
+        if not parts or x.get("type") != "moneyline" or x.get("isAlternate"): continue
+        pr = {parts.get(p["participantId"]): p["price"] for p in x.get("prices", []) if parts.get(p["participantId"])}
+        if len(pr) == 2: out[frozenset(pr)] = pr
+    return out
+
+# ── Manually pasted book prices (DK / Caesars series props): data/series_odds_manual.json ──
+MANUAL = os.path.join(DATA, "series_odds_manual.json")
+def _manual_props(series):
+    """{(league,a,b): {'exact':{k:[(odds,book)]}, 'spread':{...}, 'games':{line:{'over':[..],'under':[..]}}}}.
+    A pasted series is dropped once its score has moved since the paste (prices are stale)."""
+    out = {}
+    try: d = json.load(open(MANUAL))
+    except Exception: return out
+    for book, ser in (d.get("books") or {}).items():
+        for e in ser.values():
+            s_ = next((x for x in series if {x["a"], x["b"]} == {e["a"], e["b"]}), None)
+            if not s_: continue
+            w = s_.get("wins") or {"a": 0, "b": 0}
+            flip = s_["a"] != e["a"]
+            wa, wb = (w.get("b", 0), w.get("a", 0)) if flip else (w.get("a", 0), w.get("b", 0))
+            if (wa, wb) != (e["wins_at_paste"]["a"], e["wins_at_paste"]["b"]): continue
+            sw = (lambda k: k.replace("a", "\0").replace("b", "a").replace("\0", "b")) if flip else (lambda k: k)
+            o = out.setdefault((s_["league"], s_["a"], s_["b"]), {"exact": {}, "spread": {}, "games": {}})
+            for k, v in (e.get("exact") or {}).items(): o["exact"].setdefault(sw(k[0]) + k[1:], []).append((v, book))
+            for k, v in (e.get("spread") or {}).items(): o["spread"].setdefault(sw(k[0]) + k[1:], []).append((v, book))
+            for ln, ou in (e.get("games") or {}).items():
+                g = o["games"].setdefault(ln, {"over": [], "under": []})
+                for side in ("over", "under"):
+                    if ou.get(side) is not None: g[side].append((ou[side], book))
+    return out
+
+
+# ── Bovada (open JSON feed): full series markets -- winner, correct score, +/-1.5/2.5 games, total games ──
+BOV_LIST  = "https://www.bovada.lv/services/sports/event/v2/events/A/description/baseball?marketFilterId=def&lang=en"
+BOV_EVENT = "https://www.bovada.lv/services/sports/event/coupon/events/A/description{}?lang=en"
+NICK = {"Rays":"TB","Yankees":"NYY","Guardians":"CLE","White Sox":"CWS","Padres":"SD","Brewers":"MIL","Dodgers":"LAD",
+        "Braves":"ATL","Phillies":"PHI","Cubs":"CHC","Red Sox":"BOS","Astros":"HOU","Mariners":"SEA","Tigers":"DET"}
+def _nick(txt):
+    for k, v in NICK.items():
+        if k in txt: return v
+    return None
+def _am(x):
+    try: return int(str(x).replace("+", "")) if str(x).upper() != "EVEN" else 100
+    except Exception: return None
+def _bovada_series():
+    """{frozenset({a,b}): {'ml':{team:odds}, 'exact':{(team,w,l):odds}, 'spread':{(team,±x.5):odds}, 'games':{line:{'over','under'}}}}"""
+    out = {}
+    try: groups = _get(BOV_LIST)
+    except Exception as e:
+        print(f"[series_odds] Bovada list failed: {e}", file=sys.stderr); return out
+    links = [e["link"] for g in groups for e in g.get("events", []) if "playoff-series" in e.get("link", "")]
+    for ln in links:
+        try: d = _get(BOV_EVENT.format(ln))
+        except Exception as e:
+            print(f"[series_odds] Bovada {ln} failed: {e}", file=sys.stderr); continue
+        for g in d:
+            for ev in g.get("events", []):
+                rec = {"ml": {}, "exact": {}, "spread": {}, "games": {}}
+                for dg in ev.get("displayGroups", []):
+                    for m in dg.get("markets", []):
+                        md = m.get("description", "")
+                        for o in m.get("outcomes", []):
+                            od = o.get("description", ""); pr = o.get("price") or {}; a = _am(pr.get("american"))
+                            if a is None: continue
+                            if md == "Series Winner":
+                                t = _nick(od); t and rec["ml"].__setitem__(t, a)
+                            elif md == "Series Correct Score":
+                                t = _nick(od); sc = od.split()[-1]
+                                if t and "-" in sc: w, l = sc.split("-"); rec["exact"][(t, int(w), int(l))] = a
+                            elif "Series Handicap" in md:
+                                t = _nick(od); hc = [x for x in od.split() if x[:1] in "+-"]
+                                if t and hc: rec["spread"][(t, float(hc[0]))] = a
+                            elif md in ("Total", "Alternate Series Total Games"):
+                                side = "over" if od.lower().startswith("over") else "under"
+                                line = pr.get("handicap") or od.split()[-1]
+                                rec["games"].setdefault(str(float(line)), {})[side] = a
+                teams = set(rec["ml"]) or {t for (t, _, _) in rec["exact"]}
+                if len(teams) == 2: out[frozenset(teams)] = rec
+    if out: print(f"[series_odds] Bovada series markets: {len(out)} series")
+    return out
+
 def fetch_series_ml(series):
     """Series moneyline from Kalshi KXMLBSERIES. Each series posts TWO binaries (one per team).
     Price shown for each side = the cheapest way to actually back it, fee included:
@@ -269,6 +365,23 @@ def fetch_series_ml(series):
         bk = _bk_actionnetwork(series)
     except Exception as e:
         print(f"[series_odds] book merge skipped: {e}", file=sys.stderr); bk = {}
+    try:
+        pin = _pinnacle_series()
+        for s_ in series:
+            pr = pin.get(frozenset({s_["a"], s_["b"]}))
+            if not pr: continue
+            e = bk.setdefault((s_["league"], s_["a"], s_["b"]), {"a": {}, "b": {}})
+            e["a"]["Pinnacle"] = pr[s_["a"]]; e["b"]["Pinnacle"] = pr[s_["b"]]
+        if pin: print(f"[series_odds] Pinnacle series ML: {len(pin)} series")
+        global _BOV
+        _BOV = _bovada_series()
+        for s_ in series:
+            r = _BOV.get(frozenset({s_["a"], s_["b"]}))
+            if not r or len(r["ml"]) != 2: continue
+            e = bk.setdefault((s_["league"], s_["a"], s_["b"]), {"a": {}, "b": {}})
+            e["a"]["Bovada"] = r["ml"][s_["a"]]; e["b"]["Bovada"] = r["ml"][s_["b"]]
+    except Exception as ex:
+        print(f"[series_odds] Pinnacle merge skipped: {ex}", file=sys.stderr)
     # Deciding game (WC 1-1, LDS 2-2, LCS/WS 3-3): the series IS today's game, so the book price is that
     # game's moneyline (data/odds.json, best across books). Books' series-futures boards lag badly here
     # (FanDuel still had PHI +116 on the series with PHI -112 on the Game 3 ML).
@@ -298,6 +411,7 @@ def fetch_series_ml(series):
         cur["books"] = books
     return out
 
+_BOV = {}
 _EXACT_PROB = {}   # (league,a,b) -> {'a-2-0': mid_prob, ...}; shared by exact + spread
 
 def fetch_correct_score(series):
@@ -404,6 +518,26 @@ def main():
     ou  = fetch_games_ou(series_in)
     ex  = fetch_ws_exacta(pairings_in)
 
+    man = _manual_props(series_in)
+    for s_ in series_in:   # live Bovada series props join the pasted books
+        r = _BOV.get(frozenset({s_["a"], s_["b"]}))
+        if not r: continue
+        o = man.setdefault((s_["league"], s_["a"], s_["b"]), {"exact": {}, "spread": {}, "games": {}})
+        side = lambda t: "a" if t == s_["a"] else "b"
+        for (t, w, l), v in r["exact"].items(): o["exact"].setdefault(f"{side(t)}-{w}-{l}", []).append((v, "Bovada"))
+        for (t, hc), v in r["spread"].items():
+            o["spread"].setdefault(f"{side(t)}_{'minus' if hc < 0 else 'plus'}_{int(abs(hc))}_5", []).append((v, "Bovada"))
+        for ln, ou in r["games"].items():
+            g = o["games"].setdefault(ln, {"over": [], "under": []})
+            for sd in ("over", "under"):
+                if ou.get(sd) is not None: g[sd].append((ou[sd], "Bovada"))
+    def _merge(kal, extra):
+        """best price per key across Kalshi (already a buy price) and pasted books -> (odds, books)"""
+        best, src = dict(kal or {}), {k: "Kalshi" for k in (kal or {})}
+        for k, lst in extra.items():
+            for o, b in lst:
+                if best.get(k) is None or _dec(o) > _dec(best[k]): best[k], src[k] = o, b
+        return (best or None), src
     series_out = []
     for s in series_in:
         key = (s["league"], s["a"], s["b"])
@@ -417,13 +551,30 @@ def main():
             "spread": sp.get(key),      # dict or None
             "games":  ou.get(key),      # {'line','over','under'} or None
         })
+        mm = man.get(key)
+        if mm:
+            row = series_out[-1]
+            row["exact"], row["exact_book"] = _merge(row["exact"], mm["exact"])
+            row["spread"], row["spread_book"] = _merge(row["spread"], mm["spread"])
+            g = row["games"] or {"ladder": {}}
+            lad = {ln: dict(v) for ln, v in (g.get("ladder") or {}).items()}
+            gbook = {}
+            for ln, sides in mm["games"].items():
+                cur = lad.setdefault(ln, {"over": None, "under": None})
+                for side, lst in sides.items():
+                    for o, b in lst:
+                        if cur.get(side) is None or _dec(o) > _dec(cur[side]):
+                            cur[side] = o; gbook[f"{ln} {side}"] = b
+            if lad:
+                ln0 = sorted(lad, key=float)[0]
+                row["games"] = {"ladder": lad, "line": float(ln0), **lad[ln0], "book": gbook}
 
     pairings_out = [{"al": p["al"], "nl": p["nl"], "market": ex.get((p["al"], p["nl"]))}
                     for p in pairings_in]
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Series ML: best of Kalshi KXMLBSERIES + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
+        "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
         "price_type": "buy",   # every market price = real cost to back that side (ask / 1-bid, Kalshi fee included); do NOT de-vig
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},
