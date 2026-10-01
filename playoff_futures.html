@@ -87,7 +87,11 @@
 .chip .pct{margin-left:auto;font-size:12.5px;font-weight:700;color:#6aa9ff}
 .chip .fill{position:absolute;left:0;top:0;bottom:0;background:rgba(106,169,255,.12)}
 .chip>*{position:relative}
+.sbk{font-size:9px;color:#8b96a5;letter-spacing:.03em;line-height:1;margin-top:1px}
 .chip.out{opacity:.42}
+.brk .pair.done{opacity:.5;filter:saturate(.35)}
+.brk .pair.done .chip.out{opacity:.7}
+.brk .pair.done .chip.adv{border-color:var(--line,#232a34)}
 .chip.out .ab{text-decoration:line-through;text-decoration-thickness:2px}
 .chip.out img{filter:grayscale(1)}
 .chip .pct.x{color:#ef6b6b}
@@ -115,7 +119,8 @@
 /* ── current-round series board ── */
 .secthd{font-size:.95rem;font-weight:600;color:#e6edf3;margin:2px 2px 8px}
 .secthd .sub2,.sub2{font-weight:400;color:#8b96a5;font-size:.74rem}
-.scardgrid{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 14px}
+.scardgrid{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 14px;align-items:start}
+.scardgrid>.scol{display:flex;flex-direction:column;gap:12px;min-width:0}
 @media(min-width:640px){.scardgrid{grid-template-columns:1fr 1fr}}
 .scard{background:#161b22;border:1px solid #232a34;border-radius:10px;padding:12px 14px}
 .shd{font-size:.72rem;color:#8b96a5;margin:0 0 8px;display:flex;align-items:center;gap:6px}
@@ -438,7 +443,10 @@ function seriesRowHTML(s, mkt){
   // compare the model straight to what it costs to back each side (no de-vig -> each side has its own edge).
   const BUY=!!(window.__sodds&&window.__sodds.price_type==='buy');
   const [dva,dvb]=BUY?[impAm(mml_a),impAm(mml_b)]:devig2(mml_a,mml_b);
-  const line=(ab,seed,p,fairAm,mml,dv,isFav)=>{
+  const BKAB={DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',bet365:'365',Fanatics:'FAN',BetRivers:'BR',Kalshi:'KAL'};
+  const line=(ab,seed,p,fairAm,mml,dv,isFav,side)=>{
+    const bk=mkt&&(mkt['book_'+side]||mkt.book), all=mkt&&mkt.books&&mkt.books[side];
+    const tip=all?Object.entries(all).map(([n,o])=>`${n} ${o>0?'+':''}${o}`).join(' · '):'';
     const edge = dv!=null ? (p*100 - dv*100) : null;
     const ecls = edge==null?'flat':(edge>=3?'pos':(edge<=-3?'neg':'flat'));
     const etx  = edge==null?'—':((edge>0?'+':'')+edge.toFixed(1)+'%');
@@ -447,7 +455,7 @@ function seriesRowHTML(s, mkt){
       <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b>${seed!=null?`<span class="ssd">(${seed})</span>`:''}</div>
       <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${barColor(ab)}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
-      <div class="scell"><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}</div>
+      <div class="scell"${tip?` title="Best price. ${tip}"`:''}><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}${mml!=null&&bk&&bk!=='best'?`<div class="sbk">${BKAB[bk]||bk}</div>`:''}</div>
       <div class="scell edge ${ecls}"><div class="sk">Edge</div>${etx}${star?'<span class="star"> '+star+'</span>':''}</div>
     </div>`;
   };
@@ -523,12 +531,21 @@ function seriesRowHTML(s, mkt){
   </details>`;
   const favA=m.p_a>=m.p_b;
   return `<div class="scard">
-    <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · all @ ${host}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
-    ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA)}
-    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA)}
+    <div class="shd"><span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · ${siteLabel(s)}${s.state?`<span class="slive">● ${s.state}</span>`:''}</div>
+    ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA,'b')}
+    ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA,'a')}
     ${sbGameSlot(s)}
     ${details}
   </div>`;
+}
+// Where each game is played, from the per-game home teams: WC "all @ TB"; LDS "G1-2, G5 @ TB · G3-4 @ NYY"
+function siteLabel(s){
+  const gs=s.games||[]; if(!gs.length) return `all @ ${s.host}`;
+  const by={}; gs.forEach(g=>{(by[g.home]=by[g.home]||[]).push(g.g);});
+  const teams=Object.keys(by); if(teams.length===1) return `all @ ${teams[0]}`;
+  const rng=a=>{const o=[];let st=a[0],pv=a[0];for(let i=1;i<=a.length;i++){if(a[i]===pv+1){pv=a[i];continue;}o.push(st===pv?`G${st}`:`G${st}-${pv}`);st=pv=a[i];}return o.join(', ');};
+  teams.sort((x,y)=>by[x][0]-by[y][0]);
+  return teams.map(t=>`${rng(by[t])} @ ${t}`).join(' · ');
 }
 function RLABF(r){ return ({WC:'Wild Card',LDS:'Division Series',LCS:'Championship Series',WS:'World Series'}[r]||r); }
 function renderSeries(isEdges){
@@ -540,7 +557,11 @@ function renderSeries(isEdges){
   const hasMkt=od.some(o=>o.ml_a!=null);
   el.style.display='block';
   el.innerHTML=`<div class="secthd">Series win probability — <b>${S.round_label||RLABF(S.round)}</b> <span class="srcplain">(Game Sim)</span></div>
-    <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');})()}</div>`;
+    <div class="scardgrid">${(function(){const l=SERIESSEL?S.series.filter(seriesMatch):S.series;
+      if(SERIESSEL) return (l.length?l:S.series).map(s=>seriesRowHTML(s,mk(s))).join('');
+      // AL series stacked in the left column, NL in the right (mobile: AL block then NL block)
+      const col=lg=>{const c=S.series.filter(s=>s.league===lg); return c.length?`<div class="scol">${c.map(s=>seriesRowHTML(s,mk(s))).join('')}</div>`:'';};
+      return col('AL')+col('NL');})()}</div>`;
   fit();
 }
 function renderExacta(isEdges){
@@ -604,7 +625,11 @@ async function load(){
     window.__v2date=(v2&&v2.date)||'';
     for(const[ab,t]of Object.entries(tf.teams)){ blend[ab]=t.composite||{}; mkt[ab]=t.market||{}; }
     DATA.mine=overlay(v2); DATA.gamesim=overlay(lane2); DATA.blend=blend; MKT=mkt;
-    ['ARI','TEX'].forEach(x=>{ delete DATA.mine[x]; delete DATA.gamesim[x]; delete DATA.blend[x]; delete MKT[x]; });  // eliminated — off the projections/edges board
+    // eliminated teams come off the projections/edges tables (the bracket keeps them, crossed out).
+    // A team is out once the live bracket walk has any of its rounds at exactly 0.
+    const _out=new Set(['ARI','TEX']);
+    if(lane2){ ['reach_ds','reach_cs','al_pennant','nl_pennant'].forEach(k=>{ for(const[ab,v]of Object.entries(lane2[k]||{})) if(v===0) _out.add(({AZ:'ARI'}[ab]||ab)); }); }
+    _out.forEach(x=>{ delete DATA.mine[x]; delete DATA.gamesim[x]; delete DATA.blend[x]; delete MKT[x]; });
     if(lane2 && DATA.gamesim){ const FLDS=['ws_pct','ws_app_pct','reach_ds_pct','reach_cs_pct'];
       for(const ab in DATA.blend){ const c=DATA.blend[ab], g=DATA.gamesim[ab]; if(!c||!g) continue;
         FLDS.forEach(fl=>{ const cv=num(c[fl]), gv=num(g[fl]);
@@ -779,8 +804,9 @@ function brkStatus(ab,key){ const v=((window.__lane2||{})[key]||{})[ab]; return 
 function chip(ab,seed,mark,tbd){
   if(!ab) return `<div class="chip empty">${tbd||'TBD'}</div>`;
   const d=(brkData()||{})[ab]||{}, pv=num(d[RKEY[curRound]]);
-  const w=(pv==null||mark==='out')?0:Math.max(0,Math.min(100,pv));
-  const tail=mark==='out'?'<span class="pct x">✕</span>':`<span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span>`;
+  const w=(pv==null||mark)?0:Math.max(0,Math.min(100,pv));
+  // decided chips carry no %: the winner's odds live on in the next round's slot
+  const tail=mark==='out'?'<span class="pct x">✕</span>':(mark==='adv'?'':`<span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span>`);
   return `<div class="chip${mark?' '+mark:''}" data-ab="${ab}"><span class="fill" style="width:${w}%"></span>`+
     `<span class="seed">${seed}</span><img src="${LOGO(ab)}" alt="" onerror="this.style.visibility='hidden'">`+
     `<span class="ab">${ab}</span>${mark==='adv'?'<span class="ck">✓</span>':''}${tail}</div>`;
@@ -833,15 +859,19 @@ function renderBracket(){
   // Full bracket stays on screen all October: losers stay in their slot crossed out, winners get a ✓
   // and are carried into the next round's slot (Division -> LCS -> pennant).
   const seedOf=(s,ab)=>s.indexOf(ab)+1;
-  const wcPair=(s,seeds)=>`<div class="pair">${seeds.map(k=>chip(s[k-1],k,brkStatus(s[k-1],'reach_ds'))).join('')}</div>`;
+  // a finished series is greyed out so the live round pops; it keeps the ✓ / ✕ marks
+  const pairCls=marks=>marks.includes('adv')?'pair done':'pair';
+  const wcPair=(s,seeds)=>{ const mk=seeds.map(k=>brkStatus(s[k-1],'reach_ds'));
+    return `<div class="${pairCls(mk)}">${seeds.map((k,i)=>chip(s[k-1],k,mk[i])).join('')}</div>`; };
   const wcWin=(s,seeds)=>seeds.map(k=>s[k-1]).find(ab=>brkStatus(ab,'reach_ds')==='adv')||null;
   const dsPair=(s,top,wcSeeds)=>{ const w=wcWin(s,wcSeeds);
-    return `<div class="pair">${chip(s[top-1],top,brkStatus(s[top-1],'reach_cs'))}${chip(w,w?seedOf(s,w):'',w?brkStatus(w,'reach_cs'):'',`${wcSeeds[0]}/${wcSeeds[1]} winner`)}</div>`; };
+    const mt=brkStatus(s[top-1],'reach_cs'), mw=w?brkStatus(w,'reach_cs'):'';
+    return `<div class="${pairCls([mt,mw])}">${chip(s[top-1],top,mt)}${chip(w,w?seedOf(s,w):'',mw,`${wcSeeds[0]}/${wcSeeds[1]} winner`)}</div>`; };
   const lcsCol=(s,lab)=>{ const ws=s.filter(ab=>ab&&brkStatus(ab,'reach_cs')==='adv');
     const pk=s===al?'al_pennant':'nl_pennant';
     if(!ws.length) return `<div class="col lcs"><div class="rndlab">${lab}</div></div>`;
     const c=ab=>chip(ab,seedOf(s,ab),brkStatus(ab,pk));
-    return `<div class="col lcs on"><div class="rndlab">${lab}</div><div class="pair">${ws.map(c).join('')}${ws.length<2?chip(null,'','','TBD'):''}</div></div>`; };
+    return `<div class="col lcs on"><div class="rndlab">${lab}</div><div class="${pairCls(ws.map(ab=>brkStatus(ab,pk)))}">${ws.map(c).join('')}${ws.length<2?chip(null,'','','TBD'):''}</div></div>`; };
   const alWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(al,[3,6])}${wcPair(al,[4,5])}</div>`;
   const alDS=`<div class="col ds"><div class="rndlab">Division</div>${dsPair(al,2,[3,6])}${dsPair(al,1,[4,5])}</div>`;
   const nlWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(nl,[3,6])}${wcPair(nl,[4,5])}</div>`;
