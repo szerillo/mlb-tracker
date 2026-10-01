@@ -87,6 +87,13 @@
 .chip .pct{margin-left:auto;font-size:12.5px;font-weight:700;color:#6aa9ff}
 .chip .fill{position:absolute;left:0;top:0;bottom:0;background:rgba(106,169,255,.12)}
 .chip>*{position:relative}
+.chip.out{opacity:.42}
+.chip.out .ab{text-decoration:line-through;text-decoration-thickness:2px}
+.chip.out img{filter:grayscale(1)}
+.chip .pct.x{color:#ef6b6b}
+.chip.adv{border-color:#2f8f5b}
+.chip .ck{color:#3fc27d;font-weight:800;font-size:12px;margin-left:-2px}
+.brk .col.lcs.on{flex:.9;min-width:88px;align-items:stretch}
 .brk .center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:92px;padding:0 6px;text-align:center}
 .brk .center .champ{margin-top:6px;font-size:12px;color:var(--tx,#e6edf3)}
 .brk .center .champ b{color:#6aa9ff}
@@ -468,7 +475,7 @@ function seriesRowHTML(s, mkt){
   const _w=s.wins||{a:0,b:0};
   const possible=(side,w,l)=>{ const mine=side==='a'?_w.a:_w.b, theirs=side==='a'?_w.b:_w.a; return mine<=w && theirs<=l; };
   const exRow=(lab,p,mk,pdv,col)=>{
-    if(!(p>0.0005)) return '';
+    if(!(p>0.0005) || p>=0.9995) return '';
     const ed=(pdv!=null)?(p-pdv)*100:null;
     const ec=ed==null?'':(ed>=1?'pos':(ed<=-1?'neg':'flat'));
     const etx=ed==null?'<span class="dash">—</span>':((ed>0?'+':'')+ed.toFixed(1)+'%');
@@ -487,14 +494,29 @@ function seriesRowHTML(s, mkt){
   // sweep: de-vig against the same exact-score set (2-0 prices ARE the -1.5g prices in a bo3)
   const pdvSide=side=>{ if(!exOrder.length||!exOrder.every(q=>exM[q]!=null)) return spM[side+'_minus_1_5']!=null?impAm(spM[side+'_minus_1_5']):null;
     return exOrder.reduce((t,k,i)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=2)?exDv[i]:0);},0); };
-  const sweepBlock = `<div class="stk">${blkHead('Margin')}
-    ${_w.b>0?'':exRow(`${s.a} −1.5g`,spr.a_minus_1_5||0,spM.a_minus_1_5,pdvSide('a'),barColor(s.a))}${_w.a>0?'':exRow(`${s.b} −1.5g`,spr.b_minus_1_5||0,spM.b_minus_1_5,pdvSide('b'),barColor(s.b))}</div>`
-    + (()=>{ const bo=s.best_of||3, gM=(mkt&&mkt.games)||{}; const line=gM.line!=null?gM.line:bo-0.5;
-        const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
-        if(!exOrder.length) return '';
-        const [dO,dU]=BUY?[impAm(gM.over),impAm(gM.under)]:devig2(gM.over,gM.under);
-        return `<div class="stk">${blkHead('Total games')}
-          ${exRow(`Over ${line}`,pOver,gM.over,dO)}${exRow(`Under ${line}`,1-pOver,gM.under,dU)}</div>`; })();
+  // Series spread (±1.5g, ±2.5g in bo5/bo7) and total-games ladder, all derived from the exact-result
+  // distribution (already conditional on games played). Rows the series can no longer produce, or has
+  // already locked in, are hidden by exRow (p<=0.05% or p>=99.95%).
+  const _bo=s.best_of||3, _need=Math.floor(_bo/2)+1;
+  const _minus=(side,mg)=>exOrder.reduce((t,k)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=mg)?ex[k]:0);},0);
+  const _mk=k=>spM[k]!=null?spM[k]:null;
+  const _sprRow=(side,sign,mg)=>{ const opp=side==='a'?'b':'a', who=side==='a'?s.a:s.b, lab=`${mg-1}_5`;
+    const p=sign<0?_minus(side,mg):1-_minus(opp,mg);
+    const key=`${side}_${sign<0?'minus':'plus'}_${lab}`, mk=_mk(key);
+    let pdv=mk!=null?impAm(mk):null;
+    if(pdv==null&&sign<0&&mg===2) pdv=pdvSide(side);
+    return exRow(`${who} ${sign<0?'−':'+'}${mg-0.5}g`,p,mk,pdv,barColor(who)); };
+  const _margins=_need>=3?[2,3]:[2];
+  const sweepBlock = !exOrder.length?'':(`<div class="stk">${blkHead('Series spread')}
+    ${_margins.map(mg=>_sprRow('a',-1,mg)+_sprRow('b',1,mg)+_sprRow('b',-1,mg)+_sprRow('a',1,mg)).join('')}</div>`
+    + (()=>{ const gM=(mkt&&mkt.games)||{}, lad=gM.ladder||{};
+        const lines=[]; for(let n=_need;n<2*_need-1;n++) lines.push(n+0.5);
+        const rows=lines.map(line=>{
+          const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
+          const q=lad[String(line)]||(gM.line===line?gM:{});
+          const [dO,dU]=BUY?[impAm(q.over),impAm(q.under)]:devig2(q.over,q.under);
+          return exRow(`Over ${line}`,pOver,q.over,dO)+exRow(`Under ${line}`,1-pOver,q.under,dU); }).join('');
+        return rows?`<div class="stk">${blkHead('Total games')}${rows}</div>`:''; })());
   const details = `<details class="sdet"><summary>Series props</summary>
     ${exactBlock}
     ${sweepBlock}
@@ -559,7 +581,7 @@ async function load(){
       fetch(RAW+'lane2_series.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
-    window.__series=series; window.__sodds=sodds;
+    window.__series=series; window.__sodds=sodds; window.__lane2=lane2;
     await loadPOGames();
     const blend={},mkt={};
     // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
@@ -752,13 +774,16 @@ const RKEY={ds:'reach_ds_pct',cs:'reach_cs_pct',pennant:'ws_app_pct',ws:'ws_pct'
 const RLAB={ds:'Wild Card round',cs:'Division Series',pennant:'Pennant',ws:'World Series'};
 const BMN={mine:'Playoff Fit',gamesim:'Game Sim',blend:'Composite'};
 function brkData(){ return brkModel==='mine'?DATA.mine:brkModel==='gamesim'?DATA.gamesim:DATA.blend; }
-function chip(ab,seed){
-  if(!ab) return '<div class="chip empty">TBD</div>';
+// decided-series marks come from the live bracket walk (lane2_marginalized: exactly 1 / 0 once a series is over)
+function brkStatus(ab,key){ const v=((window.__lane2||{})[key]||{})[ab]; return v===1?'adv':(v===0?'out':''); }
+function chip(ab,seed,mark,tbd){
+  if(!ab) return `<div class="chip empty">${tbd||'TBD'}</div>`;
   const d=(brkData()||{})[ab]||{}, pv=num(d[RKEY[curRound]]);
-  const w=pv==null?0:Math.max(0,Math.min(100,pv));
-  return `<div class="chip" data-ab="${ab}"><span class="fill" style="width:${w}%"></span>`+
+  const w=(pv==null||mark==='out')?0:Math.max(0,Math.min(100,pv));
+  const tail=mark==='out'?'<span class="pct x">✕</span>':`<span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span>`;
+  return `<div class="chip${mark?' '+mark:''}" data-ab="${ab}"><span class="fill" style="width:${w}%"></span>`+
     `<span class="seed">${seed}</span><img src="${LOGO(ab)}" alt="" onerror="this.style.visibility='hidden'">`+
-    `<span class="ab">${ab}</span><span class="pct">${pv==null?'-':Math.round(pv)+'%'}</span></div>`;
+    `<span class="ab">${ab}</span>${mark==='adv'?'<span class="ck">✓</span>':''}${tail}</div>`;
 }
 function renderBracketSection(){
   const seg=document.getElementById('brkSeg'); seg.className='segwrap';
@@ -805,16 +830,26 @@ function renderBracket(){
   const S=BRACKET, wrap=document.getElementById('brkWrap');
   if(!S.AL||!S.AL.length){ wrap.innerHTML='<div class="sub" style="padding:20px">Bracket loading.</div>'; return; }
   const al=S.AL, nl=S.NL;
-  const wcPair=(s,seeds)=>`<div class="pair">${chip(s[seeds[0]-1],seeds[0])}${chip(s[seeds[1]-1],seeds[1])}</div>`;
-  const bye=(s,seed)=>`<div class="pair">${chip(s[seed-1],seed)}</div>`;
+  // Full bracket stays on screen all October: losers stay in their slot crossed out, winners get a ✓
+  // and are carried into the next round's slot (Division -> LCS -> pennant).
+  const seedOf=(s,ab)=>s.indexOf(ab)+1;
+  const wcPair=(s,seeds)=>`<div class="pair">${seeds.map(k=>chip(s[k-1],k,brkStatus(s[k-1],'reach_ds'))).join('')}</div>`;
+  const wcWin=(s,seeds)=>seeds.map(k=>s[k-1]).find(ab=>brkStatus(ab,'reach_ds')==='adv')||null;
+  const dsPair=(s,top,wcSeeds)=>{ const w=wcWin(s,wcSeeds);
+    return `<div class="pair">${chip(s[top-1],top,brkStatus(s[top-1],'reach_cs'))}${chip(w,w?seedOf(s,w):'',w?brkStatus(w,'reach_cs'):'',`${wcSeeds[0]}/${wcSeeds[1]} winner`)}</div>`; };
+  const lcsCol=(s,lab)=>{ const ws=s.filter(ab=>ab&&brkStatus(ab,'reach_cs')==='adv');
+    const pk=s===al?'al_pennant':'nl_pennant';
+    if(!ws.length) return `<div class="col lcs"><div class="rndlab">${lab}</div></div>`;
+    const c=ab=>chip(ab,seedOf(s,ab),brkStatus(ab,pk));
+    return `<div class="col lcs on"><div class="rndlab">${lab}</div><div class="pair">${ws.map(c).join('')}${ws.length<2?chip(null,'','','TBD'):''}</div></div>`; };
   const alWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(al,[3,6])}${wcPair(al,[4,5])}</div>`;
-  const alDS=`<div class="col ds"><div class="rndlab">Division</div>${bye(al,2)}${bye(al,1)}</div>`;
+  const alDS=`<div class="col ds"><div class="rndlab">Division</div>${dsPair(al,2,[3,6])}${dsPair(al,1,[4,5])}</div>`;
   const nlWC=`<div class="col wc"><div class="rndlab">Wild Card</div>${wcPair(nl,[3,6])}${wcPair(nl,[4,5])}</div>`;
-  const nlDS=`<div class="col ds"><div class="rndlab">Division</div>${bye(nl,2)}${bye(nl,1)}</div>`;
+  const nlDS=`<div class="col ds"><div class="rndlab">Division</div>${dsPair(nl,2,[3,6])}${dsPair(nl,1,[4,5])}</div>`;
   const md=brkData()||{}; let champ=null,cw=-1;
   [...al,...nl].forEach(ab=>{ if(!ab)return; const v=num((md[ab]||{}).ws_pct); if(v!=null&&v>cw){cw=v;champ=ab;} });
   const center=`<div class="center"><div class="rndlab">World Series</div>`+(champ?`<img src="${LOGO(champ)}" style="width:36px;height:36px;object-fit:contain" onerror="this.style.visibility='hidden'"><div class="champ"><b>${champ}</b> ${Math.round(cw)}%</div>`:'')+`</div>`;
-  wrap.innerHTML=`<div class="brk"><div class="wing al">${alWC}${alDS}<div class="col lcs"><div class="rndlab">ALCS</div></div></div>${center}<div class="wing nl"><div class="col lcs"><div class="rndlab">NLCS</div></div>${nlDS}${nlWC}</div></div>`;
+  wrap.innerHTML=`<div class="brk"><div class="wing al">${alWC}${alDS}${lcsCol(al,'ALCS')}</div>${center}<div class="wing nl">${lcsCol(nl,'NLCS')}${nlDS}${nlWC}</div></div>`;
   let tip=null;
   const moveTip=e=>{ if(!tip)return; tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px'; tip.style.top=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8)+'px'; };
   wrap.querySelectorAll('.chip[data-ab]').forEach(c=>{

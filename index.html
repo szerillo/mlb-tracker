@@ -3588,7 +3588,25 @@ function poSeriesStripHTML(g){
     const A = _poAb(g,'away'), H = _poAb(g,'home');
     const s = PO_SERIES && (PO_SERIES.series || []).find(x => (x.a===A && x.b===H) || (x.a===H && x.b===A));
     if (s && s.model) {
-      const favA = s.model.p_a >= 0.5, fav = favA ? s.a : s.b, p = favA ? s.model.p_a : s.model.p_b, ml = favA ? s.model.ml_a : s.model.ml_b;
+      // Price the series off THIS game's Action PRO win prob (the number on the card) plus the
+      // series model for the games after it. In a deciding game (WC G3 / LDS G5 / LCS-WS G7) this is
+      // exactly the card's WP. Final/in-progress games fall back to the series feed.
+      let pA = s.model.p_a;
+      try {
+        const st = (g.status && g.status.abstractGameState) || '';
+        const sp = (st === 'Preview') ? sheetProjForGame(g.gamePk) : null;
+        const w = s.wins || {a:0, b:0};
+        if (sp && sp.home_wp != null && Array.isArray(s.games) && s.games.length && gn && (w.a||0) + (w.b||0) === gn - 1) {
+          const need = Math.floor(s.games.length/2) + 1;
+          const pw = s.games.map((x, i) => {
+            const hw = (i === gn - 1) ? (x.home === H ? sp.home_wp : 1 - sp.home_wp) : x.home_wp;
+            return x.home === s.a ? hw : 1 - hw; });
+          const rec = (i, a, b) => a === need ? 1 : (b === need || i >= pw.length) ? 0 : pw[i]*rec(i+1, a+1, b) + (1-pw[i])*rec(i+1, a, b+1);
+          pA = rec(gn - 1, w.a||0, w.b||0);
+        }
+      } catch (e) {}
+      const _am = q => q >= 0.5 ? -Math.round(100*q/(1-q)) : Math.round(100*(1-q)/q);
+      const favA = pA >= 0.5, fav = favA ? s.a : s.b, p = favA ? pA : 1 - pA, ml = _am(p);
       proj = ' <span class="apx-series-proj">Series: <b>' + fav + ' ' + (p*100).toFixed(1) + '%</b> (' + (ml>0?'+':'') + ml + ')</span>';
     }
   } catch (e) {}
