@@ -443,7 +443,7 @@ function seriesRowHTML(s, mkt){
   // compare the model straight to what it costs to back each side (no de-vig -> each side has its own edge).
   const BUY=!!(window.__sodds&&window.__sodds.price_type==='buy');
   const [dva,dvb]=BUY?[impAm(mml_a),impAm(mml_b)]:devig2(mml_a,mml_b);
-  const BKAB={DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',bet365:'365',Fanatics:'FAN',BetRivers:'BR',Kalshi:'KAL'};
+  const BKAB={DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',bet365:'365',Fanatics:'FAN',BetRivers:'BR',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV'};
   const line=(ab,seed,p,fairAm,mml,dv,isFav,side)=>{
     const bk=mkt&&(mkt['book_'+side]||mkt.book), all=mkt&&mkt.books&&mkt.books[side];
     const tip=all?Object.entries(all).map(([n,o])=>`${n} ${o>0?'+':''}${o}`).join(' · '):'';
@@ -455,7 +455,7 @@ function seriesRowHTML(s, mkt){
       <div class="steam"><img src="${LOGO(ab)}" onerror="this.style.visibility='hidden'"><b>${ab}</b>${seed!=null?`<span class="ssd">(${seed})</span>`:''}</div>
       <div class="sbarwrap"><div class="sbar" style="width:${(p*100).toFixed(1)}%;background:${barColor(ab)}"></div><span class="sbpct">${(p*100).toFixed(1)}%</span></div>
       <div class="scell"><div class="sk">Fair</div>${fmtAm(fairAm)}</div>
-      <div class="scell"${tip?` title="Best price. ${tip}"`:''}><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}${mml!=null&&bk&&bk!=='best'?`<div class="sbk">${(m=>m?(BKAB[m[1]]||m[1])+' ML':(BKAB[bk]||bk))(String(bk).match(/^(.*) G\d ML$/))}</div>`:''}</div>
+      <div class="scell"${tip?` title="Best price. ${tip}"`:''}><div class="sk">Mkt</div>${mml!=null?fmtAm(mml):'<span class="dash">—</span>'}</div>
       <div class="scell edge ${ecls}"><div class="sk">Edge</div>${etx}${star?'<span class="star"> '+star+'</span>':''}</div>
     </div>`;
   };
@@ -482,7 +482,8 @@ function seriesRowHTML(s, mkt){
   // outcomes the series can no longer produce (e.g. trailing team -1.5g / 2-0) are hidden
   const _w=s.wins||{a:0,b:0};
   const possible=(side,w,l)=>{ const mine=side==='a'?_w.a:_w.b, theirs=side==='a'?_w.b:_w.a; return mine<=w && theirs<=l; };
-  const exRow=(lab,p,mk,pdv,col)=>{
+  const _bkl=b=>b?`<div class="sbk">${({DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV'})[b]||b}</div>`:'';
+  const exRow=(lab,p,mk,pdv,col,bk)=>{
     if(!(p>0.0005) || p>=0.9995) return '';
     const ed=(pdv!=null)?(p-pdv)*100:null;
     const ec=ed==null?'':(ed>=1?'pos':(ed<=-1?'neg':'flat'));
@@ -498,7 +499,7 @@ function seriesRowHTML(s, mkt){
   const colOf=k=>barColor(k.startsWith('a')?s.a:s.b);
   const exDv=dvSet(exOrder.map(k=>exM[k]));
   const exactBlock = exOrder.length ? `<div class="stk">${blkHead('Exact result')}
-    ${exOrder.map((k,i)=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;if(!possible(side,+w,+l))return '';return exRow(`${who} ${w}-${l}`,ex[k],exM[k],(exM[k]!=null&&exOrder.every(q=>exM[q]!=null))?exDv[i]:(exM[k]!=null?impAm(exM[k]):null),colOf(k));}).join('')}</div>` : '';
+    ${exOrder.map((k,i)=>{const [side,w,l]=k.split('-');const who=side==='a'?s.a:s.b;if(!possible(side,+w,+l))return '';return exRow(`${who} ${w}-${l}`,ex[k],exM[k],(exM[k]!=null&&exOrder.every(q=>exM[q]!=null))?exDv[i]:(exM[k]!=null?impAm(exM[k]):null),colOf(k),((mkt&&mkt.exact_book)||{})[k]);}).join('')}</div>` : '';
   // sweep: de-vig against the same exact-score set (2-0 prices ARE the -1.5g prices in a bo3)
   const pdvSide=side=>{ if(!exOrder.length||!exOrder.every(q=>exM[q]!=null)) return spM[side+'_minus_1_5']!=null?impAm(spM[side+'_minus_1_5']):null;
     return exOrder.reduce((t,k,i)=>{const [sd,w,l]=k.split('-');return t+((sd===side&&(+w)-(+l)>=2)?exDv[i]:0);},0); };
@@ -513,7 +514,7 @@ function seriesRowHTML(s, mkt){
     const key=`${side}_${sign<0?'minus':'plus'}_${lab}`, mk=_mk(key);
     let pdv=mk!=null?impAm(mk):null;
     if(pdv==null&&sign<0&&mg===2) pdv=pdvSide(side);
-    return exRow(`${who} ${sign<0?'−':'+'}${mg-0.5}g`,p,mk,pdv,barColor(who)); };
+    return exRow(`${who} ${sign<0?'−':'+'}${mg-0.5}g`,p,mk,pdv,barColor(who),((mkt&&mkt.spread_book)||{})[key]); };
   const _margins=_need>=3?[2,3]:[2];
   const sweepBlock = !exOrder.length?'':(`<div class="stk">${blkHead('Series spread')}
     ${_margins.map(mg=>_sprRow('a',-1,mg)+_sprRow('b',1,mg)+_sprRow('b',-1,mg)+_sprRow('a',1,mg)).join('')}</div>`
@@ -523,7 +524,8 @@ function seriesRowHTML(s, mkt){
           const pOver=Object.keys(ex).reduce((t,k)=>{const [,w,l]=k.split('-');return t+((+w)+(+l)>line?ex[k]:0);},0);
           const q=lad[String(line)]||(gM.line===line?gM:{});
           const [dO,dU]=BUY?[impAm(q.over),impAm(q.under)]:devig2(q.over,q.under);
-          return exRow(`Over ${line}`,pOver,q.over,dO)+exRow(`Under ${line}`,1-pOver,q.under,dU); }).join('');
+          const gb=(gM.book&&typeof gM.book==='object')?gM.book:{};
+          return exRow(`Over ${line}`,pOver,q.over,dO,null,gb[`${line} over`])+exRow(`Under ${line}`,1-pOver,q.under,dU,null,gb[`${line} under`]); }).join('');
         return rows?`<div class="stk">${blkHead('Total games')}${rows}</div>`:''; })());
   const details = `<details class="sdet"><summary>Series props</summary>
     ${exactBlock}
