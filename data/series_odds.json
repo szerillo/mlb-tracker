@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-01T21:50:13+00:00",
- "source": "Series ML: best of Kalshi KXMLBSERIES + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
+ "generated_at": "2026-10-01T22:07:21+00:00",
+ "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
   "series_ml": true,
@@ -15,15 +15,15 @@
    "league": "NL",
    "a": "ATL",
    "b": "PHI",
-   "ml_a": -107,
+   "ml_a": -110,
    "ml_b": -102,
    "book": "best",
-   "book_a": "Kalshi",
+   "book_a": "FanDuel G3 ML",
    "book_b": "Caesars G3 ML",
    "books": {
     "a": {
      "FanDuel G3 ML": -110,
-     "Kalshi": -107
+     "Kalshi": -112
     },
     "b": {
      "Caesars G3 ML": -102,
@@ -50,44 +50,78 @@
     "a": {
      "DraftKings": -140,
      "BetMGM": -150,
-     "FanDuel": -152,
      "Caesars": -145,
+     "FanDuel": -152,
+     "Pinnacle": -147,
+     "Bovada": -147,
      "Kalshi": -142
     },
     "b": {
      "DraftKings": 120,
      "BetMGM": 125,
-     "FanDuel": 126,
      "Caesars": 120,
+     "FanDuel": 126,
+     "Pinnacle": 125,
+     "Bovada": 123,
      "Kalshi": 124
     }
    },
    "exact": {
-    "b-3-2": 351,
-    "b-3-1": 351,
-    "b-3-0": 685,
-    "a-3-2": 296,
-    "a-3-1": 280,
-    "a-3-0": 456
+    "b-3-2": 450,
+    "b-3-1": 475,
+    "b-3-0": 900,
+    "a-3-2": 340,
+    "a-3-1": 330,
+    "a-3-0": 500
    },
    "spread": {
-    "a_minus_1_5": 126,
-    "b_minus_1_5": 187
+    "a_minus_1_5": 160,
+    "b_minus_1_5": 260,
+    "b_plus_1_5": -180,
+    "b_plus_2_5": -650,
+    "a_minus_2_5": 500,
+    "a_plus_1_5": -300,
+    "a_plus_2_5": -1000,
+    "b_minus_2_5": 700
    },
    "games": {
     "ladder": {
-     "4.5": {
-      "over": 124,
-      "under": -239
-     },
      "3.5": {
-      "over": -430,
-      "under": 208
+      "over": -340,
+      "under": 270
+     },
+     "4.5": {
+      "over": 150,
+      "under": -190
      }
     },
     "line": 3.5,
-    "over": -430,
-    "under": 208
+    "over": -340,
+    "under": 270,
+    "book": {
+     "3.5 over": "DraftKings",
+     "3.5 under": "DraftKings",
+     "4.5 over": "DraftKings",
+     "4.5 under": "DraftKings"
+    }
+   },
+   "exact_book": {
+    "b-3-2": "Bovada",
+    "b-3-1": "Bovada",
+    "b-3-0": "Caesars",
+    "a-3-2": "Bovada",
+    "a-3-1": "Bovada",
+    "a-3-0": "DraftKings"
+   },
+   "spread_book": {
+    "a_minus_1_5": "DraftKings",
+    "b_minus_1_5": "Caesars",
+    "b_plus_1_5": "Caesars",
+    "b_plus_2_5": "DraftKings",
+    "a_minus_2_5": "DraftKings",
+    "a_plus_1_5": "DraftKings",
+    "a_plus_2_5": "DraftKings",
+    "b_minus_2_5": "DraftKings"
    }
   },
   {
@@ -95,58 +129,86 @@
    "a": "TB",
    "b": "NYY",
    "ml_a": 109,
-   "ml_b": -115,
+   "ml_b": -110,
    "book": "best",
    "book_a": "Kalshi",
-   "book_b": "Caesars",
+   "book_b": "Pinnacle",
    "books": {
     "a": {
      "DraftKings": 100,
      "BetMGM": 105,
-     "FanDuel": -100,
      "Caesars": -105,
+     "FanDuel": -100,
+     "Pinnacle": -106,
+     "Bovada": -108,
      "Kalshi": 109
     },
     "b": {
      "DraftKings": -120,
      "BetMGM": -125,
-     "FanDuel": -120,
      "Caesars": -115,
+     "FanDuel": -120,
+     "Pinnacle": -110,
+     "Bovada": -112,
      "Kalshi": -126
     }
    },
    "exact": {
-    "a-3-2": 331,
-    "a-3-1": 373,
+    "a-3-2": 400,
+    "a-3-1": 475,
     "a-3-0": 625,
-    "b-3-2": 296,
-    "b-3-1": 313,
-    "b-3-0": 574
+    "b-3-2": 400,
+    "b-3-1": 450,
+    "b-3-0": 610
    },
    "spread": {
-    "a_minus_1_5": 166,
-    "b_minus_1_5": -137,
-    "a_minus_2_5": 218,
+    "a_minus_1_5": 220,
+    "b_minus_1_5": 210,
+    "a_minus_2_5": 600,
     "b_plus_2_5": -788,
-    "b_plus_1_5": -340,
-    "b_minus_2_5": 198,
-    "a_plus_2_5": -5268,
+    "b_plus_1_5": -245,
+    "b_minus_2_5": 600,
+    "a_plus_2_5": -800,
     "a_plus_1_5": -191
    },
    "games": {
     "ladder": {
-     "4.5": {
-      "over": 124,
-      "under": -239
-     },
      "3.5": {
-      "over": -430,
-      "under": 208
+      "over": -330,
+      "under": 270
+     },
+     "4.5": {
+      "over": 150,
+      "under": -180
      }
     },
     "line": 3.5,
-    "over": -430,
-    "under": 208
+    "over": -330,
+    "under": 270,
+    "book": {
+     "3.5 over": "DraftKings",
+     "3.5 under": "DraftKings",
+     "4.5 over": "DraftKings",
+     "4.5 under": "DraftKings"
+    }
+   },
+   "exact_book": {
+    "a-3-2": "Caesars",
+    "a-3-1": "Caesars",
+    "a-3-0": "Kalshi",
+    "b-3-2": "Bovada",
+    "b-3-1": "Caesars",
+    "b-3-0": "Bovada"
+   },
+   "spread_book": {
+    "a_minus_1_5": "Caesars",
+    "b_minus_1_5": "Caesars",
+    "a_minus_2_5": "DraftKings",
+    "b_plus_2_5": "Kalshi",
+    "b_plus_1_5": "DraftKings",
+    "b_minus_2_5": "DraftKings",
+    "a_plus_2_5": "DraftKings",
+    "a_plus_1_5": "Kalshi"
    }
   },
   {
@@ -154,50 +216,84 @@
    "a": "MIL",
    "b": "SD",
    "ml_a": -168,
-   "ml_b": 152,
+   "ml_b": 153,
    "book": "best",
    "book_a": "Kalshi",
-   "book_b": "FanDuel",
+   "book_b": "Pinnacle",
    "books": {
     "a": {
      "DraftKings": -180,
      "BetMGM": -175,
      "FanDuel": -184,
+     "Pinnacle": -180,
+     "Bovada": -183,
      "Kalshi": -168
     },
     "b": {
      "DraftKings": 150,
      "BetMGM": 145,
      "FanDuel": 152,
+     "Pinnacle": 153,
+     "Bovada": 151,
      "Kalshi": 140
     }
    },
    "exact": {
-    "b-3-2": 398,
-    "b-3-1": 425,
-    "b-3-0": 945,
-    "a-3-2": 252,
-    "a-3-1": 266,
-    "a-3-0": 351
+    "b-3-2": 550,
+    "b-3-1": 450,
+    "b-3-0": 1100,
+    "a-3-2": 280,
+    "a-3-1": 330,
+    "a-3-0": 450
    },
    "spread": {
-    "a_minus_1_5": 102,
-    "b_minus_1_5": 250
+    "a_minus_1_5": 150,
+    "b_minus_1_5": 300,
+    "b_plus_1_5": -170,
+    "b_plus_2_5": -525,
+    "a_minus_2_5": 425,
+    "a_plus_1_5": -340,
+    "a_plus_2_5": -1400,
+    "b_minus_2_5": 1000
    },
    "games": {
     "ladder": {
-     "4.5": {
-      "over": 124,
-      "under": -239
-     },
      "3.5": {
-      "over": -381,
-      "under": 189
+      "over": -310,
+      "under": 270
+     },
+     "4.5": {
+      "over": 150,
+      "under": -180
      }
     },
     "line": 3.5,
-    "over": -381,
-    "under": 189
+    "over": -310,
+    "under": 270,
+    "book": {
+     "3.5 over": "Bovada",
+     "3.5 under": "DraftKings",
+     "4.5 over": "DraftKings",
+     "4.5 under": "DraftKings"
+    }
+   },
+   "exact_book": {
+    "b-3-2": "DraftKings",
+    "b-3-1": "Bovada",
+    "b-3-0": "Bovada",
+    "a-3-2": "Bovada",
+    "a-3-1": "DraftKings",
+    "a-3-0": "Bovada"
+   },
+   "spread_book": {
+    "a_minus_1_5": "DraftKings",
+    "b_minus_1_5": "Caesars",
+    "b_plus_1_5": "Caesars",
+    "b_plus_2_5": "DraftKings",
+    "a_minus_2_5": "DraftKings",
+    "a_plus_1_5": "DraftKings",
+    "a_plus_2_5": "DraftKings",
+    "b_minus_2_5": "DraftKings"
    }
   }
  ],
@@ -206,7 +302,7 @@
    {
     "al": "NYY",
     "nl": "LAD",
-    "market": 466
+    "market": 459
    },
    {
     "al": "CLE",
@@ -216,22 +312,22 @@
    {
     "al": "TB",
     "nl": "LAD",
-    "market": 705
+    "market": 719
    },
    {
     "al": "NYY",
     "nl": "MIL",
-    "market": 764
+    "market": 748
    },
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 1490
+    "market": 1464
    },
    {
     "al": "TB",
     "nl": "MIL",
-    "market": 1089
+    "market": 1136
    },
    {
     "al": "CWS",
@@ -291,7 +387,7 @@
    {
     "al": "CWS",
     "nl": "SD",
-    "market": 1204
+    "market": 2080
    },
    {
     "al": "CWS",
