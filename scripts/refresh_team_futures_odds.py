@@ -211,6 +211,59 @@ def fetch_market(url: str, table_id: str, label: str) -> dict[str, dict]:
     return rows
 
 
+# ── Action Network futures (fresh, multi-book). VegasInsider's pennant/WS tables went stale in
+#    October (e.g. NYY pennant +300 while every live book had +175/+180), so AN overrides them. ──
+AN_LIST = "https://api.actionnetwork.com/web/v1/leagues/8/futures/available"
+AN_FUT  = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds={}"
+AN_BOOKS = {68: "DraftKings", 1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel", 1006: "FanDuel",
+            123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
+            972: "BetRivers", 2988: "Fanatics"}
+AN_ABBR = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "WAS": "WSH", "KCR": "KC", "SFG": "SF", "OAK": "ATH"}
+
+def _an_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://www.actionnetwork.com/"})
+    with urllib.request.urlopen(req, timeout=25) as r:
+        return json.load(r)
+
+def _imp(o):
+    return 100.0 / (o + 100) if o > 0 else -o / (-o + 100.0)
+
+def fetch_an_market(name_part: str) -> dict[str, dict]:
+    """Best price per team across books for the AN futures market whose type contains name_part.
+    Drops a book's price when it sits far off the other books (stale / suspended line)."""
+    try:
+        types = [f["type"] for f in _an_json(AN_LIST).get("futures", []) if name_part in f.get("type", "")]
+        if not types:
+            return {}
+        d = _an_json(AN_FUT.format(types[0], ",".join(str(i) for i in AN_BOOKS)))
+    except Exception as e:
+        print(f"[futures-odds] AN {name_part} failed: {e}", file=sys.stderr)
+        return {}
+    tm = {t["id"]: AN_ABBR.get(t.get("abbr"), t.get("abbr")) for t in d.get("teams", [])}
+    by = {}
+    for bk in d.get("books", []):
+        brand = AN_BOOKS.get(bk.get("book_id"))
+        if not brand:
+            continue
+        for o in bk.get("odds", []):
+            ab, m = tm.get(o.get("team_id")), o.get("money")
+            if ab and m is not None:
+                cur = by.setdefault(ab, {}).get(brand)
+                if cur is None or m > cur:
+                    by[ab][brand] = m
+    out = {}
+    for ab, books in by.items():
+        ps = sorted(_imp(o) for o in books.values())
+        med = ps[len(ps) // 2] if len(ps) % 2 else (ps[len(ps) // 2 - 1] + ps[len(ps) // 2]) / 2
+        ok = {b: o for b, o in books.items() if len(ps) < 3 or abs(_imp(o) - med) <= max(0.04, 0.25 * med)}
+        if not ok:
+            continue
+        b, o = max(ok.items(), key=lambda kv: kv[1] / 100 if kv[1] > 0 else 100 / -kv[1])
+        out[ab] = {"best_odds": o, "best_book": b, "n_books": len(ok)}
+    print(f"[futures-odds] AN {name_part}: {len(out)} teams", file=sys.stderr)
+    return out
+
+
 def main():
     teams_out: dict[str, dict] = {}
 
@@ -249,6 +302,13 @@ def main():
                 "odds": info["best_odds"], "book": info["best_book"],
             }
         time.sleep(0.4)  # pace polite
+
+    # 3c) Action Network overrides for pennant + World Series (fresh multi-book; VI kept as fallback)
+    for part, field in (("american_league_to_win", "pennant"), ("national_league_to_win", "pennant"),
+                        ("world_series_to_win", "world_series")):
+        for abbr, info in fetch_an_market(part).items():
+            teams_out.setdefault(abbr, {"abbr": abbr})
+            teams_out[abbr][field] = {"odds": info["best_odds"], "book": info["best_book"], "src": "actionnetwork"}
 
     # 4) PRESERVE-ON-EMPTY: if our scrape missed every market (e.g. VI
     #    rotates structure), do NOT overwrite the existing file. Keeps
