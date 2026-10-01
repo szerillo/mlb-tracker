@@ -803,6 +803,9 @@
     background: rgba(255, 255, 255, 0.015);
   }
   .bpt-section-row.avail td { color: var(--muted); }
+  .bpt-tag { display:inline-block; font-size:0.6rem; font-weight:800; letter-spacing:.03em; padding:0 4px; border-radius:3px; margin-left:4px; vertical-align:1px; line-height:1.35; }
+  .bpt-tag.out { color: var(--fatigue-out); background: rgba(248,113,113,.16); }
+  .bpt-tag.ftg { color: var(--fatigue-fat); background: rgba(229,164,73,.16); }
   .bpt-section-row.out   td { color: var(--fatigue-out);
     background: rgba(248, 113, 113, 0.06); }
   .bpt-section-row.ftg   td { color: var(--fatigue-fat);
@@ -4472,6 +4475,14 @@ function dayAbbr(iso) {
 // teams, team_meta}, where the window is the 5 COMPLETED days BEFORE that date.
 // Falls back to the old single-snapshot shape so we never break in the gap
 // before fatigue.json regenerates in the new format.
+// A game's calendar date in ET. gameDate is UTC, so any 8pm-ET-or-later start reads as TOMORROW,
+// which pulled the next day's fatigue slice (yesterday's B2B arms looked rested in the modal).
+function gameEtDate(game) {
+  if (game && game.officialDate) return game.officialDate;
+  const t = Date.parse((game && game.gameDate) || "");
+  if (isNaN(t)) return ((game && game.gameDate) || "").slice(0, 10);
+  return new Date(t - 4 * 3600 * 1000).toISOString().slice(0, 10);
+}
 function fatigueForDate(dateIso) {
   if (!FATIGUE) return null;
   if (!FATIGUE.dates) {
@@ -5886,7 +5897,7 @@ function modalPenOrStaffBox(game, side, probSPName) {
   const chip = r ? rankChipHtml(r.rank, r.total, 'bp') : rankChipHtml(null, null, 'bp');
   return `<div class="m-bp-box"><h4>${teamName} ${chip}</h4>${renderBullpenForTeam(
     teamId, teamName, probSPName,
-    {compact: true, fatigueSlice: fatigueForDate((game.gameDate || "").slice(0, 10))})}</div>`;
+    {compact: true, fatigueSlice: fatigueForDate(gameEtDate(game))})}</div>`;
 }
 
 // Grade bar above the lineup table. For the ASG we grade the actual 9 hitters
@@ -6370,7 +6381,7 @@ function renderBullpenForTeam(teamId, teamName, probableSP, opts={}) {
                  : (useXfip ? "xFIP — season actual (≥10 IP)" : "pFIP — projection (no qualified xFIP yet)");
     return `<tr class="bpt-row"${reasonsAttr}>
       <td class="bpt-hand hand-${(p.hand||'R').toLowerCase()}">${p.hand || "R"}</td>
-      <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}</td>
+      <td class="bpt-name" title="${p.name.replace(/"/g,'&quot;')}">${nameShown}${f?.tier === "LIKELY OUT" ? ' <span class="bpt-tag out">OUT</span>' : (f?.tier === "FATIGUED" ? ' <span class="bpt-tag ftg">FTG</span>' : '')}</td>
       <td class="bpt-stat"><span class="v ${fipCls}" title="${fipLbl}">${fmt(fipVal)}</span></td>
       <td class="bpt-stat bpt-kbb"><span class="v ${kbbCls}">${fmt(s?.k_bb_pct, "%")}</span></td>
       <td class="bpt-stat bpt-stf"><span class="v ${stuffCls}" title="Stuff+ (100 = league avg, higher = better)">${s?.stuff_plus!=null?Math.round(s.stuff_plus):"—"}</span></td>
@@ -7932,7 +7943,7 @@ async function openModal(game) {
     <details open class="m-sec"><summary class="m-section-header"><span>${_isASG ? "Pitching Staffs" : "Bullpens"}</span>
       <span class="right-note">${(() => {
         if (_isASG) return "full 12-man roster · projected";
-        const gIso = (game.gameDate || "").slice(0,10);
+        const gIso = gameEtDate(game);
         const fd = fatigueForDate(gIso);
         if (!fd?.window?.end) return "";
         // Identical label wording to the standalone Bullpen tab.
