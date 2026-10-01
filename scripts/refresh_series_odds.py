@@ -221,6 +221,28 @@ def _bk_actionnetwork(series):
     if out: print(f"[series_odds] Action Network series ML: {len(out)} series, books={sorted({k for v in out.values() for k in v['a']})}")
     return out
 
+
+FULLNAME = {'Tampa Bay Rays':'TB','Cleveland Guardians':'CLE','Chicago White Sox':'CWS','Houston Astros':'HOU',
+  'New York Yankees':'NYY','Boston Red Sox':'BOS','Milwaukee Brewers':'MIL','Los Angeles Dodgers':'LAD',
+  'Atlanta Braves':'ATL','San Diego Padres':'SD','Chicago Cubs':'CHC','Philadelphia Phillies':'PHI'}
+def _game_ml_today():
+    """{frozenset({away,home}): {team: (best ML, book)}} for not-yet-started games in data/odds.json."""
+    out = {}
+    try:
+        d = json.load(open(os.path.join(DATA, "odds.json")))
+    except Exception:
+        return out
+    games = d.get("games") or []
+    for g in (games.values() if isinstance(games, dict) else games):
+        if str(g.get("status", "")).lower() not in ("scheduled", "pre", "pregame"): continue
+        try: aw, hm = [FULLNAME.get(x.strip()) for x in g["matchup"].split(" @ ")]
+        except Exception: continue
+        ml = g.get("moneyline") or {}
+        if not (aw and hm and ml.get("away") and ml.get("home")): continue
+        out[frozenset({aw, hm})] = {aw: (ml["away"]["odds"], ml["away"].get("book") or "best"),
+                                    hm: (ml["home"]["odds"], ml["home"].get("book") or "best")}
+    return out
+
 def fetch_series_ml(series):
     """Series moneyline from Kalshi KXMLBSERIES. Each series posts TWO binaries (one per team).
     Price shown for each side = the cheapest way to actually back it, fee included:
@@ -247,6 +269,23 @@ def fetch_series_ml(series):
         bk = _bk_actionnetwork(series)
     except Exception as e:
         print(f"[series_odds] book merge skipped: {e}", file=sys.stderr); bk = {}
+    # Deciding game (WC 1-1, LDS 2-2, LCS/WS 3-3): the series IS today's game, so the book price is that
+    # game's moneyline (data/odds.json, best across books). Books' series-futures boards lag badly here
+    # (FanDuel still had PHI +116 on the series with PHI -112 on the Game 3 ML).
+    try:
+        gml = _game_ml_today()
+        for s_ in series:
+            w = s_.get("wins") or {}; need = (s_.get("best_of") or 3) // 2 + 1
+            if (w.get("a") or 0) == need - 1 and (w.get("b") or 0) == need - 1:
+                m = gml.get(frozenset({s_["a"], s_["b"]}))
+                key = (s_["league"], s_["a"], s_["b"])
+                if m:
+                    bk[key] = {"a": {f"{m[s_['a']][1]} G{2*need-1} ML": m[s_["a"]][0]},
+                               "b": {f"{m[s_['b']][1]} G{2*need-1} ML": m[s_["b"]][0]}}
+                else:
+                    bk.pop(key, None)
+    except Exception as e:
+        print(f"[series_odds] decider ML swap skipped: {e}", file=sys.stderr)
     for key, v in bk.items():
         cur = out.setdefault(key, {"ml_a": None, "ml_b": None, "book": None})
         books = {"a": dict(v["a"]), "b": dict(v["b"])}
