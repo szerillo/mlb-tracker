@@ -1462,7 +1462,7 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
         elif edge >= 0.02:  stars = "★★"
         elif edge >= 0.005: stars = "★"
         else:               stars = ""
-        keep = ((rk + 1) <= 5) or (mp >= 0.01) or (edge is not None and edge >= 0.0005)
+        keep = ((rk + 1) <= 5) or (mp >= 0.01) or (edge is not None and edge >= 0.0005) or (SEASON_OVER and (rk + 1) <= 10)
         if not keep:
             continue
         results.append({
@@ -1484,6 +1484,11 @@ def _render_roy_mc(pool, market_key, market_meta, top_n=50, use_hrgap=True, engi
             "best_odds": (x.get("_mkt") or {}).get("best_odds"),
             "best_book": (x.get("_mkt") or {}).get("best_book"),
             "all_book_odds": (x.get("_mkt") or {}).get("all_book_odds"),
+            "proj_share": x.get("proj_share"),      # vote-fit share score (higher = more vote points)
+            "proj_first": x.get("proj_first"),      # projected 1st-place votes of 30
+            "vf_lin": x.get("vf_lin"),
+            "pure_model_p": (round(x["pure_model_p"], 4) if x.get("pure_model_p") is not None else None),
+            "kalshi_p": (round(x["kalshi_p"], 4) if x.get("kalshi_p") is not None else None),
         })
     # Order the board by DISPLAYED probability (market when the guard fired, else
     # model) so a market-anchored board leads with the market favorite, not the
@@ -1628,6 +1633,31 @@ _VF_ROSP = {r.get("xMLBAMID"): r for r in ((_VF_ROS.get("pit") or {}).get("atc")
 _VF_SEPT = "%d-09-01" % datetime.date.today().year
 
 
+def _reg_season_end():
+    """Last day of the regular season (statsapi); fallback Sept 28."""
+    y = datetime.date.today().year
+    try:
+        import urllib.request
+        d = json.load(urllib.request.urlopen(f"https://statsapi.mlb.com/api/v1/seasons/{y}?sportId=1", timeout=15))
+        return d["seasons"][0]["regularSeasonEndDate"]
+    except Exception:
+        return f"{y}-09-28"
+
+
+# ── End of season: freeze on final regular-season numbers (2026-10-02) ──
+# Once the regular season is over there is nothing left to accrue. FanGraphs' "ROS" endpoint
+# then flips to a FULL next-season projection (e.g. Messick 252 IP, McGonigle 665 PA), and the
+# ACC channel (PA vs IP*4.3) turned that into a huge pitcher bonus: Messick passed McGonigle in
+# AL ROY and McLean/Henderson passed Benge/Stewart in NL ROY. After the season: ROS = 0, ACC is
+# September-to-date regular-season usage only, and the board is computed once and frozen.
+_VF_REG_END = _reg_season_end()
+SEASON_OVER = datetime.date.today().isoformat() > _VF_REG_END
+if SEASON_OVER:
+    _VF_ROSB, _VF_ROSP = {}, {}
+VOTERS = 30   # BBWAA ballots per league per award
+MKT_W = 0.25  # final-board weight on the de-vigged betting market
+
+
 def _vf_acc(mid, groups):
     try:
         mid_i = int(mid)
@@ -1636,13 +1666,13 @@ def _vf_acc(mid, groups):
     acc_p = None
     if "P" in groups:
         sep_ip = sum((g.get("ip") or (g.get("outs") or 0) / 3.0)
-                     for g in _VF_PGL.get(str(mid), []) if (g.get("date") or "") >= _VF_SEPT)
+                     for g in _VF_PGL.get(str(mid), []) if _VF_SEPT <= (g.get("date") or "") <= _VF_REG_END)
         ros_ip = (_VF_ROSP.get(mid_i) or {}).get("IP", 0) or 0
         acc_p = (sep_ip + ros_ip) * 4.3
         if groups == {"P"}:
             return acc_p
     sep_pa = sum((g.get("pa") or 0)
-                 for g in _VF_HGL.get(str(mid), []) if (g.get("date") or "") >= _VF_SEPT)
+                 for g in _VF_HGL.get(str(mid), []) if _VF_SEPT <= (g.get("date") or "") <= _VF_REG_END)
     ros_pa = (_VF_ROSB.get(mid_i) or {}).get("PA", 0) or 0
     acc_h = sep_pa + ros_pa
     return max(acc_h, acc_p) if acc_p is not None else acc_h
@@ -1662,6 +1692,37 @@ def _vf_feat(x):
             "HR": ytd.get("hr") or 0, "RBI": ytd.get("rbi") or 0, "OPS": ytd.get("ops") or 0,
             "W": ytd.get("w") or 0, "K": ytd.get("k") or 0, "IP": ytd.get("ip") or 0,
             "ERA": (era if era is not None else 0.0), "_x": x}
+
+
+KALSHI_AWARD = {("AL", "MVP"): "KXMLBALMVP", ("NL", "MVP"): "KXMLBNLMVP", ("AL", "CY"): "KXMLBALCY",
+                ("NL", "CY"): "KXMLBNLCY", ("AL", "ROY"): "KXMLBALROTY", ("NL", "ROY"): "KXMLBNLROTY"}
+
+
+def _kalshi_award(league, award):
+    """{normalized name: Kalshi mid prob, normalized to sum 1} for an award market (bid/ask mid,
+    last trade when one side is empty). Empty dict on failure."""
+    sid = KALSHI_AWARD.get((league, award))
+    if not sid:
+        return {}
+    try:
+        import urllib.request
+        d = json.load(urllib.request.urlopen(
+            f"https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker={sid}&status=open&limit=500", timeout=20))
+    except Exception as e:
+        print(f"[player-futures] Kalshi {sid} failed: {e}", file=sys.stderr)
+        return {}
+    out = {}
+    for m in d.get("markets", []):
+        nm = m.get("yes_sub_title") or ""
+        b = float(m.get("yes_bid_dollars") or 0); a = float(m.get("yes_ask_dollars") or 0)
+        lp = float(m.get("last_price_dollars") or 0)
+        # real two-sided book -> mid; no bid (just a 1c ask) -> a token 0.25c so dozens of empty
+        # longshot markets don't soak up probability when we normalize
+        p = (b + a) / 2 if (b > 0 and 0 < a < 1) else (0.0025 if b == 0 else (lp or b))
+        if nm and p > 0:
+            out[_norm_name(nm)] = p
+    tot = sum(out.values())
+    return {k: v / tot for k, v in out.items()} if tot > 0 else {}
 
 
 def _votefit_attach(pool, award, market_meta):
@@ -1687,17 +1748,79 @@ def _votefit_attach(pool, award, market_meta):
     board, _meta = _vf.build_board(field, obj, mkt, leader_days_idle=idle,
                                    low_confidence=(award == "CY"))
     out = []
+    if SEASON_OVER:
+        # Final board = 75% vote-fit model + 25% de-vigged betting market (Sean 2026-10-02):
+        # the market carries voter-narrative information the stat fit can't see.
+        # market = Kalshi (mid of bid/ask, normalized); sportsbook best-price fallback
+        lg = ((board[0].get("_x") or {}).get("player") or {}).get("league") if board else None
+        km = _kalshi_award(lg, award)
+        def _kp(c):
+            nm = c.get("name") or ""
+            for v in [nm] + list(_name_variants(nm)):
+                if _norm_name(v) in km:
+                    return km[_norm_name(v)]
+            return None
+        mk = [_kp(c) for c in board] if km else [mkt.get(c["key"]) for c in board]
+        for c, m in zip(board, mk):
+            c["_x"]["kalshi_p"] = m if km else None
+        tot = sum(m for m in mk if m)
+        for c, m in zip(board, mk):
+            c["p_pure"] = c["p_model"]
+            mdv = (m / tot) if (m and tot > 0) else 0.0
+            c["p_model"] = (1 - MKT_W) * c["p_model"] + (MKT_W * mdv if tot > 0 else MKT_W * c["p_model"])
+            c["lin"] = math.log(max(c["p_model"], 1e-300)) if c["p_model"] > 1e-12 else c["lin"] - 50.0
+        board = sorted(board, key=lambda c: (-c["p_model"], -c.get("share", 0.0)))
     for c in board:
         x = c["_x"]
         x["model_p"] = c["p_model"]
-        x["display_p"] = c["p_display"]
+        x["pure_model_p"] = c.get("p_pure", c["p_model"])
+        x["display_p"] = c["p_model"] if SEASON_OVER else c["p_display"]   # final board: model only, no market blend
+        x["proj_share"] = round(c.get("share", 0.0), 4)                    # vote-fit share score (fit to BBWAA vote share)
+        x["proj_first"] = round(VOTERS * c["p_model"], 1)                  # projected 1st-place votes
+        x["vf_lin"] = c.get("lin")                                         # unrounded ballot utility (log p_model + const)
         x["war_final"] = c["war"]
         x["low_confidence"] = c.get("low_confidence", False)
         out.append(x)
     return out
 
 
+BALLOT_PTS = {"MVP": [14, 9, 8, 7, 6, 5, 4, 3, 2, 1], "CY": [7, 4, 3, 2, 1], "ROY": [5, 3, 1]}
+
+
+def _project_ballots(cands, award, n_sims=20000, seed=7):
+    """Projected BBWAA vote: each of the 30 ballots ranks the field by log p_model + Gumbel noise
+    (Plackett-Luce, so P(1st on a ballot) = p_model exactly). Returns per-candidate projected
+    1st-place votes, total points, and vote share (points / (30 x 1st-place points))."""
+    import random as _r
+    rng = _r.Random(seed)
+    pts = BALLOT_PTS[award]
+    lp = [c["vf_lin"] if c.get("vf_lin") is not None else math.log(max(c.get("model_p") or 0.0, 1e-9)) for c in cands]
+    exp_pts = [0.0] * len(cands); first = [0] * len(cands)
+    for _ in range(n_sims):
+        keys = sorted(range(len(cands)), key=lambda i: -(lp[i] - math.log(-math.log(rng.random() or 1e-12))))
+        first[keys[0]] += 1
+        for place, i in enumerate(keys[:len(pts)]):
+            exp_pts[i] += pts[place]
+    for i, c in enumerate(cands):
+        c["proj_first"] = round(VOTERS * first[i] / n_sims, 1)
+        c["proj_points"] = round(VOTERS * exp_pts[i] / n_sims, 1)
+        c["proj_vote_share"] = round(exp_pts[i] / n_sims / pts[0], 4)
+    cands.sort(key=lambda c: -c["proj_points"])
+    for i, c in enumerate(cands):
+        c["rank"] = i + 1
+        c.pop("vf_lin", None)
+    return cands
+
+
 def main():
+    import os
+    if SEASON_OVER and not os.environ.get("FORCE_RUN"):
+        try:
+            if json.loads(OUTPUT.read_text()).get("frozen_eos"):
+                print("[player-futures] season over: board frozen on final regular-season numbers; skipping")
+                return 0
+        except Exception:
+            pass
     if _skip_daily(OUTPUT, "player-futures"):
         return 0
     _build_rookie_index()
@@ -1750,6 +1873,10 @@ def main():
             engine_tag="roy_votefit_v1")
 
     _enrich_display(out_markets, hitters, pitchers)
+    if SEASON_OVER:   # final static board: projected ballots, ordered by projected points
+        for mk, m in out_markets.items():
+            _project_ballots(m.get("candidates") or [], mk.split("_", 1)[1])
+            m["final_vote_projection"] = True
 
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
@@ -1757,6 +1884,9 @@ def main():
         "model":        "Awards V5.1 (PT-adjusted ROY + ATC modifiers)",
         "markets":      out_markets,
     }
+    if SEASON_OVER:
+        payload.update({"frozen_eos": True, "regular_season_end": _VF_REG_END,
+                        "model": payload["model"] + " | FINAL (frozen on end-of-season stats; 75% vote-fit model + 25% Kalshi)"})
 
     # PRESERVE-ON-EMPTY guard
     has_any = any(m.get("candidates") for m in out_markets.values())
