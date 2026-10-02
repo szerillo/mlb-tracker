@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-01T17:44:51.518889Z",
+  "generated_at": "2026-10-02T05:02:18.209165Z",
   "season": 2026,
-  "model": "Awards V5.1 (PT-adjusted ROY + ATC modifiers)",
+  "model": "Awards V5.1 (PT-adjusted ROY + ATC modifiers) | FINAL (frozen on end-of-season stats; 75% vote-fit model + 25% Kalshi)",
   "markets": {
     "AL_MVP": {
       "label": "AL MVP",
@@ -9,7 +9,7 @@
       "temperature": null,
       "calibrated_against_n_books": null,
       "engine": "mvp_votefit_v1",
-      "regime_guard": "ratio",
+      "regime_guard": null,
       "candidates": [
         {
           "rank": 1,
@@ -21,11 +21,11 @@
           "p_ops": 1.0078,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.5813,
-          "display_p": 0.7921,
+          "model_p": 0.8274,
+          "display_p": 0.8274,
           "low_confidence": false,
           "market_p": 0.9901,
-          "edge": -0.4088,
+          "edge": -0.1627,
           "stars": "",
           "best_odds": -6000,
           "best_book": "DraftKings",
@@ -36,6 +36,10 @@
             "FanDuel": -20000,
             "RiversCasino": -10000
           },
+          "proj_share": 0.048,
+          "proj_first": 24.9,
+          "pure_model_p": 0.7903,
+          "kalshi_p": 0.8527,
           "twoway": false,
           "cats": [
             {
@@ -92,101 +96,12 @@
               "proj_pct": 17,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 393.8,
+          "proj_vote_share": 0.9377
         },
         {
           "rank": 2,
-          "name": "Cam Schlittler",
-          "team_abbr": "NYY",
-          "league": "AL",
-          "pos": null,
-          "p_war": 7.03,
-          "p_ops": null,
-          "p_fip": 2.95,
-          "p_ip": 367.714,
-          "model_p": 0.2864,
-          "display_p": 0.0683,
-          "low_confidence": false,
-          "market_p": 0.0149,
-          "edge": 0.2714,
-          "stars": "\u2605\u2605\u2605",
-          "best_odds": 8000,
-          "best_book": "FanDuel",
-          "all_book_odds": {
-            "BetMGM": 6600,
-            "DraftKings": 3500,
-            "FanDuel": 8000,
-            "RiversCasino": 7500
-          },
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 6.2283,
-              "proj": 10.177,
-              "cur_pct": 98,
-              "proj_pct": 97,
-              "lower_better": false
-            },
-            {
-              "key": "era",
-              "label": "ERA",
-              "cur": 1.9518,
-              "proj": 2.6251,
-              "cur_pct": 97,
-              "proj_pct": 97,
-              "lower_better": true
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 239,
-              "proj": 439.75,
-              "cur_pct": 98,
-              "proj_pct": 98,
-              "lower_better": false
-            },
-            {
-              "key": "k_bb_pct",
-              "label": "K-BB%",
-              "cur": 0.2497,
-              "proj": 0.2237,
-              "cur_pct": 96,
-              "proj_pct": 96,
-              "lower_better": false
-            },
-            {
-              "key": "w",
-              "label": "W",
-              "cur": 14,
-              "proj": 27.25,
-              "cur_pct": 92,
-              "proj_pct": 95,
-              "lower_better": false
-            },
-            {
-              "key": "whip",
-              "label": "WHIP",
-              "cur": 0.9191,
-              "proj": 1.0364,
-              "cur_pct": 97,
-              "proj_pct": 95,
-              "lower_better": true
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 193.2,
-              "proj": 367.714,
-              "cur_pct": 98,
-              "proj_pct": 98,
-              "lower_better": false
-            }
-          ]
-        },
-        {
-          "rank": 3,
           "name": "Junior Caminero",
           "team_abbr": "TB",
           "league": "AL",
@@ -195,11 +110,11 @@
           "p_ops": 0.8724,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0645,
-          "display_p": 0.0643,
+          "model_p": 0.0695,
+          "display_p": 0.0695,
           "low_confidence": false,
           "market_p": 0.0588,
-          "edge": 0.0057,
+          "edge": 0.0106,
           "stars": "\u2605",
           "best_odds": 2000,
           "best_book": "RiversCasino",
@@ -210,6 +125,10 @@
             "FanDuel": 1800,
             "RiversCasino": 2000
           },
+          "proj_share": 0.0176,
+          "proj_first": 2.0,
+          "pure_model_p": 0.0877,
+          "kalshi_p": 0.0134,
           "twoway": false,
           "cats": [
             {
@@ -266,10 +185,12 @@
               "proj_pct": 39,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 243.6,
+          "proj_vote_share": 0.5801
         },
         {
-          "rank": 4,
+          "rank": 3,
           "name": "Kevin McGonigle",
           "team_abbr": "DET",
           "league": "AL",
@@ -278,8 +199,8 @@
           "p_ops": 0.795,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0202,
-          "display_p": 0.0221,
+          "model_p": 0.027,
+          "display_p": 0.027,
           "low_confidence": false,
           "market_p": null,
           "edge": null,
@@ -287,6 +208,10 @@
           "best_odds": null,
           "best_book": null,
           "all_book_odds": null,
+          "proj_share": 0.0053,
+          "proj_first": 0.8,
+          "pure_model_p": 0.036,
+          "kalshi_p": null,
           "twoway": false,
           "cats": [
             {
@@ -343,10 +268,12 @@
               "proj_pct": 74,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 195.1,
+          "proj_vote_share": 0.4644
         },
         {
-          "rank": 5,
+          "rank": 4,
           "name": "Bobby Witt Jr.",
           "team_abbr": "KC",
           "league": "AL",
@@ -355,12 +282,12 @@
           "p_ops": 0.8242,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0144,
-          "display_p": 0.0158,
+          "model_p": 0.0174,
+          "display_p": 0.0174,
           "low_confidence": false,
           "market_p": 0.0099,
-          "edge": 0.0045,
-          "stars": "",
+          "edge": 0.0075,
+          "stars": "\u2605",
           "best_odds": 10000,
           "best_book": "DraftKings",
           "all_book_odds": {
@@ -368,6 +295,10 @@
             "Caesars": 7500,
             "RiversCasino": 10000
           },
+          "proj_share": -0.0004,
+          "proj_first": 0.5,
+          "pure_model_p": 0.0224,
+          "kalshi_p": 0.0022,
           "twoway": false,
           "cats": [
             {
@@ -424,179 +355,12 @@
               "proj_pct": 99,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 170.8,
+          "proj_vote_share": 0.4067
         },
         {
-          "rank": 6,
-          "name": "Pete Alonso",
-          "team_abbr": "BAL",
-          "league": "AL",
-          "pos": null,
-          "p_war": 4.94,
-          "p_ops": 0.8653,
-          "p_fip": null,
-          "p_ip": null,
-          "model_p": 0.0133,
-          "display_p": 0.0138,
-          "low_confidence": false,
-          "market_p": 0.0132,
-          "edge": 0.0001,
-          "stars": "",
-          "best_odds": 15000,
-          "best_book": "DraftKings",
-          "all_book_odds": {
-            "DraftKings": 15000,
-            "Caesars": 7500
-          },
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 4.9371,
-              "proj": 7.791,
-              "cur_pct": 95,
-              "proj_pct": 95,
-              "lower_better": false
-            },
-            {
-              "key": "ops",
-              "label": "OPS",
-              "cur": 0.8845,
-              "proj": 0.8653,
-              "cur_pct": 97,
-              "proj_pct": 97,
-              "lower_better": false
-            },
-            {
-              "key": "hr",
-              "label": "HR",
-              "cur": 43,
-              "proj": 71.0,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": false
-            },
-            {
-              "key": "r",
-              "label": "R",
-              "cur": 100,
-              "proj": 167.0,
-              "cur_pct": 96,
-              "proj_pct": 94,
-              "lower_better": false
-            },
-            {
-              "key": "rbi",
-              "label": "RBI",
-              "cur": 113,
-              "proj": 192.75,
-              "cur_pct": 99,
-              "proj_pct": 100,
-              "lower_better": false
-            },
-            {
-              "key": "sb",
-              "label": "SB",
-              "cur": 5,
-              "proj": 7.75,
-              "cur_pct": 49,
-              "proj_pct": 41,
-              "lower_better": false
-            }
-          ]
-        },
-        {
-          "rank": 7,
-          "name": "Miguel Vargas",
-          "team_abbr": "CWS",
-          "league": "AL",
-          "pos": null,
-          "p_war": 5.35,
-          "p_ops": 0.8111,
-          "p_fip": null,
-          "p_ip": null,
-          "model_p": 0.0088,
-          "display_p": 0.008,
-          "low_confidence": false,
-          "market_p": 0.0066,
-          "edge": 0.0022,
-          "stars": "",
-          "best_odds": 15000,
-          "best_book": "BetMGM",
-          "all_book_odds": {
-            "BetMGM": 15000
-          },
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 5.2965,
-              "proj": 8.025,
-              "cur_pct": 96,
-              "proj_pct": 96,
-              "lower_better": false
-            },
-            {
-              "key": "ops",
-              "label": "OPS",
-              "cur": 0.8372,
-              "proj": 0.8111,
-              "cur_pct": 90,
-              "proj_pct": 89,
-              "lower_better": false
-            },
-            {
-              "key": "hr",
-              "label": "HR",
-              "cur": 33,
-              "proj": 52.0,
-              "cur_pct": 96,
-              "proj_pct": 95,
-              "lower_better": false
-            },
-            {
-              "key": "r",
-              "label": "R",
-              "cur": 106,
-              "proj": 176.5,
-              "cur_pct": 99,
-              "proj_pct": 98,
-              "lower_better": false
-            },
-            {
-              "key": "rbi",
-              "label": "RBI",
-              "cur": 93,
-              "proj": 157.0,
-              "cur_pct": 94,
-              "proj_pct": 93,
-              "lower_better": false
-            },
-            {
-              "key": "sb",
-              "label": "SB",
-              "cur": 22,
-              "proj": 32.75,
-              "cur_pct": 91,
-              "proj_pct": 84,
-              "lower_better": false
-            }
-          ]
-        }
-      ]
-    },
-    "AL_CY": {
-      "label": "AL Cy Young",
-      "n_pool": 27,
-      "temperature": null,
-      "calibrated_against_n_books": null,
-      "engine": "cy_votefit_v1",
-      "regime_guard": null,
-      "candidates": [
-        {
-          "rank": 1,
+          "rank": 5,
           "name": "Cam Schlittler",
           "team_abbr": "NYY",
           "league": "AL",
@@ -605,20 +369,24 @@
           "p_ops": null,
           "p_fip": 2.95,
           "p_ip": 367.714,
-          "model_p": 0.9396,
-          "display_p": 0.9366,
-          "low_confidence": true,
-          "market_p": 0.9901,
-          "edge": -0.0505,
+          "model_p": 0.0163,
+          "display_p": 0.0163,
+          "low_confidence": false,
+          "market_p": 0.0149,
+          "edge": 0.0013,
           "stars": "",
-          "best_odds": -1600,
-          "best_book": "DraftKings",
+          "best_odds": 8000,
+          "best_book": "FanDuel",
           "all_book_odds": {
-            "BetMGM": -10000,
-            "DraftKings": -1600,
-            "Caesars": -1800,
-            "RiversCasino": -10000
+            "BetMGM": 6600,
+            "DraftKings": 3500,
+            "FanDuel": 8000,
+            "RiversCasino": 7500
           },
+          "proj_share": 0.03,
+          "proj_first": 0.5,
+          "pure_model_p": 0.0102,
+          "kalshi_p": 0.0313,
           "twoway": false,
           "cats": [
             {
@@ -684,10 +452,641 @@
               "proj_pct": 98,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 167.0,
+          "proj_vote_share": 0.3976
+        },
+        {
+          "rank": 6,
+          "name": "Pete Alonso",
+          "team_abbr": "BAL",
+          "league": "AL",
+          "pos": null,
+          "p_war": 4.94,
+          "p_ops": 0.8653,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0161,
+          "display_p": 0.0161,
+          "low_confidence": false,
+          "market_p": 0.0132,
+          "edge": 0.003,
+          "stars": "",
+          "best_odds": 15000,
+          "best_book": "DraftKings",
+          "all_book_odds": {
+            "DraftKings": 15000,
+            "Caesars": 7500
+          },
+          "proj_share": -0.0011,
+          "proj_first": 0.5,
+          "pure_model_p": 0.0207,
+          "kalshi_p": 0.0022,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.9371,
+              "proj": 7.791,
+              "cur_pct": 95,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8845,
+              "proj": 0.8653,
+              "cur_pct": 97,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 43,
+              "proj": 71.0,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 100,
+              "proj": 167.0,
+              "cur_pct": 96,
+              "proj_pct": 94,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 113,
+              "proj": 192.75,
+              "cur_pct": 99,
+              "proj_pct": 100,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 5,
+              "proj": 7.75,
+              "cur_pct": 49,
+              "proj_pct": 41,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 164.9,
+          "proj_vote_share": 0.3927
+        },
+        {
+          "rank": 7,
+          "name": "Miguel Vargas",
+          "team_abbr": "CWS",
+          "league": "AL",
+          "pos": null,
+          "p_war": 5.35,
+          "p_ops": 0.8111,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0096,
+          "display_p": 0.0096,
+          "low_confidence": false,
+          "market_p": 0.0066,
+          "edge": 0.003,
+          "stars": "",
+          "best_odds": 15000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 15000
+          },
+          "proj_share": -0.0091,
+          "proj_first": 0.3,
+          "pure_model_p": 0.012,
+          "kalshi_p": 0.0022,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.2965,
+              "proj": 8.025,
+              "cur_pct": 96,
+              "proj_pct": 96,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8372,
+              "proj": 0.8111,
+              "cur_pct": 90,
+              "proj_pct": 89,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 33,
+              "proj": 52.0,
+              "cur_pct": 96,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 106,
+              "proj": 176.5,
+              "cur_pct": 99,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 93,
+              "proj": 157.0,
+              "cur_pct": 94,
+              "proj_pct": 93,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 22,
+              "proj": 32.75,
+              "cur_pct": 91,
+              "proj_pct": 84,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 136.0,
+          "proj_vote_share": 0.3239
+        },
+        {
+          "rank": 8,
+          "name": "Randy Arozarena",
+          "team_abbr": "SEA",
+          "league": "AL",
+          "pos": null,
+          "p_war": 5.7,
+          "p_ops": 0.8264,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0088,
+          "display_p": 0.0088,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0105,
+          "proj_first": 0.2,
+          "pure_model_p": 0.0109,
+          "kalshi_p": 0.0022,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.553,
+              "proj": 7.847,
+              "cur_pct": 98,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8649,
+              "proj": 0.8264,
+              "cur_pct": 94,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 26,
+              "proj": 42.25,
+              "cur_pct": 87,
+              "proj_pct": 84,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 113,
+              "proj": 178.25,
+              "cur_pct": 99,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 79,
+              "proj": 134.25,
+              "cur_pct": 84,
+              "proj_pct": 79,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 26,
+              "proj": 43.5,
+              "cur_pct": 94,
+              "proj_pct": 93,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 131.7,
+          "proj_vote_share": 0.3135
+        },
+        {
+          "rank": 9,
+          "name": "Wilyer Abreu",
+          "team_abbr": "BOS",
+          "league": "AL",
+          "pos": null,
+          "p_war": 5.85,
+          "p_ops": 0.7747,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0052,
+          "display_p": 0.0052,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0142,
+          "proj_first": 0.2,
+          "pure_model_p": 0.0069,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.227,
+              "proj": 6.029,
+              "cur_pct": 82,
+              "proj_pct": 85,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.773,
+              "proj": 0.7747,
+              "cur_pct": 71,
+              "proj_pct": 78,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 24,
+              "proj": 44.5,
+              "cur_pct": 83,
+              "proj_pct": 89,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 81,
+              "proj": 147.0,
+              "cur_pct": 83,
+              "proj_pct": 86,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 76,
+              "proj": 145.0,
+              "cur_pct": 80,
+              "proj_pct": 87,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 8,
+              "proj": 15.5,
+              "cur_pct": 61,
+              "proj_pct": 64,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 102.1,
+          "proj_vote_share": 0.2431
+        },
+        {
+          "rank": 10,
+          "name": "Ben Rice",
+          "team_abbr": "NYY",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.71,
+          "p_ops": 0.8687,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0022,
+          "display_p": 0.0022,
+          "low_confidence": false,
+          "market_p": 0.0079,
+          "edge": -0.0058,
+          "stars": "",
+          "best_odds": 15000,
+          "best_book": "DraftKings",
+          "all_book_odds": {
+            "DraftKings": 15000,
+            "Caesars": 12500
+          },
+          "proj_share": -0.0313,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0021,
+          "kalshi_p": 0.0022,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.2648,
+              "proj": 6.686,
+              "cur_pct": 92,
+              "proj_pct": 90,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8969,
+              "proj": 0.8687,
+              "cur_pct": 98,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 41,
+              "proj": 68.5,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 105,
+              "proj": 179.25,
+              "cur_pct": 98,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 97,
+              "proj": 173.25,
+              "cur_pct": 96,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 3,
+              "proj": 6.5,
+              "cur_pct": 33,
+              "proj_pct": 34,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 64.9,
+          "proj_vote_share": 0.1546
+        }
+      ],
+      "final_vote_projection": true
+    },
+    "AL_CY": {
+      "label": "AL Cy Young",
+      "n_pool": 27,
+      "temperature": null,
+      "calibrated_against_n_books": null,
+      "engine": "cy_votefit_v1",
+      "regime_guard": null,
+      "candidates": [
+        {
+          "rank": 1,
+          "name": "Cam Schlittler",
+          "team_abbr": "NYY",
+          "league": "AL",
+          "pos": null,
+          "p_war": 7.03,
+          "p_ops": null,
+          "p_fip": 2.95,
+          "p_ip": 367.714,
+          "model_p": 0.8997,
+          "display_p": 0.8997,
+          "low_confidence": true,
+          "market_p": 0.9901,
+          "edge": -0.0904,
+          "stars": "",
+          "best_odds": -1600,
+          "best_book": "DraftKings",
+          "all_book_odds": {
+            "BetMGM": -10000,
+            "DraftKings": -1600,
+            "Caesars": -1800,
+            "RiversCasino": -10000
+          },
+          "proj_share": 0.2296,
+          "proj_first": 27.2,
+          "pure_model_p": 0.8817,
+          "kalshi_p": 0.9053,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 6.2283,
+              "proj": 10.177,
+              "cur_pct": 98,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 1.9518,
+              "proj": 2.6251,
+              "cur_pct": 97,
+              "proj_pct": 97,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 239,
+              "proj": 439.75,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2497,
+              "proj": 0.2237,
+              "cur_pct": 96,
+              "proj_pct": 96,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 14,
+              "proj": 27.25,
+              "cur_pct": 92,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 0.9191,
+              "proj": 1.0364,
+              "cur_pct": 97,
+              "proj_pct": 95,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 193.2,
+              "proj": 367.714,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 201.6,
+          "proj_vote_share": 0.9599
         },
         {
           "rank": 2,
+          "name": "Dylan Cease",
+          "team_abbr": "TOR",
+          "league": "AL",
+          "pos": null,
+          "p_war": 5.52,
+          "p_ops": null,
+          "p_fip": 2.5598,
+          "p_ip": 170.0,
+          "model_p": 0.0452,
+          "display_p": 0.0452,
+          "low_confidence": true,
+          "market_p": 0.0476,
+          "edge": -0.0024,
+          "stars": "",
+          "best_odds": 3300,
+          "best_book": "FanDuel",
+          "all_book_odds": {
+            "BetMGM": 2000,
+            "DraftKings": 900,
+            "Caesars": 800,
+            "FanDuel": 3300,
+            "RiversCasino": 2200
+          },
+          "proj_share": 0.1694,
+          "proj_first": 1.3,
+          "pure_model_p": 0.0595,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.4903,
+              "proj": 5.49,
+              "cur_pct": 97,
+              "proj_pct": 85,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.3964,
+              "proj": 2.4014,
+              "cur_pct": 94,
+              "proj_pct": 99,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 239,
+              "proj": 240.0,
+              "cur_pct": 98,
+              "proj_pct": 64,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.235,
+              "proj": 0.2349,
+              "cur_pct": 94,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 11,
+              "proj": 11,
+              "cur_pct": 78,
+              "proj_pct": 38,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1006,
+              "proj": 1.101,
+              "cur_pct": 81,
+              "proj_pct": 90,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 169.0,
+              "proj": 170.0,
+              "cur_pct": 80,
+              "proj_pct": 29,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 101.6,
+          "proj_vote_share": 0.4838
+        },
+        {
+          "rank": 3,
           "name": "Parker Messick",
           "team_abbr": "CLE",
           "league": "AL",
@@ -696,17 +1095,21 @@
           "p_ops": null,
           "p_fip": 3.3403,
           "p_ip": 360.883,
-          "model_p": 0.051,
-          "display_p": 0.0281,
+          "model_p": 0.0313,
+          "display_p": 0.0313,
           "low_confidence": true,
           "market_p": 0.0164,
-          "edge": 0.0346,
-          "stars": "\u2605\u2605",
+          "edge": 0.0149,
+          "stars": "\u2605",
           "best_odds": 6000,
           "best_book": "BetMGM",
           "all_book_odds": {
             "BetMGM": 6000
           },
+          "proj_share": 0.1481,
+          "proj_first": 1.0,
+          "pure_model_p": 0.0409,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -772,95 +1175,9 @@
               "proj_pct": 97,
               "lower_better": false
             }
-          ]
-        },
-        {
-          "rank": 3,
-          "name": "Gavin Williams",
-          "team_abbr": "CLE",
-          "league": "AL",
-          "pos": null,
-          "p_war": 3.09,
-          "p_ops": null,
-          "p_fip": 3.5016,
-          "p_ip": 362.624,
-          "model_p": 0.0033,
-          "display_p": 0.0176,
-          "low_confidence": true,
-          "market_p": 0.1,
-          "edge": -0.0967,
-          "stars": "",
-          "best_odds": 900,
-          "best_book": "BetMGM",
-          "all_book_odds": {
-            "BetMGM": 900
-          },
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 3.5484,
-              "proj": 6.762,
-              "cur_pct": 88,
-              "proj_pct": 91,
-              "lower_better": false
-            },
-            {
-              "key": "era",
-              "label": "ERA",
-              "cur": 3.7595,
-              "proj": 3.623,
-              "cur_pct": 56,
-              "proj_pct": 72,
-              "lower_better": true
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 248,
-              "proj": 459.0,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": false
-            },
-            {
-              "key": "k_bb_pct",
-              "label": "K-BB%",
-              "cur": 0.2507,
-              "proj": 0.223,
-              "cur_pct": 97,
-              "proj_pct": 94,
-              "lower_better": false
-            },
-            {
-              "key": "w",
-              "label": "W",
-              "cur": 14,
-              "proj": 25.5,
-              "cur_pct": 92,
-              "proj_pct": 94,
-              "lower_better": false
-            },
-            {
-              "key": "whip",
-              "label": "WHIP",
-              "cur": 1.1121,
-              "proj": 1.1591,
-              "cur_pct": 77,
-              "proj_pct": 80,
-              "lower_better": true
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 184.1,
-              "proj": 362.624,
-              "cur_pct": 93,
-              "proj_pct": 98,
-              "lower_better": false
-            }
-          ]
+          ],
+          "proj_points": 91.4,
+          "proj_vote_share": 0.4351
         },
         {
           "rank": 4,
@@ -872,11 +1189,11 @@
           "p_ops": null,
           "p_fip": 3.0682,
           "p_ip": 339.528,
-          "model_p": 0.0033,
-          "display_p": 0.0055,
+          "model_p": 0.0057,
+          "display_p": 0.0057,
           "low_confidence": true,
           "market_p": 0.0099,
-          "edge": -0.0066,
+          "edge": -0.0042,
           "stars": "",
           "best_odds": 10000,
           "best_book": "BetMGM",
@@ -887,6 +1204,10 @@
             "FanDuel": 10000,
             "RiversCasino": 10000
           },
+          "proj_share": 0.0959,
+          "proj_first": 0.2,
+          "pure_model_p": 0.0067,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -952,7 +1273,9 @@
               "proj_pct": 90,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 37.6,
+          "proj_vote_share": 0.179
         },
         {
           "rank": 5,
@@ -964,11 +1287,11 @@
           "p_ops": null,
           "p_fip": 3.5286,
           "p_ip": 350.279,
-          "model_p": 0.0024,
-          "display_p": 0.0048,
+          "model_p": 0.0027,
+          "display_p": 0.0027,
           "low_confidence": true,
           "market_p": 0.0099,
-          "edge": -0.0075,
+          "edge": -0.0072,
           "stars": "",
           "best_odds": 10000,
           "best_book": "BetMGM",
@@ -979,6 +1302,10 @@
             "FanDuel": 10000,
             "RiversCasino": 10000
           },
+          "proj_share": 0.0709,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0028,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -1044,9 +1371,480 @@
               "proj_pct": 95,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 20.1,
+          "proj_vote_share": 0.0957
+        },
+        {
+          "rank": 6,
+          "name": "Gavin Williams",
+          "team_abbr": "CLE",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.09,
+          "p_ops": null,
+          "p_fip": 3.5016,
+          "p_ip": 362.624,
+          "model_p": 0.0026,
+          "display_p": 0.0026,
+          "low_confidence": true,
+          "market_p": 0.1,
+          "edge": -0.0974,
+          "stars": "",
+          "best_odds": 900,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 900
+          },
+          "proj_share": 0.0642,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0026,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.5484,
+              "proj": 6.762,
+              "cur_pct": 88,
+              "proj_pct": 91,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.7595,
+              "proj": 3.623,
+              "cur_pct": 56,
+              "proj_pct": 72,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 248,
+              "proj": 459.0,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2507,
+              "proj": 0.223,
+              "cur_pct": 97,
+              "proj_pct": 94,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 14,
+              "proj": 25.5,
+              "cur_pct": 92,
+              "proj_pct": 94,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1121,
+              "proj": 1.1591,
+              "cur_pct": 77,
+              "proj_pct": 80,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 184.1,
+              "proj": 362.624,
+              "cur_pct": 93,
+              "proj_pct": 98,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 18.7,
+          "proj_vote_share": 0.0889
+        },
+        {
+          "rank": 7,
+          "name": "Taj Bradley",
+          "team_abbr": "MIN",
+          "league": "AL",
+          "pos": null,
+          "p_war": 4.36,
+          "p_ops": null,
+          "p_fip": 3.8753,
+          "p_ip": 305.124,
+          "model_p": 0.0017,
+          "display_p": 0.0017,
+          "low_confidence": true,
+          "market_p": 0.0123,
+          "edge": -0.0106,
+          "stars": "",
+          "best_odds": 8000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 8000
+          },
+          "proj_share": 0.0661,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0023,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 2.7994,
+              "proj": 4.724,
+              "cur_pct": 80,
+              "proj_pct": 77,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.7346,
+              "proj": 3.8804,
+              "cur_pct": 56,
+              "proj_pct": 58,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 205,
+              "proj": 340.0,
+              "cur_pct": 95,
+              "proj_pct": 90,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.1725,
+              "proj": 0.1665,
+              "cur_pct": 73,
+              "proj_pct": 74,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 12,
+              "proj": 19.0,
+              "cur_pct": 83,
+              "proj_pct": 79,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.2224,
+              "proj": 1.2494,
+              "cur_pct": 57,
+              "proj_pct": 55,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 178.1,
+              "proj": 305.124,
+              "cur_pct": 91,
+              "proj_pct": 76,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 13.1,
+          "proj_vote_share": 0.0623
+        },
+        {
+          "rank": 8,
+          "name": "Reid Detmers",
+          "team_abbr": "LAA",
+          "league": "AL",
+          "pos": null,
+          "p_war": 4.23,
+          "p_ops": null,
+          "p_fip": 3.2505,
+          "p_ip": 315.029,
+          "model_p": 0.0016,
+          "display_p": 0.0016,
+          "low_confidence": true,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": 0.0547,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0021,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.8926,
+              "proj": 7.374,
+              "cur_pct": 94,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.3568,
+              "proj": 3.5556,
+              "cur_pct": 73,
+              "proj_pct": 76,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 211,
+              "proj": 357.5,
+              "cur_pct": 96,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2203,
+              "proj": 0.2092,
+              "cur_pct": 90,
+              "proj_pct": 91,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 7,
+              "proj": 14.0,
+              "cur_pct": 40,
+              "proj_pct": 57,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.0378,
+              "proj": 1.1003,
+              "cur_pct": 92,
+              "proj_pct": 91,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 185.0,
+              "proj": 315.029,
+              "cur_pct": 94,
+              "proj_pct": 82,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 12.1,
+          "proj_vote_share": 0.0576
+        },
+        {
+          "rank": 9,
+          "name": "Logan Gilbert",
+          "team_abbr": "SEA",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.31,
+          "p_ops": null,
+          "p_fip": 3.6866,
+          "p_ip": 327.043,
+          "model_p": 0.0011,
+          "display_p": 0.0011,
+          "low_confidence": true,
+          "market_p": 0.0244,
+          "edge": -0.0233,
+          "stars": "",
+          "best_odds": 4000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 4000
+          },
+          "proj_share": 0.0276,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0006,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 2.8534,
+              "proj": 5.438,
+              "cur_pct": 82,
+              "proj_pct": 83,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.7258,
+              "proj": 3.6167,
+              "cur_pct": 57,
+              "proj_pct": 72,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 205,
+              "proj": 360.25,
+              "cur_pct": 95,
+              "proj_pct": 93,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.208,
+              "proj": 0.2088,
+              "cur_pct": 85,
+              "proj_pct": 90,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 12,
+              "proj": 21.5,
+              "cur_pct": 83,
+              "proj_pct": 88,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.086,
+              "proj": 1.0886,
+              "cur_pct": 86,
+              "proj_pct": 92,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 186.0,
+              "proj": 327.043,
+              "cur_pct": 96,
+              "proj_pct": 88,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 8.3,
+          "proj_vote_share": 0.0397
+        },
+        {
+          "rank": 10,
+          "name": "Gerrit Cole",
+          "team_abbr": "NYY",
+          "league": "AL",
+          "pos": null,
+          "p_war": 2.71,
+          "p_ops": null,
+          "p_fip": 3.9301,
+          "p_ip": 316.521,
+          "model_p": 0.0007,
+          "display_p": 0.0007,
+          "low_confidence": true,
+          "market_p": 0.0123,
+          "edge": -0.0117,
+          "stars": "",
+          "best_odds": 8000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 8000
+          },
+          "proj_share": -0.0287,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 2.1473,
+              "proj": 5.448,
+              "cur_pct": 64,
+              "proj_pct": 84,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.6142,
+              "proj": 3.8133,
+              "cur_pct": 64,
+              "proj_pct": 62,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 131,
+              "proj": 320.0,
+              "cur_pct": 61,
+              "proj_pct": 85,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2042,
+              "proj": 0.1878,
+              "cur_pct": 82,
+              "proj_pct": 81,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 10,
+              "proj": 23.5,
+              "cur_pct": 71,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1024,
+              "proj": 1.1442,
+              "cur_pct": 80,
+              "proj_pct": 83,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 127.0,
+              "proj": 316.521,
+              "cur_pct": 47,
+              "proj_pct": 84,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 5.6,
+          "proj_vote_share": 0.0266
         }
-      ]
+      ],
+      "final_vote_projection": true
     },
     "AL_ROY": {
       "label": "AL Rookie of the Year",
@@ -1058,80 +1856,6 @@
       "candidates": [
         {
           "rank": 1,
-          "name": "Parker Messick",
-          "team_abbr": "CLE",
-          "league": "AL",
-          "pos": null,
-          "p_war": 6.34,
-          "p_ops": null,
-          "p_fip": 3.3403,
-          "p_ip": 360.883,
-          "model_p": 1.0,
-          "display_p": 0.9888,
-          "low_confidence": false,
-          "market_p": 0.0526,
-          "edge": 0.9474,
-          "stars": "\u2605\u2605\u2605",
-          "best_odds": 2700,
-          "best_book": "FanDuel",
-          "all_book_odds": {
-            "BetMGM": 1800,
-            "DraftKings": 1300,
-            "Caesars": 675,
-            "FanDuel": 2700,
-            "RiversCasino": 1800
-          },
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 4.9215,
-              "proj": 8.085,
-              "cur_pct": 95,
-              "proj_pct": 94,
-              "lower_better": false
-            },
-            {
-              "key": "w",
-              "label": "W",
-              "cur": 12,
-              "proj": 23.0,
-              "cur_pct": 83,
-              "proj_pct": 91,
-              "lower_better": false
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 193,
-              "proj": 366.25,
-              "cur_pct": 91,
-              "proj_pct": 94,
-              "lower_better": false
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 186.1,
-              "proj": 360.883,
-              "cur_pct": 96,
-              "proj_pct": 97,
-              "lower_better": false
-            },
-            {
-              "key": "era",
-              "label": "ERA",
-              "cur": 2.5599,
-              "proj": 3.0801,
-              "cur_pct": 92,
-              "proj_pct": 88,
-              "lower_better": true
-            }
-          ]
-        },
-        {
-          "rank": 2,
           "name": "Kevin McGonigle",
           "team_abbr": "DET",
           "league": "AL",
@@ -1140,11 +1864,11 @@
           "p_ops": 0.795,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0,
-          "display_p": 0.0107,
+          "model_p": 0.5543,
+          "display_p": 0.5543,
           "low_confidence": false,
           "market_p": 0.9901,
-          "edge": -0.9901,
+          "edge": -0.4358,
           "stars": "",
           "best_odds": -1100,
           "best_book": "Caesars",
@@ -1155,6 +1879,10 @@
             "FanDuel": -10000,
             "RiversCasino": -10000
           },
+          "proj_share": 0.2836,
+          "proj_first": 16.8,
+          "pure_model_p": 0.4334,
+          "kalshi_p": 0.8704,
           "twoway": false,
           "cats": [
             {
@@ -1211,81 +1939,172 @@
               "proj_pct": 83,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 123.3,
+          "proj_vote_share": 0.8217
         },
         {
-          "rank": 3,
-          "name": "Payton Tolle",
-          "team_abbr": "BOS",
+          "rank": 2,
+          "name": "Parker Messick",
+          "team_abbr": "CLE",
           "league": "AL",
           "pos": null,
-          "p_war": 2.91,
+          "p_war": 6.34,
           "p_ops": null,
-          "p_fip": 3.3516,
-          "p_ip": 311.472,
-          "model_p": 0.0,
-          "display_p": 0.0004,
+          "p_fip": 3.3403,
+          "p_ip": 360.883,
+          "model_p": 0.4419,
+          "display_p": 0.4419,
           "low_confidence": false,
-          "market_p": 0.0141,
-          "edge": -0.0141,
-          "stars": "",
-          "best_odds": 8000,
-          "best_book": "BetMGM",
+          "market_p": 0.0526,
+          "edge": 0.3893,
+          "stars": "\u2605\u2605\u2605",
+          "best_odds": 2700,
+          "best_book": "FanDuel",
           "all_book_odds": {
-            "BetMGM": 8000,
-            "DraftKings": 7000,
-            "Caesars": 8000,
-            "FanDuel": 7000,
-            "RiversCasino": 7000
+            "BetMGM": 1800,
+            "DraftKings": 1300,
+            "Caesars": 675,
+            "FanDuel": 2700,
+            "RiversCasino": 1800
           },
+          "proj_share": 0.2938,
+          "proj_first": 13.1,
+          "pure_model_p": 0.5665,
+          "kalshi_p": 0.0648,
           "twoway": false,
           "cats": [
             {
               "key": "war",
               "label": "WAR",
-              "cur": 4.1466,
-              "proj": 7.349,
-              "cur_pct": 92,
-              "proj_pct": 91,
+              "cur": 4.9215,
+              "proj": 8.085,
+              "cur_pct": 95,
+              "proj_pct": 94,
               "lower_better": false
             },
             {
               "key": "w",
               "label": "W",
-              "cur": 9,
-              "proj": 19.0,
-              "cur_pct": 60,
-              "proj_pct": 79,
+              "cur": 12,
+              "proj": 23.0,
+              "cur_pct": 83,
+              "proj_pct": 91,
               "lower_better": false
             },
             {
               "key": "k",
               "label": "K",
-              "cur": 171,
-              "proj": 351.75,
-              "cur_pct": 84,
-              "proj_pct": 91,
+              "cur": 193,
+              "proj": 366.25,
+              "cur_pct": 91,
+              "proj_pct": 94,
               "lower_better": false
             },
             {
               "key": "ip",
               "label": "IP",
-              "cur": 148.2,
-              "proj": 311.472,
-              "cur_pct": 62,
-              "proj_pct": 80,
+              "cur": 186.1,
+              "proj": 360.883,
+              "cur_pct": 96,
+              "proj_pct": 97,
               "lower_better": false
             },
             {
               "key": "era",
               "label": "ERA",
-              "cur": 3.0269,
-              "proj": 3.3834,
-              "cur_pct": 82,
-              "proj_pct": 81,
+              "cur": 2.5599,
+              "proj": 3.0801,
+              "cur_pct": 92,
+              "proj_pct": 88,
               "lower_better": true
             }
-          ]
+          ],
+          "proj_points": 115.7,
+          "proj_vote_share": 0.7716
+        },
+        {
+          "rank": 3,
+          "name": "Carter Jensen",
+          "team_abbr": "KC",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.28,
+          "p_ops": 0.7707,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0007,
+          "display_p": 0.0007,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0003,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.748,
+              "proj": 5.468,
+              "cur_pct": 88,
+              "proj_pct": 81,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 80,
+              "proj": 129.25,
+              "cur_pct": 82,
+              "proj_pct": 74,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 81,
+              "proj": 129.5,
+              "cur_pct": 85,
+              "proj_pct": 76,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 126,
+              "proj": 209.75,
+              "cur_pct": 69,
+              "proj_pct": 64,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 27,
+              "proj": 40.75,
+              "cur_pct": 90,
+              "proj_pct": 81,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.7902,
+              "proj": 0.7707,
+              "cur_pct": 75,
+              "proj_pct": 76,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 5.5,
+          "proj_vote_share": 0.0367
         },
         {
           "rank": 4,
@@ -1297,11 +2116,11 @@
           "p_ops": 0.8125,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0,
-          "display_p": 0.0,
+          "model_p": 0.0007,
+          "display_p": 0.0007,
           "low_confidence": false,
           "market_p": 0.0099,
-          "edge": -0.0099,
+          "edge": -0.0092,
           "stars": "",
           "best_odds": 10000,
           "best_book": "DraftKings",
@@ -1310,6 +2129,10 @@
             "Caesars": 9000,
             "RiversCasino": 10000
           },
+          "proj_share": -0.0204,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -1366,7 +2189,9 @@
               "proj_pct": 89,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 5.3,
+          "proj_vote_share": 0.0354
         },
         {
           "rank": 5,
@@ -1378,17 +2203,21 @@
           "p_ops": 0.7606,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0,
-          "display_p": 0.0,
+          "model_p": 0.0006,
+          "display_p": 0.0006,
           "low_confidence": false,
           "market_p": 0.0099,
-          "edge": -0.0099,
+          "edge": -0.0093,
           "stars": "",
           "best_odds": 10000,
           "best_book": "DraftKings",
           "all_book_odds": {
             "DraftKings": 10000
           },
+          "proj_share": -0.0293,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -1445,9 +2274,339 @@
               "proj_pct": 72,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 5.3,
+          "proj_vote_share": 0.0353
+        },
+        {
+          "rank": 6,
+          "name": "Chase DeLauter",
+          "team_abbr": "CLE",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.47,
+          "p_ops": 0.7988,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0006,
+          "display_p": 0.0006,
+          "low_confidence": false,
+          "market_p": 0.0099,
+          "edge": -0.0093,
+          "stars": "",
+          "best_odds": 10000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 10000,
+            "FanDuel": 10000
+          },
+          "proj_share": -0.0712,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.492,
+              "proj": 5.198,
+              "cur_pct": 85,
+              "proj_pct": 79,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 62,
+              "proj": 119.5,
+              "cur_pct": 61,
+              "proj_pct": 65,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 67,
+              "proj": 124.25,
+              "cur_pct": 70,
+              "proj_pct": 73,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 142,
+              "proj": 258.25,
+              "cur_pct": 79,
+              "proj_pct": 83,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 16,
+              "proj": 29.0,
+              "cur_pct": 61,
+              "proj_pct": 64,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8197,
+              "proj": 0.7988,
+              "cur_pct": 85,
+              "proj_pct": 84,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 5.0,
+          "proj_vote_share": 0.0332
+        },
+        {
+          "rank": 7,
+          "name": "Payton Tolle",
+          "team_abbr": "BOS",
+          "league": "AL",
+          "pos": null,
+          "p_war": 2.91,
+          "p_ops": null,
+          "p_fip": 3.3516,
+          "p_ip": 311.472,
+          "model_p": 0.0006,
+          "display_p": 0.0006,
+          "low_confidence": false,
+          "market_p": 0.0141,
+          "edge": -0.0135,
+          "stars": "",
+          "best_odds": 8000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 8000,
+            "DraftKings": 7000,
+            "Caesars": 8000,
+            "FanDuel": 7000,
+            "RiversCasino": 7000
+          },
+          "proj_share": -0.0934,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.1466,
+              "proj": 7.349,
+              "cur_pct": 92,
+              "proj_pct": 91,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 9,
+              "proj": 19.0,
+              "cur_pct": 60,
+              "proj_pct": 79,
+              "lower_better": false
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 171,
+              "proj": 351.75,
+              "cur_pct": 84,
+              "proj_pct": 91,
+              "lower_better": false
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 148.2,
+              "proj": 311.472,
+              "cur_pct": 62,
+              "proj_pct": 80,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.0269,
+              "proj": 3.3834,
+              "cur_pct": 82,
+              "proj_pct": 81,
+              "lower_better": true
+            }
+          ],
+          "proj_points": 4.9,
+          "proj_vote_share": 0.0329
+        },
+        {
+          "rank": 8,
+          "name": "Gage Jump",
+          "team_abbr": "ATH",
+          "league": "AL",
+          "pos": null,
+          "p_war": 0.64,
+          "p_ops": null,
+          "p_fip": 4.017,
+          "p_ip": 100.988,
+          "model_p": 0.0006,
+          "display_p": 0.0006,
+          "low_confidence": false,
+          "market_p": 0.0099,
+          "edge": -0.0093,
+          "stars": "",
+          "best_odds": 10000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 10000
+          },
+          "proj_share": -0.4357,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 1.6699,
+              "proj": 1.709,
+              "cur_pct": 51,
+              "proj_pct": 27,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 6,
+              "proj": 6,
+              "cur_pct": 30,
+              "proj_pct": 7,
+              "lower_better": false
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 108,
+              "proj": 110.5,
+              "cur_pct": 43,
+              "proj_pct": 4,
+              "lower_better": false
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 98.2,
+              "proj": 100.988,
+              "cur_pct": 27,
+              "proj_pct": 0,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 5.473,
+              "proj": 5.4368,
+              "cur_pct": 8,
+              "proj_pct": 4,
+              "lower_better": true
+            }
+          ],
+          "proj_points": 4.9,
+          "proj_vote_share": 0.0329
+        },
+        {
+          "rank": 9,
+          "name": "Tristan Peters",
+          "team_abbr": "CWS",
+          "league": "AL",
+          "pos": null,
+          "p_war": 3.63,
+          "p_ops": 0.7329,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0,
+          "display_p": 0.0,
+          "low_confidence": false,
+          "market_p": 0.0099,
+          "edge": -0.0099,
+          "stars": "",
+          "best_odds": 10000,
+          "best_book": "RiversCasino",
+          "all_book_odds": {
+            "RiversCasino": 10000
+          },
+          "proj_share": -0.0848,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.5646,
+              "proj": 5.001,
+              "cur_pct": 86,
+              "proj_pct": 76,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 63,
+              "proj": 111.0,
+              "cur_pct": 62,
+              "proj_pct": 61,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 56,
+              "proj": 98.25,
+              "cur_pct": 56,
+              "proj_pct": 56,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 116,
+              "proj": 206.0,
+              "cur_pct": 64,
+              "proj_pct": 60,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 12,
+              "proj": 20.25,
+              "cur_pct": 47,
+              "proj_pct": 44,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.7738,
+              "proj": 0.7329,
+              "cur_pct": 71,
+              "proj_pct": 57,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 0.0,
+          "proj_vote_share": 0.0002
         }
-      ]
+      ],
+      "final_vote_projection": true
     },
     "NL_MVP": {
       "label": "NL MVP",
@@ -1467,11 +2626,11 @@
           "p_ops": 0.8895,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.98,
-          "display_p": 0.9787,
+          "model_p": 0.9938,
+          "display_p": 0.9938,
           "low_confidence": false,
           "market_p": 0.9901,
-          "edge": -0.0101,
+          "edge": 0.0037,
           "stars": "",
           "best_odds": -1700,
           "best_book": "Caesars",
@@ -1481,6 +2640,10 @@
             "Caesars": -1700,
             "RiversCasino": -10000
           },
+          "proj_share": 0.0998,
+          "proj_first": 29.8,
+          "pure_model_p": 0.9991,
+          "kalshi_p": 0.8736,
           "twoway": false,
           "cats": [
             {
@@ -1537,96 +2700,12 @@
               "proj_pct": 98,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 419.1,
+          "proj_vote_share": 0.9979
         },
         {
           "rank": 2,
-          "name": "Cristopher S\u00e1nchez",
-          "team_abbr": "PHI",
-          "league": "NL",
-          "pos": null,
-          "p_war": 8.08,
-          "p_ops": null,
-          "p_fip": 2.8749,
-          "p_ip": 406.805,
-          "model_p": 0.0195,
-          "display_p": 0.0194,
-          "low_confidence": false,
-          "market_p": null,
-          "edge": null,
-          "stars": "",
-          "best_odds": null,
-          "best_book": null,
-          "all_book_odds": null,
-          "twoway": false,
-          "cats": [
-            {
-              "key": "war",
-              "label": "WAR",
-              "cur": 6.2368,
-              "proj": 11.876,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": false
-            },
-            {
-              "key": "era",
-              "label": "ERA",
-              "cur": 2.913,
-              "proj": 2.9668,
-              "cur_pct": 84,
-              "proj_pct": 90,
-              "lower_better": true
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 231,
-              "proj": 439.25,
-              "cur_pct": 97,
-              "proj_pct": 98,
-              "lower_better": false
-            },
-            {
-              "key": "k_bb_pct",
-              "label": "K-BB%",
-              "cur": 0.217,
-              "proj": 0.2069,
-              "cur_pct": 88,
-              "proj_pct": 89,
-              "lower_better": false
-            },
-            {
-              "key": "w",
-              "label": "W",
-              "cur": 18,
-              "proj": 32.25,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": false
-            },
-            {
-              "key": "whip",
-              "label": "WHIP",
-              "cur": 1.2029,
-              "proj": 1.1638,
-              "cur_pct": 60,
-              "proj_pct": 78,
-              "lower_better": true
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 207.0,
-              "proj": 406.805,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": false
-            }
-          ]
-        },
-        {
-          "rank": 3,
           "name": "Shohei Ohtani",
           "team_abbr": "LAD",
           "league": "NL",
@@ -1635,11 +2714,11 @@
           "p_ops": 0.9146,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0002,
-          "display_p": 0.0015,
+          "model_p": 0.0038,
+          "display_p": 0.0038,
           "low_confidence": false,
           "market_p": 0.0152,
-          "edge": -0.015,
+          "edge": -0.0113,
           "stars": "",
           "best_odds": 8000,
           "best_book": "FanDuel",
@@ -1650,6 +2729,10 @@
             "FanDuel": 8000,
             "RiversCasino": 7500
           },
+          "proj_share": -0.0068,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0002,
+          "kalshi_p": 0.0133,
           "twoway": true,
           "cats": [
             {
@@ -1715,10 +2798,12 @@
               "proj_pct": 81,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 254.4,
+          "proj_vote_share": 0.6058
         },
         {
-          "rank": 4,
+          "rank": 3,
           "name": "Brice Turang",
           "team_abbr": "MIL",
           "league": "NL",
@@ -1727,8 +2812,8 @@
           "p_ops": 0.7811,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0003,
-          "display_p": 0.0003,
+          "model_p": 0.0008,
+          "display_p": 0.0008,
           "low_confidence": false,
           "market_p": null,
           "edge": null,
@@ -1736,6 +2821,10 @@
           "best_odds": null,
           "best_book": null,
           "all_book_odds": null,
+          "proj_share": -0.0077,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0003,
+          "kalshi_p": 0.0022,
           "twoway": false,
           "cats": [
             {
@@ -1792,10 +2881,12 @@
               "proj_pct": 90,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 211.4,
+          "proj_vote_share": 0.5033
         },
         {
-          "rank": 5,
+          "rank": 4,
           "name": "Elly De La Cruz",
           "team_abbr": "CIN",
           "league": "NL",
@@ -1804,8 +2895,8 @@
           "p_ops": 0.8521,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0001,
-          "display_p": 0.0001,
+          "model_p": 0.0007,
+          "display_p": 0.0007,
           "low_confidence": false,
           "market_p": null,
           "edge": null,
@@ -1813,6 +2904,10 @@
           "best_odds": null,
           "best_book": null,
           "all_book_odds": null,
+          "proj_share": -0.0264,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": 0.0022,
           "twoway": false,
           "cats": [
             {
@@ -1869,112 +2964,95 @@
               "proj_pct": 97,
               "lower_better": false
             }
-          ]
-        }
-      ]
-    },
-    "NL_CY": {
-      "label": "NL Cy Young",
-      "n_pool": 21,
-      "temperature": null,
-      "calibrated_against_n_books": null,
-      "engine": "cy_votefit_v1",
-      "regime_guard": "ratio",
-      "candidates": [
+          ],
+          "proj_points": 204.4,
+          "proj_vote_share": 0.4866
+        },
         {
-          "rank": 1,
-          "name": "Jacob Misiorowski",
-          "team_abbr": "MIL",
+          "rank": 5,
+          "name": "Alex Bregman",
+          "team_abbr": "CHC",
           "league": "NL",
           "pos": null,
-          "p_war": 6.46,
-          "p_ops": null,
-          "p_fip": 2.573,
-          "p_ip": 344.227,
-          "model_p": 0.0875,
-          "display_p": 0.6421,
-          "low_confidence": true,
-          "market_p": 0.9901,
-          "edge": -0.9026,
+          "p_war": 5.79,
+          "p_ops": 0.7921,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0007,
+          "display_p": 0.0007,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
           "stars": "",
-          "best_odds": -1600,
-          "best_book": "Caesars",
-          "all_book_odds": {
-            "BetMGM": -10000,
-            "DraftKings": -8000,
-            "Caesars": -1600,
-            "FanDuel": -20000,
-            "RiversCasino": -10000
-          },
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0308,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0022,
           "twoway": false,
           "cats": [
             {
               "key": "war",
               "label": "WAR",
-              "cur": 6.6496,
-              "proj": 11.279,
-              "cur_pct": 99,
-              "proj_pct": 98,
+              "cur": 5.5508,
+              "proj": 8.056,
+              "cur_pct": 98,
+              "proj_pct": 96,
               "lower_better": false
             },
             {
-              "key": "era",
-              "label": "ERA",
-              "cur": 1.8034,
-              "proj": 2.4031,
-              "cur_pct": 99,
-              "proj_pct": 98,
-              "lower_better": true
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 252,
-              "proj": 487.5,
-              "cur_pct": 99,
-              "proj_pct": 99,
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8185,
+              "proj": 0.7921,
+              "cur_pct": 85,
+              "proj_pct": 82,
               "lower_better": false
             },
             {
-              "key": "k_bb_pct",
-              "label": "K-BB%",
-              "cur": 0.3128,
-              "proj": 0.2781,
-              "cur_pct": 99,
-              "proj_pct": 99,
+              "key": "hr",
+              "label": "HR",
+              "cur": 28,
+              "proj": 44.25,
+              "cur_pct": 92,
+              "proj_pct": 87,
               "lower_better": false
             },
             {
-              "key": "w",
-              "label": "W",
-              "cur": 16,
-              "proj": 29.25,
-              "cur_pct": 97,
-              "proj_pct": 97,
-              "lower_better": false
-            },
-            {
-              "key": "whip",
-              "label": "WHIP",
-              "cur": 0.8015,
-              "proj": 0.9485,
-              "cur_pct": 99,
-              "proj_pct": 99,
-              "lower_better": true
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 174.2,
-              "proj": 344.227,
-              "cur_pct": 87,
+              "key": "r",
+              "label": "R",
+              "cur": 92,
+              "proj": 156.0,
+              "cur_pct": 91,
               "proj_pct": 91,
               "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 93,
+              "proj": 155.5,
+              "cur_pct": 94,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 3,
+              "proj": 5.0,
+              "cur_pct": 33,
+              "proj_pct": 25,
+              "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 202.9,
+          "proj_vote_share": 0.4832
         },
         {
-          "rank": 2,
+          "rank": 6,
           "name": "Cristopher S\u00e1nchez",
           "team_abbr": "PHI",
           "league": "NL",
@@ -1983,18 +3061,19 @@
           "p_ops": null,
           "p_fip": 2.8749,
           "p_ip": 406.805,
-          "model_p": 0.8702,
-          "display_p": 0.2261,
-          "low_confidence": true,
-          "market_p": 0.0123,
-          "edge": 0.8578,
-          "stars": "\u2605\u2605\u2605",
-          "best_odds": 8000,
-          "best_book": "DraftKings",
-          "all_book_odds": {
-            "DraftKings": 8000,
-            "Caesars": 8000
-          },
+          "model_p": 0.0002,
+          "display_p": 0.0002,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": 0.0282,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0002,
+          "kalshi_p": null,
           "twoway": false,
           "cats": [
             {
@@ -2060,99 +3139,473 @@
               "proj_pct": 99,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 154.6,
+          "proj_vote_share": 0.3682
         },
         {
-          "rank": 3,
-          "name": "Chris Sale",
-          "team_abbr": "ATL",
+          "rank": 7,
+          "name": "Gabriel Moreno",
+          "team_abbr": "ARI",
           "league": "NL",
           "pos": null,
-          "p_war": 5.48,
-          "p_ops": null,
-          "p_fip": 2.5634,
-          "p_ip": 352.0,
-          "model_p": 0.0145,
-          "display_p": 0.0496,
-          "low_confidence": true,
-          "market_p": 0.0357,
-          "edge": -0.0213,
+          "p_war": 6.68,
+          "p_ops": 0.8415,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0,
+          "display_p": 0.0,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
           "stars": "",
-          "best_odds": 3000,
-          "best_book": "RiversCasino",
-          "all_book_odds": {
-            "BetMGM": 2800,
-            "DraftKings": 2000,
-            "Caesars": 850,
-            "FanDuel": 2700,
-            "RiversCasino": 3000
-          },
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0277,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": null,
           "twoway": false,
           "cats": [
             {
               "key": "war",
               "label": "WAR",
-              "cur": 5.8311,
-              "proj": 11.359,
-              "cur_pct": 98,
+              "cur": 5.3686,
+              "proj": 8.476,
+              "cur_pct": 97,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8742,
+              "proj": 0.8415,
+              "cur_pct": 95,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 16,
+              "proj": 27.5,
+              "cur_pct": 61,
+              "proj_pct": 62,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 72,
+              "proj": 127.5,
+              "cur_pct": 75,
+              "proj_pct": 72,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 83,
+              "proj": 140.0,
+              "cur_pct": 87,
+              "proj_pct": 84,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 6,
+              "proj": 10.75,
+              "cur_pct": 55,
+              "proj_pct": 51,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 117.7,
+          "proj_vote_share": 0.2802
+        },
+        {
+          "rank": 8,
+          "name": "Brandon Lowe",
+          "team_abbr": "PIT",
+          "league": "NL",
+          "pos": null,
+          "p_war": 5.35,
+          "p_ops": 0.7983,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0,
+          "display_p": 0.0,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0286,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0001,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.94,
+              "proj": 6.977,
+              "cur_pct": 95,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.8239,
+              "proj": 0.7983,
+              "cur_pct": 86,
+              "proj_pct": 84,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 35,
+              "proj": 54.0,
+              "cur_pct": 97,
+              "proj_pct": 96,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 94,
+              "proj": 149.75,
+              "cur_pct": 93,
+              "proj_pct": 88,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 96,
+              "proj": 154.5,
+              "cur_pct": 96,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "sb",
+              "label": "SB",
+              "cur": 2,
+              "proj": 4.25,
+              "cur_pct": 24,
+              "proj_pct": 20,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 115.5,
+          "proj_vote_share": 0.2749
+        }
+      ],
+      "final_vote_projection": true
+    },
+    "NL_CY": {
+      "label": "NL Cy Young",
+      "n_pool": 21,
+      "temperature": null,
+      "calibrated_against_n_books": null,
+      "engine": "cy_votefit_v1",
+      "regime_guard": "ratio",
+      "candidates": [
+        {
+          "rank": 1,
+          "name": "Jacob Misiorowski",
+          "team_abbr": "MIL",
+          "league": "NL",
+          "pos": null,
+          "p_war": 6.46,
+          "p_ops": null,
+          "p_fip": 2.573,
+          "p_ip": 344.227,
+          "model_p": 0.5308,
+          "display_p": 0.5308,
+          "low_confidence": true,
+          "market_p": 0.9901,
+          "edge": -0.4593,
+          "stars": "",
+          "best_odds": -1600,
+          "best_book": "Caesars",
+          "all_book_odds": {
+            "BetMGM": -10000,
+            "DraftKings": -8000,
+            "Caesars": -1600,
+            "FanDuel": -20000,
+            "RiversCasino": -10000
+          },
+          "proj_share": 0.1865,
+          "proj_first": 16.2,
+          "pure_model_p": 0.3874,
+          "kalshi_p": 0.8975,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 6.6496,
+              "proj": 11.279,
+              "cur_pct": 99,
               "proj_pct": 98,
               "lower_better": false
             },
             {
               "key": "era",
               "label": "ERA",
-              "cur": 2.1578,
-              "proj": 2.5642,
-              "cur_pct": 96,
-              "proj_pct": 97,
+              "cur": 1.8034,
+              "proj": 2.4031,
+              "cur_pct": 99,
+              "proj_pct": 98,
               "lower_better": true
             },
             {
               "key": "k",
               "label": "K",
-              "cur": 200,
-              "proj": 433.25,
-              "cur_pct": 93,
-              "proj_pct": 97,
+              "cur": 252,
+              "proj": 487.5,
+              "cur_pct": 99,
+              "proj_pct": 99,
               "lower_better": false
             },
             {
               "key": "k_bb_pct",
               "label": "K-BB%",
-              "cur": 0.2608,
-              "proj": 0.2512,
-              "cur_pct": 98,
+              "cur": 0.3128,
+              "proj": 0.2781,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 16,
+              "proj": 29.25,
+              "cur_pct": 97,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 0.8015,
+              "proj": 0.9485,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 174.2,
+              "proj": 344.227,
+              "cur_pct": 87,
+              "proj_pct": 91,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 166.1,
+          "proj_vote_share": 0.7907
+        },
+        {
+          "rank": 2,
+          "name": "Cristopher S\u00e1nchez",
+          "team_abbr": "PHI",
+          "league": "NL",
+          "pos": null,
+          "p_war": 8.08,
+          "p_ops": null,
+          "p_fip": 2.8749,
+          "p_ip": 406.805,
+          "model_p": 0.3971,
+          "display_p": 0.3971,
+          "low_confidence": true,
+          "market_p": 0.0123,
+          "edge": 0.3848,
+          "stars": "\u2605\u2605\u2605",
+          "best_odds": 8000,
+          "best_book": "DraftKings",
+          "all_book_odds": {
+            "DraftKings": 8000,
+            "Caesars": 8000
+          },
+          "proj_share": 0.1834,
+          "proj_first": 11.8,
+          "pure_model_p": 0.5287,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 6.2368,
+              "proj": 11.876,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.913,
+              "proj": 2.9668,
+              "cur_pct": 84,
+              "proj_pct": 90,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 231,
+              "proj": 439.25,
+              "cur_pct": 97,
               "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.217,
+              "proj": 0.2069,
+              "cur_pct": 88,
+              "proj_pct": 89,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 18,
+              "proj": 32.25,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.2029,
+              "proj": 1.1638,
+              "cur_pct": 60,
+              "proj_pct": 78,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 207.0,
+              "proj": 406.805,
+              "cur_pct": 99,
+              "proj_pct": 99,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 151.4,
+          "proj_vote_share": 0.7211
+        },
+        {
+          "rank": 3,
+          "name": "Jes\u00fas Luzardo",
+          "team_abbr": "PHI",
+          "league": "NL",
+          "pos": null,
+          "p_war": 6.49,
+          "p_ops": null,
+          "p_fip": 2.9596,
+          "p_ip": 313.2,
+          "model_p": 0.0235,
+          "display_p": 0.0235,
+          "low_confidence": true,
+          "market_p": 0.0099,
+          "edge": 0.0136,
+          "stars": "\u2605",
+          "best_odds": 10000,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 10000
+          },
+          "proj_share": 0.1235,
+          "proj_first": 0.7,
+          "pure_model_p": 0.0305,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.5182,
+              "proj": 8.531,
+              "cur_pct": 97,
+              "proj_pct": 96,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.8553,
+              "proj": 3.056,
+              "cur_pct": 87,
+              "proj_pct": 89,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 221,
+              "proj": 377.25,
+              "cur_pct": 97,
+              "proj_pct": 95,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2315,
+              "proj": 0.2236,
+              "cur_pct": 93,
+              "proj_pct": 95,
               "lower_better": false
             },
             {
               "key": "w",
               "label": "W",
               "cur": 14,
-              "proj": 29.75,
+              "proj": 23.75,
               "cur_pct": 92,
-              "proj_pct": 98,
+              "proj_pct": 93,
               "lower_better": false
             },
             {
               "key": "whip",
               "label": "WHIP",
-              "cur": 0.9836,
-              "proj": 1.0257,
-              "cur_pct": 94,
-              "proj_pct": 96,
+              "cur": 1.0742,
+              "proj": 1.1003,
+              "cur_pct": 87,
+              "proj_pct": 91,
               "lower_better": true
             },
             {
               "key": "ip",
               "label": "IP",
-              "cur": 162.2,
-              "proj": 352.0,
-              "cur_pct": 76,
-              "proj_pct": 96,
+              "cur": 179.2,
+              "proj": 313.2,
+              "cur_pct": 91,
+              "proj_pct": 81,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 58.4,
+          "proj_vote_share": 0.2781
         },
         {
           "rank": 4,
@@ -2164,17 +3617,21 @@
           "p_ops": null,
           "p_fip": 3.3438,
           "p_ip": 345.55,
-          "model_p": 0.011,
-          "display_p": 0.0357,
+          "model_p": 0.0164,
+          "display_p": 0.0164,
           "low_confidence": true,
           "market_p": 0.0244,
-          "edge": -0.0134,
+          "edge": -0.008,
           "stars": "",
           "best_odds": 4000,
           "best_book": "BetMGM",
           "all_book_odds": {
             "BetMGM": 4000
           },
+          "proj_share": 0.0901,
+          "proj_first": 0.5,
+          "pure_model_p": 0.021,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -2240,10 +3697,110 @@
               "proj_pct": 92,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 47.3,
+          "proj_vote_share": 0.2253
         },
         {
           "rank": 5,
+          "name": "Chris Sale",
+          "team_abbr": "ATL",
+          "league": "NL",
+          "pos": null,
+          "p_war": 5.48,
+          "p_ops": null,
+          "p_fip": 2.5634,
+          "p_ip": 352.0,
+          "model_p": 0.0117,
+          "display_p": 0.0117,
+          "low_confidence": true,
+          "market_p": 0.0357,
+          "edge": -0.024,
+          "stars": "",
+          "best_odds": 3000,
+          "best_book": "RiversCasino",
+          "all_book_odds": {
+            "BetMGM": 2800,
+            "DraftKings": 2000,
+            "Caesars": 850,
+            "FanDuel": 2700,
+            "RiversCasino": 3000
+          },
+          "proj_share": 0.0996,
+          "proj_first": 0.4,
+          "pure_model_p": 0.0148,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.8311,
+              "proj": 11.359,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.1578,
+              "proj": 2.5642,
+              "cur_pct": 96,
+              "proj_pct": 97,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 200,
+              "proj": 433.25,
+              "cur_pct": 93,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2608,
+              "proj": 0.2512,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 14,
+              "proj": 29.75,
+              "cur_pct": 92,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 0.9836,
+              "proj": 1.0257,
+              "cur_pct": 94,
+              "proj_pct": 96,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 162.2,
+              "proj": 352.0,
+              "cur_pct": 76,
+              "proj_pct": 96,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 36.8,
+          "proj_vote_share": 0.1752
+        },
+        {
+          "rank": 6,
           "name": "Yoshinobu Yamamoto",
           "team_abbr": "LAD",
           "league": "NL",
@@ -2252,11 +3809,11 @@
           "p_ops": null,
           "p_fip": 3.3169,
           "p_ip": 379.055,
-          "model_p": 0.0129,
-          "display_p": 0.0275,
+          "model_p": 0.0087,
+          "display_p": 0.0087,
           "low_confidence": true,
           "market_p": 0.0123,
-          "edge": 0.0006,
+          "edge": -0.0037,
           "stars": "",
           "best_odds": 9000,
           "best_book": "Caesars",
@@ -2264,6 +3821,10 @@
             "DraftKings": 8000,
             "Caesars": 9000
           },
+          "proj_share": 0.077,
+          "proj_first": 0.2,
+          "pure_model_p": 0.0107,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -2329,20 +3890,196 @@
               "proj_pct": 99,
               "lower_better": false
             }
-          ]
-        }
-      ]
-    },
-    "NL_ROY": {
-      "label": "NL Rookie of the Year",
-      "n_pool": 8,
-      "temperature": null,
-      "calibrated_against_n_books": null,
-      "engine": "roy_votefit_v1",
-      "regime_guard": "ratio",
-      "candidates": [
+          ],
+          "proj_points": 27.7,
+          "proj_vote_share": 0.132
+        },
         {
-          "rank": 1,
+          "rank": 7,
+          "name": "Tarik Skubal",
+          "team_abbr": "LAD",
+          "league": "NL",
+          "pos": null,
+          "p_war": 4.6,
+          "p_ops": null,
+          "p_fip": 2.6493,
+          "p_ip": 353.756,
+          "model_p": 0.0027,
+          "display_p": 0.0027,
+          "low_confidence": true,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": 0.0385,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0036,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 5.2087,
+              "proj": 11.385,
+              "cur_pct": 96,
+              "proj_pct": 99,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.7227,
+              "proj": 2.7679,
+              "cur_pct": 88,
+              "proj_pct": 96,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 186,
+              "proj": 423.75,
+              "cur_pct": 91,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2565,
+              "proj": 0.2574,
+              "cur_pct": 98,
+              "proj_pct": 98,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 12,
+              "proj": 28.25,
+              "cur_pct": 83,
+              "proj_pct": 97,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 0.9643,
+              "proj": 0.9765,
+              "cur_pct": 95,
+              "proj_pct": 99,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 158.2,
+              "proj": 353.756,
+              "cur_pct": 72,
+              "proj_pct": 96,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 9.6,
+          "proj_vote_share": 0.0458
+        },
+        {
+          "rank": 8,
+          "name": "Chase Burns",
+          "team_abbr": "CIN",
+          "league": "NL",
+          "pos": null,
+          "p_war": 4.7,
+          "p_ops": null,
+          "p_fip": 3.2453,
+          "p_ip": 155.1,
+          "model_p": 0.0019,
+          "display_p": 0.0019,
+          "low_confidence": true,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": 0.0507,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0017,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 4.297,
+              "proj": 4.297,
+              "cur_pct": 93,
+              "proj_pct": 71,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.8575,
+              "proj": 2.8627,
+              "cur_pct": 86,
+              "proj_pct": 93,
+              "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 185,
+              "proj": 186.0,
+              "cur_pct": 90,
+              "proj_pct": 44,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2048,
+              "proj": 0.2047,
+              "cur_pct": 83,
+              "proj_pct": 87,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 15,
+              "proj": 15,
+              "cur_pct": 96,
+              "proj_pct": 63,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1663,
+              "proj": 1.1665,
+              "cur_pct": 68,
+              "proj_pct": 77,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 154.1,
+              "proj": 155.1,
+              "cur_pct": 66,
+              "proj_pct": 22,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 6.8,
+          "proj_vote_share": 0.0322
+        },
+        {
+          "rank": 9,
           "name": "Nolan McLean",
           "team_abbr": "NYM",
           "league": "NL",
@@ -2351,19 +4088,21 @@
           "p_ops": null,
           "p_fip": 3.649,
           "p_ip": 317.496,
-          "model_p": 0.8599,
-          "display_p": 0.4291,
-          "low_confidence": false,
-          "market_p": 0.0323,
-          "edge": 0.8277,
-          "stars": "\u2605\u2605\u2605",
-          "best_odds": 6000,
-          "best_book": "DraftKings",
+          "model_p": 0.0008,
+          "display_p": 0.0008,
+          "low_confidence": true,
+          "market_p": 0.0099,
+          "edge": -0.0091,
+          "stars": "",
+          "best_odds": 10000,
+          "best_book": "BetMGM",
           "all_book_odds": {
-            "DraftKings": 6000,
-            "Caesars": 1000,
-            "RiversCasino": 3000
+            "BetMGM": 10000
           },
+          "proj_share": -0.0298,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0002,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
@@ -2376,13 +4115,13 @@
               "lower_better": false
             },
             {
-              "key": "w",
-              "label": "W",
-              "cur": 12,
-              "proj": 22.0,
-              "cur_pct": 83,
-              "proj_pct": 90,
-              "lower_better": false
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.1558,
+              "proj": 3.3682,
+              "cur_pct": 79,
+              "proj_pct": 82,
+              "lower_better": true
             },
             {
               "key": "k",
@@ -2394,6 +4133,33 @@
               "lower_better": false
             },
             {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.166,
+              "proj": 0.1614,
+              "cur_pct": 70,
+              "proj_pct": 70,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 12,
+              "proj": 22.0,
+              "cur_pct": 83,
+              "proj_pct": 90,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1688,
+              "proj": 1.2091,
+              "cur_pct": 67,
+              "proj_pct": 68,
+              "lower_better": true
+            },
+            {
               "key": "ip",
               "label": "IP",
               "cur": 179.2,
@@ -2401,88 +4167,118 @@
               "cur_pct": 91,
               "proj_pct": 85,
               "lower_better": false
-            },
-            {
-              "key": "era",
-              "label": "ERA",
-              "cur": 3.1558,
-              "proj": 3.3682,
-              "cur_pct": 79,
-              "proj_pct": 82,
-              "lower_better": true
             }
-          ]
+          ],
+          "proj_points": 3.0,
+          "proj_vote_share": 0.0144
         },
         {
-          "rank": 2,
-          "name": "Logan Henderson",
-          "team_abbr": "MIL",
+          "rank": 10,
+          "name": "Paul Skenes",
+          "team_abbr": "PIT",
           "league": "NL",
           "pos": null,
-          "p_war": 3.3,
+          "p_war": 3.34,
           "p_ops": null,
-          "p_fip": 3.6157,
-          "p_ip": 245.104,
-          "model_p": 0.12,
-          "display_p": 0.3237,
-          "low_confidence": false,
-          "market_p": null,
-          "edge": null,
+          "p_fip": 3.1761,
+          "p_ip": 308.625,
+          "model_p": 0.0008,
+          "display_p": 0.0008,
+          "low_confidence": true,
+          "market_p": 0.1667,
+          "edge": -0.1659,
           "stars": "",
-          "best_odds": null,
-          "best_book": null,
-          "all_book_odds": null,
+          "best_odds": 500,
+          "best_book": "BetMGM",
+          "all_book_odds": {
+            "BetMGM": 500
+          },
+          "proj_share": -0.0358,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0002,
+          "kalshi_p": 0.0023,
           "twoway": false,
           "cats": [
             {
               "key": "war",
               "label": "WAR",
-              "cur": 2.3894,
-              "proj": 5.158,
-              "cur_pct": 67,
-              "proj_pct": 81,
-              "lower_better": false
-            },
-            {
-              "key": "w",
-              "label": "W",
-              "cur": 11,
-              "proj": 21.75,
-              "cur_pct": 78,
-              "proj_pct": 89,
-              "lower_better": false
-            },
-            {
-              "key": "k",
-              "label": "K",
-              "cur": 110,
-              "proj": 273.0,
-              "cur_pct": 44,
-              "proj_pct": 75,
-              "lower_better": false
-            },
-            {
-              "key": "ip",
-              "label": "IP",
-              "cur": 98.1,
-              "proj": 245.104,
-              "cur_pct": 26,
-              "proj_pct": 57,
+              "cur": 4.1901,
+              "proj": 7.948,
+              "cur_pct": 92,
+              "proj_pct": 94,
               "lower_better": false
             },
             {
               "key": "era",
               "label": "ERA",
-              "cur": 2.4712,
-              "proj": 3.2915,
-              "cur_pct": 93,
-              "proj_pct": 85,
+              "cur": 3.8203,
+              "proj": 3.4722,
+              "cur_pct": 51,
+              "proj_pct": 80,
               "lower_better": true
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 200,
+              "proj": 354.5,
+              "cur_pct": 93,
+              "proj_pct": 91,
+              "lower_better": false
+            },
+            {
+              "key": "k_bb_pct",
+              "label": "K-BB%",
+              "cur": 0.2121,
+              "proj": 0.2151,
+              "cur_pct": 86,
+              "proj_pct": 92,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 10,
+              "proj": 19.5,
+              "cur_pct": 71,
+              "proj_pct": 82,
+              "lower_better": false
+            },
+            {
+              "key": "whip",
+              "label": "WHIP",
+              "cur": 1.1185,
+              "proj": 1.1071,
+              "cur_pct": 77,
+              "proj_pct": 88,
+              "lower_better": true
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 174.1,
+              "proj": 308.625,
+              "cur_pct": 86,
+              "proj_pct": 78,
+              "lower_better": false
             }
-          ]
-        },
+          ],
+          "proj_points": 2.9,
+          "proj_vote_share": 0.0137
+        }
+      ],
+      "final_vote_projection": true
+    },
+    "NL_ROY": {
+      "label": "NL Rookie of the Year",
+      "n_pool": 8,
+      "temperature": null,
+      "calibrated_against_n_books": null,
+      "engine": "roy_votefit_v1",
+      "regime_guard": "ratio",
+      "candidates": [
         {
-          "rank": 3,
+          "rank": 1,
           "name": "Carson Benge",
           "team_abbr": "NYM",
           "league": "NL",
@@ -2491,12 +4287,12 @@
           "p_ops": 0.7587,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0147,
-          "display_p": 0.1364,
+          "model_p": 0.6268,
+          "display_p": 0.6268,
           "low_confidence": false,
           "market_p": 0.1905,
-          "edge": -0.1758,
-          "stars": "",
+          "edge": 0.4363,
+          "stars": "\u2605\u2605\u2605",
           "best_odds": 5000,
           "best_book": "Caesars",
           "all_book_odds": {
@@ -2505,6 +4301,10 @@
             "Caesars": 5000,
             "FanDuel": 230
           },
+          "proj_share": 0.1342,
+          "proj_first": 18.9,
+          "pure_model_p": 0.753,
+          "kalshi_p": 0.2342,
           "twoway": false,
           "cats": [
             {
@@ -2561,10 +4361,12 @@
               "proj_pct": 70,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 121.3,
+          "proj_vote_share": 0.8084
         },
         {
-          "rank": 4,
+          "rank": 2,
           "name": "Sal Stewart",
           "team_abbr": "CIN",
           "league": "NL",
@@ -2573,11 +4375,11 @@
           "p_ops": 0.7822,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0012,
-          "display_p": 0.0811,
+          "model_p": 0.1888,
+          "display_p": 0.1888,
           "low_confidence": false,
           "market_p": 0.84,
-          "edge": -0.8388,
+          "edge": -0.6512,
           "stars": "",
           "best_odds": -290,
           "best_book": "FanDuel",
@@ -2588,6 +4390,10 @@
             "FanDuel": -290,
             "RiversCasino": -3335
           },
+          "proj_share": -0.0131,
+          "proj_first": 5.6,
+          "pure_model_p": 0.0085,
+          "kalshi_p": 0.6885,
           "twoway": false,
           "cats": [
             {
@@ -2644,10 +4450,12 @@
               "proj_pct": 80,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 68.7,
+          "proj_vote_share": 0.4579
         },
         {
-          "rank": 5,
+          "rank": 3,
           "name": "JJ Wetherholt",
           "team_abbr": "STL",
           "league": "NL",
@@ -2656,12 +4464,12 @@
           "p_ops": 0.714,
           "p_fip": null,
           "p_ip": null,
-          "model_p": 0.0041,
-          "display_p": 0.0297,
+          "model_p": 0.0913,
+          "display_p": 0.0913,
           "low_confidence": false,
           "market_p": 0.0323,
-          "edge": -0.0281,
-          "stars": "",
+          "edge": 0.0591,
+          "stars": "\u2605\u2605\u2605",
           "best_odds": 5000,
           "best_book": "Caesars",
           "all_book_odds": {
@@ -2671,6 +4479,10 @@
             "FanDuel": 3000,
             "RiversCasino": 3000
           },
+          "proj_share": 0.1434,
+          "proj_first": 2.7,
+          "pure_model_p": 0.1168,
+          "kalshi_p": 0.0141,
           "twoway": false,
           "cats": [
             {
@@ -2727,9 +4539,415 @@
               "proj_pct": 46,
               "lower_better": false
             }
-          ]
+          ],
+          "proj_points": 39.6,
+          "proj_vote_share": 0.2643
+        },
+        {
+          "rank": 4,
+          "name": "Nolan McLean",
+          "team_abbr": "NYM",
+          "league": "NL",
+          "pos": null,
+          "p_war": 3.0,
+          "p_ops": null,
+          "p_fip": 3.649,
+          "p_ip": 317.496,
+          "model_p": 0.0871,
+          "display_p": 0.0871,
+          "low_confidence": false,
+          "market_p": 0.0323,
+          "edge": 0.0549,
+          "stars": "\u2605\u2605\u2605",
+          "best_odds": 6000,
+          "best_book": "DraftKings",
+          "all_book_odds": {
+            "DraftKings": 6000,
+            "Caesars": 1000,
+            "RiversCasino": 3000
+          },
+          "proj_share": 0.075,
+          "proj_first": 2.6,
+          "pure_model_p": 0.1153,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 3.4603,
+              "proj": 5.907,
+              "cur_pct": 87,
+              "proj_pct": 86,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 12,
+              "proj": 22.0,
+              "cur_pct": 83,
+              "proj_pct": 90,
+              "lower_better": false
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 194,
+              "proj": 339.25,
+              "cur_pct": 92,
+              "proj_pct": 89,
+              "lower_better": false
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 179.2,
+              "proj": 317.496,
+              "cur_pct": 91,
+              "proj_pct": 85,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 3.1558,
+              "proj": 3.3682,
+              "cur_pct": 79,
+              "proj_pct": 82,
+              "lower_better": true
+            }
+          ],
+          "proj_points": 37.6,
+          "proj_vote_share": 0.2509
+        },
+        {
+          "rank": 5,
+          "name": "Logan Henderson",
+          "team_abbr": "MIL",
+          "league": "NL",
+          "pos": null,
+          "p_war": 3.3,
+          "p_ops": null,
+          "p_fip": 3.6157,
+          "p_ip": 245.104,
+          "model_p": 0.0025,
+          "display_p": 0.0025,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0389,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0034,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 2.3894,
+              "proj": 5.158,
+              "cur_pct": 67,
+              "proj_pct": 81,
+              "lower_better": false
+            },
+            {
+              "key": "w",
+              "label": "W",
+              "cur": 11,
+              "proj": 21.75,
+              "cur_pct": 78,
+              "proj_pct": 89,
+              "lower_better": false
+            },
+            {
+              "key": "k",
+              "label": "K",
+              "cur": 110,
+              "proj": 273.0,
+              "cur_pct": 44,
+              "proj_pct": 75,
+              "lower_better": false
+            },
+            {
+              "key": "ip",
+              "label": "IP",
+              "cur": 98.1,
+              "proj": 245.104,
+              "cur_pct": 26,
+              "proj_pct": 57,
+              "lower_better": false
+            },
+            {
+              "key": "era",
+              "label": "ERA",
+              "cur": 2.4712,
+              "proj": 3.2915,
+              "cur_pct": 93,
+              "proj_pct": 85,
+              "lower_better": true
+            }
+          ],
+          "proj_points": 1.1,
+          "proj_vote_share": 0.0073
+        },
+        {
+          "rank": 6,
+          "name": "A.J. Ewing",
+          "team_abbr": "NYM",
+          "league": "NL",
+          "pos": null,
+          "p_war": 3.06,
+          "p_ops": 0.6861,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.002,
+          "display_p": 0.002,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0452,
+          "proj_first": 0.1,
+          "pure_model_p": 0.0026,
+          "kalshi_p": null,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 1.9612,
+              "proj": 3.037,
+              "cur_pct": 61,
+              "proj_pct": 55,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 55,
+              "proj": 106.5,
+              "cur_pct": 51,
+              "proj_pct": 57,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 43,
+              "proj": 85.5,
+              "cur_pct": 37,
+              "proj_pct": 44,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 110,
+              "proj": 203.5,
+              "cur_pct": 59,
+              "proj_pct": 58,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 11,
+              "proj": 19.0,
+              "cur_pct": 41,
+              "proj_pct": 40,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.6999,
+              "proj": 0.6861,
+              "cur_pct": 36,
+              "proj_pct": 28,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 0.9,
+          "proj_vote_share": 0.0062
+        },
+        {
+          "rank": 7,
+          "name": "Bryce Eldridge",
+          "team_abbr": "SF",
+          "league": "NL",
+          "pos": null,
+          "p_war": 2.12,
+          "p_ops": 0.8248,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0009,
+          "display_p": 0.0009,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.0906,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0004,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 1.8068,
+              "proj": 1.808,
+              "cur_pct": 58,
+              "proj_pct": 38,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 50,
+              "proj": 50,
+              "cur_pct": 44,
+              "proj_pct": 8,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 57,
+              "proj": 57,
+              "cur_pct": 59,
+              "proj_pct": 21,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 104,
+              "proj": 104,
+              "cur_pct": 53,
+              "proj_pct": 14,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 17,
+              "proj": 17,
+              "cur_pct": 63,
+              "proj_pct": 32,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.825,
+              "proj": 0.8248,
+              "cur_pct": 86,
+              "proj_pct": 92,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 0.4,
+          "proj_vote_share": 0.0027
+        },
+        {
+          "rank": 8,
+          "name": "Joe Mack",
+          "team_abbr": "MIA",
+          "league": "NL",
+          "pos": null,
+          "p_war": 1.57,
+          "p_ops": 0.6809,
+          "p_fip": null,
+          "p_ip": null,
+          "model_p": 0.0006,
+          "display_p": 0.0006,
+          "low_confidence": false,
+          "market_p": null,
+          "edge": null,
+          "stars": "",
+          "best_odds": null,
+          "best_book": null,
+          "all_book_odds": null,
+          "proj_share": -0.1648,
+          "proj_first": 0.0,
+          "pure_model_p": 0.0,
+          "kalshi_p": 0.0023,
+          "twoway": false,
+          "cats": [
+            {
+              "key": "war",
+              "label": "WAR",
+              "cur": 2.2067,
+              "proj": 3.79,
+              "cur_pct": 64,
+              "proj_pct": 66,
+              "lower_better": false
+            },
+            {
+              "key": "r",
+              "label": "R",
+              "cur": 40,
+              "proj": 79.5,
+              "cur_pct": 31,
+              "proj_pct": 37,
+              "lower_better": false
+            },
+            {
+              "key": "rbi",
+              "label": "RBI",
+              "cur": 52,
+              "proj": 95.5,
+              "cur_pct": 52,
+              "proj_pct": 53,
+              "lower_better": false
+            },
+            {
+              "key": "h",
+              "label": "H",
+              "cur": 71,
+              "proj": 144.75,
+              "cur_pct": 26,
+              "proj_pct": 34,
+              "lower_better": false
+            },
+            {
+              "key": "hr",
+              "label": "HR",
+              "cur": 14,
+              "proj": 25.5,
+              "cur_pct": 54,
+              "proj_pct": 57,
+              "lower_better": false
+            },
+            {
+              "key": "ops",
+              "label": "OPS",
+              "cur": 0.6848,
+              "proj": 0.6809,
+              "cur_pct": 29,
+              "proj_pct": 25,
+              "lower_better": false
+            }
+          ],
+          "proj_points": 0.3,
+          "proj_vote_share": 0.0023
         }
-      ]
+      ],
+      "final_vote_projection": true
     }
-  }
+  },
+  "frozen_eos": true,
+  "regular_season_end": "2026-09-27"
 }
