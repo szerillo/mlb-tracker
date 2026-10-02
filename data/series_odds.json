@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-02T03:07:39+00:00",
+ "generated_at": "2026-10-02T04:44:35+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -9,31 +9,8 @@
   "ws_exacta": true,
   "games_ou": true
  },
- "round": "WC",
+ "round": "LDS",
  "series": [
-  {
-   "league": "NL",
-   "a": "ATL",
-   "b": "PHI",
-   "ml_a": -110,
-   "ml_b": -102,
-   "book": "best",
-   "book_a": "FanDuel G3 ML",
-   "book_b": "Caesars G3 ML",
-   "books": {
-    "a": {
-     "FanDuel G3 ML": -110
-    },
-    "b": {
-     "Caesars G3 ML": -102
-    }
-   },
-   "exact": {
-    "b-2-1": 9252
-   },
-   "spread": null,
-   "games": null
-  },
   {
    "league": "AL",
    "a": "CLE",
@@ -45,19 +22,19 @@
    "book_b": "FanDuel",
    "books": {
     "a": {
+     "BetMGM": -150,
      "FanDuel": -152,
      "DraftKings": -140,
      "Caesars": -145,
-     "BetMGM": -150,
      "Pinnacle": -146,
      "Bovada": -147,
      "Kalshi": -142
     },
     "b": {
+     "BetMGM": 125,
      "FanDuel": 128,
      "DraftKings": 120,
      "Caesars": 120,
-     "BetMGM": 125,
      "Pinnacle": 125,
      "Bovada": 123,
      "Kalshi": 124
@@ -126,27 +103,27 @@
    "a": "TB",
    "b": "NYY",
    "ml_a": 109,
-   "ml_b": -112,
+   "ml_b": -115,
    "book": "best",
    "book_a": "Kalshi",
-   "book_b": "Bovada",
+   "book_b": "Caesars",
    "books": {
     "a": {
+     "BetMGM": 105,
      "FanDuel": -100,
      "DraftKings": 100,
      "Caesars": -105,
-     "BetMGM": 105,
      "Pinnacle": -102,
-     "Bovada": -108,
+     "Bovada": -105,
      "Kalshi": 109
     },
     "b": {
+     "BetMGM": -125,
      "FanDuel": -120,
      "DraftKings": -120,
      "Caesars": -115,
-     "BetMGM": -125,
      "Pinnacle": -115,
-     "Bovada": -112,
+     "Bovada": -115,
      "Kalshi": -126
     }
    },
@@ -166,7 +143,7 @@
     "b_plus_1_5": -245,
     "b_minus_2_5": 600,
     "a_plus_2_5": -800,
-    "a_plus_1_5": -175
+    "a_plus_1_5": -235
    },
    "games": {
     "ladder": {
@@ -205,22 +182,39 @@
     "b_plus_1_5": "DraftKings",
     "b_minus_2_5": "DraftKings",
     "a_plus_2_5": "DraftKings",
-    "a_plus_1_5": "Kalshi"
+    "a_plus_1_5": "DraftKings"
    }
   },
   {
    "league": "NL",
    "a": "LAD",
    "b": "ATL",
-   "ml_a": null,
-   "ml_b": null,
-   "book": null,
-   "book_a": null,
-   "book_b": null,
-   "books": null,
+   "ml_a": -210,
+   "ml_b": 190,
+   "book": "best",
+   "book_a": "DraftKings",
+   "book_b": "FanDuel",
+   "books": {
+    "a": {
+     "FanDuel": -235,
+     "DraftKings": -210,
+     "Caesars": -220,
+     "Bovada": -210,
+     "Kalshi": -228
+    },
+    "b": {
+     "FanDuel": 190,
+     "DraftKings": 175,
+     "Caesars": 180,
+     "Bovada": 170,
+     "Kalshi": 152
+    }
+   },
    "exact": null,
    "spread": null,
-   "games": null
+   "games": null,
+   "exact_book": {},
+   "spread_book": {}
   },
   {
    "league": "NL",
@@ -253,9 +247,9 @@
     "b-3-2": 550,
     "b-3-1": 450,
     "b-3-0": 1100,
-    "a-3-2": 280,
+    "a-3-2": 313,
     "a-3-1": 330,
-    "a-3-0": 450
+    "a-3-0": 456
    },
    "spread": {
     "a_minus_1_5": 150,
@@ -292,9 +286,9 @@
     "b-3-2": "DraftKings",
     "b-3-1": "Bovada",
     "b-3-0": "Bovada",
-    "a-3-2": "Bovada",
+    "a-3-2": "Kalshi",
     "a-3-1": "DraftKings",
-    "a-3-0": "Bovada"
+    "a-3-0": "Kalshi"
    },
    "spread_book": {
     "a_minus_1_5": "DraftKings",
@@ -313,102 +307,82 @@
    {
     "al": "NYY",
     "nl": "LAD",
-    "market": 466
+    "market": 462
    },
    {
     "al": "CLE",
     "nl": "LAD",
-    "market": 1060
+    "market": 980
    },
    {
     "al": "TB",
     "nl": "LAD",
-    "market": 692
+    "market": 679
    },
    {
     "al": "NYY",
     "nl": "MIL",
-    "market": 850
+    "market": 860
    },
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 3129
+    "market": 1438
    },
    {
     "al": "TB",
     "nl": "MIL",
-    "market": 1136
+    "market": 1152
    },
    {
     "al": "CWS",
     "nl": "LAD",
-    "market": 1301
+    "market": 1281
+   },
+   {
+    "al": "NYY",
+    "nl": "ATL",
+    "market": 1669
    },
    {
     "al": "CWS",
     "nl": "MIL",
-    "market": 1775
+    "market": 1983
    },
    {
     "al": "NYY",
     "nl": "SD",
-    "market": 1605
-   },
-   {
-    "al": "CLE",
-    "nl": "SD",
-    "market": 2432
-   },
-   {
-    "al": "TB",
-    "nl": "SD",
-    "market": 1775
-   },
-   {
-    "al": "NYY",
-    "nl": "PHI",
-    "market": 93364
-   },
-   {
-    "al": "NYY",
-    "nl": "ATL",
-    "market": 1517
-   },
-   {
-    "al": "CLE",
-    "nl": "PHI",
-    "market": 18598
-   },
-   {
-    "al": "TB",
-    "nl": "PHI",
-    "market": 15482
+    "market": 1464
    },
    {
     "al": "CLE",
     "nl": "ATL",
-    "market": 4579
+    "market": 2366
    },
    {
     "al": "TB",
     "nl": "ATL",
-    "market": 1366
+    "market": 2186
    },
    {
-    "al": "CWS",
+    "al": "CLE",
     "nl": "SD",
-    "market": 3368
+    "market": 2302
    },
    {
-    "al": "CWS",
-    "nl": "PHI",
-    "market": 31059
+    "al": "TB",
+    "nl": "SD",
+    "market": 1983
    },
    {
     "al": "CWS",
     "nl": "ATL",
-    "market": 4825
+    "market": 3800
+   },
+   {
+    "al": "CWS",
+    "nl": "SD",
+    "market": 3244
    }
   ]
  }
