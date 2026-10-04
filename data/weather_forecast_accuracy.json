@@ -1,35 +1,35 @@
 {
-  "generated_at": "2026-10-03T21:55:20Z",
+  "generated_at": "2026-10-04T00:13:10Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-10-02"
+    "2026-10-03"
   ],
   "forecast_input_accuracy": {
-    "n_games": 735,
+    "n_games": 737,
     "our_temp_MAE_f": 2.24,
     "our_wind_MAE_mph": 2.43,
-    "our_winddir_MAE_deg": 32.89,
+    "our_winddir_MAE_deg": 32.96,
     "temp_head_to_head": {
-      "n": 537,
+      "n": 538,
       "our_temp_MAE_f": 2.09,
       "bp_temp_MAE_f": 3.5
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 733,
-    "calibrated_slope_runs_per_pct": 0.0893,
+    "n_played": 735,
+    "calibrated_slope_runs_per_pct": 0.0892,
     "ours": {
-      "slope": 0.1362,
-      "r": 0.151,
-      "n": 733,
-      "realized_x": 1.53
+      "slope": 0.1386,
+      "r": 0.154,
+      "n": 735,
+      "realized_x": 1.55
     },
     "bp": {
-      "slope": 0.0958,
-      "r": 0.143,
-      "n": 609,
-      "realized_x": 1.07
+      "slope": 0.0982,
+      "r": 0.147,
+      "n": 610,
+      "realized_x": 1.1
     }
   },
   "games": [
@@ -14732,6 +14732,46 @@
       "total": 8,
       "our_adj": 1.2,
       "bp_adj": null
+    },
+    {
+      "date": "2026-10-03",
+      "pk": 849828,
+      "venue": "UNIQLO Field at Dodger Stadium",
+      "obs_temp": 100.2,
+      "obs_wind": 7.3,
+      "obs_dir": 232.0,
+      "obs_src": "obs",
+      "our_temp": 101.0,
+      "our_wind": 4.0,
+      "our_dir": 157.5,
+      "bp_temp": null,
+      "our_temp_err": 0.7999999999999972,
+      "bp_temp_err": null,
+      "our_wind_err": 3.3,
+      "our_dir_err": 74.5,
+      "total": 8,
+      "our_adj": 4.1,
+      "bp_adj": null
+    },
+    {
+      "date": "2026-10-03",
+      "pk": 849829,
+      "venue": "Progressive Field",
+      "obs_temp": 63.0,
+      "obs_wind": 9.1,
+      "obs_dir": 88.0,
+      "obs_src": "obs",
+      "our_temp": 64.0,
+      "our_wind": 6.0,
+      "our_dir": 45,
+      "bp_temp": 64.0,
+      "our_temp_err": 1.0,
+      "bp_temp_err": 1.0,
+      "our_wind_err": 3.0999999999999996,
+      "our_dir_err": 43.0,
+      "total": 3,
+      "our_adj": -5.8,
+      "bp_adj": -14.0
     }
   ]
 }
