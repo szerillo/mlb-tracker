@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T21:53:28.613445Z",
+  "generated_at": "2026-10-04T00:05:22.069777Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20261003&periods=event",
   "date": "2026-10-03",
@@ -80,7 +80,7 @@
       "an_event_id": 303187,
       "matchup": "Atlanta Braves @ Los Angeles Dodgers",
       "start_time": "2026-10-03T20:00:00.000Z",
-      "status": "Bot 6th",
+      "status": "Final",
       "moneyline": {
         "away": {
           "odds": 190,
@@ -150,7 +150,7 @@
       "an_event_id": 303106,
       "matchup": "New York Yankees @ Tampa Bay Rays",
       "start_time": "2026-10-03T22:30:00.000Z",
-      "status": "scheduled",
+      "status": "Bot 5th",
       "moneyline": {
         "away": {
           "odds": 123,
@@ -212,7 +212,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 849830,
@@ -224,36 +225,36 @@
         "away": {
           "odds": 180,
           "line": 0,
-          "book": "BetRivers"
+          "book": "FanDuel"
         },
         "home": {
           "odds": -200,
           "line": 0,
-          "book": "Caesars"
+          "book": "FanDuel"
         }
       },
       "run_line": {
         "away": {
-          "odds": -124,
+          "odds": -121,
           "line": 1.5,
-          "book": "BetRivers"
+          "book": "Caesars"
         },
         "home": {
-          "odds": 106,
+          "odds": 116,
           "line": -1.5,
-          "book": "Caesars"
+          "book": "BetRivers"
         }
       },
       "total": {
         "over": {
-          "odds": -102,
+          "odds": 100,
           "line": 7,
-          "book": "DraftKings"
+          "book": "bet365"
         },
         "under": {
-          "odds": -108,
+          "odds": -118,
           "line": 7,
-          "book": "BetRivers"
+          "book": "DraftKings"
         }
       },
       "team_total": {
@@ -265,15 +266,15 @@
           },
           "under": {
             "odds": -105,
-            "book": "BetRivers"
+            "book": "BetMGM"
           },
           "source": "posted"
         },
         "home": {
           "line": 3.5,
           "over": {
-            "odds": -140,
-            "book": "DraftKings"
+            "odds": -127,
+            "book": "BetRivers"
           },
           "under": {
             "odds": 110,
@@ -310,18 +311,57 @@
       "start_time": "2026-10-05T00:00:00.000Z",
       "status": "scheduled",
       "moneyline": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": 130,
+          "line": 0,
+          "book": "FanDuel"
+        },
+        "home": {
+          "odds": -146,
+          "line": 0,
+          "book": "DraftKings"
+        }
       },
       "run_line": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": -175,
+          "line": 1.5,
+          "book": "BetRivers"
+        },
+        "home": {
+          "odds": 155,
+          "line": -1.5,
+          "book": "BetMGM"
+        }
       },
       "total": {
-        "over": null,
-        "under": null
+        "over": {
+          "odds": -110,
+          "line": 7,
+          "book": "Fanatics"
+        },
+        "under": {
+          "odds": -102,
+          "line": 7,
+          "book": "BetMGM"
+        }
       },
-      "team_total": null
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "implied": 3.24,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        },
+        "home": {
+          "line": 3.5,
+          "implied": 3.76,
+          "over": null,
+          "under": null,
+          "source": "implied"
+        }
+      }
     }
   ]
 }
