@@ -256,9 +256,14 @@ def _pinnacle_series():
         print(f"[series_odds] Pinnacle fetch failed: {e}", file=sys.stderr); return out
     sp = {m["id"]: {p["id"]: FULLNAME.get(p.get("name")) for p in m.get("participants", [])}
           for m in ms if m.get("type") == "special" and (m.get("special") or {}).get("category") == "Series Prices"}
+    now = datetime.datetime.now(datetime.timezone.utc)
+    def _past(ts):
+        try: return bool(ts) and datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00")) <= now
+        except Exception: return False
     for x in mk:
         parts = sp.get(x.get("matchupId"))
         if not parts or x.get("type") != "moneyline" or x.get("isAlternate"): continue
+        if _past(x.get("cutoffAt")): continue   # frozen at G1 first pitch: stale once the series starts
         pr = {parts.get(p["participantId"]): p["price"] for p in x.get("prices", []) if parts.get(p["participantId"])}
         if len(pr) == 2: out[frozenset(pr)] = pr
     return out
@@ -339,6 +344,79 @@ def _bovada_series():
     if out: print(f"[series_odds] Bovada series markets: {len(out)} series")
     return out
 
+def _imp(o):
+    try: o = float(o)
+    except Exception: return None
+    return 100.0 / (o + 100.0) if o > 0 else -o / (-o + 100.0)
+
+def _drop_ml_outliers(books, key, tol=0.06):
+    """Drop any source whose two-way no-vig price for side a sits more than `tol` from the median of the
+    other sources (needs 3+ others). Catches stale boards (e.g. pre-series Pinnacle specials, a book that
+    has not moved after a game final)."""
+    nv = {}
+    for n in set(books["a"]) & set(books["b"]):
+        pa, pb = _imp(books["a"][n]), _imp(books["b"][n])
+        if pa and pb: nv[n] = pa / (pa + pb)
+    drop = []
+    for n, p in nv.items():
+        others = sorted(v for m, v in nv.items() if m != n)
+        if len(others) < 3: continue
+        med = others[len(others) // 2] if len(others) % 2 else (others[len(others)//2 - 1] + others[len(others)//2]) / 2
+        if abs(p - med) > tol: drop.append(n)
+    for n in drop:
+        print(f"[series_odds] ML outlier dropped {key[1]}-{key[2]} {n}: no-vig {nv[n]:.3f}", file=sys.stderr)
+        books["a"].pop(n, None); books["b"].pop(n, None)
+    # one-sided entries (no partner price) can't be checked; drop them if they disagree with the median by > tol
+    for side in ("a", "b"):
+        if not nv: break
+        meds = sorted(nv[n] if side == "a" else 1 - nv[n] for n in nv if n not in drop)
+        if len(meds) < 3: continue
+        med = meds[len(meds) // 2]
+        for n in [n for n in books[side] if n not in nv]:
+            p = _imp(books[side][n])
+            if p is not None and p - med < -tol - 0.03: books[side].pop(n, None)
+    return books
+
+def _manual_ml(series):
+    out = {}
+    try: d = json.load(open(MANUAL))
+    except Exception: return out
+    for book, ser in (d.get("books") or {}).items():
+        for e in ser.values():
+            if not e.get("ml"): continue
+            s_ = next((x for x in series if {x["a"], x["b"]} == {e["a"], e["b"]}), None)
+            if not s_: continue
+            w = s_.get("wins") or {"a": 0, "b": 0}
+            flip = s_["a"] != e["a"]
+            wa, wb = (w.get("b", 0), w.get("a", 0)) if flip else (w.get("a", 0), w.get("b", 0))
+            if (wa, wb) != (e["wins_at_paste"]["a"], e["wins_at_paste"]["b"]): continue
+            o = out.setdefault((s_["league"], s_["a"], s_["b"]), {"a": {}, "b": {}})
+            ma, mb = e["ml"].get("a"), e["ml"].get("b")
+            if flip: ma, mb = mb, ma
+            if ma is not None: o["a"][book] = ma
+            if mb is not None: o["b"][book] = mb
+    return out
+
+def _prop_sanity(extra):
+    """Same-book complementary series props must not both be plus money (a +2.5 and the other side -2.5
+    priced as an arbitrage = a mislabeled line, e.g. Bovada 'SD +2.5 +330'). Drop the pair."""
+    comp = {}
+    for side, other in (("a", "b"), ("b", "a")):
+        for k in ("1_5", "2_5"):
+            comp[f"{side}_plus_{k}"] = f"{other}_minus_{k}"
+    bad = set()
+    by_book = {}
+    for k, lst in extra.items():
+        for o, b in lst: by_book.setdefault(b, {})[k] = o
+    for b, ks in by_book.items():
+        for k1, k2 in comp.items():
+            if k1 in ks and k2 in ks:
+                p1, p2 = _imp(ks[k1]), _imp(ks[k2])
+                if p1 is not None and p2 is not None and p1 + p2 < 0.97:
+                    bad.add((k1, b)); bad.add((k2, b))
+    return {k: [(o, b) for o, b in lst if (k, b) not in bad] for k, lst in extra.items()}
+
+
 def fetch_series_ml(series):
     """Series moneyline from Kalshi KXMLBSERIES. Each series posts TWO binaries (one per team).
     Price shown for each side = the cheapest way to actually back it, fee included:
@@ -399,11 +477,19 @@ def fetch_series_ml(series):
                     bk.pop(key, None)
     except Exception as e:
         print(f"[series_odds] decider ML swap skipped: {e}", file=sys.stderr)
+    try:   # pasted DK / Caesars series ML (data/series_odds_manual.json), only while the score is unchanged
+        for key, v in _manual_ml(series).items():
+            e = bk.setdefault(key, {"a": {}, "b": {}})
+            for side in ("a", "b"):
+                for book, o in v[side].items(): e[side].setdefault(book, o)
+    except Exception as e:
+        print(f"[series_odds] manual ML merge skipped: {e}", file=sys.stderr)
     for key, v in bk.items():
         cur = out.setdefault(key, {"ml_a": None, "ml_b": None, "book": None})
         books = {"a": dict(v["a"]), "b": dict(v["b"])}
         if cur.get("ml_a") is not None: books["a"]["Kalshi"] = cur["ml_a"]
         if cur.get("ml_b") is not None: books["b"]["Kalshi"] = cur["ml_b"]
+        books = _drop_ml_outliers(books, key)
         for side in ("a", "b"):
             o, name = _best([(o, n) for n, o in books[side].items()])
             cur[f"ml_{side}"] = o; cur[f"book_{side}"] = name
@@ -555,7 +641,7 @@ def main():
         if mm:
             row = series_out[-1]
             row["exact"], row["exact_book"] = _merge(row["exact"], mm["exact"])
-            row["spread"], row["spread_book"] = _merge(row["spread"], mm["spread"])
+            row["spread"], row["spread_book"] = _merge(row["spread"], _prop_sanity(mm["spread"]))
             g = row["games"] or {"ladder": {}}
             lad = {ln: dict(v) for ln, v in (g.get("ladder") or {}).items()}
             gbook = {}
