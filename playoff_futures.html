@@ -336,7 +336,6 @@ const LEAGUE={NYY:'AL',BOS:'AL',TOR:'AL',TB:'AL',BAL:'AL',CLE:'AL',MIN:'AL',DET:
  HOU:'AL',SEA:'AL',TEX:'AL',LAA:'AL',ATH:'AL',ATL:'NL',NYM:'NL',PHI:'NL',WSH:'NL',MIA:'NL',MIL:'NL',
  CHC:'NL',CIN:'NL',STL:'NL',PIT:'NL',LAD:'NL',SD:'NL',SF:'NL',ARI:'NL',COL:'NL'};
 const COLS=[
- {k:'reach_ds_pct',lab:'WC'},
  {k:'reach_cs_pct',lab:'LDS'},
  {k:'ws_app_pct',  lab:'Pennant'},
  {k:'ws_pct',      lab:'WS', ws:true},
@@ -645,6 +644,22 @@ function applyTodayWP(series,lane2,TW){
       for(const [t,r] of [[s.a,pA/old],[s.b,(1-pA)/(1-old)]]) (_NEXTKEYS[s.round]||[]).forEach(k=>{ const kk=k==='pen'?pk:k; if(lane2[kk]&&lane2[kk][t]!=null) lane2[kk][t]=+(lane2[kk][t]*r).toFixed(4); }); }
   }
 }
+// The Game Sim table's current-round column must equal the series card's projection. If the
+// bracket walk and the series feed were written on different runs, rescale that team's current and
+// later rounds to the series number (later rounds scale with the series win %).
+function syncSeriesToLane2(series,lane2){
+  if(!series||!series.series||!lane2) return;
+  for(const s of series.series){
+    const ks=_NEXTKEYS[s.round]||[]; if(!ks.length) continue;
+    const pk=s.league==='AL'?'al_pennant':'nl_pennant';
+    for(const [t,p] of [[s.a,s.model.p_a],[s.b,s.model.p_b]]){
+      const k0=ks[0]==='pen'?pk:ks[0]; const old=(lane2[k0]||{})[t];
+      if(old==null||p==null||Math.abs(old-p)<1e-4||old<=0) continue;
+      const r=p/old;
+      ks.forEach(k=>{ const kk=k==='pen'?pk:k; if(lane2[kk]&&lane2[kk][t]!=null) lane2[kk][t]=+Math.min(1,lane2[kk][t]*r).toFixed(4); });
+    }
+  }
+}
 async function load(){
   try{
     const [sean,tf,v2,lane2,bdist,series,sodds]=await Promise.all([
@@ -657,6 +672,7 @@ async function load(){
       fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     try{ applyTodayWP(series,lane2,await loadTodayWP()); }catch(e){}
+    try{ syncSeriesToLane2(series,lane2); }catch(e){}
     window.__series=series; window.__sodds=sodds; window.__lane2=lane2;
     await loadPOGames();
     const blend={},mkt={};
@@ -871,7 +887,7 @@ function renderBracketSection(){
   const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
   const mo=[]; if(window.__hasLane2)mo.push({v:'gamesim',lab:'Game Sim'}); mo.push({v:'mine',lab:'Playoff Fit'}); mo.push({v:'blend',lab:'Composite'});
   if(brkModel==='gamesim'&&!window.__hasLane2)brkModel='mine';
-  const ro=[{v:'ds',lab:'WC'},{v:'cs',lab:'LDS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
+  const ro=[{v:'cs',lab:'LDS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
   seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Win</span>`+grp('bround',ro,curRound);
   seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.closest('.seg').dataset.grp,v=b.dataset.v; if(g==='bmodel')brkModel=v; else curRound=v; render();});
   document.getElementById('brkNote').innerHTML=`Each team's chance to <b>win the ${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${brkModel}',event)">Methodology</a>`;
@@ -941,7 +957,7 @@ function renderBracket(){
     c.onmouseenter=e=>{ const ab=c.dataset.ab, d=(brkData()||{})[ab]||{};
       tip=document.createElement('div'); tip.className='brktip';
       const rr=(lab,k)=>{const v=num(d[k]); return `<div class="r"><span>${lab}</span><b>${v==null?'-':Math.round(v)+'%'}</b></div>`;};
-      tip.innerHTML=`<h5>${ab} path</h5>`+rr('Win WC','reach_ds_pct')+rr('Win LDS','reach_cs_pct')+rr('Win Pennant','ws_app_pct')+rr('Win WS','ws_pct');
+      tip.innerHTML=`<h5>${ab} path</h5>`+rr('Win LDS','reach_cs_pct')+rr('Win Pennant','ws_app_pct')+rr('Win WS','ws_pct');
       document.body.appendChild(tip); moveTip(e); };
     c.onmousemove=moveTip;
     c.onmouseleave=()=>{ if(tip){tip.remove();tip=null;} };
