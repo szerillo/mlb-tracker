@@ -10497,11 +10497,18 @@ function _pfCard(cand, rankTxt, isVal){
     +   '<span class="pfx-rk">'+rankTxt+'</span>'
     +   '<span class="pfx-logo">'+logo+'</span>'
     +   '<span class="pfx-name">'+cand.name+tw+'</span>'
-    +   '<div class="pfx-mets">'
+    +   (cand.proj_points!=null
+        // Final (frozen end-of-season) board: projected BBWAA ballot, no market comparison
+        ? '<div class="pfx-mets">'
+          + '<div class="pfx-met"><span class="pfx-k">1st-pl votes</span><span class="pfx-p">'+(cand.proj_first>=0.95?Math.round(cand.proj_first):(cand.proj_first>0?'<1':'0'))+'</span><span class="pfx-o">of 30</span></div>'
+          + '<div class="pfx-met mk"><span class="pfx-k">Points</span><span class="pfx-p">'+Math.round(cand.proj_points)+'</span><span class="pfx-o">'+(cand.war_final!=null?'':(cand.p_war!=null?cand.p_war.toFixed(1)+' WAR':''))+'</span></div>'
+          + '<div class="pfx-met"><span class="pfx-k">Vote share</span><span class="pfx-p">'+Math.round(cand.proj_vote_share*1000)/10+'%</span><span class="pfx-o">win '+_pfPc(mp)+'</span></div>'
+          + '</div>'
+        : '<div class="pfx-mets">'
     +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(dp)+'</span><span class="pfx-o">'+_pfP2Odds(dp)+'</span></div>'
     +     '<div class="pfx-met mk"><span class="pfx-k">Market</span><span class="pfx-p">'+_pfPc(mktP)+'</span><span class="pfx-o">'+_pfOddsStr(mktOdds)+'</span></div>'
     +     '<div class="pfx-met edge"><span class="pfx-k">Edge</span><span class="pfx-edge '+eCls+'">'+eTxt+'</span></div>'
-    +   '</div>'
+    +   '</div>')
     +   chev
     + '</div>';
   if(hasCats){
@@ -10517,11 +10524,12 @@ function _pfRenderCards(){
     const host = document.querySelector('.pfx-cards[data-mkt="'+mkt+'"]');
     if(!host) continue;
     const cands = payload.candidates||[];
-    const inMain = c => c.model_p>=0.01 || (c.rank!=null && c.rank<=5);
+    const FINAL = !!payload.final_vote_projection;
+    const inMain = FINAL ? (c => c.rank!=null && c.rank<=10) : (c => c.model_p>=0.01 || (c.rank!=null && c.rank<=5));
     const cont = cands.filter(inMain);
     const val  = cands.filter(c=>!inMain(c));
     let h = cont.map((c,i)=>_pfCard(c, '#'+(c.rank!=null?c.rank:(i+1)), false)).join('');
-    if(val.length){
+    if(val.length && !FINAL){
       h += '<div class="pfx-vsec">Value · under 1% but +edge</div>';
       h += val.map(c=>_pfCard(c, '#'+(c.rank!=null?c.rank:'?'), true)).join('');
     }
@@ -10536,7 +10544,8 @@ function _pfRenderCards(){
       const poolTxt = mkt.endsWith('_CY') ? 'qualified starters (IP≥120)'
                     : mkt.endsWith('_MVP') ? 'qualified hitters (PA≥400)'
                     : 'qualified regulars';
-      sub.textContent = (PF_PHASE==='cur'?'Current (YTD)':'Projected (EOS)')+' · percentiles vs '+poolTxt;
+      sub.textContent = FINAL ? 'Final projected vote · 30 BBWAA ballots · frozen on end-of-season stats'
+                              : (PF_PHASE==='cur'?'Current (YTD)':'Projected (EOS)')+' · percentiles vs '+poolTxt;
     }
   }
 }
@@ -10559,7 +10568,10 @@ async function renderPlayerFuturesTab(){
     const resp = await fetch('data/player_futures.json',{cache:'no-store'});
     if(!resp.ok){ if(upd) upd.textContent='Player futures data not generated yet — the workflow will populate it on the next cron pull.'; return; }
     PF_DATA = await resp.json();
-    if(upd && PF_DATA.generated_at){ const dt=new Date(PF_DATA.generated_at); upd.textContent='Model · updated '+dt.toLocaleString(); }
+    if(upd && PF_DATA.generated_at){ const dt=new Date(PF_DATA.generated_at);
+      upd.textContent = PF_DATA.frozen_eos ? ('Final award projections · frozen on end-of-season stats ('+(PF_DATA.regular_season_end||'')+')') : ('Model · updated '+dt.toLocaleString()); }
+    if(PF_DATA.frozen_eos){ const _n=document.querySelector('#tab-player-futures .pf-filter-note'); if(_n) _n.textContent='Top 10 by projected ballot points · 1st-place votes of 30 · no market comparison';
+      const _ph=document.getElementById('pfx-phase'); if(_ph) _ph.style.display='none'; }
     _pfRenderCards();
     _pfWireControls();
     try{
