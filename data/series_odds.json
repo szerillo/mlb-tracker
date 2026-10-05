@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-05T00:33:56+00:00",
+ "generated_at": "2026-10-05T01:06:51+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -43,7 +43,7 @@
    "exact": {
     "b-3-2": 475,
     "b-3-1": 260,
-    "b-3-0": 331,
+    "b-3-0": 351,
     "a-3-2": 300,
     "a-3-1": 600
    },
@@ -121,8 +121,8 @@
    },
    "exact": {
     "a-3-2": 400,
-    "a-3-1": 296,
-    "a-3-0": 398,
+    "a-3-1": 313,
+    "a-3-0": 360,
     "b-3-2": 360,
     "b-3-1": 450
    },
@@ -158,7 +158,7 @@
    "exact_book": {
     "a-3-2": "Caesars",
     "a-3-1": "Kalshi",
-    "a-3-0": "Kalshi",
+    "a-3-0": "DraftKings",
     "b-3-2": "DraftKings",
     "b-3-1": "DraftKings"
    },
@@ -182,29 +182,31 @@
    "book_b": "BetMGM",
    "books": {
     "a": {
-     "Caesars": -400,
+     "Caesars": -450,
      "FanDuel": -400,
-     "DraftKings": -350,
      "BetMGM": -500,
+     "DraftKings": -350,
+     "Bovada": -415,
      "Kalshi": -458
     },
     "b": {
-     "Caesars": 300,
-     "FanDuel": 300,
-     "DraftKings": 320,
+     "Caesars": 330,
+     "FanDuel": 315,
      "BetMGM": 375,
-     "Kalshi": 373
+     "DraftKings": 320,
+     "Bovada": 310,
+     "Kalshi": 351
     }
    },
    "exact": {
     "a-3-2": 425,
     "a-3-1": 235,
-    "a-3-0": 230,
     "b-3-2": 575,
-    "b-3-1": 950
+    "b-3-1": 950,
+    "a-3-0": 230
    },
    "spread": {
-    "a_minus_1_5": -140,
+    "a_minus_1_5": 146,
     "b_minus_1_5": 700,
     "a_plus_1_5": -1200,
     "b_plus_1_5": 125,
@@ -219,7 +221,7 @@
      },
      "4.5": {
       "over": 175,
-      "under": -210
+      "under": -170
      }
     },
     "line": 3.5,
@@ -229,18 +231,18 @@
      "3.5 over": "DraftKings",
      "3.5 under": "DraftKings",
      "4.5 over": "DraftKings",
-     "4.5 under": "DraftKings"
+     "4.5 under": "Bovada"
     }
    },
    "exact_book": {
     "a-3-2": "Caesars",
     "a-3-1": "DraftKings",
-    "a-3-0": "DraftKings",
     "b-3-2": "Caesars",
-    "b-3-1": "Caesars"
+    "b-3-1": "Caesars",
+    "a-3-0": "DraftKings"
    },
    "spread_book": {
-    "a_minus_1_5": "DraftKings",
+    "a_minus_1_5": "Kalshi",
     "b_minus_1_5": "DraftKings",
     "a_plus_1_5": "DraftKings",
     "b_plus_1_5": "Caesars",
@@ -253,10 +255,10 @@
    "a": "MIL",
    "b": "SD",
    "ml_a": -788,
-   "ml_b": 841,
-   "book": "Kalshi",
+   "ml_b": 810,
+   "book": "best",
    "book_a": "Kalshi",
-   "book_b": "Kalshi",
+   "book_b": "FanDuel",
    "books": {
     "a": {
      "Caesars": -1100,
@@ -268,18 +270,20 @@
      "Caesars": 700,
      "FanDuel": 810,
      "BetMGM": 750,
-     "Kalshi": 841
+     "Kalshi": 625
     }
    },
    "exact": {
-    "b-3-2": 574,
-    "a-3-2": 425,
+    "b-3-2": 625,
+    "a-3-2": 456,
     "a-3-1": 252,
     "a-3-0": 101
    },
    "spread": {
-    "a_minus_1_5": -306,
-    "b_plus_1_5": 114
+    "a_minus_1_5": -322,
+    "a_minus_2_5": -116,
+    "b_plus_2_5": -137,
+    "b_plus_1_5": 189
    },
    "games": null
   }
@@ -299,22 +303,22 @@
    {
     "al": "CWS",
     "nl": "LAD",
-    "market": 756
+    "market": 814
    },
    {
     "al": "NYY",
     "nl": "LAD",
-    "market": 614
+    "market": 679
    },
    {
     "al": "CWS",
     "nl": "MIL",
-    "market": 1089
+    "market": 956
    },
    {
     "al": "NYY",
     "nl": "MIL",
-    "market": 719
+    "market": 805
    },
    {
     "al": "CLE",
@@ -324,34 +328,34 @@
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 1546
+    "market": 1575
    },
    {
     "al": "TB",
     "nl": "ATL",
-    "market": 2738
+    "market": 2186
    },
    {
     "al": "CWS",
     "nl": "ATL",
-    "market": 4579
+    "market": 3129
    },
    {
     "al": "NYY",
     "nl": "ATL",
-    "market": 4579
+    "market": 3021
    },
    {
     "al": "CLE",
     "nl": "ATL",
-    "market": 7694
-   },
-   {
-    "al": "TB",
-    "nl": "SD",
     "market": 5404
    },
    {
+    "al": "TB",
+    "nl": "SD",
+    "market": 5098
+   },
+   {
     "al": "CWS",
     "nl": "SD",
     "market": 7694
@@ -359,12 +363,12 @@
    {
     "al": "NYY",
     "nl": "SD",
-    "market": 7694
+    "market": 7095
    },
    {
     "al": "CLE",
     "nl": "SD",
-    "market": 11588
+    "market": 10290
    }
   ]
  }
