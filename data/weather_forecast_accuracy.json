@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-10-04T22:05:26Z",
+  "generated_at": "2026-10-05T00:54:02Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-10-03"
+    "2026-10-04"
   ],
   "forecast_input_accuracy": {
-    "n_games": 737,
+    "n_games": 738,
     "our_temp_MAE_f": 2.24,
     "our_wind_MAE_mph": 2.43,
-    "our_winddir_MAE_deg": 32.96,
+    "our_winddir_MAE_deg": 32.94,
     "temp_head_to_head": {
       "n": 538,
       "our_temp_MAE_f": 2.09,
@@ -17,12 +17,12 @@
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 735,
+    "n_played": 736,
     "calibrated_slope_runs_per_pct": 0.0892,
     "ours": {
-      "slope": 0.1386,
-      "r": 0.154,
-      "n": 735,
+      "slope": 0.1383,
+      "r": 0.153,
+      "n": 736,
       "realized_x": 1.55
     },
     "bp": {
@@ -14772,6 +14772,26 @@
       "total": 3,
       "our_adj": -5.8,
       "bp_adj": -14.0
+    },
+    {
+      "date": "2026-10-04",
+      "pk": 849825,
+      "venue": "American Family Field",
+      "obs_temp": 67.9,
+      "obs_wind": 14.2,
+      "obs_dir": 295.0,
+      "obs_src": "obs",
+      "our_temp": 66.0,
+      "our_wind": 10.0,
+      "our_dir": 315,
+      "bp_temp": null,
+      "our_temp_err": 1.9000000000000057,
+      "bp_temp_err": null,
+      "our_wind_err": 4.199999999999999,
+      "our_dir_err": 20.0,
+      "total": 7,
+      "our_adj": 2.3,
+      "bp_adj": null
     }
   ]
 }
