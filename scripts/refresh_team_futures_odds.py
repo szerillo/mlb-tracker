@@ -215,7 +215,9 @@ def fetch_market(url: str, table_id: str, label: str) -> dict[str, dict]:
 #    October (e.g. NYY pennant +300 while every live book had +175/+180), so AN overrides them. ──
 AN_LIST = "https://api.actionnetwork.com/web/v1/leagues/8/futures/available"
 AN_FUT  = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds={}"
-AN_BOOKS = {68: "DraftKings", 1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel", 1006: "FanDuel",
+# Futures feeds only: AN book ids 68 (DK) and 1006 (FD) carry stale pre-round futures boards (10/5: DK 68 had
+# TB pennant +260 / CWS +1200, FD 1006 had TB +3500, NYY +400). Live futures are DK 1548/3118 and FD 69.
+AN_BOOKS = {1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel",
             123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
             972: "BetRivers", 2988: "Fanatics"}
 AN_ABBR = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "WAS": "WSH", "KCR": "KC", "SFG": "SF", "OAK": "ATH"}
@@ -240,26 +242,29 @@ def fetch_an_market(name_part: str) -> dict[str, dict]:
         print(f"[futures-odds] AN {name_part} failed: {e}", file=sys.stderr)
         return {}
     tm = {t["id"]: AN_ABBR.get(t.get("abbr"), t.get("abbr")) for t in d.get("teams", [])}
+    # Keep every (brand, book_id) feed separately. AN carries several ids per brand (DK 68/1548/3118,
+    # FD 69/1006, ...) and some of them are stale pre-round boards; taking the max per brand picked the
+    # stale price (TB pennant DK +260 when DK's live board was +160).
     by = {}
     for bk in d.get("books", []):
-        brand = AN_BOOKS.get(bk.get("book_id"))
+        bid = bk.get("book_id"); brand = AN_BOOKS.get(bid)
         if not brand:
             continue
         for o in bk.get("odds", []):
             ab, m = tm.get(o.get("team_id")), o.get("money")
             if ab and m is not None:
-                cur = by.setdefault(ab, {}).get(brand)
-                if cur is None or m > cur:
-                    by[ab][brand] = m
+                by.setdefault(ab, []).append((brand, bid, m))
     out = {}
-    for ab, books in by.items():
-        ps = sorted(_imp(o) for o in books.values())
-        med = ps[len(ps) // 2] if len(ps) % 2 else (ps[len(ps) // 2 - 1] + ps[len(ps) // 2]) / 2
-        ok = {b: o for b, o in books.items() if len(ps) < 3 or abs(_imp(o) - med) <= max(0.04, 0.25 * med)}
+    for ab, rows in by.items():
+        ps = sorted(_imp(m) for _, _, m in rows)
+        n = len(ps)
+        med = ps[n // 2] if n % 2 else (ps[n // 2 - 1] + ps[n // 2]) / 2
+        tol = max(0.03, 0.15 * med)
+        ok = [(b, m) for b, _, m in rows if n < 3 or abs(_imp(m) - med) <= tol]
         if not ok:
             continue
-        b, o = max(ok.items(), key=lambda kv: kv[1] / 100 if kv[1] > 0 else 100 / -kv[1])
-        out[ab] = {"best_odds": o, "best_book": b, "n_books": len(ok)}
+        b, o = max(ok, key=lambda kv: kv[1] / 100 if kv[1] > 0 else 100 / -kv[1])
+        out[ab] = {"best_odds": o, "best_book": b, "n_books": len({x[0] for x in ok})}
     print(f"[futures-odds] AN {name_part}: {len(out)} teams", file=sys.stderr)
     return out
 

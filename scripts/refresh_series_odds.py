@@ -155,7 +155,8 @@ def _best(cands):
 AN_FUT_LIST = "https://api.actionnetwork.com/web/v1/leagues/8/futures/available"
 AN_FUT      = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds={}"
 # AN book id -> brand (state variants collapse to one brand; best price per brand kept)
-AN_BOOKS = {68: "DraftKings", 1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel", 1006: "FanDuel",
+# AN futures feeds 68 (DK) and 1006 (FD) are stale legacy boards (pre-round prices); live = DK 1548/3118, FD 69
+AN_BOOKS = {1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel",
             123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
             972: "BetRivers", 2988: "Fanatics", 247: "Unibet", 1902: "Resorts World", 1903: "Bally Bet"}
 AN_AB = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "ARI": "ARI"}
