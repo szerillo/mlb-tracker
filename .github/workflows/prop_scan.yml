@@ -22,6 +22,12 @@ jobs:
       - name: grade
         env: {SCAN_DIR: data/prop_scan}
         run: python scripts/scan_grade.py || true
+      - name: archive dashboard board (calls, prices, closes)
+        env: {SCAN_DIR: data/prop_scan}
+        run: python scripts/props_board_archive.py || true
+      - name: grade board + tickets
+        env: {SCAN_DIR: data/prop_scan}
+        run: python scripts/board_grade.py || true
       - name: commit
         run: |
           git config user.name "bartolo-bot"

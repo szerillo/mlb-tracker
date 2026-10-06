@@ -15,7 +15,10 @@ jobs:
         with: {python-version: '3.12'}
       - run: python3 scripts/kalshi_oblog_once.py
       - run: python3 scripts/an_props_log_once.py
+      - name: archive dashboard board + freeze closes (last 30 min before first pitch)
+        env: {SCAN_DIR: data/prop_scan}
+        run: python3 scripts/props_board_archive.py || true
       - run: |
           git config user.name "oblog-bot"; git config user.email "actions@users.noreply.github.com"
-          git add data/kalshi_oblog data/an_props_log && git commit -m "kalshi prop orderbook snapshot" || exit 0
+          git add data/kalshi_oblog data/an_props_log data/prop_scan && git commit -m "kalshi prop orderbook snapshot + board archive" || exit 0
           git pull --rebase && git push
