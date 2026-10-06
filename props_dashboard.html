@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BARTOLO · Sharp Props Dashboard</title>
+<style>
+  :root{--bg:#0d1117;--panel:#141a23;--panel2:#1a2230;--border:#263042;--text:#e6e9ef;--muted:#8b96a8;--accent:#5eead4;--good:#4ade80;--bad:#f87171;--warn:#fbbf24;--t1:#5eead4;--t2:#93c5fd;--t3:#c4b5fd;--t4:#64748b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#0b0f15;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+  header h1{font-size:16px;margin:0;letter-spacing:.04em}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted)}
+  .pill b{color:var(--text)}
+  .pill.ok{border-color:#1f6f4a;color:var(--good)} .pill.bad{border-color:#7f2a2a;color:var(--bad)}
+  main{max-width:1200px;margin:0 auto;padding:14px 16px 60px}
+  h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px;display:flex;gap:8px;align-items:center}
+  h2 .n{background:var(--panel2);border-radius:6px;padding:0 7px;color:var(--text);font-size:12px}
+  .banner{background:#3a1d1d;border:1px solid #7f2a2a;color:#fecaca;border-radius:8px;padding:8px 12px;margin:10px 0}
+  .note{color:var(--muted);font-size:12px;margin:2px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(360px,100%),1fr));gap:10px}
+  .card{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--t1);border-radius:9px;padding:10px 12px}
+  .card.t2{border-left-color:var(--t2)} .card.t3{border-left-color:var(--t3);opacity:.92} .card.t4{border-left-color:var(--t4)}
+  .card.dead{opacity:.5}
+  .card .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .card .bet{font-weight:700;font-size:15px}
+  .card .game{color:var(--muted);font-size:12px;white-space:nowrap}
+  .rules{margin:4px 0 6px;display:flex;flex-wrap:wrap;gap:5px}
+  .tag{font-size:11px;border-radius:5px;padding:1px 6px;background:var(--panel2);border:1px solid var(--border)}
+  .tag.t1{color:var(--t1)} .tag.t2{color:var(--t2)} .tag.t3{color:var(--t3)} .tag.t4{color:var(--t4)}
+  table.px{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0}
+  table.px th{color:var(--muted);font-weight:500;text-align:left;padding:2px 4px;border-bottom:1px solid var(--border)}
+  table.px td{padding:3px 4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pos{color:var(--good)} .neg{color:var(--bad)} .mut{color:var(--muted)}
+  .inputs{font-size:12px;color:var(--muted);margin-top:4px}
+  .status{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin-top:6px;color:var(--muted)}
+  .status b{color:var(--text)}
+  .size{font-weight:700;color:var(--warn)}
+  table.board{width:100%;display:block;overflow-x:auto;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:9px;overflow:hidden;font-size:13px}
+  table.board th{background:var(--panel2);color:var(--muted);font-weight:500;text-align:right;padding:6px 8px;white-space:nowrap}
+  table.board th:first-child,table.board td:first-child{text-align:left}
+  table.board td{padding:6px 8px;text-align:right;border-top:1px solid var(--border);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  table.board tr.hot td{background:rgba(94,234,212,.08)}
+  details{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-top:8px}
+  summary{cursor:pointer;color:var(--muted)}
+  .empty{color:var(--muted);font-style:italic;padding:6px 0}
+  .ctl{display:flex;gap:8px;align-items:center;margin-left:auto}
+  .ctl button{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>B.A.R.T.O.L.O. · Sharp Props</h1>
+  <span class="pill" id="h-scan">Latest scan: …</span>
+  <span class="pill" id="h-pin">Pinnacle: …</span>
+  <span class="pill" id="h-games">Games: …</span>
+  <span class="pill" id="h-tiers">Tiers: …</span>
+  <div class="ctl"><label class="pill"><input type="checkbox" id="showTomorrow"> show tomorrow</label><button id="reload">Reload</button></div>
+</header>
+<main>
+  <div id="pinBanner" class="banner" hidden>Pinnacle unavailable for this run (every Pinnacle field is blank). That is a feed failure, not "no edge".</div>
+  <div class="note">Paper and decision support only. Sean places every ticket. BetMGM is excluded from every best price. Backtest edges are discounted about half (about 80 rule combinations were tried). One position per pitcher per direction; size comes from the tier, never from how many rules agree.</div>
+
+  <h2>A · Bet now <span class="n" id="nA">0</span></h2>
+  <div class="note">Tier 1, live in the latest run, game day. K unders: fire only if still live on the 10:05 AM run. YRFI: last 60 to 120 minutes before first pitch.</div>
+  <div class="grid" id="panelA"></div>
+  <div id="spotWrap"></div>
+
+  <h2>B · Leads (Tier 2 / 3) <span class="n" id="nB">0</span></h2>
+  <div class="grid" id="panelB"></div>
+
+  <h2>C · YRFI board</h2>
+  <div class="note">Curve = empirical NRFI on Kalshi's own total; Oct-adj = curve with the October −0.15 logit. Edge = curve minus (ask + fee). Highlighted rows: edge ≥ +2 inside the last 2 hours. Big NRFI money on Kalshi is retail (normal about 74%).</div>
+  <div id="panelC"></div>
+
+  <h2>D · Walks and October hitter unders</h2>
+  <div class="note">Walks over: bet only at a book price implying less than Kalshi mid + 4 pts. Hitter unders: NO limits at the mid, small, spread across hitters; one correlated position per game (cap the game at a small unit). Never HR.</div>
+  <div id="panelD"></div>
+
+  <h2>E · Info (no backtested edge)</h2>
+  <details id="panelE"><summary>Big trades, price moves, depth imbalances (<span id="nE">0</span>). Context only, no bet. Kalshi prop depth is NO-heavy by default.</summary><div id="panelEbody"></div></details>
+
+  <h2>F · Scorecard (graded flags)</h2>
+  <div class="note">From scan_graded.json: first flag per ticker + rule. P/L per $1 contract after Kalshi fee; CLV vs the Kalshi pregame close. Tier 3 rules with CLV ≤ 0 after 30+ bets are flagged DROP.</div>
+  <div id="panelF"></div>
+</main>
+<script>
+const BASE='data/prop_scan/';
+const TEAMS=['ARI','AZ','ATL','BAL','BOS','CHC','CWS','CHW','CIN','CLE','COL','DET','HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH','OAK','PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH','WAS'];
+const MON={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+const TIER_SIZE={'K-LENGTH UNDER':'½ unit','K-SEASON-ANCHOR UNDER':'½ unit','YRFI CURVE':'small','K-LENGTH OVER':'¼ unit','DEEP-SPOT OVERS':'¼ unit','BIG OUTS TRADE':'¼ / paper','YRFI CURVE (Oct-adj only)':'small','KALSHI OFF PINNACLE (ungraded)':'paper','WALKS OVER (lead)':'¼ unit','OCTOBER HITTER UNDERS (lean)':'small, spread'};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fee=p=>0.07*p*(1-p);
+const imp=o=>o>0?100/(o+100):-o/(-o+100);
+const pct=(x,d=1)=>x==null||isNaN(x)?'–':(x*100).toFixed(d);
+const sgn=(x,d=1)=>x==null||isNaN(x)?'–':((x>0?'+':'')+x.toFixed(d));
+const cls=x=>x==null||isNaN(x)?'mut':(x>0?'pos':'neg');
+
+function evCode(ev){ return String(ev||'').split('-').slice(-1)[0]; }
+function parseEvent(ev){
+  const c=evCode(ev); const m=c.match(/^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)([A-Z]+?)(G\d?)?$/); if(!m) return {code:c,label:c,date:null,start:null};
+  const [,yy,mon,dd,hh,mi,teams]=m; let away=null,home=null;
+  for(const a of TEAMS){ if(teams.startsWith(a) && TEAMS.includes(teams.slice(a.length))){ away=a; home=teams.slice(a.length); break; } }
+  const date=`20${yy}-${String(MON[mon]).padStart(2,'0')}-${dd}`;
+  // ET first pitch -> Date (EDT, UTC-4)
+  const start=new Date(Date.UTC(2000+ +yy, MON[mon]-1, +dd, +hh+4, +mi));
+  return {code:c,label:away?`${away} @ ${home}`:teams,date,start,timeET:`${(+hh%12)||12}:${mi} ${+hh>=12?'PM':'AM'}`};
+}
+function todayET(){ const d=new Date(Date.now()-4*3600e3); return d.toISOString().slice(0,10); }
+function fmtET(iso){ const d=new Date(iso); return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'; }
+function countdown(start){ if(!start) return '–'; const m=Math.round((start-Date.now())/60000); if(m<0) return 'started'; return m>=60?`${Math.floor(m/60)}h ${m%60}m`:`${m}m`; }
+
+// parse "book u2.5: DK +124; Pinnacle u2.5 +123 (fair 42.2%)" / "book: Fanatics +120"
+function parseNote(n){
+  n=n||''; const o={};
+  let m=n.match(/book[^:;]*:\s*([A-Za-z]+)\s*([+-]\d+)/); if(m){o.book=m[1]; o.bookOdds=+m[2];}
+  m=n.match(/Pinnacle\s+([ou][\d.]+)\s*([+-]\d+)\s*\(fair\s*([\d.]+)%\)/); if(m){o.pinLine=m[1]; o.pinOdds=+m[2]; o.pinFair=+m[3]/100;}
+  m=n.match(/fair YRFI\s*([\d.]+)/); if(m) o.pinYrfi=+m[1];
+  m=n.match(/Kalshi total\s*([\d.]+)/); if(m) o.ktotal=+m[1];
+  m=n.match(/YRFI curve\s*([\d.]+)\s*\(Oct-adj\s*([\d.]+)\)/); if(m){o.curve=+m[1]; o.curveOct=+m[2];}
+  m=n.match(/ask\s*([\d.]+);\s*edge\s*([+-]?[\d.]+)\s*\(Oct\s*([+-]?[\d.]+)\)/); if(m){o.ask=+m[1]; o.edge=+m[2]; o.edgeOct=+m[3];}
+  m=n.match(/taker \$\s*(\d+)% NRFI/); if(m) o.nrfiPct=+m[1];
+  return o;
+}
+function pitcherOf(what){ const m=String(what||'').match(/^(.*?)\s+(K|walks|outs|Outs|hits)/); return m?m[1]:String(what||'').split(':')[0]; }
+
+async function getText(u){ try{ const r=await fetch(u+'?t='+Date.now()); return r.ok?await r.text():''; }catch(e){ return ''; } }
+const jsonl=t=>t.split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l);}catch(e){return null;}}).filter(Boolean);
+
+async function load(){
+  const [slT,plT,grT]=await Promise.all([getText(BASE+'scan_log.jsonl'),getText(BASE+'pinnacle_log.jsonl'),getText(BASE+'scan_graded.json')]);
+  const SL=jsonl(slT), PL=jsonl(plT); let GR=[]; try{ GR=JSON.parse(grT||'[]'); }catch(e){}
+  if(!SL.length){ document.querySelector('main').innerHTML='<div class="banner">No scan_log.jsonl rows yet.</div>'; return; }
+  const latest=SL.reduce((a,x)=>x.ts>a?x.ts:a,'');
+  const L=SL.filter(x=>x.ts===latest);
+  const key=x=>(x.ticker||evCode(x.event))+'|'+x.rule;
+  const first={}; SL.forEach(x=>{ const k=key(x); if(!first[k]||x.ts<first[k].ts) first[k]=x; });
+  const pinRun=PL.filter(x=>x.ts===latest);
+  const pinOK=pinRun.length>0;
+  const showTom=document.getElementById('showTomorrow').checked;
+  const today=todayET();
+  const games=[...new Set(L.map(x=>parseEvent(x.event).label))];
+  const tc=[1,2,3,4].map(t=>L.filter(x=>x.tier===t).length);
+  document.getElementById('h-scan').innerHTML='Latest scan: <b>'+fmtET(latest)+'</b>';
+  const hp=document.getElementById('h-pin'); hp.className='pill '+(pinOK?'ok':'bad'); hp.innerHTML='Pinnacle: <b>'+(pinOK?`OK (${pinRun.length})`:'unavailable')+'</b>';
+  document.getElementById('pinBanner').hidden=pinOK;
+  document.getElementById('h-games').innerHTML='Games: <b>'+games.length+'</b> '+esc(games.join(', '));
+  document.getElementById('h-tiers').innerHTML=`Tier 1 <b>${tc[0]}</b> · T2 <b>${tc[1]}</b> · T3 <b>${tc[2]}</b> · T4 <b>${tc[3]}</b>`;
+
+  // ---- grouped pitcher / game cards ----
+  function groupCards(rows){
+    const g={};
+    rows.forEach(x=>{
+      const ev=parseEvent(x.event);
+      const isK=/K-|DEEP-SPOT|OUTS/.test(x.rule);
+      const dir=x.side==='NO'?'under':(x.side==='YES'?'over':'-');
+      const k=isK?`${ev.code}|${pitcherOf(x.what)}|${dir}`:`${ev.code}|${x.rule}|${x.what}`;
+      (g[k]=g[k]||{ev,rows:[],tier:9}).rows.push(x); g[k].tier=Math.min(g[k].tier,x.tier);
+    });
+    return Object.values(g).sort((a,b)=>a.tier-b.tier||(a.ev.start||0)-(b.ev.start||0));
+  }
+  function cardHTML(c){
+    const x=c.rows.find(r=>r.tier===c.tier)||c.rows[0];
+    const N=parseNote(c.rows.map(r=>r.note).join('; '));
+    const kPrice=x.price, kCost=kPrice!=null?kPrice+fee(kPrice):null;
+    const fair=N.pinFair!=null?N.pinFair:(x.fair!=null?x.fair:null), fairSrc=N.pinFair!=null?'Pinnacle no-vig':'Kalshi mid';
+    const eK=(fair!=null&&kCost!=null)?(fair-kCost)*100:null;
+    const eB=(fair!=null&&N.bookOdds!=null)?(fair-imp(N.bookOdds))*100:null;
+    const f=first[key(x)]; const moved=(f&&f.price!=null&&kPrice!=null)?(kPrice-f.price)*100:null;
+    const size=c.rows.map(r=>TIER_SIZE[r.rule]).find(Boolean)||'–';
+    return `<div class="card t${c.tier}">
+      <div class="top"><div class="bet">${esc(x.what)} <span class="mut">(${x.side==='NO'?'NO / under':x.side})</span></div><div class="game">${esc(c.ev.label)} · ${esc(c.ev.timeET||'')} · ${countdown(c.ev.start)}</div></div>
+      <div class="rules">${c.rows.map(r=>`<span class="tag t${r.tier}">T${r.tier} ${esc(r.rule)}</span>`).join('')}</div>
+      <table class="px"><tr><th>Kalshi (take)</th><th>Best NY book</th><th>Pinnacle</th><th>Novig</th><th>Fair (${fairSrc})</th></tr>
+        <tr><td>${kPrice!=null?(kPrice*100).toFixed(0)+'¢':'–'}${kCost!=null?` <span class="mut">(${(kCost*100).toFixed(1)} w/ fee)</span>`:''}</td>
+            <td>${N.book?esc(N.book)+' '+sgn(N.bookOdds,0):'–'}</td>
+            <td>${N.pinOdds!=null?esc(N.pinLine)+' '+sgn(N.pinOdds,0):'<span class="mut">–</span>'}</td>
+            <td class="mut">manual</td>
+            <td>${fair!=null?pct(fair)+'%':'–'}</td></tr>
+        <tr><td colspan="2">Edge Kalshi: <span class="${cls(eK)}">${sgn(eK)}</span> · Edge book: <span class="${cls(eB)}">${sgn(eB)}</span></td><td colspan="3" class="mut">edge = fair − cost, in pts</td></tr></table>
+      <div class="inputs">${c.rows.map(r=>esc(r.note)).join('<br>')}</div>
+      <div class="status"><span>First seen <b>${f?fmtET(f.ts):'–'}</b>${f&&f.price!=null?' at '+(f.price*100).toFixed(0)+'¢':''}</span><span>Live now <b>Y</b></span><span>Δ since first <b class="${cls(moved==null?null:-moved)}">${moved==null?'–':sgn(moved,0)+'¢'}</b></span><span>Size <span class="size">${esc(size)}</span></span></div>
+    </div>`;
+  }
+  const isToday=x=>parseEvent(x.event).date===today;
+  const T1=L.filter(x=>x.tier===1);
+  const A=groupCards(T1.filter(isToday));
+  document.getElementById('panelA').innerHTML=A.length?A.map(cardHTML).join(''):'<div class="empty">No Tier 1 bets live for today in the latest run.</div>';
+  document.getElementById('nA').textContent=A.length;
+  const spot=groupCards(T1.filter(x=>!isToday(x)));
+  document.getElementById('spotWrap').innerHTML=spot.length?`<h2>Spotting (next day, Tier 1) <span class="n">${spot.length}</span></h2><div class="note">Night-before triggers are for spotting only. Act only if still live on the game-day 10:05 AM run.</div><div class="grid">${spot.map(cardHTML).join('').replace(/class="card /g,'class="card dead ')}</div>`:'';
+  const Brows=L.filter(x=>(x.tier===2||x.tier===3)&&!/WALKS|HITTER UNDERS|YRFI/.test(x.rule)&&(showTom||isToday(x)));
+  const B=groupCards(Brows);
+  document.getElementById('panelB').innerHTML=B.length?B.map(cardHTML).join(''):'<div class="empty">No Tier 2 / 3 leads in the latest run.</div>';
+  document.getElementById('nB').textContent=B.length;
+
+  // ---- C: YRFI board ----
+  const rfi={}; L.filter(x=>/RFI/.test(x.rule)).forEach(x=>{ const ev=parseEvent(x.event); const N=parseNote(x.note); const cur=rfi[ev.code]; if(!cur||x.tier<cur.tier) rfi[ev.code]={ev,N,tier:x.tier,rule:x.rule}; });
+  const rows=Object.values(rfi).filter(r=>showTom||r.ev.date===today).sort((a,b)=>a.ev.start-b.ev.start);
+  document.getElementById('panelC').innerHTML=rows.length?`<table class="board"><tr><th>Game</th><th>First pitch</th><th>Kalshi total</th><th>Curve YRFI</th><th>Oct-adj</th><th>Kalshi ask</th><th>Pinnacle YRFI</th><th>Edge (base)</th><th>Edge (Oct)</th><th>% $ on NRFI</th><th>Countdown</th></tr>${rows.map(r=>{const mins=(r.ev.start-Date.now())/60000; const hot=(r.N.edge>=2||r.N.edgeOct>=2)&&mins<=120&&mins>=0; return `<tr class="${hot?'hot':''}"><td>${esc(r.ev.label)} <span class="tag t${r.tier}">T${r.tier}</span></td><td>${esc(r.ev.timeET)}</td><td>${r.N.ktotal??'–'}</td><td>${pct(r.N.curve)}</td><td>${pct(r.N.curveOct)}</td><td>${r.N.ask!=null?(r.N.ask*100).toFixed(0)+'¢':'–'}</td><td>${pct(r.N.pinYrfi)}</td><td class="${cls(r.N.edge)}">${sgn(r.N.edge)}</td><td class="${cls(r.N.edgeOct)}">${sgn(r.N.edgeOct)}</td><td>${r.N.nrfiPct!=null?r.N.nrfiPct+'%':'–'}</td><td>${countdown(r.ev.start)}</td></tr>`;}).join('')}</table>`:'<div class="empty">No RFI rows for today.</div>';
+
+  // ---- D: walks + hitter unders ----
+  const W=L.filter(x=>/WALKS/.test(x.rule)&&(showTom||isToday(x)));
+  const H=L.filter(x=>/HITTER UNDERS/.test(x.rule)&&(showTom||isToday(x)));
+  let d='';
+  d+=W.length?`<table class="board"><tr><th>Starter</th><th>Game</th><th>Kalshi mid</th><th>Fair (mid + 4)</th><th>Best book o1.5</th><th>Book implied</th><th>Edge vs fair</th><th>Bet?</th></tr>${W.map(x=>{const N=parseNote(x.note); const ev=parseEvent(x.event); const fr=(x.fair!=null)?x.fair+0.04:null; const bi=N.bookOdds!=null?imp(N.bookOdds):null; const e=(fr!=null&&bi!=null)?(fr-bi)*100:null; return `<tr><td>${esc(x.what)}</td><td>${esc(ev.label)}</td><td>${pct(x.fair)}</td><td>${pct(fr)}</td><td>${N.book?esc(N.book)+' '+sgn(N.bookOdds,0):'–'}</td><td>${pct(bi)}</td><td class="${cls(e)}">${sgn(e)}</td><td>${e!=null&&e>0?'<b class="pos">yes, ¼ unit</b>':'<span class="mut">no</span>'}</td></tr>`;}).join('')}</table>`:'<div class="empty">No walks rows.</div>';
+  d+=H.length?`<div style="height:10px"></div><table class="board"><tr><th>Game</th><th>Rungs</th><th style="text-align:left">Top tight rungs (mid)</th></tr>${H.map(x=>{const ev=parseEvent(x.event); const top=(x.note||'').split('top:')[1]||''; return `<tr><td>${esc(ev.label)}</td><td>${esc((x.what||'').split(' ')[0])}</td><td style="text-align:left;font-family:inherit">${esc(top.trim())}</td></tr>`;}).join('')}</table>`:'';
+  document.getElementById('panelD').innerHTML=d;
+
+  // ---- E: info ----
+  const E=L.filter(x=>x.tier===4&&!/RFI INFO/.test(x.rule));
+  document.getElementById('nE').textContent=E.length;
+  document.getElementById('panelEbody').innerHTML=E.length?`<table class="board"><tr><th>Rule</th><th>Game</th><th>Market</th><th>Side</th><th>Price</th><th style="text-align:left">Detail</th></tr>${E.map(x=>`<tr><td>${esc(x.rule)}</td><td>${esc(parseEvent(x.event).label)}</td><td style="text-align:left;font-family:inherit">${esc(x.what)}</td><td>${esc(x.side)}</td><td>${x.price!=null?(x.price*100).toFixed(1)+'¢':'–'}</td><td style="text-align:left;font-family:inherit">${esc(x.note)} <span class="tag t4">no backtested edge</span></td></tr>`).join('')}</table>`:'<div class="empty">None.</div>';
+
+  // ---- F: scorecard ----
+  const byR={}; (GR||[]).forEach(x=>{ const r=byR[x.rule]=byR[x.rule]||{tier:x.tier,n:0,pl:0,clv:0,nc:0,w:0}; r.n++; r.pl+=(x.pl||0); if(x.clv!=null){r.clv+=x.clv; r.nc++;} if(x.result===(x.side==='YES'?'yes':'no')) r.w++; });
+  const rs=Object.entries(byR).sort((a,b)=>a[1].tier-b[1].tier||b[1].n-a[1].n);
+  document.getElementById('panelF').innerHTML=rs.length?`<table class="board"><tr><th>Rule</th><th>Tier</th><th>n</th><th>Win %</th><th>P/L per contract</th><th>Avg CLV (Kalshi close)</th><th>Flag</th></tr>${rs.map(([k,r])=>{const clv=r.nc?r.clv/r.nc*100:null; const drop=r.tier===3&&r.n>=30&&clv!=null&&clv<=0; return `<tr><td>${esc(k)}</td><td>${r.tier}</td><td>${r.n}</td><td>${pct(r.w/r.n,0)}</td><td class="${cls(r.pl/r.n)}">${sgn(r.pl/r.n*100,1)}¢</td><td class="${cls(clv)}">${sgn(clv)}</td><td>${drop?'<b class="neg">DROP</b>':''}</td></tr>`;}).join('')}</table>`:'<div class="empty">No graded flags yet (scan_graded.json is empty until the first flagged games settle).</div>';
+}
+document.getElementById('reload').onclick=load;
+document.getElementById('showTomorrow').onchange=load;
+load(); setInterval(load, 5*60*1000);
+</script>
+</body>
+</html>
