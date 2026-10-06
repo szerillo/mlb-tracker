@@ -157,8 +157,9 @@ async function load(){
 function pricedObjs(){ const out=[]; (B?B.cards:[]).forEach(c=>{ if(c.started) return; if(c.ticker) out.push(c); if(c.yrfi&&c.yrfi.ticker) out.push(c.yrfi); (c.f5||[]).forEach(r=>r.ticker&&out.push(r)); }); return out; }
 async function refreshLive(){
   if(!B) return; const tk=[...new Set(pricedObjs().map(o=>o.ticker))]; if(!tk.length) return;
-  try{ const r=await fetch(LIVE_API+'?tickers='+encodeURIComponent(tk.join(','))); if(!r.ok) throw new Error(r.status); const d=await r.json(); LIVE={ts:d.ts,m:d.markets||{}}; }
-  catch(e){ LIVE={ts:null,m:{},err:true}; }
+  try{ const r=await fetch(LIVE_API+'?tickers='+encodeURIComponent(tk.join(','))); if(!r.ok) throw new Error(r.status); const d=await r.json(); const got=d.markets||{};
+    if(Object.keys(got).length) LIVE={ts:d.ts,m:Object.assign({},LIVE.m,got)}; else if(!LIVE.ts) LIVE={ts:null,m:{},err:true}; }
+  catch(e){ if(!LIVE.ts) LIVE={ts:null,m:{},err:true}; }   // keep the last good quotes on a failed refresh
   pricedObjs().forEach(reprice); render();
 }
 function reprice(o){   // same math as props_board_archive.pricing(), on a live Kalshi quote
