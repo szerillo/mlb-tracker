@@ -57,6 +57,7 @@ def cond_dist(games, teamA, aw, bw):
 
 # ── statsapi live state ──────────────────────────────────────────────────────
 STARTED=set()
+SCHED={}   # statsapi gamePk -> {home, away, n (series game number), date, preview}
 def series_state(season):
     """Return {gtype: {frozenset(abbrs): {'wins':{ab:n},'played':n,'games':[...]}}}"""
     st={}
@@ -73,6 +74,8 @@ def series_state(season):
                 key=frozenset({a,h})
                 b=buckets.setdefault(key,{'wins':{a:0,h:0},'played':0})
                 if g['status'].get('abstractGameState')!='Preview': STARTED.add(str(g['gamePk']))
+                SCHED[str(g['gamePk'])]={'home':h,'away':a,'n':g.get('seriesGameNumber'),'date':(g.get('officialDate') or dt.get('date')),
+                                         'preview':g['status'].get('abstractGameState')=='Preview'}
                 if g['status']['detailedState']=='Final':
                     sa=g['teams']['away'].get('score'); sh=g['teams']['home'].get('score')
                     if sa is not None and sh is not None:
@@ -119,8 +122,7 @@ def rebuild_marginalized(grid,state):
         A,o=idx[(frozenset({x,y}),bo)]; B=y if A==x else x
         w=live.get((frozenset({x,y}),bo),{})
         gs=o['games']; nx=w.get(A,0)+w.get(B,0)
-        if nx<len(gs) and (gs[nx]['home'],gs[nx]['away']) in TODAY_WP:
-            gs=[dict(z) for z in gs]; gs[nx]['home_wp']=TODAY_WP[(gs[nx]['home'],gs[nx]['away'])]
+        gs=_apply_sheet(gs,nx)
         p=_p_from_games(gs,A,w.get(A,0),w.get(B,0))
         return p if A==x else 1-p
     out={"reach_ds":{},"reach_cs":{},"al_pennant":{},"nl_pennant":{},"ws":{}}
@@ -162,18 +164,61 @@ def load_grid():
 FULLNAME={'Tampa Bay Rays':'TB','Cleveland Guardians':'CLE','Chicago White Sox':'CWS','Houston Astros':'HOU',
   'New York Yankees':'NYY','Boston Red Sox':'BOS','Milwaukee Brewers':'MIL','Los Angeles Dodgers':'LAD',
   'Atlanta Braves':'ATL','San Diego Padres':'SD','Chicago Cubs':'CHC','Philadelphia Phillies':'PHI'}
-TODAY_WP={}   # (home, away) -> home_wp, today's pregame games only
+TODAY_WP={}   # (home, away, series_game_no) -> home_wp for EVERY not-yet-started game Sean has projected
+SHEET_CSV=("https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P"
+           "/pub?gid=580753288&single=true&output=csv")   # Sean's published GAME UPLOADER (all upcoming dates)
 def load_today_wp(started):
-    try:
+    """Sean's game projection overrides the grid for EVERY upcoming game he has posted (today and future
+    dates), so series %, exact score, spreads and futures always match his game numbers (e.g. MIL 3-0 at
+    0-2 = his G3 number). Sources: the published uploader CSV (keyed by Action Network game id, any date)
+    and data/sheet_projections.json (today, keyed by statsapi gamePk). Started games are never overridden."""
+    import csv, io
+    by_pk={}
+    try:   # repo copy (today)
         sp=json.load(open(os.path.join(DATA,"sheet_projections.json")))
-        et=(datetime.datetime.utcnow()-datetime.timedelta(hours=4)).date().isoformat()
-        if sp.get("date")!=et: return
         for pk,g in (sp.get("games") or {}).items():
-            if str(pk) in started: continue
-            h=FULLNAME.get(g.get("home_team")); a=FULLNAME.get(g.get("away_team"))
-            if h and a and g.get("home_wp") is not None: TODAY_WP[(h,a)]=float(g["home_wp"])
+            if g.get("home_wp") is not None: by_pk[str(pk)]=float(g["home_wp"])
     except Exception as e:
-        print(f"[series_live] today WP override skipped: {e}", file=sys.stderr)
+        print(f"[series_live] sheet_projections.json skipped: {e}", file=sys.stderr)
+    try:   # published uploader CSV (all dates) -> AN game id -> statsapi gamePk via date + team names
+        txt=urllib.request.urlopen(urllib.request.Request(SHEET_CSV,headers={'User-Agent':'x'}),timeout=20).read().decode()
+        rows=[]
+        for r in csv.reader(io.StringIO(txt)):
+            if len(r)<7 or not r[2].strip().isdigit(): continue
+            try: hwp=float(r[6])
+            except Exception: continue
+            d=next((c for c in r[7:] if c.count('/')==2),None)
+            if not d: continue
+            m,dd,y=d.split('/'); rows.append((r[2].strip(),f"{y}-{int(m):02d}-{int(dd):02d}",hwp))
+        an={}
+        for date in sorted({x[1] for x in rows}):
+            try: sb=_get(f"https://api.actionnetwork.com/web/v2/scoreboard/mlb?bookIds=15&date={date.replace('-','')}&periods=event")
+            except Exception: continue
+            for x in sb.get('games',[]):
+                T={t['id']:FULLNAME.get(t.get('full_name')) for t in x.get('teams',[])}
+                an[str(x['id'])]=(date,T.get(x['home_team_id']),T.get(x['away_team_id']))
+        for aid,date,hwp in rows:
+            m_=an.get(aid)
+            if not m_ or not m_[1] or not m_[2]: continue
+            pk=next((p for p,v in SCHED.items() if v['home']==m_[1] and v['away']==m_[2] and v['date']==m_[0]),None)
+            if pk: by_pk[pk]=hwp
+    except Exception as e:
+        print(f"[series_live] uploader CSV skipped: {e}", file=sys.stderr)
+    for pk,hwp in by_pk.items():
+        v=SCHED.get(pk)
+        if not v or pk in started or not v.get('n'): continue
+        TODAY_WP[(v['home'],v['away'],int(v['n']))]=hwp
+    if TODAY_WP: print(f"[series_live] sheet game WP applied to {len(TODAY_WP)} upcoming games: "+", ".join(f"G{n} {a}@{h} {p:.3f}" for (h,a,n),p in sorted(TODAY_WP.items(),key=lambda x:x[0][2])))
+
+def _apply_sheet(games, nx):
+    """Copy of games with Sean's projection on every remaining game he has posted."""
+    out=None
+    for i in range(nx,len(games)):
+        k=(games[i]['home'],games[i]['away'],i+1)
+        if k in TODAY_WP:
+            if out is None: out=[dict(z) for z in games]
+            out[i]['home_wp']=TODAY_WP[k]; out[i]['src']='action_pro_sheet'
+    return out or games
 
 def build_series(gtype, matchup_key, grid_idx, wins):
     bo=BEST_OF[gtype]
@@ -183,9 +228,7 @@ def build_series(gtype, matchup_key, grid_idx, wins):
     B=[t for t in matchup_key if t!=A][0] if len(matchup_key)==2 else games[0]['away']
     aw=wins.get(A,0); bw=wins.get(B,0)
     nx=aw+bw
-    if nx<len(games) and (games[nx]['home'],games[nx]['away']) in TODAY_WP:
-        games=[dict(x) for x in games]
-        games[nx]['home_wp']=TODAY_WP[(games[nx]['home'],games[nx]['away'])]; games[nx]['src']='action_pro_today'
+    games=_apply_sheet(games,nx)
 
     d,need=cond_dist(games,A,aw,bw)
     pA=sum(v for (a,b),v in d.items() if a==need)
@@ -208,7 +251,7 @@ def build_series(gtype, matchup_key, grid_idx, wins):
     gm=[{"g":i+1,"home":x['home'],"away":x['away'],
          "home_sp":x.get('home_sp'),"away_sp":x.get('away_sp'),
          "home_sp_rank":x.get('home_sp_rank'),"away_sp_rank":x.get('away_sp_rank'),
-         "home_wp":round(x['home_wp'],4)}
+         "home_wp":round(x['home_wp'],4),"src":x.get('src')}
         for i,x in enumerate(games)]
     decided=aw+bw
     if decided==0: state=None
