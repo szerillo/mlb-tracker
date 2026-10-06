@@ -3924,7 +3924,11 @@ async function bootShotMode(params){
   let game=null;
   if(pk) game=CURRENT_GAMES.find(x=>String(x.gamePk)===String(pk));
   if(!game && matchup){ const [a,h]=matchup.split('-'); game=CURRENT_GAMES.find(x=>{const aa=(x.teams.away.team.abbreviation||teamAbbr(x.teams.away.team.name)).toUpperCase();const hh=(x.teams.home.team.abbreviation||teamAbbr(x.teams.home.team.name)).toUpperCase();return aa===a&&hh===h;}); }
-  if(!game){ document.body.innerHTML='<p style="color:#e0726a;font-family:sans-serif;padding:1.5rem;text-align:center;">Game not found for that date.</p>'; return; }
+  if(!game){ // one more full attempt before giving up (slow/flaky statsapi on first load)
+    try{ await loadForDate(reqDate||await nextSlateDate(today())); }catch(e){}
+    if(pk) game=CURRENT_GAMES.find(x=>String(x.gamePk)===String(pk));
+  }
+  if(!game){ document.body.innerHTML='<p style="color:#e0726a;font-family:sans-serif;padding:1.5rem;text-align:center;">Game not found for that date. <a href="javascript:location.reload()" style="color:#5eead4">Retry</a></p>'; return; }
   try{ await openModal(game); }catch(e){ console.error('shot openModal failed',e); }
   buildShotBar(game);
 }
@@ -4529,8 +4533,15 @@ function fatigueBreakdown(days, format="days", labels=null) {
 // MLB API
 // ============================================================================
 async function getSchedule(date) {
-  const d = await fetchJSON(`${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season)),seriesStatus`);
-  return d.dates?.[0]?.games || [];
+  // Retry transient statsapi failures ("Failed to fetch"): loadForDate fires ~14 of these in
+  // parallel, and one dropped request used to reject the whole Promise.all -> empty slate
+  // (shot mode showed "Game not found" with no screenshot buttons).
+  const url = `${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season)),seriesStatus`;
+  for (let i = 0; i < 3; i++) {
+    try { const d = await fetchJSON(url); return d.dates?.[0]?.games || []; }
+    catch (e) { if (i === 2) { console.warn('schedule fetch failed', date, e); return []; } await new Promise(r => setTimeout(r, 600 * (i + 1))); }
+  }
+  return [];
 }
 // One-shot fetch for game live data: officials, battingOrder for both sides,
 // player map (needed to resolve IDs to names), and final score if game is over.
