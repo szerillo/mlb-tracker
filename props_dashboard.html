@@ -46,6 +46,9 @@
   .empty{color:var(--muted);font-style:italic;padding:6px 0}
   .ctl{display:flex;gap:8px;align-items:center;margin-left:auto}
   .ctl button{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 10px;cursor:pointer}
+  body.in-site header{position:static;background:transparent;border-bottom:0;padding:6px 0 0}
+  body.in-site header h1{display:none}
+  body.in-site main{padding:8px 0 30px;max-width:none}
 </style>
 </head>
 <body>
@@ -85,6 +88,7 @@
   <div id="panelF"></div>
 </main>
 <script>
+if(window.self!==window.top) document.body.classList.add('in-site');
 const BASE='data/prop_scan/';
 const TEAMS=['ARI','AZ','ATL','BAL','BOS','CHC','CWS','CHW','CIN','CLE','COL','DET','HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH','OAK','PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH','WAS'];
 const MON={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};

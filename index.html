@@ -2537,6 +2537,7 @@ body.embed-mode.embed-futures #tab-futures,
     <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
     <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
         <button class="tab" data-tab="playoff-futures" role="tab">Playoff Futures</button>
+        <button class="tab" data-tab="sharp-props" role="tab">Sharp Props</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -2557,6 +2558,15 @@ body.embed-mode.embed-futures #tab-futures,
       <iframe id="pf-frame" title="Playoff Futures" src="playoff_futures.html" style="width:100%;border:0;display:block;min-height:520px" scrolling="no"></iframe>
     </section>
     <script>(function(){var f=document.getElementById('pf-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}f.addEventListener('load',function(){[150,600,1500,3000].forEach(function(t){setTimeout(fit,t);});});window.addEventListener('resize',fit);document.querySelectorAll('.tab[data-tab="playoff-futures"]').forEach(function(b){b.addEventListener('click',function(){[60,300,900].forEach(function(t){setTimeout(fit,t);});});});})();</script>
+    <section id="tab-sharp-props" class="tab-content" hidden>
+      <iframe id="sp-frame" title="Sharp Props" data-src="props_dashboard.html" style="width:100%;border:0;display:block;min-height:620px" scrolling="no"></iframe>
+    </section>
+    <script>(function(){var f=document.getElementById('sp-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}
+      f.addEventListener('load',function(){[150,600,1500,3000].forEach(function(t){setTimeout(fit,t);});try{new ResizeObserver(fit).observe(f.contentWindow.document.body);}catch(e){}});
+      window.addEventListener('resize',fit);
+      function open(){ if(!f.src) f.src=f.dataset.src; [60,300,900].forEach(function(t){setTimeout(fit,t);}); }
+      document.querySelectorAll('.tab[data-tab="sharp-props"]').forEach(function(b){b.addEventListener('click',open);});
+      if(/[#&?]tab=sharp-props|#sharp-props/.test(location.href)) setTimeout(open,50);})();</script>
   <section id="tab-scoreboard" class="tab-content">
     <div class="an-proj-banner">
       <span class="an-proj-lbl">Today's projections</span>
