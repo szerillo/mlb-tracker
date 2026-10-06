@@ -3897,7 +3897,7 @@ function buildShotBar(game){
   ];
   const bar=document.createElement('div');
   bar.id='shot-bar';
-  bar.style.cssText='position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;background:#0d1117;border-bottom:1px solid #232a36;padding:10px;font-family:Inter,sans-serif;';
+  bar.style.cssText='position:sticky;top:0;z-index:2000;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;background:#0d1117;border-bottom:1px solid #232a36;padding:10px;font-family:Inter,sans-serif;';
   const lbl=document.createElement('span');
   lbl.style.cssText='color:#9aa4b2;font-size:13px;font-weight:700;margin-right:4px;';
   lbl.textContent=aAb+' @ '+hAb+' — tap to download a section PNG:';
@@ -11366,7 +11366,7 @@ body.pm-on .apx-mkt, body.pm-on .apx-fair, body.pm-on .apx-mkttot, body.pm-on .a
    keep the X + arrows, and let the existing resize handshake grow the iframe to
    fit. setProperty(...,'important') beats the stylesheet !important static rules. */
 (function(){
-  function isEmbedSb(){ return document.body.classList.contains('embed-scoreboard'); }
+  function isEmbedSb(){ return document.body.classList.contains('embed-scoreboard') && !document.body.classList.contains('shot-mode'); }  /* shot mode (embed-tool screenshots) keeps the modal inline under the sticky button bar */
   var lastY=null, tmr=0, bg=null;
   document.addEventListener('click', function(e){
     var c=e.target.closest && e.target.closest('.apx-card[data-pk]');
