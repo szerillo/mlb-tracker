@@ -1,0 +1,21 @@
+name: kalshi-prop-orderbook-log
+on:
+  schedule:
+    - cron: '*/20 14-23,0-3 * * *'   # every 20 min, 10 AM to 11:59 PM ET
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  snap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python3 scripts/kalshi_oblog_once.py
+      - run: python3 scripts/an_props_log_once.py
+      - run: |
+          git config user.name "oblog-bot"; git config user.email "actions@users.noreply.github.com"
+          git add data/kalshi_oblog data/an_props_log && git commit -m "kalshi prop orderbook snapshot" || exit 0
+          git pull --rebase && git push
