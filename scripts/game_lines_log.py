@@ -8,6 +8,9 @@ One snapshot per run, for today's and tomorrow's games (ET), full game + first f
   data/game_lines/kalshi_log.jsonl     Kalshi game markets (GAME, TOTAL, SPREAD, F5, F5TOTAL, F5SPREAD, TEAMTOTAL): bid/ask/last/volume for every open rung.
   data/game_lines/kalshi_prints.jsonl  Kalshi $1,000+ pregame prints on GAME, F5 and the TOTAL / F5TOTAL / TEAMTOTAL rungs nearest 50%, since the last run (deduped by trade id).
   data/game_lines/latest.json          The newest snapshot of all of the above, keyed by game (what sides_board.py reads).
+  data/game_lines/pinnacle_first.json  First post per Pinnacle market (line, prices, OPENING LIMIT) plus the latest limit (Fable 10/7).
+  data/game_lines/lineups_confirmed.json  First time both lineups were posted, per game (Fable 10/7).
+  In the last 90 minutes before any first pitch the run takes 2 extra Pinnacle + Kalshi snapshots 5 minutes apart (Fable 10/7).
 
 Read-only public endpoints. Places nothing.
 """
@@ -167,11 +170,58 @@ def append(name, rows):
     with open(os.path.join(OUT, name), 'a') as f:
         for r in rows: f.write(json.dumps(r) + '\n')
 
+def pinnacle_first(plat):
+    """Fable 10/7: keep each Pinnacle market's FIRST post (line, prices, opening limit) - limit growth is the sharp-money tell."""
+    p = os.path.join(OUT, 'pinnacle_first.json'); cur = json.load(open(p)) if os.path.exists(p) else {}; n = 0
+    for gk, snap in plat.items():
+        for mkt, rec in snap.items():
+            if not isinstance(rec, dict) or 'mkt' not in rec: continue
+            k = f"{gk}|{mkt}"
+            if k not in cur: cur[k] = {'first_ts': NOW_S, **rec}; n += 1
+            else: cur[k]['last_limit'] = rec.get('limit'); cur[k]['last_ts'] = NOW_S
+    json.dump(cur, open(p, 'w'))
+    return n
+
+def lineups_confirmed():
+    """Fable 10/7: first time both lineups are posted per game, so open-to-confirm and confirm-to-close moves can be separated."""
+    p = os.path.join(OUT, 'lineups_confirmed.json'); cur = json.load(open(p)) if os.path.exists(p) else {}; n = 0
+    for d in DATES:
+        x = g(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={d}&hydrate=lineups,team")
+        for dd in x.get('dates', []):
+            for gm in dd['games']:
+                lu = gm.get('lineups') or {}
+                if lu.get('awayPlayers') and lu.get('homePlayers'):
+                    ab = lambda t: {'CHW': 'CWS', 'AZ': 'ARI', 'WAS': 'WSH', 'OAK': 'ATH'}.get(t['team'].get('abbreviation'), t['team'].get('abbreviation'))
+                    k = gkey(ab(gm['teams']['away']), ab(gm['teams']['home']), gm['gameDate'])
+                    if k not in cur: cur[k] = {'confirmed_ts': NOW_S, 'game_pk': gm['gamePk']}; n += 1
+    json.dump(cur, open(p, 'w'))
+    return n
+
+def snapshot(full=True):
+    global NOW, NOW_S
+    NOW = dt.datetime.now(dt.timezone.utc); NOW_S = NOW.isoformat()
+    prow, plat = pinnacle(); append('pinnacle_log.jsonl', prow); nf = pinnacle_first(plat)
+    krow, klat, mains = kalshi(); append('kalshi_log.jsonl', krow)
+    arow, alat, prints = [], None, []
+    if full:
+        arow, alat = action_network(); append('an_log.jsonl', arow); prints = kalshi_prints(mains)
+    return prow, plat, arow, alat, krow, klat, prints, nf
+
 def main():
-    prow, plat = pinnacle(); arow, alat = action_network(); krow, klat, mains = kalshi(); prints = kalshi_prints(mains)
-    append('pinnacle_log.jsonl', prow); append('an_log.jsonl', arow); append('kalshi_log.jsonl', krow)
+    prow, plat, arow, alat, krow, klat, prints, nf = snapshot(True)
+    nl = lineups_confirmed()
     json.dump({'ts': NOW_S, 'pinnacle': plat, 'action': alat, 'kalshi': klat}, open(os.path.join(OUT, 'latest.json'), 'w'))
-    print(f"[lines] pinnacle {len(plat)} games / {len(prow)} rows; AN {len(alat)} games / {len(arow)} rows; Kalshi {len(klat)} events / {len(krow)} rungs; {len(prints)} new $1k+ prints")
+    print(f"[lines] pinnacle {len(plat)} games / {len(prow)} rows ({nf} first posts); AN {len(alat)} games / {len(arow)} rows; Kalshi {len(klat)} events / {len(krow)} rungs; {len(prints)} new $1k+ prints; {nl} lineups newly confirmed")
+    # Fable 10/7: 5-minute cadence in the last 90 minutes before a first pitch (Pinnacle incl. F5 / TT, and Kalshi), inside this run
+    extra = int(os.environ.get('LAST90_EXTRA_SNAPS', 2))
+    for i in range(extra):
+        starts = [dt.datetime.fromisoformat(v['start'].replace('Z', '+00:00')) for v in alat.values()]
+        if not any(0 < (s - dt.datetime.now(dt.timezone.utc)).total_seconds() / 60 <= 90 for s in starts): break
+        time.sleep(300)
+        prow, plat2, _, _, krow, klat2, _, nf = snapshot(False)
+        lat = json.load(open(os.path.join(OUT, 'latest.json'))); lat.update({'ts': NOW_S, 'pinnacle': plat2 or lat['pinnacle'], 'kalshi': klat2 or lat['kalshi']})
+        json.dump(lat, open(os.path.join(OUT, 'latest.json'), 'w'))
+        print(f"[lines] last-90 snapshot {i + 1}: pinnacle {len(prow)} rows, Kalshi {len(krow)} rungs")
 
 if __name__ == '__main__':
     main()

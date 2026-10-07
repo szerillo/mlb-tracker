@@ -26,7 +26,10 @@ FREEZE_MIN = float(os.environ.get('FREEZE_MIN', 30))
 SHEET_CSV = ("https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P"
              "/pub?gid=580753288&single=true&output=csv")
 BOOKS = ['DK', 'FD', 'CZR', 'BetRivers', 'Fanatics', 'theScore']          # NY books (BetMGM excluded by rule)
-THRESH = {'ml': 3.0, 'total': 2.5, 'tt': 3.5, 'f5_ml': 3.5, 'f5_total': 3.5}
+THRESH = {'ml': 3.0, 'total': 2.5, 'tt': 5.0, 'f5_ml': 3.5, 'f5_total': 3.5}   # Fable 10/7: TT floor 5 while the sheet level is off
+# Fable 10/7 (REPLY_sharp_sides_totals): October scoring factor goes ON TOP of the sheet's runs (logged postseason assumption)
+SEASON_FACTOR = {'F': 1.04, 'D': 1.04, 'L': 1.04, 'W': 0.95}
+NO_SHEET_UNDERS = True   # Fable 10/7: no under leans off the sheet's total, F5 total or TT until the sheet is recentred (level bias, not edge)
 LAG = {'ml': 0.02, 'total': 0.3}
 SLOPE = {'total': 0.113, 'f5_total': 0.19, 'tt': 0.19}   # prob per run for line shifts (full total 0.113 = house constant)                                           # Fable cross-venue live test
 MKT_NAME = {'ml': 'Moneyline', 'total': 'Total', 'tt': 'Team total', 'f5_ml': 'F5 moneyline', 'f5_total': 'F5 total'}
@@ -86,6 +89,20 @@ def jl(p):
 def g(u):
     try: return urllib.request.urlopen(urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'}), timeout=25).read().decode()
     except Exception: return ''
+
+_GT = {}
+def game_type(date, away, home):
+    """StatsAPI gameType (R / F / D / L / W) for the game, cached per date."""
+    if date not in _GT:
+        _GT[date] = {}
+        try:
+            x = json.loads(g(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}&hydrate=team") or '{}')
+            for d in x.get('dates', []):
+                for gm in d['games']:
+                    ab = lambda t: {'CHW': 'CWS', 'AZ': 'ARI', 'WAS': 'WSH', 'OAK': 'ATH'}.get(t['team'].get('abbreviation'), t['team'].get('abbreviation'))
+                    _GT[date][(ab(gm['teams']['away']), ab(gm['teams']['home']))] = gm.get('gameType')
+        except Exception: pass
+    return _GT[date].get((away, home), 'R')
 
 # ---------- Sean's projections ----------
 def projections():
@@ -162,13 +179,18 @@ def build():
     for gkey, an in L['action'].items():
         a, h = an['away'], an['home']; start = an['start'].replace('.000Z', '+00:00').replace('Z', '+00:00')
         sdt = dt.datetime.fromisoformat(start); started = sdt <= NOW or an.get('status') not in (None, 'scheduled')
+        if started: continue   # in-game prices are not pregame prices: no cards once a game starts
         pin = L['pinnacle'].get(gkey, {}) or next((v for k, v in L['pinnacle'].items() if v['away'] == a and v['home'] == h and abs((dt.datetime.fromisoformat(v['start'].replace('Z', '+00:00')) - sdt).total_seconds()) < 4 * 3600), {})
         kcode = sdt.astimezone(ET).strftime('%y') + sdt.astimezone(ET).strftime('%b').upper() + sdt.astimezone(ET).strftime('%d%H%M') + a + h
         krs = L['kalshi'].get(kcode) or next((v for k, v in L['kalshi'].items() if k.endswith(a + h) and k[:7] == kcode[:7]), [])
         model, model5 = full.get(int(an['an_id'])), f5.get(int(an['an_id']))
+        gt = game_type(sdt.astimezone(ET).date().isoformat(), a, h); fac = SEASON_FACTOR.get(gt, 1.0)
+        if model and fac != 1.0:   # 1.04 postseason / 0.95 World Series on the sheet's runs; WP unchanged
+            model = {**model, **{k: model[k] * fac for k in ('away_runs', 'home_runs', 'total') if model.get(k) is not None}}
         books = an['books']
         base = {'game': f"{a} @ {h}", 'away': a, 'home': h, 'first_pitch': sdt.isoformat(), 'date': sdt.astimezone(ET).date().isoformat(),
-                'started': started, 'an_id': an['an_id'], 'model_src': (model or {}).get('src'), 'kalshi_event': kcode if krs else None}
+                'started': started, 'an_id': an['an_id'], 'model_src': (model or {}).get('src'), 'kalshi_event': kcode if krs else None,
+                'game_type': gt, 'scoring_factor': fac}
         prints_g = [p for p in PR if kcode in p['ticker']]
         pkey = next((k for k, v in L['pinnacle'].items() if v is pin), None)
 
@@ -220,15 +242,24 @@ def build():
             elif open_line is not None and cons_line is not None and open_line != cons_line:
                 c['signals']['move'] = {'src': 'consensus vs open', 'line_from': open_line, 'line_to': cons_line}
             mvp = (c['signals'].get('move') or {}).get('pts')
-            if mvp is not None and abs(mvp) >= 1.0: c['chips'].append(('toward' if mvp > 0 else 'against') + f" you: market {mvp:+.1f} pts on this side")
+            if mvp is not None and abs(mvp) >= 1.0: c['chips'].append(f"market moved {mvp:+.1f} pts on this side since open (display only, Fable 10/7)")
             if 'line_from' in (c['signals'].get('move') or {}): c['chips'].append(f"line moved {c['signals']['move']['line_from']} → {c['signals']['move']['line_to']}")
             if mk is not None:
                 gap = (best['model'] - mk) * 100; c['signals']['model_vs_market'] = round(gap, 1)
-            if public and public.get('tickets_pct') is not None and public.get('money_pct'):
-                d = public['money_pct'] - public['tickets_pct']
-                if d >= 10: c['chips'].append(f"money {public['money_pct']}% vs tickets {public['tickets_pct']}% on this side (ungraded)")
+            # public money / tickets: logged only (Fable 10/7: revisit at 500 games); shown as plain text on the card, never a chip
             if extra: c.update(extra)
             lvl = 'bet' if c['edge'] >= th else ('lean' if c['edge'] >= th - 1.5 else ('watch' if c['edge'] > 0 else 'info'))
+            # timing (Fable 10/7): ML / F5 ML keep ~1/3 of the edge in play at mid-day and ~1/5 in the last 3 h; totals / TT / F5 totals are done by 6 h out
+            mins = (sdt - NOW).total_seconds() / 60
+            if mkt in ('ml', 'f5_ml'):
+                c['timing'] = 'early: best CLV' if mins > 720 else ('mid-day: about a third of the edge still to come' if mins > 180 else 'late: about a fifth of the edge left to come')
+            else:
+                c['timing'] = 'open window: totals keep moving toward the sheet until about 6 h out' if mins > 360 else 'under 6 h out: effectively the close for totals'
+            if mkt in ('f5_ml', 'f5_total') or mkt.startswith('tt'):
+                c['chips'].append('thinner market than ML: CLV-graded, small stake')
+            if NO_SHEET_UNDERS and side == 'under' and (mkt in ('total', 'f5_total') or mkt.startswith('tt')) and lvl != 'info':
+                c['blocked'] = 'No sheet unders in October until the sheet is recentred (Fable 10/7): the sheet ran about 1 run a game under all summer, so under edges are level bias'
+                c['chips'].append('blocked: sheet-under level bias (Fable 10/7)'); lvl = 'info'
             c['level'] = lvl
             return c
 
@@ -364,13 +395,14 @@ def build():
                     same = sum(p['usd'] for p in mine if (p['taker_side'] == 'yes') == (c.get('kalshi_side') == 'YES'))
                     opp = sum(p['usd'] for p in mine) - same
                     c['signals']['kalshi_prints_3h'] = {'same_side_usd': same, 'other_side_usd': opp, 'n': len(mine)}
-                    c['chips'].append(f"Kalshi $1k+ prints (3 h): ${same:,} your side / ${opp:,} other (ungraded)")
+                    c['chips'].append(f"Kalshi $1k+ prints (3 h): ${same:,} your side / ${opp:,} other (not a signal, Fable 10/7)")
     return cards
 
 def main():
     cards = build()
     out = {'meta': {'built': NOW_S, 'lines_ts': json.load(open(os.path.join(GL, 'latest.json')))['ts'], 'thresholds': THRESH, 'lag': LAG,
-                    'books': BOOKS, 'note': 'Model = Sean GAME/F5 UPLOADER. Flow signals are ungraded context.'},
+                    'books': BOOKS, 'season_factor': SEASON_FACTOR, 'no_sheet_unders': NO_SHEET_UNDERS,
+                    'note': 'Model = Sean GAME/F5 UPLOADER, runs x1.04 postseason (0.95 WS). Fable 10/7: bet = edge at the current price; moves, Kalshi prints, imbalance and public % are display only.'},
            'cards': cards}
     json.dump(out, open(os.path.join(GL, 'board_latest.json'), 'w'), default=str)
     # archive positions worth grading (bet / lean / lag), pregame only
