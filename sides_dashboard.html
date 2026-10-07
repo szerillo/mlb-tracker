@@ -83,14 +83,14 @@
     <div class="seg" id="segMkt"><button data-m="all" class="on">All</button><button data-m="ml">ML</button><button data-m="total">Total</button><button data-m="tt">Team totals</button><button data-m="f5">F5</button><button data-m="lag">Kalshi lag</button></div>
   </div>
   <div class="legend">
-    <span><span class="badge bet">Bet</span> model edge ≥ threshold at the best venue (ML 3, total 2.5, team total / F5 3.5 pts)</span>
+    <span><span class="badge bet">Bet</span> model edge ≥ threshold at the best venue (ML 3, total 2.5, F5 3.5, team total 5 pts)</span>
     <span><span class="badge lean">Lean</span> within 1.5 pts of the threshold</span>
     <span><span class="badge lead">Lead</span> Fable cross-venue lag (live test)</span>
     <span><span class="badge watch">Watch</span> small positive edge</span>
   </div>
   <div class="legend">
     <span><b>Model</b> = your GAME / F5 UPLOADER numbers, priced with the app's edge math. <b>Edge</b> = model − cost at the best venue (Kalshi incl. fee). Grey "vs mkt" = against Pinnacle (or consensus) no-vig: negative means you are fading the market.</span>
-    <span><b>Signals</b> (movement, Pinnacle, public money vs tickets, Kalshi $1k+ prints) are context, ungraded until Fable rules. Never the call by themselves.</span>
+    <span><b>Fable 10/7:</b> the call is the edge at the current price, nothing else. Market moves, Kalshi $1k+ prints, taker imbalance and public % are display only (tested: not signals). Your runs carry ×1.04 in the postseason (0.95 World Series). No sheet unders on totals, F5 totals or team totals until the sheet is recentred. Team totals need 5 pts. Best time: the open for everything; ML and F5 ML still worth it mid-day.</span>
   </div>
   <div id="board"></div>
   <p class="note" style="margin-top:14px">Decision support only. Sean places every ticket. BetMGM excluded. Kalshi F5 is 3-way (team YES loses on a tie): its price is shown tie-adjusted so it compares to 2-way books. Team-total edges only at the posted line (the TT model is calibrated there).</p>
@@ -133,10 +133,12 @@ function rowHTML(c,showGame){
                                              :`${esc(c.venue)} <b>${am(c.odds)}</b><div class="sub">board ${hmET(B.meta.built)}</div>`;
   const fair=`${pct(c.model)}<div class="sub">model${c.model_proj?' ('+esc(c.model_proj)+')':''}</div><div class="sub">mkt ${pct(c.market_fair)} ${esc((c.market_fair_src||'').replace(' (approx)','*'))}</div>`;
   const edge=`<span class="${cls(c.edge)}"><b>${sgn(c.edge)}</b></span><div class="sub">need ${c.threshold}</div><div class="sub">vs mkt ${sgn(c.edge_mkt)}</div>`;
-  const mv=(c.signals||{}).move; const mvTxt=mv&&mv.pts!=null?`<span class="${cls(mv.pts)}">${sgn(mv.pts)}</span> <span class="sub">${esc(mv.src)}</span>`:(mv&&mv.line_from!=null?`<span class="sub">line ${mv.line_from} → ${mv.line_to}</span>`:'<span class="mut">no move data</span>');
-  const pub=c.public&&c.public.tickets_pct!=null?`<div class="sub">public ${c.public.tickets_pct}% tix / ${c.public.money_pct}% $</div>`:'';
+  const mv=(c.signals||{}).move; const mvTxt=mv&&mv.pts!=null?`<span class="mut">move ${sgn(mv.pts)}</span> <span class="sub">${esc(mv.src)}</span>`:(mv&&mv.line_from!=null?`<span class="sub">line ${mv.line_from} → ${mv.line_to}</span>`:'<span class="mut">no move data</span>');
+  const pub=c.public&&c.public.tickets_pct!=null?`<div class="sub mut">public ${c.public.tickets_pct}% tix / ${c.public.money_pct}% $ (log only)</div>`:'';
   const kp=(c.signals||{}).kalshi_prints_3h; const kpTxt=kp?`<div class="sub">Kalshi $1k+: $${kp.same_side_usd.toLocaleString()} / $${kp.other_side_usd.toLocaleString()}</div>`:'';
-  const chips=(c.chips||[]).map(t=>`<span class="chip ${/^toward/.test(t)?'ok':(/^against/.test(t)?'bad':(/ungraded|ONE bet/.test(t)?'warn':''))}">${esc(t)}</span>`).join('');
+  const chips=(c.chips||[]).map(t=>`<span class="chip ${/^blocked/.test(t)?'bad':(/ONE bet|thinner/.test(t)?'warn':'')}">${esc(t)}</span>`).join('');
+  const timing=c.timing?`<div class="sub">⏱ ${esc(c.timing)}</div>`:'';
+  const blocked=c.blocked?`<div class="sub neg">${esc(c.blocked)}</div>`:'';
   const target=c.level!=='info'?`<span class="play ${c.level==='bet'||c.level==='lead'?'':'dim'}">Bet at or better than ${am(c.target_am)}${c.target_kalshi_cents?` · Kalshi ≤ ${c.target_kalshi_cents}¢`:''}</span>`:'';
   const below=['bet','lead'].includes(c.level)&&c.edge<c.threshold?'<span class="chip warn">price worse than threshold now</span>':'';
   const prices=(c.all_prices||[]).length?`<table class="t"><tr><th>Venue</th><th>Line</th><th>Price</th><th>Cost</th><th>Edge</th></tr>${c.all_prices.map(p=>`<tr><td>${esc(p.venue)}</td><td>${p.line??'–'}</td><td>${am(p.odds)}</td><td>${pct(p.cost)}</td><td class="${cls(p.edge)}">${sgn(p.edge)}</td></tr>`).join('')}</table>`:'';
@@ -144,7 +146,7 @@ function rowHTML(c,showGame){
   return `<div class="row">
     <div><span class="badge ${c.level}">${LVL[c.level]}</span></div>
     <div class="bet"><b>${esc(c.label)}</b> <span class="mut">${esc(c.market)}</span>${showGame?`<div class="sub">${esc(c.game)} · ${countdown(c.first_pitch)}</div>`:''}
-      <div>${target} ${below}</div><div>${chips}</div><span class="tog" data-id="${id}">${open?'▾ hide prices':'▸ all prices & Pinnacle'}</span></div>
+      <div>${target} ${below}</div>${blocked}${timing}<div>${chips}</div><span class="tog" data-id="${id}">${open?'▾ hide prices':'▸ all prices & Pinnacle'}</span></div>
     <div class="mono c-p">${price}</div><div class="mono c-m">${fair}</div><div class="mono c-e">${edge}</div><div class="c-s">${mvTxt}${pub}${kpTxt}</div>
     ${open?`<div class="why">${pin}${prices}</div>`:''}</div>`;
 }
