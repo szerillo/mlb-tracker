@@ -2538,6 +2538,7 @@ body.embed-mode.embed-futures #tab-futures,
     <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
         <button class="tab" data-tab="playoff-futures" role="tab">Playoff Futures</button>
         <button class="tab" data-tab="sharp-props" role="tab">Sharp Props</button>
+        <button class="tab" data-tab="sharp-sides" role="tab">Sharp Sides &amp; Totals</button>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -2567,6 +2568,15 @@ body.embed-mode.embed-futures #tab-futures,
       function open(){ if(!f.src) f.src=f.dataset.src; [60,300,900].forEach(function(t){setTimeout(fit,t);}); }
       document.querySelectorAll('.tab[data-tab="sharp-props"]').forEach(function(b){b.addEventListener('click',open);});
       if(/[#&?]tab=sharp-props|#sharp-props/.test(location.href)) setTimeout(open,50);})();</script>
+    <section id="tab-sharp-sides" class="tab-content" hidden>
+      <iframe id="ss-frame" title="Sharp Sides &amp; Totals" data-src="sides_dashboard.html" style="width:100%;border:0;display:block;min-height:620px" scrolling="no"></iframe>
+    </section>
+    <script>(function(){var f=document.getElementById('ss-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}
+      f.addEventListener('load',function(){[150,600,1500,3000].forEach(function(t){setTimeout(fit,t);});try{new ResizeObserver(fit).observe(f.contentWindow.document.body);}catch(e){}});
+      window.addEventListener('resize',fit);
+      function open(){ if(!f.src) f.src=f.dataset.src; [60,300,900].forEach(function(t){setTimeout(fit,t);}); }
+      document.querySelectorAll('.tab[data-tab="sharp-sides"]').forEach(function(b){b.addEventListener('click',open);});
+      if(/[#&?]tab=sharp-sides|#sharp-sides/.test(location.href)) setTimeout(open,50);})();</script>
   <section id="tab-scoreboard" class="tab-content">
     <div class="an-proj-banner">
       <span class="an-proj-lbl">Today's projections</span>
@@ -3731,13 +3741,20 @@ async function exportScoreboardPNG(){
   if(!games.length){ alert('No games to export yet.'); return; }
   const btn=document.getElementById('apx-png'); const oldT=btn?btn.textContent:''; if(btn){btn.textContent='Rendering…';btn.disabled=true;}
   let dateStr=''; try{ const d=(typeof VIEW_DATE!=='undefined'&&VIEW_DATE)?new Date(VIEW_DATE+'T12:00:00'):new Date(); dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }catch(e){}
-  // ≤10 games → one 3-wide image (9 → clean 3x3). 11+ games → two images,
+  // ≤10 games → one 3-wide image (9 → clean 3x3; 4 → 2x2; 2 → 1x2; 1 → single). 11+ games → two images,
   // balanced split (e.g. 15 → 8 / 7), 2-wide grid, trailing odd card centered.
   let chunks, cols, stageW, winW;
   if (games.length >= 11) {
     const half = Math.ceil(games.length / 2);
     chunks = [games.slice(0, half), games.slice(half)];
     cols = 2; stageW = 960; winW = 1000;
+  } else if (games.length === 4 || games.length === 2) {
+    // 4 games -> 2x2, 2 games -> 1x2: same card width as the 3-wide layout, no orphan row
+    chunks = [games];
+    cols = 2; stageW = 960; winW = 1000;
+  } else if (games.length === 1) {
+    chunks = [games];
+    cols = 1; stageW = 520; winW = 560;
   } else {
     chunks = [games];
     cols = 3; stageW = 1380; winW = 1420;
