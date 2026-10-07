@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BARTOLO · Sharp Sides &amp; Totals</title>
+<style>
+  :root{--bg:#0d1117;--panel:#141a23;--panel2:#1a2230;--border:#263042;--text:#e6e9ef;--muted:#8b96a8;--accent:#5eead4;--good:#4ade80;--bad:#f87171;--warn:#fbbf24;
+        --bet:#22c55e;--lean:#38bdf8;--lead:#60a5fa;--watch:#a78bfa;--info:#64748b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 16px 50px}
+  .title{font-size:17px;font-weight:700;letter-spacing:.03em;margin:0 0 6px}
+  body.in-site .title{display:none} body.in-site .wrap{padding:6px 0 30px;max-width:none}
+  .strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted);background:var(--panel)}
+  .pill b{color:var(--text)} .pill.ok{color:var(--good);border-color:#1f6f4a} .pill.bad{color:var(--bad);border-color:#7f2a2a} .pill.warn{color:var(--warn);border-color:#7a5a12}
+  .pill.btn{cursor:pointer;color:var(--text)}
+  .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0 12px}
+  .sum{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 12px}
+  .sum .k{font-size:22px;font-weight:800} .sum .l{font-size:12px;color:var(--muted)}
+  .sum.bet{border-top:3px solid var(--bet)} .sum.lean{border-top:3px solid var(--lean)} .sum.lead{border-top:3px solid var(--lead)} .sum.watch{border-top:3px solid var(--watch)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 12px}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel);color:var(--muted);border:0;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px}
+  .seg button.on{background:var(--panel2);color:var(--text);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent)}
+  .ctl-label{font-size:12px;color:var(--muted)}
+  .banner{background:#3a1d1d;border:1px solid #7f2a2a;color:#fecaca;border-radius:8px;padding:8px 12px;margin:8px 0}
+  .legend{font-size:12px;color:var(--muted);margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px 14px}
+  .sec{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin:12px 0;overflow:hidden}
+  .sec-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--border)}
+  .sec-h .name{font-weight:800;font-size:15px} .sec-h .meta{color:var(--muted);font-size:12px} .sec-h .right{margin-left:auto;font-size:12px}
+  details.sec>summary{list-style:none;cursor:pointer} details.sec>summary::-webkit-details-marker{display:none}
+  .row{display:grid;grid-template-columns:76px minmax(220px,1.8fr) 130px 120px 120px 96px;gap:8px;align-items:center;padding:9px 14px;border-top:1px solid var(--border)}
+  .row.head{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:6px;padding-bottom:6px;background:rgba(255,255,255,.015);border-top:0}
+  .bet b{font-weight:700} .sub{font-size:12px;color:var(--muted)}
+  .play{display:inline-block;margin-top:4px;font-size:13px;font-weight:800;color:#0d1117;background:var(--accent);border-radius:6px;padding:2px 8px}
+  .play.dim{background:var(--panel2);color:var(--muted);font-weight:600}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+  .badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:2px 7px}
+  .badge.bet{background:rgba(34,197,94,.15);color:var(--bet)} .badge.lean{background:rgba(56,189,248,.13);color:var(--lean)} .badge.lead{background:rgba(96,165,250,.15);color:var(--lead)}
+  .badge.watch{background:rgba(167,139,250,.15);color:var(--watch)} .badge.info{background:rgba(100,116,139,.2);color:#94a3b8}
+  .chip{display:inline-block;font-size:11px;border:1px solid var(--border);border-radius:999px;padding:0 7px;margin:2px 4px 0 0;color:var(--muted)}
+  .chip.ok{color:var(--good);border-color:#1f6f4a} .chip.bad{color:var(--bad);border-color:#7f2a2a} .chip.warn{color:var(--warn);border-color:#7a5a12}
+  .pos{color:var(--good)} .neg{color:var(--bad)} .mut{color:var(--muted)}
+  .why{grid-column:1/-1;font-size:12px;color:var(--muted);background:rgba(255,255,255,.02);border-radius:8px;padding:8px 10px;margin-top:2px}
+  .tog{cursor:pointer;color:var(--accent);font-size:12px;user-select:none}
+  .empty{color:var(--muted);font-style:italic;padding:10px 14px}
+  table.t{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  table.t th{color:var(--muted);font-weight:500;text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+  table.t td{text-align:right;padding:4px 6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border-bottom:1px solid rgba(255,255,255,.03)}
+  table.t th:first-child,table.t td:first-child{text-align:left;font-family:inherit}
+  .pad{padding:8px 14px 12px} .note{font-size:12px;color:var(--muted)}
+  @media (max-width:760px){
+    .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .row{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:6px}
+    .row>div:first-child,.row .bet{grid-column:1/-1}
+    .row.head{display:none}
+    .c-p::before{content:'Best price ';color:var(--muted);font-size:11px} .c-m::before{content:'Fair ';color:var(--muted);font-size:11px}
+    .c-e::before{content:'Edge ';color:var(--muted);font-size:11px} .c-s::before{content:'Signals ';color:var(--muted);font-size:11px}
+    .tw{overflow-x:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">B.A.R.T.O.L.O. · Sharp Sides &amp; Totals</div>
+  <div class="strip">
+    <span class="pill" id="h-built">Board: …</span>
+    <span class="pill" id="h-model">Model: …</span>
+    <span class="pill" id="h-live">Live Kalshi: …</span>
+    <span class="pill btn" id="refreshLive">↻ Refresh prices</span>
+    <span class="pill btn" id="reload">↻ Reload board</span>
+  </div>
+  <div id="banners"></div>
+  <div class="summary" id="summary"></div>
+  <div class="controls">
+    <span class="ctl-label">Organize by</span>
+    <div class="seg" id="segView"><button data-v="market" class="on">Market</button><button data-v="game">Game</button></div>
+    <span class="ctl-label">Day</span>
+    <div class="seg" id="segDay"><button data-d="today" class="on">Today</button><button data-d="tomorrow">Tomorrow</button><button data-d="all">All</button></div>
+    <span class="ctl-label">Market</span>
+    <div class="seg" id="segMkt"><button data-m="all" class="on">All</button><button data-m="ml">ML</button><button data-m="total">Total</button><button data-m="tt">Team totals</button><button data-m="f5">F5</button><button data-m="lag">Kalshi lag</button></div>
+  </div>
+  <div class="legend">
+    <span><span class="badge bet">Bet</span> model edge ≥ threshold at the best venue (ML 3, total 2.5, team total / F5 3.5 pts)</span>
+    <span><span class="badge lean">Lean</span> within 1.5 pts of the threshold</span>
+    <span><span class="badge lead">Lead</span> Fable cross-venue lag (live test)</span>
+    <span><span class="badge watch">Watch</span> small positive edge</span>
+  </div>
+  <div class="legend">
+    <span><b>Model</b> = your GAME / F5 UPLOADER numbers, priced with the app's edge math. <b>Edge</b> = model − cost at the best venue (Kalshi incl. fee). Grey "vs mkt" = against Pinnacle (or consensus) no-vig: negative means you are fading the market.</span>
+    <span><b>Signals</b> (movement, Pinnacle, public money vs tickets, Kalshi $1k+ prints) are context, ungraded until Fable rules. Never the call by themselves.</span>
+  </div>
+  <div id="board"></div>
+  <p class="note" style="margin-top:14px">Decision support only. Sean places every ticket. BetMGM excluded. Kalshi F5 is 3-way (team YES loses on a tie): its price is shown tie-adjusted so it compares to 2-way books. Team-total edges only at the posted line (the TT model is calibrated there).</p>
+</div>
+<script>
+if(window.self!==window.top) document.body.classList.add('in-site');
+const SRC='data/game_lines/board_latest.json', LIVE_API='/api/live';
+const LVL={bet:'Bet',lean:'Lean',lead:'Lead',watch:'Watch',info:'Info'}, ORD={bet:0,lead:1,lean:2,watch:3,info:4};
+const MK_ORDER=['ml','total','tt','f5_ml','f5_total','lag'];
+const MK_NAME={ml:'Moneyline',total:'Total',tt:'Team totals',f5_ml:'F5 moneyline',f5_total:'F5 total',lag:'Kalshi cross-venue lag (Fable live test)'};
+const state={view:'market',day:'today',mkt:'all',open:{},showInfo:false};
+let B=null, LIVE={ts:null,m:{}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fee=p=>0.07*p*(1-p), toAm=p=>p==null||p<=0||p>=1?null:(p>=0.5?-Math.round(100*p/(1-p)):Math.round(100*(1-p)/p));
+const am=o=>o==null?'–':(o>0?'+':'')+o, pct=(x,d=1)=>x==null?'–':(x*100).toFixed(d)+'%', sgn=(x,d=1)=>x==null?'–':((x>0?'+':'')+(+x).toFixed(d));
+const cls=x=>x==null?'mut':(x>0?'pos':'neg');
+const todayET=()=>new Date(Date.now()-4*3600e3).toISOString().slice(0,10), tomET=()=>new Date(Date.now()+20*3600e3).toISOString().slice(0,10);
+const hmET=iso=>new Date(iso).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'});
+const fmtET=iso=>new Date(iso).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET';
+function countdown(iso){ const m=(new Date(iso)-Date.now())/60000; if(m<0) return 'started'; const r=Math.round(m); return r>=60?`in ${Math.floor(r/60)}h ${r%60}m`:`in ${r}m`; }
+const group=c=>c.mkt.startsWith('tt')?'tt':(c.mkt.startsWith('lag')?'lag':c.mkt);
+async function load(){
+  try{ const r=await fetch(SRC+'?t='+Date.now()); B=r.ok?await r.json():null; }catch(e){ B=null; }
+  if(!B){ document.getElementById('board').innerHTML='<div class="banner">Board not built yet (data/game_lines/board_latest.json). It is written every 20 minutes by the order-book job.</div>'; return; }
+  render(); refreshLive();
+}
+async function refreshLive(){
+  if(!B) return; const tk=[...new Set(B.cards.filter(c=>!c.started&&c.ticker).map(c=>c.ticker))]; if(!tk.length) return;
+  try{ const r=await fetch(LIVE_API+'?tickers='+encodeURIComponent(tk.join(','))); const d=await r.json(); const got=d.markets||{};
+       if(Object.keys(got).length) LIVE={ts:d.ts,m:Object.assign({},LIVE.m,got)}; }catch(e){}
+  B.cards.forEach(c=>{ const m=c.ticker&&LIVE.m[c.ticker]; if(!m||!(m.bid>0)||!(m.ask>0&&m.ask<1)||c.started) return;
+    let px=c.kalshi_side==='NO'?1-m.bid:m.ask, cost=px+fee(px); if(/tie-adjusted/.test(c.venue)&&c.kalshi_tie_mid) cost=cost/(1-c.kalshi_tie_mid);
+    c.cost=cost; c.cost_am=toAm(cost); c.edge=(c.model-cost)*100; if(c.market_fair!=null) c.edge_mkt=(c.market_fair-cost)*100; c.live_ts=LIVE.ts; });
+  render();
+}
+const HEAD=`<div class="row head"><div>Call</div><div>Bet</div><div>Best price</div><div>Fair</div><div>Edge (pts)</div><div>Signals</div></div>`;
+function rowHTML(c,showGame){
+  const id=c.key.replace(/\W/g,'_'), open=state.open[id];
+  const price=c.venue==='Kalshi'||/Kalshi/.test(c.venue)?`${esc(c.venue)} ${c.kalshi_side||''}<div>${am(c.cost_am)} <span class="sub">(${(c.cost*100).toFixed(1)}¢ w/ fee)</span></div><div class="sub">${c.live_ts?'live '+hmET(c.live_ts):'board '+hmET(B.meta.built)}</div>`
+                                             :`${esc(c.venue)} <b>${am(c.odds)}</b><div class="sub">board ${hmET(B.meta.built)}</div>`;
+  const fair=`${pct(c.model)}<div class="sub">model${c.model_proj?' ('+esc(c.model_proj)+')':''}</div><div class="sub">mkt ${pct(c.market_fair)} ${esc((c.market_fair_src||'').replace(' (approx)','*'))}</div>`;
+  const edge=`<span class="${cls(c.edge)}"><b>${sgn(c.edge)}</b></span><div class="sub">need ${c.threshold}</div><div class="sub">vs mkt ${sgn(c.edge_mkt)}</div>`;
+  const mv=(c.signals||{}).move; const mvTxt=mv&&mv.pts!=null?`<span class="${cls(mv.pts)}">${sgn(mv.pts)}</span> <span class="sub">${esc(mv.src)}</span>`:(mv&&mv.line_from!=null?`<span class="sub">line ${mv.line_from} → ${mv.line_to}</span>`:'<span class="mut">no move data</span>');
+  const pub=c.public&&c.public.tickets_pct!=null?`<div class="sub">public ${c.public.tickets_pct}% tix / ${c.public.money_pct}% $</div>`:'';
+  const kp=(c.signals||{}).kalshi_prints_3h; const kpTxt=kp?`<div class="sub">Kalshi $1k+: $${kp.same_side_usd.toLocaleString()} / $${kp.other_side_usd.toLocaleString()}</div>`:'';
+  const chips=(c.chips||[]).map(t=>`<span class="chip ${/^toward/.test(t)?'ok':(/^against/.test(t)?'bad':(/ungraded|ONE bet/.test(t)?'warn':''))}">${esc(t)}</span>`).join('');
+  const target=c.level!=='info'?`<span class="play ${c.level==='bet'||c.level==='lead'?'':'dim'}">Bet at or better than ${am(c.target_am)}${c.target_kalshi_cents?` · Kalshi ≤ ${c.target_kalshi_cents}¢`:''}</span>`:'';
+  const below=['bet','lead'].includes(c.level)&&c.edge<c.threshold?'<span class="chip warn">price worse than threshold now</span>':'';
+  const prices=(c.all_prices||[]).length?`<table class="t"><tr><th>Venue</th><th>Line</th><th>Price</th><th>Cost</th><th>Edge</th></tr>${c.all_prices.map(p=>`<tr><td>${esc(p.venue)}</td><td>${p.line??'–'}</td><td>${am(p.odds)}</td><td>${pct(p.cost)}</td><td class="${cls(p.edge)}">${sgn(p.edge)}</td></tr>`).join('')}</table>`:'';
+  const pin=c.pinnacle?`<div>Pinnacle: ${c.pinnacle.line!=null?c.pinnacle.line+' ':''}${am(c.pinnacle.odds)} (no-vig ${pct(c.pinnacle.p)}), limit $${c.pinnacle.limit??'–'}${c.pinnacle.first?` · first seen today ${pct(c.pinnacle.first.p)}${c.pinnacle.first.line!=null?' at '+c.pinnacle.first.line:''}`:''}</div>`:'<div>Pinnacle: not posted</div>';
+  return `<div class="row">
+    <div><span class="badge ${c.level}">${LVL[c.level]}</span></div>
+    <div class="bet"><b>${esc(c.label)}</b> <span class="mut">${esc(c.market)}</span>${showGame?`<div class="sub">${esc(c.game)} · ${countdown(c.first_pitch)}</div>`:''}
+      <div>${target} ${below}</div><div>${chips}</div><span class="tog" data-id="${id}">${open?'▾ hide prices':'▸ all prices & Pinnacle'}</span></div>
+    <div class="mono c-p">${price}</div><div class="mono c-m">${fair}</div><div class="mono c-e">${edge}</div><div class="c-s">${mvTxt}${pub}${kpTxt}</div>
+    ${open?`<div class="why">${pin}${prices}</div>`:''}</div>`;
+}
+function render(){
+  if(!B) return;
+  const day=c=>state.day==='all'||c.date===(state.day==='today'?todayET():tomET());
+  const mk=c=>state.mkt==='all'||(state.mkt==='f5'?c.mkt.startsWith('f5'):group(c)===state.mkt);
+  let cards=B.cards.filter(c=>!c.started&&day(c)&&mk(c));
+  const age=(Date.now()-new Date(B.meta.built))/60000;
+  const hb=document.getElementById('h-built'); hb.className='pill '+(age>45?'warn':''); hb.innerHTML='Board: <b>'+fmtET(B.meta.built)+'</b>'+(age>45?' (stale)':'');
+  const srcs=[...new Set(B.cards.map(c=>c.model_src).filter(Boolean))]; document.getElementById('h-model').innerHTML='Model: <b>'+(srcs.join(', ')||'none')+'</b>';
+  const hl=document.getElementById('h-live'); hl.className='pill '+(LIVE.ts?'ok':''); hl.innerHTML='Live Kalshi: <b>'+(LIVE.ts?hmET(LIVE.ts)+' ET':'board prices')+'</b>';
+  document.getElementById('banners').innerHTML=(!B.cards.length?'<div class="banner">No games with both your projection and posted lines yet.</div>':'')+(age>45?'<div class="banner">Board is more than 45 minutes old. The order-book job may not have run.</div>':'');
+  const cnt=l=>cards.filter(c=>c.level===l).length;
+  document.getElementById('summary').innerHTML=[['bet','Bets'],['lead','Kalshi lag (live test)'],['lean','Leans'],['watch','Watch']].map(([l,t])=>`<div class="sum ${l}"><div class="k">${cnt(l)}</div><div class="l">${t}</div></div>`).join('');
+  const sortFn=(a,b)=>ORD[a.level]-ORD[b.level]||b.edge-a.edge;
+  const shown=cards.filter(c=>c.level!=='info'), hidden=cards.filter(c=>c.level==='info');
+  let html='';
+  if(state.view==='market'){
+    MK_ORDER.forEach(g=>{ const list=shown.filter(c=>group(c)===g).sort(sortFn); if(!list.length) return;
+      html+=`<div class="sec"><div class="sec-h"><span class="name">${MK_NAME[g]}</span><span class="meta">${list.length}</span></div>${HEAD}${list.map(c=>rowHTML(c,true)).join('')}</div>`; });
+  } else {
+    const byG={}; shown.forEach(c=>(byG[c.game+'|'+c.first_pitch]=byG[c.game+'|'+c.first_pitch]||{game:c.game,fp:c.first_pitch,list:[]}).list.push(c));
+    Object.values(byG).sort((a,b)=>new Date(a.fp)-new Date(b.fp)).forEach(g=>{
+      html+=`<div class="sec"><div class="sec-h"><span class="name">${esc(g.game)}</span><span class="meta">${fmtET(g.fp)} · ${countdown(g.fp)}</span></div>${HEAD}${g.list.sort(sortFn).map(c=>rowHTML(c,false)).join('')}</div>`; });
+  }
+  if(!shown.length) html='<div class="sec"><div class="empty">No positive model edges for this filter right now.</div></div>';
+  if(hidden.length) html+=`<details class="sec" ${state.showInfo?'open':''} id="infoSec"><summary class="sec-h"><span class="name">▸ No edge (${hidden.length})</span><span class="meta">the other side of each market, and negative edges</span></summary>${HEAD}${hidden.sort(sortFn).map(c=>rowHTML(c,true)).join('')}</details>`;
+  html+=`<div class="note" style="margin-top:8px">Graded results land in data/game_lines/board_summary.json once games settle (CLV vs Pinnacle close first; ROI at October samples is not a verdict).</div>`;
+  document.getElementById('board').innerHTML=html;
+  const det=document.getElementById('infoSec'); if(det) det.addEventListener('toggle',()=>{state.showInfo=det.open;});
+}
+function seg(id,attr,key){ document.getElementById(id).addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; state[key]=b.dataset[attr]; document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.toggle('on',x===b)); render();}); }
+seg('segView','v','view'); seg('segDay','d','day'); seg('segMkt','m','mkt');
+document.getElementById('board').addEventListener('click',e=>{const t=e.target.closest('.tog'); if(!t) return; state.open[t.dataset.id]=!state.open[t.dataset.id]; render();});
+document.getElementById('reload').onclick=load; document.getElementById('refreshLive').onclick=refreshLive;
+load(); setInterval(load,5*60*1000); setInterval(refreshLive,60*1000);
+</script>
+</body>
+</html>
