@@ -118,6 +118,11 @@
   .tab::after { content: "↗"; position: absolute; top: 0.3rem; right: 0.25rem;
     font-size: 0.55rem; opacity: 0.45; transition: opacity 0.15s; }
   .tab:hover::after, .tab.active::after { opacity: 0.9; }
+  .apx-pill.apx-open { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.45); }
+  body.embed-mode .apx-open { display: none !important; }
+  .tab-group { align-self: center; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); opacity: 0.75; padding: 0 0.15rem 0 0.35rem; }
+  @media (max-width: 760px) { .tab-group { display: none; } }
   .tab-sep { display: inline-block; width: 1px; height: 18px; background: var(--border);
     margin: 0 0.45rem; align-self: center; opacity: 0.7; }
   .ft-stars { display: inline-block; margin-left: 0.25rem; color: #ffd24d;
@@ -2518,27 +2523,32 @@ body.embed-mode.embed-futures #tab-futures,
             title="Toggle light / dark theme">🌗</button>
   </div>
   <div class="tabs" role="tablist">
-    <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button><a class="tab" href="/tracker" role="tab" style="text-decoration:none" onclick="window.location.href='/tracker';return false;">Exp vs Reality</a>
-    <button class="tab" data-tab="env" role="tab">Park | wX | Umps</button>
-    <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
+    <span class="tab-group">Today</span>
+    <button class="tab active" data-tab="scoreboard" role="tab">Scoreboard</button>
+    <button class="tab" data-tab="proj" role="tab">Projections</button>
+    <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
     <button class="tab" data-tab="lineups" role="tab">Lineups</button>
+    <button class="tab" data-tab="pitchers" role="tab">Pitchers</button>
     <button class="tab" data-tab="bullpen" role="tab">Bullpen Fatigue</button>
+    <button class="tab" data-tab="env" role="tab">Park | wX | Umps</button>
     <span class="tab-sep" aria-hidden="true"></span>
+    <span class="tab-group">Betting</span>
+    <button class="tab" data-tab="sharp-props" role="tab">Sharp Props</button>
+    <button class="tab" data-tab="bet-tracker" role="tab">Bet Tracker</button>
+    <span class="tab-sep" aria-hidden="true"></span>
+    <span class="tab-group">Postseason &amp; Futures</span>
+    <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
+    <button class="tab" data-tab="playoff-futures" role="tab">Playoff Futures</button>
+    <button class="tab" data-tab="futures" role="tab">Team Futures</button>
+    <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
+    <span class="tab-sep" aria-hidden="true"></span>
+    <span class="tab-group">Ratings &amp; Research</span>
     <button class="tab" data-tab="rankings" role="tab">Pitcher Ranks</button>
     <button class="tab" data-tab="hitter-ranks" role="tab">Hitter Ranks</button>
     <button class="tab" data-tab="team-rankings" role="tab">Team Ranks</button>
     <button class="tab" data-tab="team-compare" role="tab">Team Compare</button>
-    <span class="tab-sep" aria-hidden="true"></span>
-    <button class="tab" data-tab="proj" role="tab">Projections</button>
-    <button class="tab" data-tab="winprob" role="tab">Win Prob</button>
     <button class="tab" data-tab="luck" role="tab">Luck Ratings</button>
-    <span class="tab-sep" aria-hidden="true"></span>
-    <button class="tab" data-tab="futures" role="tab">Team Futures</button>
-    <button class="tab" data-tab="player-futures" role="tab">Player Futures</button>
-    <button class="tab" data-tab="playoffs" role="tab">Playoff Picture</button>
-        <button class="tab" data-tab="playoff-futures" role="tab">Playoff Futures</button>
-        <button class="tab" data-tab="sharp-props" role="tab">Sharp Props</button>
-        <button class="tab" data-tab="sharp-sides" role="tab">Sharp Sides &amp; Totals</button>
+    <a class="tab" href="/tracker" role="tab" style="text-decoration:none" onclick="window.location.href='/tracker';return false;">Exp vs Reality</a>
   </div>
   <div class="tabs-hint">
     Tip · click any game row to open a quick modal · tabs (↗) go deeper · use <code>←</code> / <code>→</code> inside the modal to scroll through games.
@@ -2568,15 +2578,15 @@ body.embed-mode.embed-futures #tab-futures,
       function open(){ if(!f.src) f.src=f.dataset.src; [60,300,900].forEach(function(t){setTimeout(fit,t);}); }
       document.querySelectorAll('.tab[data-tab="sharp-props"]').forEach(function(b){b.addEventListener('click',open);});
       if(/[#&?]tab=sharp-props|#sharp-props/.test(location.href)) setTimeout(open,50);})();</script>
-    <section id="tab-sharp-sides" class="tab-content" hidden>
-      <iframe id="ss-frame" title="Sharp Sides &amp; Totals" data-src="sides_dashboard.html" style="width:100%;border:0;display:block;min-height:620px" scrolling="no"></iframe>
+    <section id="tab-bet-tracker" class="tab-content" hidden>
+      <iframe id="bt-frame" title="Bet Tracker" data-src="bet_tracker.html" style="width:100%;border:0;display:block;min-height:620px" scrolling="no"></iframe>
     </section>
-    <script>(function(){var f=document.getElementById('ss-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}
+    <script>(function(){var f=document.getElementById('bt-frame');if(!f)return;function fit(){try{var d=f.contentWindow.document;var h=Math.max(d.body.scrollHeight,d.documentElement.scrollHeight);if(h)f.style.height=(h+8)+'px';}catch(e){}}
       f.addEventListener('load',function(){[150,600,1500,3000].forEach(function(t){setTimeout(fit,t);});try{new ResizeObserver(fit).observe(f.contentWindow.document.body);}catch(e){}});
       window.addEventListener('resize',fit);
       function open(){ if(!f.src) f.src=f.dataset.src; [60,300,900].forEach(function(t){setTimeout(fit,t);}); }
-      document.querySelectorAll('.tab[data-tab="sharp-sides"]').forEach(function(b){b.addEventListener('click',open);});
-      if(/[#&?]tab=sharp-sides|#sharp-sides/.test(location.href)) setTimeout(open,50);})();</script>
+      document.querySelectorAll('.tab[data-tab="bet-tracker"]').forEach(function(b){b.addEventListener('click',open);});
+      if(/[#&?]tab=bet-tracker|#bet-tracker/.test(location.href)) setTimeout(open,50);})();</script>
   <section id="tab-scoreboard" class="tab-content">
     <div class="an-proj-banner">
       <span class="an-proj-lbl">Today's projections</span>
@@ -3440,7 +3450,7 @@ function _apxEdgeBarF5(g){
   let tot='<span class="apx-pill">No F5 total edge</span>';
   const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO,1.53,true);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No F5 total edge</span>'; } }
-  return '<div class="apx-edgebar">'+ml+tot+'</div>';
+  return '<div class="apx-edgebar">'+ml+tot+_apxOpenBadges(g,true)+'</div>';
 }
 function _apxEdgeBarTT(g){
   const sp=sheetProjForGame(g.gamePk); const o=oddsForGame(g.gamePk);
@@ -3575,6 +3585,30 @@ function _apxBestEdge(g){
     return best;
   }catch(e){ return -1; }
 }
+// ── Open window (Fable 10/3 ALPHA_BEFORE_THE_CLOSE + 10/7 timing): your number vs the sportsbook OPEN.
+// Qualifies at ML 4+ pts, total 0.6+ runs, F5 ML 3.5+ pts, F5 total 0.75+ runs vs the open. The badge shows how much of that
+// edge the market still has to absorb by now ("left"), and the best current price (NY books excl. BetMGM, Kalshi incl. fee).
+// Built by scripts/sides_board.py every 20 min -> data/game_lines/open_edges.json. Pregame only.
+let OPEN_EDGES = null;
+async function loadOpenEdges(){
+  try { OPEN_EDGES = await fetchJSON('data/game_lines/open_edges.json?t=' + Date.now()); } catch (e) { OPEN_EDGES = null; }
+  if (OPEN_EDGES && OPEN_EDGES.built && (Date.now() - new Date(OPEN_EDGES.built)) > 3 * 3600e3) OPEN_EDGES = null;   // stale feed: show nothing
+}
+function _apxOpenBadges(g, f5){
+  try {
+    if (!OPEN_EDGES || !OPEN_EDGES.games) return '';
+    const o = oddsForGame(g.gamePk); const eid = o && o.an_event_id; if (eid == null) return '';
+    const G = OPEN_EDGES.games[String(eid)]; if (!G || !G.items) return '';
+    const want = f5 ? ['f5_ml','f5_total'] : ['ml','total'];
+    return G.items.filter(x => x.qualifies && want.includes(x.mkt)).map(x => {
+      const amt = x.unit === 'runs' ? (x.open_edge > 0 ? '+' : '') + x.open_edge.toFixed(2) + ' runs' : '+' + x.open_edge.toFixed(1) + ' pts';
+      const left = x.left_share != null ? '~' + Math.round(x.left_share * 100) + '% still to come' : '';
+      const best = x.best_venue ? (x.best_venue + ' ' + (x.best_odds != null ? (x.best_odds > 0 ? '+' : '') + x.best_odds : '') + (x.best_line != null && x.mkt.indexOf('total') >= 0 ? ' @' + x.best_line : '')) : '';
+      const tip = 'Your number vs the sportsbook open: ' + amt + '. The market still has to absorb about ' + left.replace('~','').replace(' still to come','') + ' of it by now (Fable 10/7). Best price now: ' + (best || 'n/a') + (x.best_edge_now != null ? ' (edge now ' + (x.best_edge_now > 0 ? '+' : '') + x.best_edge_now.toFixed(1) + ')' : '') + '.';
+      return '<span class="apx-pill apx-open" title="' + tip.replace(/"/g, '&quot;') + '">⏱ ' + x.label + ' ' + amt + ' vs open · ' + left + (best ? ' · ' + best : '') + '</span>';
+    }).join('');
+  } catch (e) { return ''; }
+}
 function _apxEdgeBar(g){
   const sp=sheetProjForGame(g.gamePk); const o=oddsForGame(g.gamePk);
   if(!sp) return '';
@@ -3588,7 +3622,7 @@ function _apxEdgeBar(g){
   let tot='<span class="apx-pill">Total —</span>';
   const ti=totalEdgeInfo(sp.total,ovL,ovO,unL,unO);
   if(ti){ if(ti.edge>0){ const cls=ti.edge>=3?'apx-edge-strong':'apx-edge-mild'; tot='<span class="apx-pill '+cls+'">'+ti.lean+' '+ti.line+' +'+ti.edge.toFixed(1)+'%</span>'; } else { tot='<span class="apx-pill">No total edge</span>'; } }
-  return '<div class="apx-edgebar">'+ml+tot+'</div>';
+  return '<div class="apx-edgebar">'+ml+tot+_apxOpenBadges(g,false)+'</div>';
 }
 
 
@@ -4781,6 +4815,8 @@ async function loadForDate(date) {
   // F5 (first-5) projections + odds, also in the background.
   if (typeof loadF5 === 'function') { loadF5().catch(() => {}); }
   loadPOSeries().then(() => { try { if (CURRENT_GAMES && CURRENT_GAMES.some(_isPostseason) && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
+  // Open-window badges (your number vs the sportsbook open; Fable 10/3 + 10/7) — background, re-render when it lands.
+  loadOpenEdges().then(() => { try { if (OPEN_EDGES && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {});
   // Load the team list up front so team-rank grades (OFF/DEF/BSR) match the
   // Rankings tab and populate on the scoreboard; re-render when ready.
   if (typeof fetchAllTeams === 'function') { fetchAllTeams().then(() => { try { if (typeof _ensureTeamRankGrades === 'function') _ensureTeamRankGrades(); if (typeof CURRENT_GAMES !== 'undefined' && CURRENT_GAMES && CURRENT_GAMES.length && typeof renderScoreboard === 'function') renderScoreboard(); } catch (e) {} }).catch(() => {}); }
