@@ -1,28 +1,28 @@
 {
-  "generated_at": "2026-10-07T20:54:39Z",
+  "generated_at": "2026-10-08T00:33:10Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-10-06"
+    "2026-10-07"
   ],
   "forecast_input_accuracy": {
-    "n_games": 740,
-    "our_temp_MAE_f": 2.24,
-    "our_wind_MAE_mph": 2.43,
-    "our_winddir_MAE_deg": 32.89,
+    "n_games": 742,
+    "our_temp_MAE_f": 2.25,
+    "our_wind_MAE_mph": 2.44,
+    "our_winddir_MAE_deg": 32.94,
     "temp_head_to_head": {
-      "n": 539,
+      "n": 540,
       "our_temp_MAE_f": 2.1,
-      "bp_temp_MAE_f": 3.5
+      "bp_temp_MAE_f": 3.49
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 738,
+    "n_played": 739,
     "calibrated_slope_runs_per_pct": 0.0891,
     "ours": {
-      "slope": 0.1403,
+      "slope": 0.14,
       "r": 0.156,
-      "n": 738,
+      "n": 739,
       "realized_x": 1.57
     },
     "bp": {
@@ -14832,6 +14832,46 @@
       "total": 4,
       "our_adj": -5.2,
       "bp_adj": -5.0
+    },
+    {
+      "date": "2026-10-07",
+      "pk": 849822,
+      "venue": "Truist Park",
+      "obs_temp": 79.4,
+      "obs_wind": 3.0,
+      "obs_dir": 54.0,
+      "obs_src": "obs",
+      "our_temp": 78.0,
+      "our_wind": 0.0,
+      "our_dir": null,
+      "bp_temp": 81.0,
+      "our_temp_err": 1.4000000000000057,
+      "bp_temp_err": 1.5999999999999943,
+      "our_wind_err": 3.0,
+      "our_dir_err": null,
+      "total": null,
+      "our_adj": -2.4,
+      "bp_adj": 3.0
+    },
+    {
+      "date": "2026-10-07",
+      "pk": 849833,
+      "venue": "Rate Field",
+      "obs_temp": 79.0,
+      "obs_wind": 13.1,
+      "obs_dir": 312.0,
+      "obs_src": "obs",
+      "our_temp": 74.0,
+      "our_wind": 8.0,
+      "our_dir": 22.5,
+      "bp_temp": null,
+      "our_temp_err": 5.0,
+      "bp_temp_err": null,
+      "our_wind_err": 5.1,
+      "our_dir_err": 70.5,
+      "total": 12,
+      "our_adj": 0.4,
+      "bp_adj": null
     }
   ]
 }
