@@ -32,11 +32,13 @@ jobs:
       - name: grade board + tickets
         env: {SCAN_DIR: data/prop_scan}
         run: python scripts/board_grade.py || true
+      - name: paper bet tracker
+        run: python scripts/build_bet_tracker.py || true
       - name: commit
         run: |
           git config user.name "bartolo-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/prop_scan
+          git add data/prop_scan data/bet_tracker.json
           git commit -m "prop scan $(date -u +%Y-%m-%dT%H:%M)" || exit 0
           for i in 1 2 3 4 5; do
             if git pull --rebase -X theirs && git push; then exit 0; fi
