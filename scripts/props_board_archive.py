@@ -353,6 +353,33 @@ def pos_from(c):
     if 'rule' in p and 'rules' not in p: p['rules'] = [p['rule']]
     return p
 
+# ---------- Kalshi cross-venue lag (Fable live test), moved here from the retired Sharp Sides tab ----------
+def lag_cards(now, live):
+    """Read the lag-rule cards sides_board.py wrote (data/game_lines/board_latest.json) and show them in Leads.
+    Graded by sides_grade.py (game_lines archive), so no positions here (no double counting)."""
+    p = os.path.join(ROOT, 'data', 'game_lines', 'board_latest.json')
+    try: B = json.load(open(p))
+    except Exception: return []
+    built = dt.datetime.fromisoformat(B['meta']['built'])
+    if (now - built).total_seconds() > 45 * 60: return []   # stale: the 20-minute job has not run
+    out, seen = [], set()
+    for c in B.get('cards', []):
+        if not str(c.get('mkt', '')).startswith('lag') or c.get('started'): continue
+        k = f"{c['date']}|{c['game']}|LAG|{c['label']}"
+        if k in seen: continue
+        seen.add(k)
+        d = {'key': k, 'cat': 'LAG', 'game': c['game'], 'event': c.get('kalshi_event') or c['game'], 'date': c['date'], 'first_pitch': c['first_pitch'],
+             'away': c.get('away'), 'home': c.get('home'), 'tier': 2, 'rules': ['CROSS-VENUE LAG (Fable live test)'], 'live': True,
+             'first_seen': B['meta']['built'], 'last_seen': B['meta']['built'], 'n_scans': 1, 'started': False,
+             'notes': [{'rule': 'CROSS-VENUE LAG (Fable live test)', 'note': '; '.join(c.get('chips') or [])}],
+             'badges': ['Fable live test'], 'label': c['label'], 'side': c.get('kalshi_side') or 'YES', 'ticker': c.get('ticker'),
+             'kalshi_px': c.get('kalshi_px'), 'model': c.get('model'), 'model_src': c.get('market_fair_src'),
+             'market': c.get('market_fair'), 'market_src': c.get('market_fair_src'), 'level': 'lead', 'size': 'small (live test)',
+             'panel': 'B', 'positions': []}
+        pricing(d, live)
+        out.append(d)
+    return out
+
 # ---------- tickets ----------
 def read_tickets():
     out = []
@@ -402,6 +429,7 @@ def main():
         for m in d.get('markets', []):
             live[m['ticker']] = {'bid': float(m.get('yes_bid_dollars') or 0), 'ask': float(m.get('yes_ask_dollars') or 0), 'status': m.get('status')}
     latest, cards = build(SL, PL, live, now)
+    cards += lag_cards(now, live)
     tickets = overlaps(read_tickets(), cards)
     velo_logged = len({(x['event'], pitcher_of(x['what'])) for x in SL if x['rule'] == 'VELO-DECLINE K UNDER (paper)'})
     pin_n = sum(1 for x in PL if x.get('ts') == latest)

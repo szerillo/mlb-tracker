@@ -171,6 +171,18 @@ def first_pin(PL, gkey, mkt, side):
     if side not in r or other not in r: return None
     return {'ts': r['ts'], 'p': novig(r[side], r[other]), 'line': r.get('line'), 'odds': r[side]}
 
+# Fable 10/3 (ALPHA_BEFORE_THE_CLOSE) open rules + 10/7 remaining-move table (share of the edge the market still has to absorb)
+OPEN_RULE = {'ml': 4.0, 'total': 0.6, 'f5_ml': 3.5, 'f5_total': 0.75}
+LEFT = {'ml': [(12, .37), (6, .31), (3, .22), (1, .23), (0, .20)], 'f5_ml': [(12, 1.0), (6, .72), (3, .47), (0, .40)],
+        'total': [(12, .22), (6, .14), (3, .04), (0, 0.0)], 'f5_total': [(12, .31), (6, .15), (3, .05), (0, 0.0)]}
+def left_share(mkt, hrs):
+    t = LEFT[mkt]
+    if hrs >= t[0][0]: return t[0][1]
+    for (h1, v1), (h2, v2) in zip(t, t[1:]):
+        if h2 <= hrs <= h1: return round(v2 + (v1 - v2) * (hrs - h2) / (h1 - h2), 2)
+    return t[-1][1]
+OPEN_EDGES = {}
+
 def build():
     L = json.load(open(os.path.join(GL, 'latest.json')))
     PL = jl(os.path.join(GL, 'pinnacle_log.jsonl'))
@@ -363,7 +375,7 @@ def build():
                 med = st.median(ps); kmid = (kr['bid'] + kr['ask']) / 2; cost = kr['ask'] + KFEE(kr['ask'])
                 if med - kmid >= LAG['ml'] and (med - cost) * 100 >= 2:
                     lag.append({**base, 'key': f"{base['date']}|{a}@{h}|lag_ml|{side}", 'mkt': 'lag_ml', 'market': 'Cross-venue lag (Fable live test)', 'side': side,
-                                'label': f"{team} ML on Kalshi", 'venue': 'Kalshi', 'ticker': kr['ticker'], 'kalshi_side': 'YES', 'cost': r4(cost), 'cost_am': to_am(cost),
+                                'label': f"{team} ML on Kalshi", 'venue': 'Kalshi', 'ticker': kr['ticker'], 'kalshi_side': 'YES', 'kalshi_px': kr['ask'], 'cost': r4(cost), 'cost_am': to_am(cost),
                                 'model': r4(med), 'market_fair': r4(med), 'market_fair_src': f'median of {len(ps)} books no-vig', 'edge': round((med - cost) * 100, 2),
                                 'edge_mkt': round((med - cost) * 100, 2), 'threshold': 2.0, 'target_kalshi_cents': max_kalshi(med - .02), 'level': 'lead',
                                 'chips': [f"books {med:.3f} vs Kalshi mid {kmid:.3f} (gap {100 * (med - kmid):+.1f} pts)"], 'signals': {}, 'all_prices': []})
@@ -388,12 +400,47 @@ def build():
                     e = (fair - px - KFEE(px)) * 100
                     if e >= 2:
                         lag.append({**base, 'key': f"{base['date']}|{a}@{h}|lag_total|{side}|{r['strike']}", 'mkt': 'lag_total', 'market': 'Cross-venue lag (Fable live test)',
-                                    'side': side, 'label': f"{side.title()} {r['strike']} on Kalshi", 'venue': 'Kalshi', 'line': r['strike'], 'ticker': r['ticker'],
+                                    'side': side, 'label': f"{side.title()} {r['strike']} on Kalshi", 'venue': 'Kalshi', 'line': r['strike'], 'ticker': r['ticker'], 'kalshi_px': px,
                                     'kalshi_side': 'YES' if side == 'over' else 'NO', 'cost': r4(px + KFEE(px)), 'cost_am': to_am(px + KFEE(px)), 'model': r4(fair),
                                     'market_fair': r4(fair), 'market_fair_src': 'Kalshi ladder shifted to the books', 'edge': round(e, 2), 'edge_mkt': round(e, 2), 'threshold': 2.0,
                                     'target_kalshi_cents': max_kalshi(fair - .02), 'level': 'lead', 'signals': {}, 'all_prices': [],
                                     'chips': [f"books' implied total {bmed:.2f} vs Kalshi fair {kfair:.2f} ({gap:+.2f} runs): all rungs in this game = ONE bet"]})
         cards += lag
+        # ---------- open window (Fable 10/3 + 10/7): your number vs the sportsbook OPEN, and how much of it the market still has to absorb ----------
+        hrs = (sdt - NOW).total_seconds() / 3600
+        oe = []
+        def best_now(mkt, side):
+            cs = [c for c in cards if c.get('mkt') == mkt and c.get('side') == side and c.get('away') == a and c.get('home') == h]
+            return max(cs, key=lambda c: c['edge']) if cs else None
+        if model and model.get('away_wp') is not None:
+            op_a, _, _ = consensus_novig(books, 'ml', 'away', 'home', 'Open')
+            if op_a is not None:
+                for side, team in (('away', a), ('home', h)):
+                    e = (model[f'{side}_wp'] - (op_a if side == 'away' else 1 - op_a)) * 100
+                    oe.append({'mkt': 'ml', 'side': side, 'label': f'{team} ML', 'open_edge': round(e, 1), 'unit': 'pts', 'qualifies': e >= OPEN_RULE['ml']})
+        if model and model.get('total') is not None:
+            op_o, op_line, _ = consensus_novig(books, 'total', 'over', 'under', 'Open')
+            if op_o is not None and op_line is not None:
+                lean = model['total'] - (op_line + (op_o - .5) / 0.113)
+                side = 'over' if lean > 0 else 'under'
+                oe.append({'mkt': 'total', 'side': side, 'label': f"{side.title()} {op_line}", 'open_edge': round(lean, 2), 'unit': 'runs', 'qualifies': abs(lean) >= OPEN_RULE['total']})
+        if model5 and model5.get('away_wp') is not None:
+            op_a, _, _ = consensus_novig(books, 'f5_ml', 'away', 'home', 'Open')
+            if op_a is not None:
+                for side, team in (('away', a), ('home', h)):
+                    e = (model5[f'{side}_wp'] - (op_a if side == 'away' else 1 - op_a)) * 100
+                    oe.append({'mkt': 'f5_ml', 'side': side, 'label': f'{team} F5 ML', 'open_edge': round(e, 1), 'unit': 'pts', 'qualifies': e >= OPEN_RULE['f5_ml']})
+        if model5 and model5.get('total') is not None:
+            op_o, op_line, _ = consensus_novig(books, 'f5_total', 'over', 'under', 'Open')
+            if op_o is not None and op_line is not None:
+                lean = model5['total'] - (op_line + (op_o - .5) / 0.19)
+                side = 'over' if lean > 0 else 'under'
+                oe.append({'mkt': 'f5_total', 'side': side, 'label': f"F5 {side} {op_line}", 'open_edge': round(lean, 2), 'unit': 'runs', 'qualifies': abs(lean) >= OPEN_RULE['f5_total']})
+        for x in oe:
+            x['left_share'] = left_share(x['mkt'], hrs)
+            b = best_now(x['mkt'], x['side'])
+            if b: x.update(best_venue=b['venue'], best_odds=b.get('odds') if b.get('odds') is not None else b.get('cost_am'), best_line=b.get('line'), best_edge_now=b['edge'])
+        OPEN_EDGES[str(an['an_id'])] = {'game': f"{a} @ {h}", 'first_pitch': sdt.isoformat(), 'hours_out': round(hrs, 1), 'items': oe}
         # ---------- Kalshi flow (ungraded context) per game ----------
         if prints_g:
             recent = [p for p in prints_g if p['created'] >= (NOW - dt.timedelta(hours=3)).isoformat()]
@@ -415,6 +462,8 @@ def main():
                     'note': 'Model = Sean GAME/F5 UPLOADER (October adjustment already in it). Fable 10/7 v2: bet = edge at the current price, either direction; moves, Kalshi prints, imbalance and public % are display only; TT lean > 0.5 runs = check inputs.'},
            'cards': cards}
     json.dump(out, open(os.path.join(GL, 'board_latest.json'), 'w'), default=str)
+    json.dump({'built': NOW_S, 'open_rule': OPEN_RULE, 'note': 'Your number vs the sportsbook open (Fable 10/3) and the share of that edge the market still has to absorb by now (Fable 10/7).',
+               'games': OPEN_EDGES}, open(os.path.join(GL, 'open_edges.json'), 'w'), default=str)
     # archive positions worth grading (bet / lean / lag), pregame only
     os.makedirs(os.path.join(GL, 'board'), exist_ok=True); os.makedirs(os.path.join(GL, 'board_close'), exist_ok=True)
     keep = [c for c in cards if not c['started'] and c['level'] in ('bet', 'lean', 'lead')]
