@@ -26,10 +26,11 @@ FREEZE_MIN = float(os.environ.get('FREEZE_MIN', 30))
 SHEET_CSV = ("https://docs.google.com/spreadsheets/d/e/2PACX-1vR8rC-5ro6T19a3W6mQDpwDrr5nK6supT0TVYATBk305OgcrlQqeCOlz8mPydvfEZ_XqYR96g7s816P"
              "/pub?gid=580753288&single=true&output=csv")
 BOOKS = ['DK', 'FD', 'CZR', 'BetRivers', 'Fanatics', 'theScore']          # NY books (BetMGM excluded by rule)
-THRESH = {'ml': 3.0, 'total': 2.5, 'tt': 5.0, 'f5_ml': 3.5, 'f5_total': 3.5}   # Fable 10/7: TT floor 5 while the sheet level is off
-# Fable 10/7 (REPLY_sharp_sides_totals): October scoring factor goes ON TOP of the sheet's runs (logged postseason assumption)
-SEASON_FACTOR = {'F': 1.04, 'D': 1.04, 'L': 1.04, 'W': 0.95}
-NO_SHEET_UNDERS = True   # Fable 10/7: no under leans off the sheet's total, F5 total or TT until the sheet is recentred (level bias, not edge)
+THRESH = {'ml': 3.0, 'total': 2.5, 'tt': 3.5, 'f5_ml': 3.5, 'f5_total': 3.5}
+# Fable 10/7 v2: Sean's October scoring adjustment is already in the sheet, nothing on top (the v1 1.04 factor is withdrawn)
+SEASON_FACTOR = {}
+TT_INPUT_CHECK_RUNS = 0.5   # Fable 10/7 v2: a sheet TT lean > 0.5 runs vs the devigged line is an input check, not a bet
+NO_SHEET_UNDERS = False  # Fable 10/7 v2: sheet = market on level all summer; overs and unders graded symmetrically (v1 under ban withdrawn)
 LAG = {'ml': 0.02, 'total': 0.3}
 SLOPE = {'total': 0.113, 'f5_total': 0.19, 'tt': 0.19}   # prob per run for line shifts (full total 0.113 = house constant)                                           # Fable cross-venue live test
 MKT_NAME = {'ml': 'Moneyline', 'total': 'Total', 'tt': 'Team total', 'f5_ml': 'F5 moneyline', 'f5_total': 'F5 total'}
@@ -257,6 +258,15 @@ def build():
                 c['timing'] = 'open window: totals keep moving toward the sheet until about 6 h out' if mins > 360 else 'under 6 h out: effectively the close for totals'
             if mkt in ('f5_ml', 'f5_total') or mkt.startswith('tt'):
                 c['chips'].append('thinner market than ML: CLV-graded, small stake')
+            if mkt.startswith('tt') and lvl != 'info' and cons_p is not None and cons_line is not None and best['line'] == cons_line:
+                proj_runs = (extra or {}).get('team_runs')
+                p_over_mkt = cons_p if side == 'over' else 1 - cons_p
+                dv_line = cons_line + (p_over_mkt - .5) / 0.19   # devigged TT line in runs (0.19 prob per run)
+                if proj_runs is not None:
+                    c['tt_lean_runs'] = round(proj_runs - dv_line, 2)
+                    if abs(c['tt_lean_runs']) > TT_INPUT_CHECK_RUNS:
+                        c['blocked'] = f"CHECK INPUTS: sheet team runs {proj_runs:.2f} vs devigged line {dv_line:.2f} ({c['tt_lean_runs']:+.2f} runs). Fable 10/7: TT leans over 0.5 runs lost at every size; treat as a sheet input error, not a bet"
+                        c['chips'].append('check inputs: TT lean > 0.5 runs'); lvl = 'info'
             if NO_SHEET_UNDERS and side == 'under' and (mkt in ('total', 'f5_total') or mkt.startswith('tt')) and lvl != 'info':
                 c['blocked'] = 'No sheet unders in October until the sheet is recentred (Fable 10/7): the sheet ran about 1 run a game under all summer, so under edges are level bias'
                 c['chips'].append('blocked: sheet-under level bias (Fable 10/7)'); lvl = 'info'
@@ -307,7 +317,7 @@ def build():
                     cp = cons_o if side == 'over' else (1 - cons_o if cons_o is not None else None)
                     opn = op_o if side == 'over' else (1 - op_o if op_o is not None else None)
                     cands = near(cands, cons_line, 0.0)   # TT model (outcome-centred x0.68) is only calibrated at the posted line
-                    cd = card(mkt, f"{team} {side}", side, pfn, cands, pi, cp, cons_line, opn, op_line, None, {'model_proj': f"{team} {mu:.2f} runs", 'team': team})
+                    cd = card(mkt, f"{team} {side}", side, pfn, cands, pi, cp, cons_line, opn, op_line, None, {'model_proj': f"{team} {mu:.2f} runs", 'team': team, 'team_runs': mu})
                     if cd: cd['market'] = 'Team total'; cd['label'] = f"{team} {side} {cd['line']}"; cards.append(cd)
         # ---------- F5 ML (2-way, push on tie; Kalshi F5 is 3-way: team YES loses on a tie) ----------
         if model5 and model5.get('away_wp') is not None:
@@ -402,7 +412,7 @@ def main():
     cards = build()
     out = {'meta': {'built': NOW_S, 'lines_ts': json.load(open(os.path.join(GL, 'latest.json')))['ts'], 'thresholds': THRESH, 'lag': LAG,
                     'books': BOOKS, 'season_factor': SEASON_FACTOR, 'no_sheet_unders': NO_SHEET_UNDERS,
-                    'note': 'Model = Sean GAME/F5 UPLOADER, runs x1.04 postseason (0.95 WS). Fable 10/7: bet = edge at the current price; moves, Kalshi prints, imbalance and public % are display only.'},
+                    'note': 'Model = Sean GAME/F5 UPLOADER (October adjustment already in it). Fable 10/7 v2: bet = edge at the current price, either direction; moves, Kalshi prints, imbalance and public % are display only; TT lean > 0.5 runs = check inputs.'},
            'cards': cards}
     json.dump(out, open(os.path.join(GL, 'board_latest.json'), 'w'), default=str)
     # archive positions worth grading (bet / lean / lag), pregame only
