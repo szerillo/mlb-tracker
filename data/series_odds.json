@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-08T19:12:10+00:00",
+ "generated_at": "2026-10-08T20:02:26+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -23,40 +23,41 @@
    "books": {
     "a": {
      "DraftKings": 210,
+     "Caesars": 215,
      "FanDuel": 205,
      "BetMGM": 200,
-     "Caesars": 215,
      "Pinnacle": 212,
+     "Bovada": 210,
      "Kalshi": 229
     },
     "b": {
      "DraftKings": -260,
+     "Caesars": -260,
      "FanDuel": -255,
      "BetMGM": -250,
-     "Caesars": -260,
      "Pinnacle": -255,
-     "Kalshi": -276
+     "Bovada": -260,
+     "Kalshi": -251
     }
    },
    "exact": {
     "b-3-2": 296,
-    "b-3-1": -121,
+    "b-3-1": 101,
     "a-3-2": 198
    },
    "spread": {
     "b_minus_1_5": -126,
     "a_plus_1_5": -112
    },
-   "games": {
-    "ladder": {
-     "4.5": {
-      "over": -142,
-      "under": -112
-     }
-    },
-    "line": 4.5,
-    "over": -142,
-    "under": -112
+   "games": null,
+   "exact_book": {
+    "b-3-2": "Kalshi",
+    "b-3-1": "Kalshi",
+    "a-3-2": "Kalshi"
+   },
+   "spread_book": {
+    "b_minus_1_5": "Kalshi",
+    "a_plus_1_5": "Kalshi"
    }
   },
   {
@@ -71,63 +72,97 @@
    "books": {
     "a": {
      "DraftKings": 130,
+     "Caesars": 145,
      "FanDuel": 152,
      "BetMGM": 140,
-     "Caesars": 145,
      "Pinnacle": 136,
+     "Bovada": 135,
      "Kalshi": 134
     },
     "b": {
      "DraftKings": -160,
+     "Caesars": -175,
      "FanDuel": -184,
      "BetMGM": -165,
-     "Caesars": -175,
      "Pinnacle": -160,
+     "Bovada": -161,
      "Kalshi": -161
     }
    },
    "exact": {
-    "a-4-3": 490,
-    "a-4-2": 490,
-    "a-4-1": 841,
-    "a-4-0": 1464,
+    "a-4-3": 529,
+    "a-4-2": 550,
+    "a-4-1": 850,
+    "a-4-0": 2000,
     "b-4-3": 490,
-    "b-4-2": 425,
-    "b-4-1": 425,
-    "b-4-0": 756
+    "b-4-2": 456,
+    "b-4-1": 450,
+    "b-4-0": 841
    },
    "spread": {
-    "a_minus_1_5": 181,
+    "a_minus_1_5": 255,
     "b_minus_1_5": 114,
-    "a_minus_3_5": 1241,
-    "b_plus_3_5": -2580,
-    "a_minus_2_5": 373,
+    "a_minus_3_5": 2000,
+    "b_plus_3_5": -2500,
+    "a_minus_2_5": 600,
     "b_plus_2_5": -719,
-    "b_plus_1_5": -290,
-    "b_minus_3_5": 625,
-    "a_plus_3_5": -1684,
-    "b_minus_2_5": 240,
-    "a_plus_2_5": -404,
+    "b_plus_1_5": -276,
+    "b_minus_3_5": 800,
+    "a_plus_3_5": -1000,
+    "b_minus_2_5": 255,
+    "a_plus_2_5": -320,
     "a_plus_1_5": -199
    },
    "games": {
     "ladder": {
-     "6.5": {
-      "over": 189,
-      "under": -340
-     },
      "5.5": {
-      "over": -191,
-      "under": 119
+      "over": -185,
+      "under": 140
+     },
+     "6.5": {
+      "over": 205,
+      "under": -245
      },
      "4.5": {
-      "over": -1087,
-      "under": 425
+      "over": -750,
+      "under": 550
      }
     },
     "line": 4.5,
-    "over": -1087,
-    "under": 425
+    "over": -750,
+    "under": 550,
+    "book": {
+     "5.5 over": "Bovada",
+     "5.5 under": "Bovada",
+     "6.5 over": "Bovada",
+     "6.5 under": "Bovada",
+     "4.5 over": "Bovada",
+     "4.5 under": "Bovada"
+    }
+   },
+   "exact_book": {
+    "a-4-3": "Kalshi",
+    "a-4-2": "Bovada",
+    "a-4-1": "Bovada",
+    "a-4-0": "Bovada",
+    "b-4-3": "Kalshi",
+    "b-4-2": "Kalshi",
+    "b-4-1": "Bovada",
+    "b-4-0": "Kalshi"
+   },
+   "spread_book": {
+    "a_minus_1_5": "Bovada",
+    "b_minus_1_5": "Kalshi",
+    "a_minus_3_5": "Bovada",
+    "b_plus_3_5": "Bovada",
+    "a_minus_2_5": "Bovada",
+    "b_plus_2_5": "Kalshi",
+    "b_plus_1_5": "Kalshi",
+    "b_minus_3_5": "Bovada",
+    "a_plus_3_5": "Bovada",
+    "b_minus_2_5": "Bovada",
+    "a_plus_2_5": "Bovada",
+    "a_plus_1_5": "Kalshi"
    }
   }
  ],
@@ -136,7 +171,7 @@
    {
     "al": "TB",
     "nl": "LAD",
-    "market": 138
+    "market": 136
    },
    {
     "al": "TB",
@@ -151,7 +186,7 @@
    {
     "al": "CWS",
     "nl": "MIL",
-    "market": 814
+    "market": 822
    },
    {
     "al": "CLE",
@@ -161,7 +196,7 @@
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 2030
+    "market": 2080
    }
   ]
  }
