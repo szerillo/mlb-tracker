@@ -4,7 +4,7 @@ Novig charges no fee pregame (fee charged WHEN_LIVE), so it is often the cheapes
 import json,time,urllib.request,datetime,os,concurrent.futures as cf
 A="https://api.novig.com/v3/public"
 TYPES={'PITCHER_STRIKEOUTS','PITCHER_OUTS','HITS_ALLOWED','WALKS','EARNED_RUNS','HITS','TOTAL_BASES','HITS_RUNS_RBIS','HOME_RUNS','RBIS','RUNS',
-       'FIRST_INNING_TOTAL','TOTAL','TEAM_TOTAL','TOTAL_1H','SPREAD_1H','MONEY','MONEY_1H'}
+       'FIRST_INNING_TOTAL','TOTAL','TEAM_TOTAL','TOTAL_1H','SPREAD_1H','MONEY','MONEY_1H','BATTING_STRIKEOUTS','BATTING_WALKS'}
 def g(u):
     for i in range(5):
         try: return json.load(urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'bartolo-logger'}),timeout=30))

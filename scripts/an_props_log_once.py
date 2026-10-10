@@ -3,7 +3,7 @@ Appends to data/an_props_log/YYYY-MM-DD.jsonl. Gives us book-move history (which
 import json,time,urllib.request,datetime,os
 BOOKS={'1548':'DK','1006':'FD','1005':'CZR','972':'BetRivers','2789':'Fanatics','4621':'theScore','939':'MGM'}
 TYPES=['core_bet_type_37_strikeouts','core_bet_type_42_pitching_outs','core_bet_type_72_hits_allowed','core_bet_type_76_walks','core_bet_type_74_earned_runs',
-       'core_bet_type_36_hits','core_bet_type_77_total_bases','core_bet_type_33_hr','core_bet_type_431_hits_runs_rbis','core_bet_type_34_rbi','core_bet_type_78_runs_scored']
+       'core_bet_type_36_hits','core_bet_type_77_total_bases','core_bet_type_33_hr','core_bet_type_431_hits_runs_rbis','core_bet_type_34_rbi','core_bet_type_78_runs_scored','core_bet_type_709_hitter_strikeouts','core_bet_type_710_hitter_walks']
 def g(u):
     for i in range(5):
         try: return json.load(urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0'}),timeout=40))

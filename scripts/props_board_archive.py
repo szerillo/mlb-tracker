@@ -37,6 +37,7 @@ RULE_TIER = {'K-LENGTH UNDER': 1, 'K-SEASON-ANCHOR UNDER': 1, 'F5 OVER': 1, 'YRF
              'RFI INFO': 4, 'K-LENGTH OVER': 2, 'DEEP-SPOT OVERS': 2, 'VELO-DECLINE K UNDER (paper)': 2, 'BIG OUTS TRADE': 2,
              'WALKS OVER (lead)': 3, 'WALKS OVER (info: low-BB% pitcher)': 4, 'OCTOBER HITTER UNDERS (lean)': 3,
              'PS SUB-RISK HIT UNDER (lean)': 3, 'PS SUB-RISK (info)': 4, 'KALSHI OFF PINNACLE (ungraded)': 3,
+             'HITTER UNDER vs SP (lean)': 3, 'HR ATTACK-ANGLE YES (paper)': 4,
              'BIG TRADES (no backtested edge)': 4, 'PRICE MOVE': 4, 'DEPTH IMBALANCE (ungraded)': 4, 'VELO-DECLINE (price too short)': 4}
 K_ORDER = ['K-LENGTH UNDER', 'K-SEASON-ANCHOR UNDER', 'VELO-DECLINE K UNDER (paper)', 'K-LENGTH OVER', 'DEEP-SPOT OVERS', 'VELO-DECLINE (price too short)']
 
@@ -136,6 +137,7 @@ def cat_of(rule):
     if rule in ('F5 OVER',) or 'RFI' in rule: return 'EARLY'
     if rule.startswith('K-') or 'DEEP-SPOT' in rule or rule.startswith('VELO-DECLINE'): return 'K'
     if rule.startswith('WALKS'): return 'WALK'
+    if rule.startswith('HITTER UNDER vs SP'): return 'HSP'
     if 'HITTER UNDERS' in rule or 'SUB-RISK' in rule: return 'HIT'
     if rule == 'BIG OUTS TRADE': return 'OUTS'
     if rule.startswith('KALSHI OFF PINNACLE'): return 'KOP'
@@ -145,6 +147,7 @@ def card_key(cat, ev, x):
     if cat == 'K': return f"{ev['code']}|K|{pitcher_of(x['what'])}|{'under' if x['side'] == 'NO' else 'over'}"
     if cat == 'EARLY': return f"{ev['code']}|EARLY"
     if cat == 'HIT': return f"{ev['code']}|HIT"
+    if cat == 'HSP': return f"{ev['code']}|HSP"   # one position per game (Bartolo 10/10)
     if cat == 'WALK': return f"{ev['code']}|WALK|{pitcher_of(x['what'])}"
     return f"{ev['code']}|{x['rule']}|{x['what']}"
 
@@ -328,6 +331,19 @@ def build(SL, PL, live, now):
             c['positions'] = [pos_from({**c, 'key': f"{k}|{s['label']}", 'label': s['label'], 'side': 'UNDER', 'model': s.get('model'),
                                         'book': s.get('book'), 'book_odds': s.get('book_odds'), 'level': 'lean' if s['lean'] else 'info', 'ticker': None})
                               for s in subs]
+        elif cat == 'HSP':
+            # Hitter under vs a high-K starter (Bartolo 10/10). Every firing rung is shown; the best edge after fee is the one position.
+            def _e(r): return (r['fair'] - r['price'] - fee(r['price'])) if r.get('fair') is not None and r.get('price') is not None else -9
+            best = {}
+            for r in rows:
+                if r['what'] not in best or r['ts'] > best[r['what']]['ts']: best[r['what']] = r
+            rs = sorted(best.values(), key=lambda r: -_e(r)); x = rs[0]
+            c.update(label=x['what'], side='NO', ticker=x.get('ticker'), kalshi_px=x.get('price'), rule='HITTER UNDER vs SP (lean)',
+                     market=x.get('price'), market_src='Kalshi NO mid', model=x.get('fair'), model_src='opp SP K% score (+ October -3)')
+            c['hsp_rungs'] = [{'label': r['what'], 'ticker': r.get('ticker'), 'no_limit': r.get('price'), 'no_fair': r.get('fair'),
+                               'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note')} for r in rs[:8]]
+            c['level'] = 'lean'; c['size'] = 'small, one position (NO limit at the mid)'; c['panel'] = 'D'
+            c['positions'] = [pos_from(c)]
         else:   # OUTS, KOP, INFO
             x = rows[0]
             c.update(label=x['what'], side=x['side'], ticker=x.get('ticker'), kalshi_px=x.get('price'), first_px=first_rows[0].get('price'))
@@ -343,7 +359,8 @@ def build(SL, PL, live, now):
                 c['market'] = x.get('fair'); c['market_src'] = 'Pinnacle no-vig'; c['model'] = x.get('fair'); c['model_src'] = 'Pinnacle no-vig'
                 c['level'] = 'watch'; c['size'] = 'paper'; c['badges'].append('ungraded'); c['panel'] = 'B'
             else:
-                c['level'] = 'info'; c['size'] = 'none'; c['panel'] = 'E'; c['badges'].append('no backtested edge')
+                c['level'] = 'info'; c['size'] = 'none'; c['panel'] = 'E'
+                c['badges'].append('paper: log only' if 'paper' in x['rule'] else 'no backtested edge')
             c['positions'] = [pos_from(c)] if cat != 'INFO' else []
         if not live_now:
             c['level'] = 'gone'; c['panel'] = 'E'; c['status'] = f"No longer firing (last seen {dt.datetime.fromisoformat(last_ts).astimezone(ET).strftime('%-I:%M %p')} ET)"

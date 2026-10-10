@@ -336,9 +336,10 @@ for (ev,nm),D in P.items():
     if not W: continue
     r=nearest50(W['rungs']); line=r['strike']; s_=SS.get((ev,nm)) or {}; bbp=s_.get('bb_pct')
     hi=bbp is not None and bbp>=0.085
+    _bbtxt=("bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99))) if hi else ("no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid'])
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
-        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
+        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {_bbtxt}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
 # October hitter-under lean (2026 PS: Hits 1+, TB 2+, H+R+RBI 1+/2+ overs ran 4 to 6 pts below mid, 16 games; 2021-25 PS H/PA 3 to 13% below RS)
 if any(d.month==10 for d in dates):
     HU=collections.defaultdict(list)
@@ -388,6 +389,73 @@ if SUBR and any(d.month>=10 for d in dates):
                         tier=3 if (e>=0.02 and n>=15) else 4
                         add(tier,'PS SUB-RISK HIT UNDER (lean)' if tier==3 else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
                             f"RS pinch-hit-for {100*sr['ph']:.0f}%, <=2 PA {100*sr['le2']:.0f}% ({n} starts), RS PA {sr['pa']/n:.2f} x Oct mult {mult}; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. Lineups confirmed only; small size"+("; under 15 RS starts: info only" if n<15 else ""),None)
+# Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
+# a hitter's recent quality of contact (L10 xwOBA vs season, L10 barrel%). Fit on all Sept RS Kalshi hitter rungs (true quotes);
+# validated on 24 PS games (slope 0.88). Score = pts of (result - mid). Lean NO when score <= -3 pts (Oct adds the -3 pt October base).
+HS=dict(mu={"sp_k":0.2244,"sp_csw":0.2689,"hot":-0.0035,"brl_l10":0.0795},sd={"sp_k":0.0497,"sp_csw":0.0208,"hot":0.0591,"brl_l10":0.0660},
+        coef={"sp_k":-0.0301,"sp_csw":0.0147,"hot":0.0085,"brl_l10":0.0038})
+def _loadj(path,url):
+    try: return json.load(open(path))
+    except Exception: return g(url)
+try:
+    RAWD="https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/"
+    HGL=_loadj('data/hitter_gamelogs.json',RAWD+'hitter_gamelogs.json').get('hitters',{}); PGL=_loadj('data/pitcher_gamelogs.json',RAWD+'pitcher_gamelogs.json').get('pitchers',{})
+except Exception: HGL={};PGL={}
+HGLn={nz(v['name']):v for v in HGL.values() if v.get('name')}; PGLi={str(v.get('mlbam_id')):v for v in PGL.values()}
+def _hf(h,d):
+    G=[x for x in h.get('games',[]) if x['date']<d and x.get('pa')]
+    if sum(x['pa'] for x in G)<150 or len(G)<10: return None
+    xw=lambda L: sum(x.get('xwoba_num',0) for x in L)/max(1,sum(x['pa'] for x in L))
+    bip=sum(x.get('bip',0) for x in G[-10:])
+    return dict(hot=xw(G[-10:])-xw(G),brl_l10=sum(x.get('barrels',0) for x in G[-10:])/bip if bip else None)
+def _sf(pid,d):
+    v=PGLi.get(str(pid)); S=[x for x in (v or {}).get('starts',[]) if x['date']<d and x.get('tbf')]
+    if len(S)<5: return None
+    t=sum(x['tbf'] for x in S); cs=[x for x in S if x.get('csw') is not None]
+    return dict(sp_k=sum(x['k'] for x in S)/t,sp_csw=sum(x['csw']*x['tbf'] for x in cs)/max(1,sum(x['tbf'] for x in cs)) if cs else None)
+if HGL and PGL:
+    PROB={}
+    for d in dates:
+        for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team").get('dates',[]):
+            for gm in dd['games']:
+                for sd_,od in (('away','home'),('home','away')):
+                    ab=gm['teams'][sd_]['team'].get('abbreviation'); pp_=gm['teams'][od].get('probablePitcher')
+                    if ab and pp_: PROB[(str(d),ab)]=pp_['id']
+    AB={'AZ':'ARI','WSH':'WSH','ATH':'ATH','CWS':'CWS','KC':'KC','SD':'SD','SF':'SF','TB':'TB'}
+    for r in R:
+        if r['series'] not in ('KXMLBHIT','KXMLBTB','KXMLBHRR') or r['mid'] is None or r['ask']-r['bid']>0.04: continue
+        if (r['series'],r['strike']) not in (('KXMLBHIT',0.5),('KXMLBTB',1.5),('KXMLBTB',2.5),('KXMLBHRR',0.5),('KXMLBHRR',1.5)): continue
+        code=r['event'].split('-',1)[1]; d0=codes.get(code[:7]); pl=r['ticker'].split('-')[2]
+        if not d0: continue
+        team=next((ab for (dd,ab) in PROB if dd==str(d0) and pl.startswith(ab) and (code[11:].startswith(ab) or code.endswith(ab))),None)
+        h=HGLn.get(nz(pname(r)))
+        if not team or not h: continue
+        hf=_hf(h,str(d0)); sf=_sf(PROB[(str(d0),team)],str(d0))
+        if not hf or not sf or sf['sp_csw'] is None or hf['brl_l10'] is None: continue
+        x={**hf,**sf}; sc=sum(HS['coef'][f]*(x[f]-HS['mu'][f])/HS['sd'][f] for f in HS['coef'])
+        octb=-0.03 if d0.month>=10 else 0.0
+        e_no=-(sc+octb)-fee(1-r['mid'])
+        if sc<=-0.03 and e_no>=0.02:
+            add(3,'HITTER UNDER vs SP (lean)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']-sc-octb,3),
+                f"score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee; one game = one position",r['ticker'])
+# HR ATTACK-ANGLE (paper, Bartolo 10/10): Kalshi HR 1+ under-prices steep-attack-angle hitters. Aug-Sep RS 9,338 rungs:
+# +1.06 pts (result - mid) per SD of season attack angle after HR rate / barrel / LA / FB controls (t 2.4; Aug +1.0, Sep +1.1).
+# Top quintile (Savant AA >= 13.0): +2.0 vs mid, but only +0.5 at the ask after fee; PS check (386 rungs) flat. Paper only: log, never size.
+try:
+    _t=urllib.request.urlopen(urllib.request.Request("https://baseballsavant.mlb.com/leaderboard/bat-tracking/swing-path-attack-angle?dateStart=2026-03-01&dateEnd="+str(max(dates))+
+        "&gameType=Regular&minSwings=100&minGroupSwings=1&seasonStart=&seasonEnd=&type=batter&csv=true",headers={'User-Agent':'Mozilla/5.0'}),timeout=60).read().decode('utf-8-sig')
+    AAS={}
+    for row in _csv.DictReader(_io.StringIO(_t)):
+        if int(float(row.get('competitive_swings') or 0))>=150:
+            ln,_,fn_=row['name'].partition(', '); AAS[nz(f"{fn_} {ln}")]=float(row['attack_angle'])
+except Exception: AAS={}
+for r in R:
+    if not AAS or r['series']!='KXMLBHR' or float(r['strike'] or 0)!=0.5 or r['mid'] is None or r['ask']-r['bid']>0.04: continue
+    aa=AAS.get(nz(pname(r)))
+    if aa is None or aa<13.0: continue
+    fair=r['mid']+0.0106*((aa-0.5)-9.49)/3.43
+    add(4,'HR ATTACK-ANGLE YES (paper)',r['event'],r['title'],'YES',r['ask'],round(fair,3),
+        f"Savant attack angle {aa:.1f} deg (top quintile); model +{100*(fair-r['mid']):.1f} pts over mid; edge at ask after fee {100*(fair-r['ask']-fee(r['ask'])):+.1f}. Paper: log only (fee-free Novig at mid is the only venue where it clears)",r['ticker'])
 for r in R:
     if r['series'] not in PSER or r['series']=='KXMLBHA' or r['mid'] is None or r['ask']-r['bid']>0.04: continue   # hits allowed is on the no-bet list
     p=PIN.get((nz(pname(r)),PSER[r['series']],float(r['strike'])))

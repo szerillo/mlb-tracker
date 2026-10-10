@@ -19,7 +19,7 @@ D = os.path.abspath(os.path.join(HERE, '..', 'data'))
 THRESH = {'ml': 3.0, 'total': 2.5, 'f5_ml': 3.5, 'f5_total': 3.5}
 MKT = {'ml': 'ML', 'total': 'Total', 'f5_ml': 'F5 ML', 'f5_total': 'F5 total', 'tt_away': 'Team total', 'tt_home': 'Team total',
        'lag_ml': 'ML', 'lag_total': 'Total', 'K': 'K prop', 'EARLY': 'YRFI / F5 over', 'RFI': 'YRFI', 'F5': 'F5 over', 'WALK': 'Walks prop',
-       'HIT': 'Hitter prop', 'OUTS': 'Outs prop', 'KOP': 'Prop (Kalshi vs Pinnacle)'}
+       'HIT': 'Hitter prop', 'HSP': 'Hitter prop (vs SP)', 'OUTS': 'Outs prop', 'KOP': 'Prop (Kalshi vs Pinnacle)'}
 imp = lambda o: 100 / (o + 100) if o > 0 else -o / (-o + 100)
 def to_am(p):
     if p is None or p <= 0 or p >= 1: return None
