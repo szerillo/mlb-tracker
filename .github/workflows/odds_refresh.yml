@@ -49,12 +49,8 @@ jobs:
         run: python scripts/refresh_odds.py
         continue-on-error: true
 
-      - name: Odds fallback — multi-source (if primary empty or stale)
-        run: |
-          if [ ! -s data/odds.json ] || ! python -c "import json, datetime as dt; d=json.load(open('data/odds.json')); today=(dt.datetime.utcnow()-dt.timedelta(hours=4)).date().isoformat(); exit(0 if (d.get('games') and any(g.get('moneyline',{}).get('away') for g in d['games']) and d.get('date')==today) else 1)" 2>/dev/null; then
-            echo "Primary odds empty or stale — trying multi-source fallback"
-            python scripts/refresh_odds_multi.py > data/odds.json || true
-          fi
+      - name: Odds fallback (force primary if stale; secondary sources never overwrite with an empty payload)
+        run: python scripts/odds_fallback.py
         continue-on-error: true
 
       - name: Live series probabilities (conditional on in-round score + auto round-advance)
