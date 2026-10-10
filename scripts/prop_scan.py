@@ -201,16 +201,7 @@ def pin_fair(nm,kind,line,side):
 PSEASON=any(d.month>=10 for d in dates)   # 10/10: K unders went 6-8 on all 2026 PS starts (n 14, -8c); paper in October pending Fable
 
 TR=[]
-def _first_pitch_utc(ev):
-    """Kalshi game code (26OCT071600CLECWS, ET) -> first pitch in UTC; None for non-Kalshi events (AWAY@HOME)."""
-    m=re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',str(ev or '').split('-',1)[-1])
-    if not m or m.group(2) not in MON: return None
-    return dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
-SKIPPED_LIVE=0
 def add(tier,rule,ev,what,side,price,fair,note,ticker=None):
-    global SKIPPED_LIVE
-    fp=_first_pitch_utc(ev)
-    if fp is not None and now>=fp: SKIPPED_LIVE+=1; return   # game already started: in-game prices are never pregame signals
     rd=lambda x: round(float(x),3) if x is not None else None
     TR.append(dict(ts=now.isoformat(),tier=tier,rule=rule,event=ev,what=what,side=side,price=rd(price),fair=rd(fair),note=note,ticker=ticker))
 def nearest50(rs): return min(rs,key=lambda r:abs(r['mid']-.5))
@@ -336,10 +327,9 @@ for (ev,nm),D in P.items():
     if not W: continue
     r=nearest50(W['rungs']); line=r['strike']; s_=SS.get((ev,nm)) or {}; bbp=s_.get('bb_pct')
     hi=bbp is not None and bbp>=0.085
-    _bbtxt=("bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99))) if hi else ("no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid'])
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
-        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {_bbtxt}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
+        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
 # October hitter-under lean (2026 PS: Hits 1+, TB 2+, H+R+RBI 1+/2+ overs ran 4 to 6 pts below mid, 16 games; 2021-25 PS H/PA 3 to 13% below RS)
 if any(d.month==10 for d in dates):
     HU=collections.defaultdict(list)
@@ -350,10 +340,15 @@ if any(d.month==10 for d in dates):
         L.sort(key=lambda r:-r['mid'])
         add(3,'OCTOBER HITTER UNDERS (lean)',code,f"{len(L)} tight TB 2+/3+ rungs",'NO',None,None,
             "limit NO at the mid, small and spread across hitters; top: "+'; '.join(f"{r['title'].replace('?','')} mid {r['mid']:.3f}" for r in L[:6]),None)
-# Postseason sub-risk hitter UNDER (Bartolo 10/6): part-timers lose PA to earlier October pinch-hitting.
-# Fair P(0 hits) = sum over his 2026 RS PA distribution of (1 - h/PA)^(PA * tier multiplier); h/PA shrunk 200 PA to .220, x0.95 Oct contact.
-# Sportsbook prices (Kalshi rarely lists these hitters). Lean: tier 3-20% RS pinch-hit-for share, edge >= +2 pts vs best under 0.5 hits.
-PH_MULT=[(0.03,0.976),(0.10,0.930),(0.20,0.876),(1.01,0.852)]   # RS pinch-hit-for share -> PS PA multiplier (2016-20 + 2022-26 same player-season, 6,489 PS starts, pitchers excluded)
+# Postseason sub-risk hitter UNDER, v2 (Bartolo 10/10). Rebuilt on 2016-26 PS play-by-play (7,233 PS starters, pitchers excluded):
+#  - old fair ran ~4 pts low for everyone (Oct contact + PA), so it is recalibrated (fit 2016-25, 2026 OOS Brier .2489 -> .2452);
+#  - the profile that matters is the PLATOON START: a part-timer (RS PH-for >= 3%, 30+ starts) starting because he has the platoon edge on
+#    the SP (LHB vs RHP SP / RHB vs LHP SP). LHB platoon starts: actual P(0 H) .540 vs old fair .436 (n 389); they get lifted when the LHP arrives (7th-9th);
+#  - this October's own lift rate (2+ PS starts) adds +11 pts per unit (managers repeat); RS manager PH habits, elimination games and the
+#    count of opposing LHP relievers add nothing once the profile is in.
+# Fair P(0 H) = c + b*old + group + prior-Oct. Lean (tier 3) only for part-timer groups or 2+ October lifts, edge >= +3 pts; regulars info.
+PH_MULT=[(0.03,0.976),(0.10,0.930),(0.20,0.876),(1.01,0.852)]
+P0V2=dict(c=0.069,old=0.9467,platL=0.0497,platR=0.0085,oth=-0.0253,prx=0.1138,has=-0.0214)
 try:
     SUBR=json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'sub_risk_2026.json')))
 except Exception: SUBR={}
@@ -369,26 +364,60 @@ if SUBR and any(d.month>=10 for d in dates):
                     if o.get('value')==0.5 and o.get('side')=='under' and o.get('odds') is not None and pl.get(o.get('player_id')):
                         HB[pl[o['player_id']]].append((o['odds'],BOOKS[bid],'H' if typ.endswith('hits') else 'TB'))
     ipr=lambda o: 100/(o+100) if o>0 else -o/(-o+100)
+    # this October's lifts: starter whose lineup slot was later batted by a sub
+    OCT=collections.defaultdict(lambda:[0,0])
+    yr=max(dates).year
+    for dd in g(f"{MLB}/schedule?sportId=1&startDate={yr}-09-25&endDate={min(dates)-dt.timedelta(days=1)}&gameType=F,D,L,W").get('dates',[]):
+        for gm in dd['games']:
+            if gm['status']['abstractGameState']!='Final': continue
+            bx=g(f"{MLB}/game/{gm['gamePk']}/boxscore")
+            for sd_ in ('away','home'):
+                PP=bx.get('teams',{}).get(sd_,{}).get('players',{}); slot=collections.defaultdict(list)
+                for v in PP.values():
+                    if v.get('battingOrder'): slot[int(v['battingOrder'])//100].append((int(v['battingOrder']),v['person']['id'],v.get('stats',{}).get('batting',{}).get('plateAppearances',0)))
+                for L in slot.values():
+                    L.sort(); st=L[0]
+                    if st[0]%100: continue
+                    OCT[st[1]][0]+=1; OCT[st[1]][1]+=int(any(pa>0 for _,_,pa in L[1:]))
     for d in dates:
-        sch=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=lineups,team")
+        sch=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=lineups,team,probablePitcher")
         for dd in sch.get('dates',[]):
             for gm in dd['games']:
                 if gm.get('gameType')=='R' or gm.get('status',{}).get('abstractGameState')!='Preview': continue   # pregame only
                 lu=gm.get('lineups') or {}
                 gl=f"{gm['teams']['away']['team'].get('abbreviation','')}@{gm['teams']['home']['team'].get('abbreviation','')}"
-                for side in ('awayPlayers','homePlayers'):
+                SPH={}
+                for s_ in ('away','home'):
+                    pp_=gm['teams'][s_].get('probablePitcher')
+                    if not pp_: continue
+                    pe=g(f"{MLB}/people/{pp_['id']}?hydrate=stats(group=[pitching],type=[season],season={yr})").get('people',[{}])[0]
+                    stt=((pe.get('stats') or [{}])[0].get('splits') or [{}])[0].get('stat',{})
+                    gs=stt.get('gamesStarted',0) or 0; ip=float(stt.get('inningsPitched','0') or 0)
+                    opener=gs<5 or ip/max(gs,1)<4.0      # opener / bulk game: SP hand does not define the platoon start
+                    SPH[s_]=(pe.get('pitchHand',{}).get('code'),opener,pp_.get('fullName'))
+                for side,osd in (('awayPlayers','home'),('homePlayers','away')):
+                    oh,opn,onm=SPH.get(osd,(None,True,'?'))
                     for p in lu.get(side,[]):
                         sr=SUBR.get(str(p['id']))
-                        if not sr or sr['ph']<0.03: continue
-                        mult=next(m for cut,m in PH_MULT if sr['ph']<cut)
-                        hpa=(sr['h']+0.22*200)/(sr['pa']+200)*0.95; n=sr['starts']
-                        p0=sum(c/n*(1-hpa)**(int(k)*mult) for k,c in sr['pa_dist'].items())
+                        if not sr: continue
+                        n=sr['starts']; rsph=sr['ph']; mult=next(m for cut,m in PH_MULT if rsph<cut)
+                        hpa=(sr['h']+0.22*200)/(sr['pa']+200)*0.95; mpa=sr['pa']/n*mult; lo_=int(mpa); fr=mpa-lo_
+                        p0o=(1-fr)*(1-hpa)**lo_+fr*(1-hpa)**(lo_+1)
+                        bs=p.get('batSide',{}).get('code')
+                        if bs is None:
+                            bs=(g(f"{MLB}/people/{p['id']}").get('people',[{}])[0].get('batSide') or {}).get('code')
+                        pt=rsph>=0.03 and n>=30
+                        platL=int(pt and not opn and bs=='L' and oh=='R'); platR=int(pt and not opn and bs=='R' and oh=='L'); oth=int(pt and not platL and not platR)
+                        oc=OCT[p['id']]; has=int(oc[0]>=2); prx=(oc[1]/oc[0] if oc[0] else 0.0)*has
+                        p0=P0V2['c']+P0V2['old']*p0o+P0V2['platL']*platL+P0V2['platR']*platR+P0V2['oth']*oth+P0V2['prx']*prx+P0V2['has']*has
                         q=HB.get(nz(p['fullName']),[])
                         if not q: continue
                         best=max(q,key=lambda t:t[0]); e=p0-ipr(best[0])
-                        tier=3 if (e>=0.02 and n>=15) else 4
-                        add(tier,'PS SUB-RISK HIT UNDER (lean)' if tier==3 else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
-                            f"RS pinch-hit-for {100*sr['ph']:.0f}%, <=2 PA {100*sr['le2']:.0f}% ({n} starts), RS PA {sr['pa']/n:.2f} x Oct mult {mult}; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. Lineups confirmed only; small size"+("; under 15 RS starts: info only" if n<15 else ""),None)
+                        grp='platoon-start LHB' if platL else 'platoon-start RHB' if platR else 'part-timer' if oth else 'regular'
+                        lean=(pt or (has and oc[1]>=2)) and e>=0.03
+                        if not lean and e<0.02 and grp=='regular': continue
+                        add(3 if lean else 4,'PS SUB-RISK HIT UNDER (lean)' if lean else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
+                            f"{grp} vs {onm} ({oh}{', opener: no platoon tag' if opn else ''}); RS PH-for {100*rsph:.0f}% ({n} starts); lifted {oc[1]} of {oc[0]} Oct starts; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. One game = one position; small size")
 # Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
 # a hitter's recent quality of contact (L10 xwOBA vs season, L10 barrel%). Fit on all Sept RS Kalshi hitter rungs (true quotes);
 # validated on 24 PS games (slope 0.88). Score = pts of (result - mid). Lean NO when score <= -3 pts (Oct adds the -3 pt October base).
@@ -467,7 +496,6 @@ for r in R:
             f"Pinnacle o{r['strike']} {p['o']:+d} / u {p['u']:+d} (no-vig over {p['over']:.3f}) vs Kalshi {r['bid']:.2f}/{r['ask']:.2f}; edge at touch {100*max(ey,en):+.1f}; Pinnacle limit ${p['limit']}",r['ticker'])
 # ---------- 5. output ----------
 stamp=et_now.strftime('%Y%m%d_%H%M')
-print(f'[scan] skipped {SKIPPED_LIVE} triggers on games already started')
 with open(os.path.join(HERE,'scan_log.jsonl'),'a') as f:
     for t in TR: f.write(json.dumps(t)+'\n')
 TN={1:'TIER 1: backtested rules (bet if price holds)',2:'TIER 2: leads (half size or paper)',3:'TIER 3: weaker / already moved (watch)',4:'WATCH: information only, no backtested edge'}
