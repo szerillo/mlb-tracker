@@ -26,11 +26,17 @@ now=dt.datetime.now(dt.timezone.utc); et_now=now-dt.timedelta(hours=4)
 dates=[dt.date.fromisoformat(x) for x in sys.argv[1:]] or [et_now.date(),et_now.date()+dt.timedelta(days=1)]
 codes={d.strftime('%y')+MON[d.month-1]+d.strftime('%d'):d for d in dates}
 # ---------- 1. markets ----------
+def pregame(ev):
+    """True only before first pitch (ticker time is ET). Kalshi keeps game markets open in-game; never scan those."""
+    m=re.search(r'-(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',ev)
+    if not m: return False
+    t=dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone(dt.timedelta(hours=-4)))
+    return now < t - dt.timedelta(minutes=2)
 def series_markets(s):
     out=[];cur=''
     while True:
         d=g(f"{API}/markets?series_ticker={s}&status=open&limit=1000"+(f"&cursor={cur}" if cur else ""))
-        out+=[m for m in d.get('markets',[]) if any(c in m['event_ticker'] for c in codes)]; cur=d.get('cursor')
+        out+=[m for m in d.get('markets',[]) if any(c in m['event_ticker'] for c in codes) and pregame(m['event_ticker'])]; cur=d.get('cursor')
         if not cur or not d.get('markets'): break
     return [(s,m) for m in out]
 MK=[]
@@ -192,6 +198,8 @@ def pin_fair(nm,kind,line,side):
     q=p['over'] if side=='over' else 1-p['over']
     return f"Pinnacle {side[0]}{line} {p['o'] if side=='over' else p['u']:+d} (fair {100*q:.1f}%)"
 # ---------- 4. triggers ----------
+PSEASON=any(d.month>=10 for d in dates)   # 10/10: K unders went 6-8 on all 2026 PS starts (n 14, -8c); paper in October pending Fable
+
 TR=[]
 def add(tier,rule,ev,what,side,price,fair,note,ticker=None):
     rd=lambda x: round(float(x),3) if x is not None else None
@@ -201,13 +209,13 @@ for (ev,nm),D in P.items():
     s=SS.get((ev,nm))
     if not s: continue
     K=D.get('K'); O=D.get('OUTS')
-    small=f"; {s['gs']} starts"+('; small sample' if s['gs']<8 else '')   # starts count read by the dashboard (season-anchor sizing: <10 starts = 1/4)
+    small=' small sample' if s['gs']<8 else ''
     if O and O['mean'] is not None:
         dev=O['mean']-s['outs_gs']
         if K and abs(dev)>=2:
             r=nearest50(K['rungs']); line=r['strike']
             if dev<=-2:
-                add(1,'K-LENGTH UNDER',ev,f"{nm} K u{line}",'NO',round(1-r['bid'],2),round(1-r['mid'],3),
+                add(2 if PSEASON else 1,'K-LENGTH UNDER' + (' (PS paper)' if PSEASON else ''),ev,f"{nm} K u{line}",'NO',round(1-r['bid'],2),round(1-r['mid'],3),
                     f"outs mkt {O['mean']:.1f} vs season {s['outs_gs']:.1f} ({dev:+.1f}); L5 outs {s['l5_outs']:.1f}{small}; book u{line}: {best_book(nm,'K',line,'under')}; {pin_fair(nm,'K',line,'under')}",r['ticker'])
             else:
                 add(2,'K-LENGTH OVER',ev,f"{nm} K o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
@@ -215,8 +223,8 @@ for (ev,nm),D in P.items():
     if K and K['mean'] is not None:
         kd=K['mean']-s['k_gs']; r=nearest50(K['rungs']); line=r['strike']
         if kd<=-1:
-            add(1,'K-SEASON-ANCHOR UNDER',ev,f"{nm} K u{line}",'NO',round(1-r['bid'],2),round(1-r['mid'],3),
-                f"K mkt {K['mean']:.2f} vs season {s['k_gs']:.2f} ({kd:+.2f}){small}"+(f"; outs mkt {O['mean']:.1f} vs season {s['outs_gs']:.1f} ({O['mean']-s['outs_gs']:+.1f})" if (O and O.get('mean') is not None and s.get('outs_gs')) else "")+f"; same bet as K-LENGTH if both fire; book: {best_book(nm,'K',line,'under')}; {pin_fair(nm,'K',line,'under')}",r['ticker'])
+            add(2 if PSEASON else 1,'K-SEASON-ANCHOR UNDER' + (' (PS paper)' if PSEASON else ''),ev,f"{nm} K u{line}",'NO',round(1-r['bid'],2),round(1-r['mid'],3),
+                f"K mkt {K['mean']:.2f} vs season {s['k_gs']:.2f} ({kd:+.2f}){small}; same bet as K-LENGTH if both fire; book: {best_book(nm,'K',line,'under')}; {pin_fair(nm,'K',line,'under')}",r['ticker'])
         if kd>=0.5 and O:
             ro=nearest50(O['rungs'])
             add(2,'DEEP-SPOT OVERS',ev,f"{nm} K o{line} / outs o{ro['strike']}",'YES',round(r['ask'],2),round(r['mid'],3),
@@ -321,16 +329,16 @@ for (ev,nm),D in P.items():
     hi=bbp is not None and bbp>=0.085
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
-        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {('bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f' % (r['mid'],min(r['mid']+.04,.99))) if hi else ('no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f' % r['mid'])}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
+        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
 # October hitter-under lean (2026 PS: Hits 1+, TB 2+, H+R+RBI 1+/2+ overs ran 4 to 6 pts below mid, 16 games; 2021-25 PS H/PA 3 to 13% below RS)
 if any(d.month==10 for d in dates):
     HU=collections.defaultdict(list)
     for r in R:
         if r['mid'] is None or r['ask']-r['bid']>0.03: continue
-        if (r['series'],r['strike']) in (('KXMLBHIT',0.5),('KXMLBTB',1.5),('KXMLBHRR',0.5),('KXMLBHRR',1.5)): HU[r['event'].split('-',1)[1]].append(r)
+        if (r['series'],r['strike']) in (('KXMLBTB',1.5),('KXMLBTB',2.5)): HU[r['event'].split('-',1)[1]].append(r)   # 10/10: narrowed to TB 2+/3+ (24 PS games: TB2+ -5.7 pts, hits/HRR back to fair)
     for code,L in HU.items():
         L.sort(key=lambda r:-r['mid'])
-        add(3,'OCTOBER HITTER UNDERS (lean)',code,f"{len(L)} tight hitter rungs (Hits 1+, TB 2+, HRR 1+/2+)",'NO',None,None,
+        add(3,'OCTOBER HITTER UNDERS (lean)',code,f"{len(L)} tight TB 2+/3+ rungs",'NO',None,None,
             "limit NO at the mid, small and spread across hitters; top: "+'; '.join(f"{r['title'].replace('?','')} mid {r['mid']:.3f}" for r in L[:6]),None)
 # Postseason sub-risk hitter UNDER (Bartolo 10/6): part-timers lose PA to earlier October pinch-hitting.
 # Fair P(0 hits) = sum over his 2026 RS PA distribution of (1 - h/PA)^(PA * tier multiplier); h/PA shrunk 200 PA to .220, x0.95 Oct contact.
@@ -339,7 +347,6 @@ PH_MULT=[(0.03,0.976),(0.10,0.930),(0.20,0.876),(1.01,0.852)]   # RS pinch-hit-f
 try:
     SUBR=json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'sub_risk_2026.json')))
 except Exception: SUBR={}
-_OPPC={}
 if SUBR and any(d.month>=10 for d in dates):
     HB=collections.defaultdict(list)
     for d in dates:
@@ -353,19 +360,12 @@ if SUBR and any(d.month>=10 for d in dates):
                         HB[pl[o['player_id']]].append((o['odds'],BOOKS[bid],'H' if typ.endswith('hits') else 'TB'))
     ipr=lambda o: 100/(o+100) if o>0 else -o/(-o+100)
     for d in dates:
-        sch=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=lineups,team,probablePitcher")
+        sch=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=lineups,team")
         for dd in sch.get('dates',[]):
             for gm in dd['games']:
-                if gm.get('gameType')=='R': continue
+                if gm.get('gameType')=='R' or gm.get('status',{}).get('abstractGameState')!='Preview': continue   # pregame only
                 lu=gm.get('lineups') or {}
                 gl=f"{gm['teams']['away']['team'].get('abbreviation','')}@{gm['teams']['home']['team'].get('abbreviation','')}"
-                opp={}   # opposing probable starter's season outs/start (short leash = more pinch-hit risk)
-                for sd,os_ in (('awayPlayers','home'),('homePlayers','away')):
-                    pp_=(gm['teams'][os_].get('probablePitcher') or {})
-                    if pp_.get('id'):
-                        if pp_['id'] not in _OPPC: _OPPC[pp_['id']]=season_starts(pp_['id'])
-                        ss_=_OPPC[pp_['id']] or {}
-                        opp[sd]=(pp_.get('fullName','opp SP'),ss_.get('outs_gs'))
                 for side in ('awayPlayers','homePlayers'):
                     for p in lu.get(side,[]):
                         sr=SUBR.get(str(p['id']))
@@ -377,10 +377,8 @@ if SUBR and any(d.month>=10 for d in dates):
                         if not q: continue
                         best=max(q,key=lambda t:t[0]); e=p0-ipr(best[0])
                         tier=3 if (e>=0.02 and n>=15) else 4
-                        on,oo=opp.get(side,(None,None))
-                        oppn=(f"; opp SP {on} {oo:.1f} outs/start"+(" (SHORT LEASH)" if oo<15 else "")) if oo is not None else ""
                         add(tier,'PS SUB-RISK HIT UNDER (lean)' if tier==3 else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
-                            f"RS pinch-hit-for {100*sr['ph']:.0f}%, <=2 PA {100*sr['le2']:.0f}% ({n} starts), RS PA {sr['pa']/n:.2f} x Oct mult {mult}; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}{oppn}. Lineups confirmed only; small size"+("; under 15 RS starts: info only" if n<15 else ""),None)
+                            f"RS pinch-hit-for {100*sr['ph']:.0f}%, <=2 PA {100*sr['le2']:.0f}% ({n} starts), RS PA {sr['pa']/n:.2f} x Oct mult {mult}; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. Lineups confirmed only; small size"+("; under 15 RS starts: info only" if n<15 else ""),None)
 for r in R:
     if r['series'] not in PSER or r['series']=='KXMLBHA' or r['mid'] is None or r['ask']-r['bid']>0.04: continue   # hits allowed is on the no-bet list
     p=PIN.get((nz(pname(r)),PSER[r['series']],float(r['strike'])))

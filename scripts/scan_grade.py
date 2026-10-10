@@ -11,6 +11,10 @@ def g(u):
     return {}
 T=[json.loads(l) for l in open(os.path.join(HERE,'scan_log.jsonl'))]
 T=[t for t in T if t['tier']<=3 and t.get('ticker') and t['side'] in('YES','NO')]
+def _fp(tk):
+    c=re.search(r'-(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',tk)
+    return dt.datetime(2000+int(c.group(1)),MON[c.group(2)],int(c.group(3)),int(c.group(4)),int(c.group(5)),tzinfo=dt.timezone(dt.timedelta(hours=-4))) if c else None
+T=[t for t in T if _fp(t['ticker']) and dt.datetime.fromisoformat(t['ts'])<_fp(t['ticker'])]   # pregame flags only (scan logged in-game rows before the 10/10 fix)
 seen=set(); U=[]
 for t in T:   # first trigger per ticker+rule only (later scans repeat it)
     k=(t['ticker'],t['rule'])
