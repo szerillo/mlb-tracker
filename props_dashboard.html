@@ -146,6 +146,10 @@ const minsTo=iso=>iso?(new Date(iso)-Date.now())/60000:null;
 function countdown(iso){ const m=minsTo(iso); if(m==null) return ''; if(m<0) return 'started'; const r=Math.round(m); return r>=60?`in ${Math.floor(r/60)}h ${r%60}m`:`in ${r}m`; }
 function windowTxt(iso){ const m=minsTo(iso); if(m==null) return {open:false,txt:'start time n/a'}; if(m<0) return {open:false,txt:'started'}; if(m<=120) return {open:true,txt:'window open'}; return {open:false,txt:'window opens '+countdown(new Date(new Date(iso).getTime()-120*60000).toISOString())}; }
 function nextScan(){ const n=new Date(); for(let d=0;d<2;d++) for(const h of SCAN_UTC_HOURS){ const t=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+d,h,SCAN_MIN)); if(t>n) return t; } return null; }
+// rows logged after their game's first pitch (Kalshi code: 26OCT071600CLECWS = Oct 7, 4:00 PM ET) carry live-game prices: ignore
+const _MON={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+function pregameRow(x){ const m=String(x.event||'').split('-').slice(1).join('-').match(/^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)/)||String(x.event||'').match(/^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)/);
+  if(!m||!(m[2] in _MON)||!x.ts) return true; const fp=Date.UTC(2000+ +m[1],_MON[m[2]],+m[3],+m[4]+4,+m[5]); return new Date(x.ts).getTime()<fp; }
 async function getText(u){ try{ const r=await fetch(u+'?t='+Date.now()); return r.ok?await r.text():''; }catch(e){ return ''; } }
 
 async function load(){
@@ -260,7 +264,7 @@ function scorecard(){
   } else h+='<div class="note">No graded board positions yet. Fills in as games settle.</div>';
   const vl=B&&B.meta?B.meta.velo_logged:0;
   h+=`<div class="note" style="margin-top:8px"><b>Auto DROP</b>: any Tier 2/3 rule with 30+ graded bets and CLV ≤ 0. <b>Fable review</b>: velocity decline at 150 logged (now ${vl}); HR anchor at 200 (paper, not in the scan).</div>`;
-  const byR={}; (GR||[]).filter(x=>!/hits allowed/i.test(x.what||'')).forEach(x=>{const r=byR[x.rule]=byR[x.rule]||{tier:x.tier,n:0,pl:0,clv:0,nc:0,w:0}; r.n++; r.pl+=(x.pl||0); if(x.clv!=null){r.clv+=x.clv;r.nc++;} if(x.result===(x.side==='YES'?'yes':'no')) r.w++;});
+  const byR={}; (GR||[]).filter(x=>!/hits allowed/i.test(x.what||'')&&pregameRow(x)).forEach(x=>{const r=byR[x.rule]=byR[x.rule]||{tier:x.tier,n:0,pl:0,clv:0,nc:0,w:0}; r.n++; r.pl+=(x.pl||0); if(x.clv!=null){r.clv+=x.clv;r.nc++;} if(x.result===(x.side==='YES'?'yes':'no')) r.w++;});
   const rs=Object.entries(byR).sort((a,b)=>a[1].tier-b[1].tier||b[1].n-a[1].n);
   if(rs.length) h+=`<div class="note" style="margin-top:10px">Scan flags (original grader, every flag):</div><table class="t"><tr><th>Rule</th><th>n</th><th>Win %</th><th>P/L per $1</th><th>Avg CLV (Kalshi close)</th><th></th></tr>${rs.map(([k,r])=>{const clv=r.nc?r.clv/r.nc*100:null; const drop=(r.tier===2||r.tier===3)&&r.n>=30&&clv!=null&&clv<=0; return `<tr><td>${esc(PLAIN[k]||k)}</td><td>${r.n}</td><td>${pct(r.w/r.n,0)}</td><td class="${cls(r.pl)}">${sgn(r.pl/r.n*100)}¢</td><td class="${cls(clv)}">${sgn(clv)}</td><td>${drop?'<b class="neg">DROP</b>':''}</td></tr>`;}).join('')}</table>`;
   return `<div class="pad">${h}</div>`;
