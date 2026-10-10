@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-10T16:05:00+00:00",
+ "generated_at": "2026-10-10T16:13:03+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -15,12 +15,21 @@
    "league": "AL",
    "a": "CLE",
    "b": "CWS",
-   "ml_a": -148,
-   "ml_b": 119,
-   "book": "Kalshi",
-   "book_a": "Kalshi",
-   "book_b": "Kalshi",
-   "books": null,
+   "ml_a": -135,
+   "ml_b": 122,
+   "book": "best",
+   "book_a": "BetMGM G5 ML",
+   "book_b": "bet365 G5 ML",
+   "books": {
+    "a": {
+     "BetMGM G5 ML": -135,
+     "Kalshi": -148
+    },
+    "b": {
+     "bet365 G5 ML": 122,
+     "Kalshi": 119
+    }
+   },
    "exact": {
     "b-3-2": 114,
     "a-3-2": -142
@@ -32,18 +41,26 @@
    "league": "NL",
    "a": "MIL",
    "b": "LAD",
-   "ml_a": 138,
-   "ml_b": -161,
+   "ml_a": 145,
+   "ml_b": -160,
    "book": "best",
-   "book_a": "Pinnacle",
-   "book_b": "Kalshi",
+   "book_a": "Caesars",
+   "book_b": "DraftKings",
    "books": {
     "a": {
+     "DraftKings": 130,
+     "Caesars": 145,
+     "BetMGM": 140,
+     "FanDuel": 142,
      "Pinnacle": 138,
      "Bovada": 137,
-     "Kalshi": 134
+     "Kalshi": 140
     },
     "b": {
+     "DraftKings": -160,
+     "Caesars": -165,
+     "BetMGM": -165,
+     "FanDuel": -172,
      "Pinnacle": -162,
      "Bovada": -163,
      "Kalshi": -161
