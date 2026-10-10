@@ -1,7 +1,7 @@
 {
 "meta": {
-"built": "2026-10-10T18:23:59.491264+00:00",
-"latest_scan": "2026-10-10T18:22:11.481954+00:00",
+"built": "2026-10-10T20:22:09.056568+00:00",
+"latest_scan": "2026-10-10T20:20:15.492439+00:00",
 "pinnacle_rows_latest": 88,
 "velo_logged": 0,
 "fable_review": {
@@ -49,12 +49,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-09T07:14:00.784031+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 7,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 8,
 "notes": [
 {
 "rule": "YRFI CURVE (Oct-adj only)",
-"note": "Kalshi total 7.21; YRFI curve 0.433 (Oct-adj 0.470); ask 0.43; edge -1.4 (Oct +2.3); taker $ 80% NRFI (normal is 74%); Pinnacle YRFI +121 / NRFI -141 (fair YRFI 0.433, Kalshi edge vs Pinnacle -1.5)"
+"note": "Kalshi total 7.21; YRFI curve 0.433 (Oct-adj 0.470); ask 0.43; edge -1.4 (Oct +2.3); taker $ 79% NRFI (normal is 74%); Pinnacle YRFI +127 / NRFI -149 (fair YRFI 0.420, Kalshi edge vs Pinnacle -2.8)"
 }
 ],
 "badges": [],
@@ -70,9 +70,9 @@
 "curve": 0.433,
 "curve_oct": 0.47,
 "ktotal": 7.21,
-"market": 0.433,
+"market": 0.42,
 "market_src": "Pinnacle no-vig",
-"nrfi_pct": 80,
+"nrfi_pct": 79,
 "side": "YES",
 "label": "YRFI",
 "cat": "RFI",
@@ -82,7 +82,7 @@
 "kalshi_cost": 0.4472,
 "kalshi_am": 124,
 "edge": 2.28,
-"edge_mkt": -1.42,
+"edge_mkt": -2.72,
 "target_am": 122,
 "target_kalshi_cents": 43
 },
@@ -108,7 +108,7 @@
 "size": "small, late only",
 "model": 0.47,
 "model_src": "curve, Oct-adj (pending Fable)",
-"market": 0.433,
+"market": 0.42,
 "market_src": "Pinnacle no-vig",
 "kalshi_px": 0.43,
 "first_seen": "2026-10-09T07:14:00.784031+00:00",
@@ -117,7 +117,7 @@
 "kalshi_cost": 0.4472,
 "kalshi_am": 124,
 "edge": 2.28,
-"edge_mkt": -1.42,
+"edge_mkt": -2.72,
 "target_am": 122,
 "target_kalshi_cents": 43
 }
@@ -134,23 +134,53 @@
 "home": "CLE",
 "tier": 3,
 "rules": [
-"OCTOBER HITTER UNDERS (lean)"
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
 ],
 "live": true,
 "first_seen": "2026-10-09T07:14:00.784031+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 7,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 8,
 "notes": [
 {
 "rule": "OCTOBER HITTER UNDERS (lean)",
-"note": "limit NO at the mid, small and spread across hitters; top: Jos\u00e9 Ram\u00edrez: 2+ total bases mid 0.375; Jo Adell: 2+ total bases mid 0.360; Miguel Vargas: 2+ total bases mid 0.345; Brayan Rocchio: 2+ total bases mid 0.275; Colson Montgomery: 2+ total bases mid 0.235; Jos\u00e9 Ram\u00edrez: 3+ total bases mid 0.210"
+"note": "limit NO at the mid, small and spread across hitters; top: Jos\u00e9 Ram\u00edrez: 2+ total bases mid 0.375; Jo Adell: 2+ total bases mid 0.355; Miguel Vargas: 2+ total bases mid 0.345; Munetaka Murakami: 2+ total bases mid 0.300; Brayan Rocchio: 2+ total bases mid 0.270; Colson Montgomery: 2+ total bases mid 0.240"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 9%, <=2 PA 1% (123 starts), RS PA 4.28 x Oct mult 0.93; fair P(0 H) 0.385 vs best DK +150 (u0.5 H), edge -1.5. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 3%, <=2 PA 3% (32 starts), RS PA 4.19 x Oct mult 0.93; fair P(0 H) 0.454 vs best DK +102 (u0.5 H), edge -4.1. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 5%, <=2 PA 13% (114 starts), RS PA 3.73 x Oct mult 0.93; fair P(0 H) 0.459 vs best Fanatics -150 (u0.5 H), edge -14.1. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 6%, <=2 PA 11% (125 starts), RS PA 3.62 x Oct mult 0.93; fair P(0 H) 0.437 vs best DK -106 (u0.5 H), edge -7.8. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 7%, <=2 PA 16% (55 starts), RS PA 3.55 x Oct mult 0.93; fair P(0 H) 0.478 vs best Fanatics -130 (u0.5 H), edge -8.7. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK HIT UNDER (lean)",
+"note": "RS pinch-hit-for 10%, <=2 PA 9% (92 starts), RS PA 3.57 x Oct mult 0.93; fair P(0 H) 0.502 vs best DK +109 (u0.5 H), edge +2.4. Lineups confirmed only; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "RS pinch-hit-for 6%, <=2 PA 12% (48 starts), RS PA 3.58 x Oct mult 0.93; fair P(0 H) 0.479 vs best DK -102 (u0.5 H), edge -2.6. Lineups confirmed only; small size"
 }
 ],
 "badges": [],
 "started": false,
 "label": "Hitter unders",
 "side": "NO",
-"oct_count": "10",
+"oct_count": "12",
 "oct_rungs": [
 {
 "market": "Jos\u00e9 Ram\u00edrez: 2+ total bases",
@@ -162,10 +192,10 @@
 },
 {
 "market": "Jo Adell: 2+ total bases",
-"yes_mid": 0.36,
-"no_limit": 0.64,
-"no_fair": 0.67,
-"edge_at_limit": 1.39,
+"yes_mid": 0.355,
+"no_limit": 0.645,
+"no_fair": 0.675,
+"edge_at_limit": 1.4,
 "buy_no_cents": 63
 },
 {
@@ -177,35 +207,345 @@
 "buy_no_cents": 64
 },
 {
+"market": "Munetaka Murakami: 2+ total bases",
+"yes_mid": 0.3,
+"no_limit": 0.7,
+"no_fair": 0.73,
+"edge_at_limit": 1.53,
+"buy_no_cents": 69
+},
+{
 "market": "Brayan Rocchio: 2+ total bases",
-"yes_mid": 0.275,
-"no_limit": 0.725,
-"no_fair": 0.755,
-"edge_at_limit": 1.6,
+"yes_mid": 0.27,
+"no_limit": 0.73,
+"no_fair": 0.76,
+"edge_at_limit": 1.62,
 "buy_no_cents": 72
 },
 {
 "market": "Colson Montgomery: 2+ total bases",
-"yes_mid": 0.235,
-"no_limit": 0.765,
-"no_fair": 0.795,
-"edge_at_limit": 1.74,
-"buy_no_cents": 76
-},
-{
-"market": "Jos\u00e9 Ram\u00edrez: 3+ total bases",
-"yes_mid": 0.21,
-"no_limit": 0.79,
-"no_fair": 0.82,
-"edge_at_limit": 1.84,
-"buy_no_cents": 78
+"yes_mid": 0.24,
+"no_limit": 0.76,
+"no_fair": 0.79,
+"edge_at_limit": 1.72,
+"buy_no_cents": 75
 }
 ],
-"subs": [],
+"subs": [
+{
+"rule": "PS SUB-RISK HIT UNDER (lean)",
+"label": "Patrick Bailey under 0.5 hits",
+"model": 0.502,
+"lean": true,
+"book": "DK",
+"book_odds": 109,
+"book_mkt": "H",
+"ph_pct": 10,
+"le2_pct": 9,
+"starts": 92,
+"edge": 2.35,
+"target_am": 107
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Sam Antonacci under 0.5 hits",
+"model": 0.385,
+"lean": false,
+"book": "DK",
+"book_odds": 150,
+"book_mkt": "H",
+"ph_pct": 9,
+"le2_pct": 1,
+"starts": 123,
+"edge": -1.5,
+"target_am": 174
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Petey Halpin under 0.5 hits",
+"model": 0.479,
+"lean": false,
+"book": "DK",
+"book_odds": -102,
+"book_mkt": "H",
+"ph_pct": 6,
+"le2_pct": 12,
+"starts": 48,
+"edge": -2.6,
+"target_am": 118
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Kyle Teel under 0.5 hits",
+"model": 0.454,
+"lean": false,
+"book": "DK",
+"book_odds": 102,
+"book_mkt": "H",
+"ph_pct": 3,
+"le2_pct": 3,
+"starts": 32,
+"edge": -4.1,
+"target_am": 130
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Tristan Peters under 0.5 hits",
+"model": 0.437,
+"lean": false,
+"book": "DK",
+"book_odds": -106,
+"book_mkt": "H",
+"ph_pct": 6,
+"le2_pct": 11,
+"starts": 125,
+"edge": -7.76,
+"target_am": 140
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Brenton Doyle under 0.5 hits",
+"model": 0.478,
+"lean": false,
+"book": "Fanatics",
+"book_odds": -130,
+"book_mkt": "H",
+"ph_pct": 7,
+"le2_pct": 16,
+"starts": 55,
+"edge": -8.72,
+"target_am": 118
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Andrew Benintendi under 0.5 hits",
+"model": 0.459,
+"lean": false,
+"book": "Fanatics",
+"book_odds": -150,
+"book_mkt": "H",
+"ph_pct": 5,
+"le2_pct": 13,
+"starts": 114,
+"edge": -14.1,
+"target_am": 128
+}
+],
 "level": "lean",
 "size": "small, spread (cap the game)",
 "panel": "D",
-"positions": []
+"positions": [
+{
+"key": "26OCT102000CWSCLE|HIT|Patrick Bailey under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Patrick Bailey under 0.5 hits",
+"side": "UNDER",
+"level": "lean",
+"size": "small, spread (cap the game)",
+"model": 0.502,
+"book": "DK",
+"book_odds": 109,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": 2.35,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 107,
+"target_kalshi_cents": 46
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Sam Antonacci under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Sam Antonacci under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.385,
+"book": "DK",
+"book_odds": 150,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -1.5,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 174,
+"target_kalshi_cents": 34
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Petey Halpin under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Petey Halpin under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.479,
+"book": "DK",
+"book_odds": -102,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -2.6,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 118,
+"target_kalshi_cents": 44
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Kyle Teel under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Kyle Teel under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.454,
+"book": "DK",
+"book_odds": 102,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -4.1,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 130,
+"target_kalshi_cents": 41
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Tristan Peters under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Tristan Peters under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.437,
+"book": "DK",
+"book_odds": -106,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -7.76,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 140,
+"target_kalshi_cents": 40
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Brenton Doyle under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Brenton Doyle under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.478,
+"book": "Fanatics",
+"book_odds": -130,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -8.72,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 118,
+"target_kalshi_cents": 44
+},
+{
+"key": "26OCT102000CWSCLE|HIT|Andrew Benintendi under 0.5 hits",
+"cat": "HIT",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"rules": [
+"OCTOBER HITTER UNDERS (lean)",
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Andrew Benintendi under 0.5 hits",
+"side": "UNDER",
+"level": "info",
+"size": "small, spread (cap the game)",
+"model": 0.459,
+"book": "Fanatics",
+"book_odds": -150,
+"first_seen": "2026-10-09T07:14:00.784031+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": -14.1,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": 128,
+"target_kalshi_cents": 42
+}
+]
 },
 {
 "key": "26OCT102000CWSCLE|K|Sean Burke|under",
@@ -223,16 +563,16 @@
 ],
 "live": true,
 "first_seen": "2026-10-09T19:21:12.396461+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 5,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 6,
 "notes": [
 {
 "rule": "K-LENGTH UNDER (PS paper)",
-"note": "outs mkt 12.3 vs season 15.8 (-3.5); L5 outs 12.8; book u3.5: BetRivers +117; Pinnacle u3.5 +126 (fair 41.7%)"
+"note": "outs mkt 12.4 vs season 15.8 (-3.4); L5 outs 12.8; book u3.5: BetRivers +117; Pinnacle u3.5 +122 (fair 42.5%)"
 },
 {
 "rule": "K-SEASON-ANCHOR UNDER (PS paper)",
-"note": "K mkt 3.96 vs season 5.74 (-1.78); same bet as K-LENGTH if both fire; book: BetRivers +117; Pinnacle u3.5 +126 (fair 41.7%)"
+"note": "K mkt 3.92 vs season 5.74 (-1.82); same bet as K-LENGTH if both fire; book: BetRivers +117; Pinnacle u3.5 +122 (fair 42.5%)"
 }
 ],
 "badges": [],
@@ -242,9 +582,9 @@
 "ticker": "KXMLBKS-26OCT102000CWSCLE-CWSSBURKE59-4",
 "pitcher": "Sean Burke",
 "direction": "under",
-"kalshi_px": 0.44999999999999996,
+"kalshi_px": 0.45999999999999996,
 "first_px": 0.45,
-"market": 0.41700000000000004,
+"market": 0.425,
 "market_src": "Pinnacle no-vig",
 "model": null,
 "model_src": "market + 0",
@@ -252,10 +592,10 @@
 "book": "BetRivers",
 "book_odds": 117,
 "inputs": {
-"outs_mkt": 12.3,
+"outs_mkt": 12.4,
 "outs_season": 15.8,
-"outs_gap": -3.5,
-"k_mkt": 3.96,
+"outs_gap": -3.4,
+"k_mkt": 3.92,
 "k_season": 5.74
 },
 "level": "lead",
@@ -279,31 +619,31 @@
 "level": "lead",
 "size": "none",
 "model_src": "market + 0",
-"market": 0.41700000000000004,
+"market": 0.425,
 "market_src": "Pinnacle no-vig",
 "book": "BetRivers",
 "book_odds": 117,
-"kalshi_px": 0.44999999999999996,
+"kalshi_px": 0.45999999999999996,
 "first_seen": "2026-10-09T19:21:12.396461+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.44499999999999995,
-"kalshi_cost": 0.4673,
-"kalshi_am": 114,
+"kalshi_mid_side": 0.45499999999999996,
+"kalshi_cost": 0.4774,
+"kalshi_am": 109,
 "edge": null,
-"edge_mkt": -5.03,
+"edge_mkt": -5.24,
 "book_edge": null,
-"book_edge_mkt": -4.38,
+"book_edge_mkt": -3.58,
 "best_venue": "book"
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.44499999999999995,
-"kalshi_cost": 0.4673,
-"kalshi_am": 114,
+"kalshi_mid_side": 0.45499999999999996,
+"kalshi_cost": 0.4774,
+"kalshi_am": 109,
 "edge": null,
-"edge_mkt": -5.03,
+"edge_mkt": -5.24,
 "book_edge": null,
-"book_edge_mkt": -4.38,
+"book_edge_mkt": -3.58,
 "best_venue": "book"
 },
 {
@@ -322,16 +662,16 @@
 ],
 "live": true,
 "first_seen": "2026-10-09T23:53:36.462155+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 4,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 5,
 "notes": [
 {
 "rule": "K-LENGTH UNDER (PS paper)",
-"note": "outs mkt 13.1 vs season 17.3 (-4.2); L5 outs 17.0; book u6.5: CZR +106; Pinnacle u6.5 +108 (fair 45.2%)"
+"note": "outs mkt 13.1 vs season 17.3 (-4.2); L5 outs 17.0; book u6.5: DK +108; Pinnacle u6.5 +108 (fair 45.2%)"
 },
 {
 "rule": "K-SEASON-ANCHOR UNDER (PS paper)",
-"note": "K mkt 6.60 vs season 7.75 (-1.15); same bet as K-LENGTH if both fire; book: CZR +106; Pinnacle u6.5 +108 (fair 45.2%)"
+"note": "K mkt 6.63 vs season 7.75 (-1.12); same bet as K-LENGTH if both fire; book: DK +108; Pinnacle u6.5 +108 (fair 45.2%)"
 }
 ],
 "badges": [],
@@ -348,13 +688,13 @@
 "model": null,
 "model_src": "market + 0",
 "rule_edge": 0,
-"book": "CZR",
-"book_odds": 106,
+"book": "DK",
+"book_odds": 108,
 "inputs": {
 "outs_mkt": 13.1,
 "outs_season": 17.3,
 "outs_gap": -4.2,
-"k_mkt": 6.6,
+"k_mkt": 6.63,
 "k_season": 7.75
 },
 "level": "lead",
@@ -380,8 +720,8 @@
 "model_src": "market + 0",
 "market": 0.452,
 "market_src": "Pinnacle no-vig",
-"book": "CZR",
-"book_odds": 106,
+"book": "DK",
+"book_odds": 108,
 "kalshi_px": 0.48,
 "first_seen": "2026-10-09T23:53:36.462155+00:00",
 "price_src": "live",
@@ -391,7 +731,7 @@
 "edge": null,
 "edge_mkt": -4.55,
 "book_edge": null,
-"book_edge_mkt": -3.34,
+"book_edge_mkt": -2.88,
 "best_venue": "book"
 }
 ],
@@ -402,7 +742,7 @@
 "edge": null,
 "edge_mkt": -4.55,
 "book_edge": null,
-"book_edge_mkt": -3.34,
+"book_edge_mkt": -2.88,
 "best_venue": "book"
 },
 {
@@ -420,12 +760,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T06:49:40.104389+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 3,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 4,
 "notes": [
 {
 "rule": "RFI INFO",
-"note": "Kalshi total 6.00; YRFI curve 0.367 (Oct-adj 0.402); ask 0.39; edge -4.0 (Oct -0.4); taker $ 63% NRFI (normal is 74%)"
+"note": "Kalshi total 6.00; YRFI curve 0.367 (Oct-adj 0.402); ask 0.39; edge -4.0 (Oct -0.4); taker $ 74% NRFI (normal is 74%)"
 }
 ],
 "badges": [],
@@ -443,7 +783,7 @@
 "ktotal": 6.0,
 "market": null,
 "market_src": null,
-"nrfi_pct": 63,
+"nrfi_pct": 74,
 "side": "YES",
 "label": "YRFI",
 "cat": "RFI",
@@ -507,8 +847,8 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T06:49:40.104389+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 3,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 4,
 "notes": [
 {
 "rule": "OCTOBER HITTER UNDERS (lean)",
@@ -559,12 +899,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 2,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 3,
 "notes": [
 {
 "rule": "WALKS OVER (info: low-BB% pitcher)",
-"note": "season BB% 8.2; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.615; Kalshi 0.59/0.64; book o1.5: DK -189; -"
+"note": "season BB% 8.2; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.610; Kalshi 0.59/0.63; book o1.5: DK -168; -"
 }
 ],
 "badges": [],
@@ -573,14 +913,14 @@
 "side": "YES",
 "ticker": "KXMLBWA-26OCT102000CWSCLE-CLEGWILLIAMS32-2",
 "pitcher": "Gavin Williams",
-"kalshi_px": 0.64,
+"kalshi_px": 0.63,
 "first_px": 0.72,
-"market": 0.615,
+"market": 0.61,
 "market_src": "Kalshi mid",
 "model": null,
 "model_src": "Kalshi mid + 4",
 "book": "DK",
-"book_odds": -189,
+"book_odds": -168,
 "inputs": {
 "bb_pct": 8.2
 },
@@ -603,31 +943,31 @@
 "level": "info",
 "size": "none",
 "model_src": "Kalshi mid + 4",
-"market": 0.615,
+"market": 0.61,
 "market_src": "Kalshi mid",
 "book": "DK",
-"book_odds": -189,
-"kalshi_px": 0.64,
+"book_odds": -168,
+"kalshi_px": 0.63,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.615,
-"kalshi_cost": 0.6561,
-"kalshi_am": -191,
+"kalshi_mid_side": 0.61,
+"kalshi_cost": 0.6463,
+"kalshi_am": -183,
 "edge": null,
-"edge_mkt": -4.11,
+"edge_mkt": -3.63,
 "book_edge": null,
-"book_edge_mkt": -3.9,
+"book_edge_mkt": -1.69,
 "best_venue": "book"
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.615,
-"kalshi_cost": 0.6561,
-"kalshi_am": -191,
+"kalshi_mid_side": 0.61,
+"kalshi_cost": 0.6463,
+"kalshi_am": -183,
 "edge": null,
-"edge_mkt": -4.11,
+"edge_mkt": -3.63,
 "book_edge": null,
-"book_edge_mkt": -3.9,
+"book_edge_mkt": -1.69,
 "best_venue": "book"
 },
 {
@@ -645,12 +985,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 2,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 3,
 "notes": [
 {
 "rule": "WALKS OVER (lead)",
-"note": "season BB% 8.9; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); bet only at or better than Kalshi mid 0.430 + 4 pts = fair about 0.470; Kalshi 0.41/0.45; book o1.5: DK +128; -"
+"note": "season BB% 8.9; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); bet only at or better than Kalshi mid 0.430 + 4 pts = fair about 0.470; Kalshi 0.41/0.45; book o1.5: DK +123; -"
 }
 ],
 "badges": [],
@@ -666,7 +1006,7 @@
 "model": 0.47,
 "model_src": "Kalshi mid + 4",
 "book": "DK",
-"book_odds": 128,
+"book_odds": 123,
 "inputs": {
 "bb_pct": 8.9
 },
@@ -693,7 +1033,7 @@
 "market": 0.43,
 "market_src": "Kalshi mid",
 "book": "DK",
-"book_odds": 128,
+"book_odds": 123,
 "kalshi_px": 0.45,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
 "price_src": "live",
@@ -702,8 +1042,8 @@
 "kalshi_am": 114,
 "edge": 0.27,
 "edge_mkt": -3.73,
-"book_edge": 3.14,
-"book_edge_mkt": -0.86,
+"book_edge": 2.16,
+"book_edge_mkt": -1.84,
 "best_venue": "book",
 "target_am": 122,
 "target_kalshi_cents": 43
@@ -715,8 +1055,8 @@
 "kalshi_am": 114,
 "edge": 0.27,
 "edge_mkt": -3.73,
-"book_edge": 3.14,
-"book_edge_mkt": -0.86,
+"book_edge": 2.16,
+"book_edge_mkt": -1.84,
 "best_venue": "book",
 "target_am": 122,
 "target_kalshi_cents": 43
@@ -736,8 +1076,8 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 2,
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 3,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (lean)",
@@ -745,11 +1085,11 @@
 },
 {
 "rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.855, edge +7.0 after fee; one game = one position"
+"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.860, edge +7.0 after fee; one game = one position"
 },
 {
 "rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.765, edge +6.6 after fee; one game = one position"
+"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.760, edge +6.6 after fee; one game = one position"
 },
 {
 "rule": "HITTER UNDER vs SP (lean)",
@@ -767,26 +1107,26 @@
 "ticker": "KXMLBTB-26OCT102000CWSCLE-CWSCMONTGOMERY12-3",
 "kalshi_px": 0.87,
 "rule": "HITTER UNDER vs SP (lean)",
-"market": 0.855,
+"market": 0.86,
 "market_src": "Kalshi NO mid",
-"model": 0.933,
+"model": 0.938,
 "model_src": "opp SP K% score (+ October -3)",
 "hsp_rungs": [
 {
 "label": "Colson Montgomery: 3+ total bases?",
 "ticker": "KXMLBTB-26OCT102000CWSCLE-CWSCMONTGOMERY12-3",
-"no_limit": 0.855,
-"no_fair": 0.933,
-"edge_at_limit": 6.93,
-"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.855, edge +7.0 after fee; one game = one position"
+"no_limit": 0.86,
+"no_fair": 0.938,
+"edge_at_limit": 6.96,
+"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.860, edge +7.0 after fee; one game = one position"
 },
 {
 "label": "Colson Montgomery: 2+ total bases?",
 "ticker": "KXMLBTB-26OCT102000CWSCLE-CWSCMONTGOMERY12-2",
-"no_limit": 0.765,
-"no_fair": 0.843,
-"edge_at_limit": 6.54,
-"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.765, edge +6.6 after fee; one game = one position"
+"no_limit": 0.76,
+"no_fair": 0.838,
+"edge_at_limit": 6.52,
+"note": "score -4.8 pts (opp SP K% 33.2, CSW 32.5; hitter L10 xwOBA -0.126 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.760, edge +6.6 after fee; one game = one position"
 },
 {
 "label": "Colson Montgomery: 2+ hits + runs + RBIs?",
@@ -832,116 +1172,120 @@
 "ticker": "KXMLBTB-26OCT102000CWSCLE-CWSCMONTGOMERY12-3",
 "level": "lean",
 "size": "small, one position (NO limit at the mid)",
-"model": 0.933,
+"model": 0.938,
 "model_src": "opp SP K% score (+ October -3)",
-"market": 0.855,
+"market": 0.86,
 "market_src": "Kalshi NO mid",
 "kalshi_px": 0.87,
 "first_seen": "2026-10-10T15:29:17.669016+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.855,
+"kalshi_mid_side": 0.86,
 "kalshi_cost": 0.8779,
 "kalshi_am": -719,
-"edge": 5.51,
-"edge_mkt": -2.29,
-"target_am": -1049,
-"target_kalshi_cents": 90
+"edge": 6.01,
+"edge_mkt": -1.79,
+"target_am": -1120,
+"target_kalshi_cents": 91
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.855,
+"kalshi_mid_side": 0.86,
 "kalshi_cost": 0.8779,
 "kalshi_am": -719,
-"edge": 5.51,
-"edge_mkt": -2.29,
-"target_am": -1049,
-"target_kalshi_cents": 90
+"edge": 6.01,
+"edge_mkt": -1.79,
+"target_am": -1120,
+"target_kalshi_cents": 91
 },
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Jacob Misiorowski: 7+ strikeouts?",
-"cat": "INFO",
+"key": "26OCT112000LADMIL|K|Jacob Misiorowski|under",
+"cat": "K",
 "game": "LAD @ MIL",
 "event": "26OCT112000LADMIL",
 "date": "2026-10-11",
 "first_pitch": "2026-10-11T20:00:00-04:00",
 "away": "LAD",
 "home": "MIL",
-"tier": 4,
+"tier": 2,
 "rules": [
-"DEPTH IMBALANCE (ungraded)"
+"K-SEASON-ANCHOR UNDER (PS paper)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $2 vs NO bids $644; heavier bidders NO; logged for grading"
+"rule": "K-SEASON-ANCHOR UNDER (PS paper)",
+"note": "K mkt 7.27 vs season 8.40 (-1.13); same bet as K-LENGTH if both fire; book: DK -131; Pinnacle u7.5 -140 (fair 55.6%)"
 }
 ],
-"badges": [
-"no backtested edge"
-],
+"badges": [],
 "started": false,
-"label": "Jacob Misiorowski: 7+ strikeouts?",
+"label": "Jacob Misiorowski K u7.5",
 "side": "NO",
-"ticker": "KXMLBKS-26OCT112000LADMIL-MILJMISIOROWSKI32-7",
-"kalshi_px": 0.39,
-"first_px": 0.625,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.375,
-"kalshi_cost": 0.4067,
-"kalshi_am": 146,
-"edge": null,
-"edge_mkt": null
+"ticker": "KXMLBKS-26OCT112000LADMIL-MILJMISIOROWSKI32-8",
+"pitcher": "Jacob Misiorowski",
+"direction": "under",
+"kalshi_px": 0.54,
+"first_px": 0.54,
+"market": 0.556,
+"market_src": "Pinnacle no-vig",
+"model": null,
+"model_src": "market + 0",
+"rule_edge": 0,
+"book": "DK",
+"book_odds": -131,
+"inputs": {
+"k_mkt": 7.27,
+"k_season": 8.4
 },
+"level": "lead",
+"size": "none",
+"panel": "B",
+"positions": [
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Tarik Skubal: 9+ strikeouts?",
-"cat": "INFO",
+"key": "26OCT112000LADMIL|K|Jacob Misiorowski|under",
+"cat": "K",
+"rule_edge": 0,
 "game": "LAD @ MIL",
 "event": "26OCT112000LADMIL",
-"date": "2026-10-11",
 "first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
 "rules": [
-"DEPTH IMBALANCE (ungraded)"
+"K-SEASON-ANCHOR UNDER (PS paper)"
 ],
-"live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $122 vs NO bids $1,547; heavier bidders NO; logged for grading"
+"label": "Jacob Misiorowski K u7.5",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT112000LADMIL-MILJMISIOROWSKI32-8",
+"level": "lead",
+"size": "none",
+"model_src": "market + 0",
+"market": 0.556,
+"market_src": "Pinnacle no-vig",
+"book": "DK",
+"book_odds": -131,
+"kalshi_px": 0.54,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.53,
+"kalshi_cost": 0.5574,
+"kalshi_am": -126,
+"edge": null,
+"edge_mkt": -0.14,
+"book_edge": null,
+"book_edge_mkt": -1.11,
+"best_venue": "kalshi"
 }
 ],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Tarik Skubal: 9+ strikeouts?",
-"side": "NO",
-"ticker": "KXMLBKS-26OCT112000LADMIL-LADTSKUBAL29-9",
-"kalshi_px": 0.72,
-"first_px": 0.295,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.705,
-"kalshi_cost": 0.7341,
-"kalshi_am": -276,
+"kalshi_mid_side": 0.53,
+"kalshi_cost": 0.5574,
+"kalshi_am": -126,
 "edge": null,
-"edge_mkt": null
+"edge_mkt": -0.14,
+"book_edge": null,
+"book_edge_mkt": -1.11,
+"best_venue": "kalshi"
 },
 {
 "key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Tarik Skubal: 6+ strikeouts?",
@@ -957,13 +1301,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $11 vs NO bids $386; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $9 vs NO bids $798; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1000,8 +1344,8 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1030,7 +1374,7 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Gavin Williams: 6+ strikeouts?",
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Gavin Williams: 9+ strikeouts?",
 "cat": "INFO",
 "game": "CWS @ CLE",
 "event": "26OCT102000CWSCLE",
@@ -1043,32 +1387,75 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $107 vs NO bids $1,429; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $1,293 vs NO bids $23,064; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
-"label": "Gavin Williams: 6+ strikeouts?",
+"label": "Gavin Williams: 9+ strikeouts?",
 "side": "NO",
-"ticker": "KXMLBKS-26OCT102000CWSCLE-CLEGWILLIAMS32-6",
-"kalshi_px": 0.31999999999999995,
-"first_px": 0.685,
+"ticker": "KXMLBKS-26OCT102000CWSCLE-CLEGWILLIAMS32-9",
+"kalshi_px": 0.74,
+"first_px": 0.265,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.31499999999999995,
-"kalshi_cost": 0.3352,
-"kalshi_am": 198,
+"kalshi_mid_side": 0.735,
+"kalshi_cost": 0.7535,
+"kalshi_am": -306,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Gavin Williams: 8+ strikeouts?",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $598 vs NO bids $16,073; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Gavin Williams: 8+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT102000CWSCLE-CLEGWILLIAMS32-8",
+"kalshi_px": 0.62,
+"first_px": 0.385,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.615,
+"kalshi_cost": 0.6365,
+"kalshi_am": -175,
 "edge": null,
 "edge_mkt": null
 },
@@ -1086,13 +1473,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,424 vs NO bids $357; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $3,443 vs NO bids $431; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1102,16 +1489,145 @@
 "label": "Gavin Williams: 5+ strikeouts?",
 "side": "YES",
 "ticker": "KXMLBKS-26OCT102000CWSCLE-CLEGWILLIAMS32-5",
-"kalshi_px": 0.77,
-"first_px": 0.765,
+"kalshi_px": 0.79,
+"first_px": 0.775,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.765,
-"kalshi_cost": 0.7824,
-"kalshi_am": -360,
+"kalshi_mid_side": 0.775,
+"kalshi_cost": 0.8016,
+"kalshi_am": -404,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Sean Burke: 6+ strikeouts?",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $601 vs NO bids $20,090; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Sean Burke: 6+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT102000CWSCLE-CWSSBURKE59-6",
+"kalshi_px": 0.78,
+"first_px": 0.23,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.77,
+"kalshi_cost": 0.792,
+"kalshi_am": -381,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Sean Burke: 5+ strikeouts?",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $1,713 vs NO bids $17,559; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Sean Burke: 5+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT102000CWSCLE-CWSSBURKE59-5",
+"kalshi_px": 0.63,
+"first_px": 0.375,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.625,
+"kalshi_cost": 0.6463,
+"kalshi_am": -183,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT102000CWSCLE|BIG TRADES (no backtested edge)|Sean Burke: 4+ strikeouts?",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"BIG TRADES (no backtested edge)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "BIG TRADES (no backtested edge)",
+"note": "1 prints $1k+ since listing: YES $0 / NO $1,487"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Sean Burke: 4+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT102000CWSCLE-CWSSBURKE59-4",
+"kalshi_px": 0.45999999999999996,
+"first_px": 0.545,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.45499999999999996,
+"kalshi_cost": 0.4774,
+"kalshi_am": 109,
 "edge": null,
 "edge_mkt": null
 },
@@ -1129,13 +1645,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $10 vs NO bids $461; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $10 vs NO bids $429; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1146,56 +1662,56 @@
 "side": "NO",
 "ticker": "KXMLBOUTS-26OCT112000LADMIL-MILJMISIOROWSKI32-17",
 "kalshi_px": 0.51,
-"first_px": 0.515,
+"first_px": 0.51,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.485,
+"kalshi_mid_side": 0.49,
 "kalshi_cost": 0.5275,
 "kalshi_am": -112,
 "edge": null,
 "edge_mkt": null
 },
 {
-"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Gavin Williams: 13+ Outs Recorded?",
+"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Tarik Skubal: 18+ Outs Recorded?",
 "cat": "INFO",
-"game": "CWS @ CLE",
-"event": "26OCT102000CWSCLE",
-"date": "2026-10-10",
-"first_pitch": "2026-10-10T20:00:00-04:00",
-"away": "CWS",
-"home": "CLE",
+"game": "LAD @ MIL",
+"event": "26OCT112000LADMIL",
+"date": "2026-10-11",
+"first_pitch": "2026-10-11T20:00:00-04:00",
+"away": "LAD",
+"home": "MIL",
 "tier": 4,
 "rules": [
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $98 vs NO bids $1,039; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $32 vs NO bids $323; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
-"label": "Gavin Williams: 13+ Outs Recorded?",
+"label": "Tarik Skubal: 18+ Outs Recorded?",
 "side": "NO",
-"ticker": "KXMLBOUTS-26OCT102000CWSCLE-CLEGWILLIAMS32-13",
+"ticker": "KXMLBOUTS-26OCT112000LADMIL-LADTSKUBAL29-18",
 "kalshi_px": 0.43999999999999995,
-"first_px": 0.57,
+"first_px": 0.575,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.42999999999999994,
+"kalshi_mid_side": 0.42500000000000004,
 "kalshi_cost": 0.4572,
 "kalshi_am": 119,
 "edge": null,
@@ -1215,13 +1731,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $22 vs NO bids $303; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $24 vs NO bids $343; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1245,7 +1761,7 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT102000CWSCLE|PRICE MOVE|Sean Burke: 1+ walks allowed?",
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Jo Adell: 1+ hits + runs + RBIs?",
 "cat": "INFO",
 "game": "CWS @ CLE",
 "event": "26OCT102000CWSCLE",
@@ -1255,35 +1771,35 @@
 "home": "CLE",
 "tier": 4,
 "rules": [
-"PRICE MOVE"
+"DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
-"rule": "PRICE MOVE",
-"note": "0.590 -> 0.675 since last scan; new taker $ YES 0 / NO 0"
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $2,113 vs NO bids $435; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
-"label": "Sean Burke: 1+ walks allowed?",
-"side": "-",
-"ticker": "KXMLBWA-26OCT102000CWSCLE-CWSSBURKE59-1",
-"kalshi_px": 0.98,
-"first_px": 0.675,
+"label": "Jo Adell: 1+ hits + runs + RBIs?",
+"side": "YES",
+"ticker": "KXMLBHRR-26OCT102000CWSCLE-CLEJADELL7-1",
+"kalshi_px": 0.66,
+"first_px": 0.655,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.675,
-"kalshi_cost": 0.9814,
-"kalshi_am": -5268,
+"kalshi_mid_side": 0.655,
+"kalshi_cost": 0.6757,
+"kalshi_am": -208,
 "edge": null,
 "edge_mkt": null
 },
@@ -1301,8 +1817,8 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1344,13 +1860,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $5,890 vs NO bids $22,470; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $2,980 vs NO bids $26,904; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1374,6 +1890,92 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Over 4.5 runs scored",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $65,939 vs NO bids $16,067; heavier bidders YES; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Over 4.5 runs scored",
+"side": "YES",
+"ticker": "KXMLBTOTAL-26OCT102000CWSCLE-5",
+"kalshi_px": 0.79,
+"first_px": 0.785,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.785,
+"kalshi_cost": 0.8016,
+"kalshi_am": -404,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT102000CWSCLE|DEPTH IMBALANCE (ungraded)|Over 10.5 runs scored",
+"cat": "INFO",
+"game": "CWS @ CLE",
+"event": "26OCT102000CWSCLE",
+"date": "2026-10-10",
+"first_pitch": "2026-10-10T20:00:00-04:00",
+"away": "CWS",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $17,513 vs NO bids $55,264; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Over 10.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT102000CWSCLE-11",
+"kalshi_px": 0.78,
+"first_px": 0.225,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.775,
+"kalshi_cost": 0.792,
+"kalshi_am": -381,
+"edge": null,
+"edge_mkt": null
+},
+{
 "key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Over 3.5 runs scored",
 "cat": "INFO",
 "game": "LAD @ MIL",
@@ -1387,13 +1989,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $3,155 vs NO bids $576; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $10,315 vs NO bids $1,573; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1403,21 +2005,21 @@
 "label": "Over 3.5 runs scored",
 "side": "YES",
 "ticker": "KXMLBTOTAL-26OCT112000LADMIL-4",
-"kalshi_px": 0.77,
-"first_px": 0.765,
+"kalshi_px": 0.78,
+"first_px": 0.77,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.765,
-"kalshi_cost": 0.7824,
-"kalshi_am": -360,
+"kalshi_mid_side": 0.77,
+"kalshi_cost": 0.792,
+"kalshi_am": -381,
 "edge": null,
 "edge_mkt": null
 },
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 4.5 runs",
+"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 2.5 runs",
 "cat": "INFO",
 "game": "LAD @ MIL",
 "event": "26OCT112000LADMIL",
@@ -1430,77 +2032,222 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $351 vs NO bids $2,597; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $2,560 vs NO bids $550; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
-"label": "First 5 innings: Over 4.5 runs",
-"side": "NO",
-"ticker": "KXMLBF5TOTAL-26OCT112000LADMIL-5",
-"kalshi_px": 0.72,
-"first_px": 0.285,
+"label": "First 5 innings: Over 2.5 runs",
+"side": "YES",
+"ticker": "KXMLBF5TOTAL-26OCT112000LADMIL-3",
+"kalshi_px": 0.57,
+"first_px": 0.565,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.715,
-"kalshi_cost": 0.7341,
-"kalshi_am": -276,
+"kalshi_mid_side": 0.565,
+"kalshi_cost": 0.5872,
+"kalshi_am": -142,
 "edge": null,
 "edge_mkt": null
 },
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 3.5 runs",
-"cat": "INFO",
+"key": "26OCT112000LADMIL|HSP",
+"cat": "HSP",
 "game": "LAD @ MIL",
 "event": "26OCT112000LADMIL",
 "date": "2026-10-11",
 "first_pitch": "2026-10-11T20:00:00-04:00",
 "away": "LAD",
 "home": "MIL",
-"tier": 4,
+"tier": 3,
 "rules": [
-"DEPTH IMBALANCE (ungraded)"
+"HITTER UNDER vs SP (lean)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $185 vs NO bids $727; heavier bidders NO; logged for grading"
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.480, edge +6.1 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 8.8%) + October -3; NO limit at mid 0.380, edge +4.4 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.450, edge +6.5 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 7.7%) + October -3; NO limit at mid 0.475, edge +4.4 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 8.8%) + October -3; NO limit at mid 0.640, edge +4.4 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.645, edge +6.2 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.415, edge +6.1 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 8.8%) + October -3; NO limit at mid 0.555, edge +4.3 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 8.8%) + October -3; NO limit at mid 0.310, edge +4.6 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.640, edge +6.6 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.400, edge +6.5 after fee; one game = one position"
+},
+{
+"rule": "HITTER UNDER vs SP (lean)",
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 7.7%) + October -3; NO limit at mid 0.655, edge +4.5 after fee; one game = one position"
 }
 ],
-"badges": [
-"no backtested edge"
-],
+"badges": [],
 "started": false,
-"label": "First 5 innings: Over 3.5 runs",
+"label": "Freddie Freeman: 2+ hits + runs + RBIs?",
 "side": "NO",
-"ticker": "KXMLBF5TOTAL-26OCT112000LADMIL-4",
-"kalshi_px": 0.6,
-"first_px": 0.41,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADFFREEMAN5-2",
+"kalshi_px": 0.65,
+"rule": "HITTER UNDER vs SP (lean)",
+"market": 0.64,
+"market_src": "Kalshi NO mid",
+"model": 0.722,
+"model_src": "opp SP K% score (+ October -3)",
+"hsp_rungs": [
+{
+"label": "Freddie Freeman: 2+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADFFREEMAN5-2",
+"no_limit": 0.64,
+"no_fair": 0.722,
+"edge_at_limit": 6.59,
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.640, edge +6.6 after fee; one game = one position"
+},
+{
+"label": "Freddie Freeman: 1+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADFFREEMAN5-1",
+"no_limit": 0.4,
+"no_fair": 0.482,
+"edge_at_limit": 6.52,
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.400, edge +6.5 after fee; one game = one position"
+},
+{
+"label": "Freddie Freeman: 1+ hits?",
+"ticker": "KXMLBHIT-26OCT112000LADMIL-LADFFREEMAN5-1",
+"no_limit": 0.45,
+"no_fair": 0.532,
+"edge_at_limit": 6.47,
+"note": "score -5.2 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.072 vs season, L10 barrel 10.3%) + October -3; NO limit at mid 0.450, edge +6.5 after fee; one game = one position"
+},
+{
+"label": "Shohei Ohtani: 2+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADSOHTANI17-2",
+"no_limit": 0.645,
+"no_fair": 0.723,
+"edge_at_limit": 6.2,
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.645, edge +6.2 after fee; one game = one position"
+},
+{
+"label": "Shohei Ohtani: 1+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADSOHTANI17-1",
+"no_limit": 0.415,
+"no_fair": 0.493,
+"edge_at_limit": 6.1,
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.415, edge +6.1 after fee; one game = one position"
+},
+{
+"label": "Shohei Ohtani: 1+ hits?",
+"ticker": "KXMLBHIT-26OCT112000LADMIL-LADSOHTANI17-1",
+"no_limit": 0.48,
+"no_fair": 0.558,
+"edge_at_limit": 6.05,
+"note": "score -4.8 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA -0.078 vs season, L10 barrel 18.2%) + October -3; NO limit at mid 0.480, edge +6.1 after fee; one game = one position"
+},
+{
+"label": "Mookie Betts: 1+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADMBETTS50-1",
+"no_limit": 0.31,
+"no_fair": 0.371,
+"edge_at_limit": 4.6,
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 8.8%) + October -3; NO limit at mid 0.310, edge +4.6 after fee; one game = one position"
+},
+{
+"label": "Andy Pages: 2+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADAPAGES44-2",
+"no_limit": 0.655,
+"no_fair": 0.716,
+"edge_at_limit": 4.52,
+"note": "score -3.1 pts (opp SP K% 37.9, CSW 34.0; hitter L10 xwOBA +0.082 vs season, L10 barrel 7.7%) + October -3; NO limit at mid 0.655, edge +4.5 after fee; one game = one position"
+}
+],
+"level": "lean",
+"size": "small, one position (NO limit at the mid)",
+"panel": "D",
+"positions": [
+{
+"key": "26OCT112000LADMIL|HSP",
+"cat": "HSP",
+"game": "LAD @ MIL",
+"event": "26OCT112000LADMIL",
+"first_pitch": "2026-10-11T20:00:00-04:00",
+"rules": [
+"HITTER UNDER vs SP (lean)"
+],
+"rule": "HITTER UNDER vs SP (lean)",
+"label": "Freddie Freeman: 2+ hits + runs + RBIs?",
+"side": "NO",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADFFREEMAN5-2",
+"level": "lean",
+"size": "small, one position (NO limit at the mid)",
+"model": 0.722,
+"model_src": "opp SP K% score (+ October -3)",
+"market": 0.64,
+"market_src": "Kalshi NO mid",
+"kalshi_px": 0.65,
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.59,
-"kalshi_cost": 0.6168,
-"kalshi_am": -161,
-"edge": null,
-"edge_mkt": null
+"kalshi_mid_side": 0.64,
+"kalshi_cost": 0.6659,
+"kalshi_am": -199,
+"edge": 5.61,
+"edge_mkt": -2.59,
+"target_am": -236,
+"target_kalshi_cents": 68
+}
+],
+"price_src": "live",
+"kalshi_mid_side": 0.64,
+"kalshi_cost": 0.6659,
+"kalshi_am": -199,
+"edge": 5.61,
+"edge_mkt": -2.59,
+"target_am": -236,
+"target_kalshi_cents": 68
 },
 {
 "key": "26OCT112000LADMIL|HR ATTACK-ANGLE YES (paper)|Shohei Ohtani: 1+ home runs?",
@@ -1516,8 +2263,8 @@
 "HR ATTACK-ANGLE YES (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1532,16 +2279,16 @@
 "label": "Shohei Ohtani: 1+ home runs?",
 "side": "YES",
 "ticker": "KXMLBHR-26OCT112000LADMIL-LADSOHTANI17-1",
-"kalshi_px": 0.16,
-"first_px": 0.16,
+"kalshi_px": 0.17,
+"first_px": 0.17,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.14500000000000002,
-"kalshi_cost": 0.1694,
-"kalshi_am": 490,
+"kalshi_mid_side": 0.15500000000000003,
+"kalshi_cost": 0.1799,
+"kalshi_am": 456,
 "edge": null,
 "edge_mkt": null
 },
@@ -1559,8 +2306,8 @@
 "HR ATTACK-ANGLE YES (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1602,13 +2349,13 @@
 "HR ATTACK-ANGLE YES (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-10T18:22:11.481954+00:00",
-"last_seen": "2026-10-10T18:22:11.481954+00:00",
+"first_seen": "2026-10-10T20:20:15.492439+00:00",
+"last_seen": "2026-10-10T20:20:15.492439+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HR ATTACK-ANGLE YES (paper)",
-"note": "Savant attack angle 13.4 deg (top quintile); model +1.1 pts over mid; edge at ask after fee -0.3. Paper: log only (fee-free Novig at mid is the only venue where it clears)"
+"note": "Savant attack angle 13.4 deg (top quintile); model +1.1 pts over mid; edge at ask after fee -0.2. Paper: log only (fee-free Novig at mid is the only venue where it clears)"
 }
 ],
 "badges": [
@@ -1618,16 +2365,16 @@
 "label": "Colson Montgomery: 1+ home runs?",
 "side": "YES",
 "ticker": "KXMLBHR-26OCT102000CWSCLE-CWSCMONTGOMERY12-1",
-"kalshi_px": 0.14,
-"first_px": 0.14,
+"kalshi_px": 0.13,
+"first_px": 0.13,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.135,
-"kalshi_cost": 0.1484,
-"kalshi_am": 574,
+"kalshi_mid_side": 0.125,
+"kalshi_cost": 0.1379,
+"kalshi_am": 625,
 "edge": null,
 "edge_mkt": null
 }
