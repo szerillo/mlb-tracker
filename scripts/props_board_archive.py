@@ -66,6 +66,14 @@ def split_teams(t):
         if t.startswith(a) and t[len(a):] in TEAMS: return a, t[len(a):]
     return None, None
 
+def pregame(row):
+    """True unless the row was logged after its game's first pitch (first pitch read from the Kalshi game code, ET).
+    Rows without a Kalshi code (sportsbook-only, AWAY@HOME) are kept."""
+    e = parse_event(row.get('event'))
+    if not e or not e.get('start') or not row.get('ts'): return True
+    try: return dt.datetime.fromisoformat(row['ts']) < dt.datetime.fromisoformat(e['start'])
+    except Exception: return True
+
 def parse_event(ev):
     c = str(ev or '').split('-', 1)[-1]
     m = re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)([A-Z]+?)(G\d?)?$', c)
@@ -419,6 +427,7 @@ def overlaps(tickets, cards):
 
 def main():
     SL = load_jsonl(os.path.join(SCAN, 'scan_log.jsonl')); PL = load_jsonl(os.path.join(SCAN, 'pinnacle_log.jsonl'))
+    SL = [x for x in SL if pregame(x)]   # old scan rows logged after first pitch carry live-game prices: never use them
     if not SL: print('[board] no scan_log yet'); return
     now = dt.datetime.now(dt.timezone.utc); now_s = now.isoformat()
     latest = max(x['ts'] for x in SL)

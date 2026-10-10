@@ -14,7 +14,7 @@ tickets.csv columns (header row required):
   date,game,bet,book,price,size,rule_tier,kalshi_mid_at_bet,pinnacle_novig_at_bet,ticker,side
   price: American odds (e.g. +124) or Kalshi cents (e.g. 45c). ticker/side (YES|NO) optional but needed for auto-grading.
 """
-import json, os, glob, csv, time, re, collections, statistics as st, urllib.request
+import json, os, glob, csv, time, re, collections, statistics as st, urllib.request, datetime as dt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCAN = os.environ.get("SCAN_DIR") or os.path.join(HERE, "..", "data", "prop_scan")
@@ -44,6 +44,8 @@ def grade_board():
             try: r = json.loads(l)
             except Exception: continue
             if r.get('level') in ('info',) or r.get('cat') == 'HIT' or not r.get('ticker'): continue
+            fp = r.get('first_pitch')
+            if fp and r.get('ts') and r['ts'] >= dt.datetime.fromisoformat(fp).astimezone(dt.timezone.utc).isoformat(): continue   # logged after first pitch
             if r['key'] not in first: first[r['key']] = r   # first time the call appeared (the call we would have acted on)
     rows = []
     for k, r in first.items():

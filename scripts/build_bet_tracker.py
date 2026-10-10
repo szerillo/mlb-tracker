@@ -109,7 +109,18 @@ def game_of(ev):
 def _flag_edge(x):
     try: return (x.get('fair') or 0) - (x.get('price') or 1)
     except Exception: return -9
-_scan = load(os.path.join(D, 'prop_scan', 'scan_graded.json'), [])
+MON = {m: i + 1 for i, m in enumerate(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'])}
+def first_pitch_utc(ev):
+    """Kalshi game code 26OCT071600CLECWS -> first pitch (ET in the code) as UTC ISO, else None"""
+    m = re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)', str(ev or '').split('-', 1)[-1])
+    if not m or m.group(2) not in MON: return None
+    t = dt.datetime(2000 + int(m.group(1)), MON[m.group(2)], int(m.group(3)), int(m.group(4)), int(m.group(5)), tzinfo=dt.timezone(dt.timedelta(hours=-4)))
+    return t.astimezone(dt.timezone.utc).isoformat()
+def pregame(x):
+    fp = first_pitch_utc(x.get('event'))
+    try: return not (fp and x.get('ts')) or dt.datetime.fromisoformat(x['ts']) < dt.datetime.fromisoformat(fp)
+    except Exception: return True
+_scan = [x for x in load(os.path.join(D, 'prop_scan', 'scan_graded.json'), []) if pregame(x)]   # in-game rows from before the fix are dropped
 _scan.sort(key=lambda x: (x.get('ts') or '', -_flag_edge(x)))   # earliest scan first; within a scan, the best-edge rung first
 for x in _scan:
     base = re.sub(r'\s[ou]\d+(\.\d+)?(\s*/.*)?$', '', str(x.get('what') or ''))
