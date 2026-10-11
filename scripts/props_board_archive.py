@@ -316,11 +316,15 @@ def build(SL, PL, live, now):
                 n = r['note'] or ''; s = {'rule': r['rule'], 'label': r['what'], 'model': r.get('fair'), 'lean': r['tier'] == 3}
                 m = re.search(r'best\s+(\S+)\s+([+-]\d+)\s*\(u0\.5\s*(\w+)\)', n)
                 if m: s['book'], s['book_odds'], s['book_mkt'] = m.group(1), int(m.group(2)), m.group(3)
-                for fld, pat in (('ph_pct', r'pinch-hit-for\s*(\d+)%'), ('le2_pct', r'<=2 PA\s*(\d+)%'), ('starts', r'\((\d+) starts\)')):
+                for fld, pat in (('ph_pct', r'(?:pinch-hit-for|PH-for)\s*(\d+)%'), ('le2_pct', r'<=2 PA\s*(\d+)%'), ('starts', r'\((\d+) starts\)')):
                     m = re.search(pat, n)
                     if m: s[fld] = int(m.group(1))
-                m = re.search(r'opp SP (.*?) ([\d.]+) outs/start', n)
+                m = re.search(r'opp SP (.*?) ([\d.]+) outs/start', n)   # v1 notes
                 if m: s['opp_sp'], s['opp_outs'] = m.group(1), float(m.group(2)); s['short_leash'] = s['opp_outs'] < 15
+                m = re.match(r'\s*(platoon-start LHB|platoon-start RHB|part-timer|regular) vs (.*?) \((\w*)(, opener)?', n)   # v2 notes (10/10)
+                if m: s['profile'], s['opp_sp'], s['opp_hand'], s['opener'] = m.group(1), m.group(2), m.group(3), bool(m.group(4))
+                m = re.search(r'lifted (\d+) of (\d+) Oct starts', n)
+                if m: s['oct_lifted'], s['oct_starts'] = int(m.group(1)), int(m.group(2))
                 if s.get('book_odds') is not None and s.get('model') is not None:
                     s['edge'] = round((s['model'] - imp(s['book_odds'])) * 100, 2); s['target_am'] = to_am(s['model'] - .02)
                 subs.append(s)
@@ -330,7 +334,8 @@ def build(SL, PL, live, now):
             c['level'] = 'lean' if lean else 'info'; c['size'] = 'small, spread (cap the game)' if lean else 'none'; c['panel'] = 'D' if lean else 'E'
             c['positions'] = [pos_from({**c, 'key': f"{k}|{s['label']}", 'label': s['label'], 'side': 'UNDER', 'model': s.get('model'),
                                         'book': s.get('book'), 'book_odds': s.get('book_odds'), 'level': 'lean' if s['lean'] else 'info', 'ticker': None})
-                              for s in subs]
+                              for s in subs[:1] if s['lean']]   # sub-risk v2 (10/10): one game = one position, the best-edge lean
+            if subs and subs[0]['lean']: subs[0]['position'] = True
         elif cat == 'HSP':
             # Hitter under vs a high-K starter (Bartolo 10/10). Every firing rung is shown; the best edge after fee is the one position.
             def _e(r): return (r['fair'] - r['price'] - fee(r['price'])) if r.get('fair') is not None and r.get('price') is not None else -9
