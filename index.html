@@ -2449,6 +2449,7 @@ body.embed-mode.embed-futures #tab-futures,
   .modal .lineup-table .lu-kbb { display: table-cell !important; }
   .modal .bpt-stf { display: table-cell !important; }
   .modal .m-lineup-box, .modal .m-bp-box { overflow-x: auto; }
+.ps-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.3px;padding:0 4px;border-radius:3px;background:rgba(245,158,11,.18);color:#f59e0b;vertical-align:middle;margin-left:3px}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -7347,7 +7348,7 @@ function renderSPTrendsHTML(gl) {
     : `<td class="${tier(v * 100, thr, hib)}">${(v * 100).toFixed(0)}%</td>`;
 
   const lsRows = recent.map(s => `<tr>
-      <td>${fmtDateMD(s.date)}</td>
+      <td>${fmtDateMD(s.date)}${s.ps ? ' <span class="ps-tag" title="Postseason">PS</span>' : ''}</td>
       <td>${fmtOppDisp(s.opp)}</td>
       <td>${s.ip != null ? s.ip : '—'}</td>
       <td>${s.h ?? '—'}</td><td>${s.r ?? '—'}</td><td>${s.er ?? '—'}</td>
@@ -7482,7 +7483,7 @@ function renderHitterTrendsHTML(gl) {
   // Box-score + Statcast game log (most recent 10). Box cols come from MLB game
   // logs (show — until the nightly pull repopulates them).
   const lsRows = recent.map(g => `<tr>
-      <td>${g.date ? fmtDateMD(g.date) : '—'}</td>
+      <td>${g.date ? fmtDateMD(g.date) : '—'}${g.ps ? ' <span class="ps-tag" title="Postseason">PS</span>' : ''}</td>
       <td>${g.opp || '—'}</td>
       <td>${iv(g.ab)}</td><td>${iv(g.r)}</td><td>${iv(g.h)}</td><td>${iv(g.hr)}</td>
       <td>${iv(g.rbi)}</td><td>${iv(g.bb)}</td><td>${iv(g.k)}</td><td>${iv(g.sb)}</td>
