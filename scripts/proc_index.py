@@ -47,7 +47,7 @@ COLS = ['game_date', 'game_pk', 'pitcher', 'player_name', 'pitch_type', 'release
 
 
 def savant(yr, a, b):
-    u = (f"https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7C&hfSea={yr}%7C&player_type=pitcher"
+    u = (f"https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7CPO%7C&hfSea={yr}%7C&player_type=pitcher"
          f"&game_date_gt={a}&game_date_lt={b}&min_pitches=0&min_results=0&group_by=name&sort_col=pitches"
          f"&player_event_sort=api_p_release_speed&sort_order=desc&min_pas=0&type=details")
     t = requests.get(u, timeout=180).text

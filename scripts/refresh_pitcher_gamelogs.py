@@ -281,7 +281,7 @@ def mlb_starts_fallback(mlbam_id, season):
     flow into the rolling pool naturally.
     """
     url = (f"https://statsapi.mlb.com/api/v1/people/{mlbam_id}/stats"
-           f"?stats=gameLog&group=pitching&season={season}")
+           f"?stats=gameLog&group=pitching&season={season}&gameType=R,F,D,L,W")   # + postseason (Sean 10/11)
     try:
         d = http_json(url)
         splits = d["stats"][0]["splits"]
@@ -301,6 +301,7 @@ def mlb_starts_fallback(mlbam_id, season):
             "date": s.get("date"),
             "opp": opp,
             "is_home": s.get("isHome"),
+            "ps": s.get("gameType") in ("F", "D", "L", "W"),
             "ip": _f(st.get("inningsPitched")),
             "outs": ip_to_outs(st.get("inningsPitched")),
             "h": _f(st.get("hits")), "r": _f(st.get("runs")),
@@ -709,6 +710,9 @@ def main():
             for _s in _src:
                 if _s.get("date") and _s.get("is_home") is not None:
                     _home[_s["date"]] = _s["is_home"]
+        _psd = {x["date"]: bool(x.get("ps")) for x in (full or []) if x.get("date")}
+        for _s in starts:
+            _s["ps"] = _psd.get(_s.get("date"), bool(_s.get("ps")))
         for _s in starts:
             ih = _s.get("is_home")
             if ih is None:
@@ -749,7 +753,7 @@ def main():
     payload = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "season": season,
-        "source": "FanGraphs game logs (server-side); MLB Stats API universe + fallback",
+        "source": "FanGraphs game logs (server-side); MLB Stats API universe + fallback; regular season + postseason blended (starts[].ps marks October games)",
         "count": len(pitchers),
         "coverage": {"universe": len(universe), "fg_matched": len(fg_map),
                      "fg_ok": fg_ok, "mlb_fallback": mlb_fb, "failed": fg_fail},

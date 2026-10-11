@@ -14,6 +14,7 @@ OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "pitcher_splits.j
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _common import skip_if_not_in_window
+from _gametypes import GAME_TYPES, combine_splits
 
 
 def strip_accents(s):
@@ -65,7 +66,8 @@ def fetch_splits_and_gamelog(pid, season):
     # Two calls: /people/{id} for bio (hand), /stats for the splits
     bio = fetch(f"https://statsapi.mlb.com/api/v1/people/{pid}")
     stats_url = (f"https://statsapi.mlb.com/api/v1/people/{pid}/stats"
-                 f"?stats=statSplits,season,gameLog&group=pitching&season={season}&sitCodes=vr,vl")
+                 f"?stats=statSplits,season,gameLog&group=pitching&season={season}&sitCodes=vr,vl"
+                 f"&gameType={GAME_TYPES}")   # regular season + postseason blended (Sean 10/11)
     stats = fetch(stats_url)
     if not bio or not stats:
         return None
@@ -87,6 +89,13 @@ def parse_pitcher(data, pid):
     for grp in stats_groups:
         typ = grp.get("type", {}).get("displayName") or grp.get("type", {}).get("code")
         splits = grp.get("splits", [])
+        if typ == "statSplits":   # one row per game type (and duplicates): combine
+            c = combine_splits(splits, key=lambda s: s.get("split", {}).get("code"))
+            vs_r, vs_l = c.get("vr"), c.get("vl")
+            continue
+        if typ == "season":
+            season = combine_splits(splits).get(None)
+            continue
         for s in splits:
             sit_code = s.get("split", {}).get("code")
             stat = s.get("stat", {})

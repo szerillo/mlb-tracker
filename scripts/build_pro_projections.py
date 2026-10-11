@@ -29,6 +29,7 @@ HERE = os.path.dirname(__file__)
 REPO = os.path.abspath(os.path.join(HERE, ".."))
 sys.path.insert(0, HERE)
 import compute_pro_projections as E
+from _gametypes import combine_splits
 
 def _load(name):
     try:
@@ -60,13 +61,12 @@ def _sp_gs_ip(mlbam_id, season):
     if not mlbam_id:
         return (None, None)
     try:
-        url = f"https://statsapi.mlb.com/api/v1/people/{mlbam_id}/stats?stats=season&group=pitching&season={season}"
+        url = f"https://statsapi.mlb.com/api/v1/people/{mlbam_id}/stats?stats=season&group=pitching&season={season}&gameType=R,F,D,L,W"
         req = urllib.request.Request(url, headers={"User-Agent": "mlb-tracker/1.0"})
         d = json.load(urllib.request.urlopen(req, timeout=15))
         splits = (d.get("stats") or [{}])[0].get("splits") or []
-        agg = max(splits, key=lambda s: (s.get("stat", {}).get("battersFaced") or 0), default=None)
-        if agg:
-            st = agg["stat"]
+        st = combine_splits(splits).get(None)   # regular season + postseason (Sean 10/11)
+        if st:
             return (st.get("gamesStarted"), float(st.get("inningsPitched") or 0) or None)
     except Exception:
         pass

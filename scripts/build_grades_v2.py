@@ -81,7 +81,7 @@ def compute_damage():
 
 # ---------------------------------------------------------------- EYE
 def compute_eye():
-    base=("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7C&hfSea="
+    base=("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7CPO%7C&hfSea="
           f"{YEAR}%7C&player_type=batter&group_by=name&min_pitches=1&sort_col=pitches&sort_order=desc")
     def harv(extra):
         d=fetch(base+extra, 45)

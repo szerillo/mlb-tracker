@@ -28,7 +28,7 @@ def get(u): return urllib.request.urlopen(urllib.request.Request(u,headers={"Use
 def savant_split(hand, season):
     u=("https://baseballsavant.mlb.com/statcast_search/csv?all=true&player_type=batter"
        f"&group_by=name&min_pitches=1&sort_col=pitches&sort_order=desc&pitcher_throws={hand}"
-       f"&hfSea={season}%7C")
+       f"&hfSea={season}%7C&hfGT=R%7CPO%7C")   # regular season + postseason (Sean 10/11)
     out={}
     for r in csv.DictReader(io.StringIO(get(u))):
         try: out[norm(r["player_name"])]={"woba":float(r["woba"]),"pa":int(r["pa"]),

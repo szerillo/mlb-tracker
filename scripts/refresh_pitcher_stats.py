@@ -18,6 +18,7 @@ SAVANT_URL = "https://baseballsavant.mlb.com/leaderboard/expected_statistics?yea
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _common import skip_if_not_in_window
+from _gametypes import combine_splits
 
 
 def strip_accents(s):
@@ -47,6 +48,21 @@ def fetch_savant(year):
         return r.read().decode("utf-8-sig")
 
 
+BLEND_URL = ("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7CPO%7C&hfSea={year}%7C"
+             "&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&sort_col=pitches&sort_order=desc&type=")
+
+def fetch_blend_xwoba(year):
+    """{mlbam: (pa, woba, xwoba)} over regular season + postseason (Statcast search, grouped by pitcher)."""
+    req = urllib.request.Request(BLEND_URL.format(year=year), headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=90) as r:
+        rows = csv.DictReader(io.StringIO(r.read().decode("utf-8-sig")))
+        out = {}
+        for x in rows:
+            try: out[int(x["player_id"])] = (int(float(x["pa"])), float(x["woba"]), float(x["xwoba"]))
+            except (KeyError, TypeError, ValueError): pass
+    return out
+
+
 def fetch_mlb_kbb_and_hand(person_ids, season):
     """Fetch K/BB counts + TBF + pitchHand for many pitchers in batch."""
     if not person_ids: return {}, {}
@@ -56,7 +72,7 @@ def fetch_mlb_kbb_and_hand(person_ids, season):
     for i in range(0, len(ids_list), 100):
         chunk = ids_list[i:i+100]
         url = (f"https://statsapi.mlb.com/api/v1/people?personIds={','.join(str(x) for x in chunk)}"
-               f"&hydrate=stats(group=pitching,type=season,season={season})")
+               f"&hydrate=stats(group=pitching,type=season,season={season},gameType=[R,F,D,L,W])")   # + postseason (Sean 10/11)
         try:
             req = urllib.request.Request(url, headers={"User-Agent":"u/1.0"})
             with urllib.request.urlopen(req, timeout=30) as r:
@@ -68,8 +84,8 @@ def fetch_mlb_kbb_and_hand(person_ids, season):
             pid = p["id"]
             hand_result[pid] = (p.get("pitchHand") or {}).get("code")
             for s in p.get("stats", []):
-                for sp in s.get("splits", []):
-                    st = sp.get("stat", {})
+                st = combine_splits(s.get("splits", [])).get(None) or {}   # RS + PS rows summed
+                for _ in (0,):
                     ks = st.get("strikeOuts")
                     bbs = st.get("baseOnBalls")
                     tbf = st.get("battersFaced")
@@ -78,6 +94,7 @@ def fetch_mlb_kbb_and_hand(person_ids, season):
                             "k_pct": round(100 * ks / tbf, 1),
                             "bb_pct": round(100 * (bbs or 0) / tbf, 1),
                             "tbf": tbf,
+                            "era_blend": float(st["era"]) if st.get("era") not in (None, "-.--") else None,
                         }
     return kbb_result, hand_result
 
@@ -153,6 +170,29 @@ def main():
         if key and key in savant_stats:
             savant_stats[key]["hand"] = hand
     print(f"  K/BB resolved: {sum(1 for v in savant_stats.values() if 'k_pct' in v)}")
+
+    # Regular season + postseason blend (Sean 10/11). The expected_statistics leaderboard is
+    # regular-season only: swap in blended wOBA / xwOBA from Statcast search and move xERA by
+    # the change in xwOBA, using the xERA-per-xwOBA slope fitted on today's leaderboard.
+    try:
+        bl = fetch_blend_xwoba(year)
+        pts = [(v["xwoba"], v["xera"]) for v in savant_stats.values() if v.get("xwoba") and v.get("xera") and (v.get("pa") or 0) >= 150]
+        mx = sum(a for a, _ in pts) / len(pts); my = sum(b for _, b in pts) / len(pts)
+        slope = sum((a - mx) * (b - my) for a, b in pts) / sum((a - mx) ** 2 for a, _ in pts)
+        nb = 0
+        for key, v in savant_stats.items():
+            b = bl.get(v.get("mlbam_id"))
+            if not b or v.get("pa") is None or b[0] <= v["pa"]:
+                continue                              # no postseason PA for this pitcher
+            if v.get("xera") is not None and v.get("xwoba") is not None:
+                v["xera"] = round(v["xera"] + slope * (b[2] - v["xwoba"]), 2)
+            v["woba"], v["xwoba"], v["pa"] = b[1], b[2], float(b[0])
+            if v.get("era_blend") is not None:
+                v["era"] = v["era_blend"]
+            nb += 1
+        print(f"  postseason blend: {nb} pitchers updated (xERA slope {slope:.1f} per xwOBA)")
+    except Exception as e:
+        print(f"  postseason blend skipped: {e}")
     print(f"  pitchHand resolved: {sum(1 for v in savant_stats.values() if v.get('hand'))}")
 
     # Load projected FIP

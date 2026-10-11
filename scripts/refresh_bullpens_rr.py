@@ -17,6 +17,8 @@ CSV columns match the existing Bullpen Dump layout so it's a drop-in via
   E (const 8) | F number 1..N in role order | G "Team N" concat | H Workload
 """
 import json, os, sys, time, urllib.request, collections
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _gametypes import combine_splits
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUT_CSV = os.path.join(REPO_ROOT, "data", "bullpens_rr.csv")
@@ -228,7 +230,11 @@ def main():
     def _statline(person):
         st = person.get("stats") or []
         sp = (st[0].get("splits") if st else None) or []
-        s = (sp[0].get("stat") if sp else None) or {}
+        if sp and not any(x.get("gameType") for x in sp):
+            # byDateRange with several game types returns per-type rows plus an untagged total: take the total
+            s = max((x.get("stat") or {} for x in sp), key=lambda t: (t.get("gamesPitched") or 0, t.get("battersFaced") or 0))
+        else:
+            s = combine_splits(sp).get(None) or {}   # regular season + postseason rows summed (Sean 10/11)
         return {"g": s.get("gamesPitched") or 0, "gs": s.get("gamesStarted") or 0,
                 "sv": s.get("saves") or 0, "hld": s.get("holds") or 0,
                 "gf": s.get("gamesFinished") or 0, "ip": _ipf(s.get("inningsPitched"))}
@@ -236,8 +242,8 @@ def main():
     def _roster(tid, kind):
         base = "https://statsapi.mlb.com/api/v1/teams/%d/roster?rosterType=active&hydrate=person(stats(group=[pitching]," % tid
         if kind == "season":
-            return _get(base + "type=[season],season=%d))" % _year)
-        return _get(base + "type=[byDateRange],startDate=%s,endDate=%s))" % (_start.isoformat(), _end.isoformat()))
+            return _get(base + "type=[season],season=%d,gameType=[R,F,D,L,W]))" % _year)
+        return _get(base + "type=[byDateRange],startDate=%s,endDate=%s,gameType=[R,F,D,L,W]))" % (_start.isoformat(), _end.isoformat()))
 
     _tdata = _get("https://statsapi.mlb.com/api/v1/teams?sportId=1&season=%d" % _year) or {}
     _teams = [(tm.get("id"), tm.get("name")) for tm in _tdata.get("teams", [])

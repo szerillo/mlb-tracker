@@ -20,6 +20,12 @@ OUT       = REPO_ROOT / "data" / "savant_true_xwoba.json"
 SEASON    = datetime.date.today().year
 URL = ("https://baseballsavant.mlb.com/leaderboard/expected_statistics"
        f"?type=batter&year={SEASON}&position=&team=&filterType=bip&min=1&csv=true")
+# Regular season + postseason blended (Sean 10/11): the expected_statistics leaderboard is
+# regular-season only, so the primary source is Statcast search grouped by batter with
+# hfGT=R|PO| (same est_woba, PA-weighted over every game). The leaderboard is the fallback.
+URL_BLEND = ("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfGT=R%7CPO%7C"
+             f"&hfSea={SEASON}%7C&player_type=batter&group_by=name&min_pitches=0&min_results=0"
+             "&sort_col=pitches&sort_order=desc&type=")
 MIN_ROWS  = 200          # sanity floor; a real pull is ~440 batters
 
 def fetch_csv(url):
@@ -28,17 +34,23 @@ def fetch_csv(url):
         return r.read().decode("utf-8-sig")
 
 def main():
+    src = "statcast_search R+PO (regular season + postseason)"
     try:
-        text = fetch_csv(URL)
-        rows = list(csv.DictReader(io.StringIO(text)))
+        rows = list(csv.DictReader(io.StringIO(fetch_csv(URL_BLEND))))
+        if len(rows) < MIN_ROWS: raise ValueError(f"only {len(rows)} rows")
     except Exception as e:
-        print(f"[savant-xwoba] fetch failed: {e}; keeping previous", file=sys.stderr)
-        return 0 if OUT.exists() else 1
+        print(f"[savant-xwoba] blended pull failed ({e}); using the regular-season leaderboard", file=sys.stderr)
+        src = "savant_expected_statistics"
+        try:
+            rows = list(csv.DictReader(io.StringIO(fetch_csv(URL))))
+        except Exception as e2:
+            print(f"[savant-xwoba] fetch failed: {e2}; keeping previous", file=sys.stderr)
+            return 0 if OUT.exists() else 1
 
     out = {}
     for r in rows:
         pid = (r.get("player_id") or "").strip()
-        xw  = r.get("est_woba")
+        xw  = r.get("est_woba") if r.get("est_woba") not in (None, "") else r.get("xwoba")
         pa  = r.get("pa")
         if not pid or xw in (None, ""):
             continue
@@ -54,7 +66,7 @@ def main():
 
     payload = {"generated_at": datetime.datetime.now(datetime.timezone.utc)
                                 .isoformat(timespec="seconds"),
-               "season": SEASON, "source": "savant_expected_statistics",
+               "season": SEASON, "source": src,
                "n": len(out), "players": out}
     # Written flat ({mlbam: {...}}) at top level so the offense pipeline reads it
     # directly; the meta lives alongside under reserved keys.
