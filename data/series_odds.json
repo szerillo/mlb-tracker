@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-11T02:53:52+00:00",
+ "generated_at": "2026-10-11T09:21:01+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -15,15 +15,49 @@
    "league": "AL",
    "a": "TB",
    "b": "CLE",
-   "ml_a": null,
-   "ml_b": null,
-   "book": null,
-   "book_a": null,
-   "book_b": null,
-   "books": null,
-   "exact": null,
-   "spread": null,
-   "games": null
+   "ml_a": -150,
+   "ml_b": 135,
+   "book": "best",
+   "book_a": "FanDuel",
+   "book_b": "Caesars",
+   "books": {
+    "a": {
+     "Caesars": -155,
+     "FanDuel": -150,
+     "Kalshi": -263
+    },
+    "b": {
+     "Caesars": 135,
+     "FanDuel": 125,
+     "Kalshi": -103
+    }
+   },
+   "exact": {
+    "a-4-1": 173,
+    "a-4-0": 296,
+    "b-4-3": 173,
+    "b-4-2": 198,
+    "b-4-1": 252,
+    "b-4-0": 456
+   },
+   "spread": {
+    "a_minus_1_5": -162,
+    "b_minus_1_5": -397,
+    "a_minus_3_5": 296,
+    "b_plus_3_5": -3476,
+    "b_minus_3_5": 456
+   },
+   "games": {
+    "ladder": {
+     "4.5": {
+      "over": -2580,
+      "under": 189
+     }
+    },
+    "line": 4.5,
+    "over": -2580,
+    "under": 189
+   }
   },
   {
    "league": "NL",
@@ -33,20 +67,20 @@
    "ml_b": -160,
    "book": "best",
    "book_a": "BetMGM",
-   "book_b": "DraftKings",
+   "book_b": "Caesars",
    "books": {
     "a": {
-     "FanDuel": 136,
      "BetMGM": 140,
-     "Caesars": 135,
+     "Caesars": 140,
+     "FanDuel": 134,
      "DraftKings": 130,
      "Pinnacle": 139,
-     "Kalshi": 140
+     "Kalshi": 134
     },
     "b": {
-     "FanDuel": -164,
      "BetMGM": -165,
-     "Caesars": -165,
+     "Caesars": -160,
+     "FanDuel": -162,
      "DraftKings": -160,
      "Pinnacle": -163,
      "Kalshi": -161
@@ -54,45 +88,45 @@
    },
    "exact": {
     "a-4-3": 529,
-    "a-4-2": 625,
+    "a-4-2": 574,
     "a-4-1": 945,
     "a-4-0": 2243,
-    "b-4-3": 425,
-    "b-4-2": 425,
-    "b-4-1": 456,
+    "b-4-3": 398,
+    "b-4-2": 373,
+    "b-4-1": 425,
     "b-4-0": 756
    },
    "spread": {
-    "a_minus_1_5": 280,
-    "b_minus_1_5": 114,
-    "a_minus_3_5": 1775,
+    "a_minus_1_5": 266,
+    "b_minus_1_5": -103,
+    "a_minus_3_5": 1241,
     "b_plus_3_5": -2580,
-    "a_minus_2_5": 529,
+    "a_minus_2_5": 398,
     "b_plus_2_5": -869,
     "b_plus_1_5": -360,
-    "b_minus_3_5": 841,
-    "a_plus_3_5": -1236,
-    "b_minus_2_5": 240,
+    "b_minus_3_5": 625,
+    "a_plus_3_5": -1087,
+    "b_minus_2_5": 208,
     "a_plus_2_5": -306,
-    "a_plus_1_5": -137
+    "a_plus_1_5": -131
    },
    "games": {
     "ladder": {
      "6.5": {
-      "over": 198,
-      "under": -263
+      "over": 189,
+      "under": -306
      },
      "5.5": {
-      "over": -175,
+      "over": -208,
       "under": 140
      },
      "4.5": {
-      "over": -869,
+      "over": -967,
       "under": 574
      }
     },
     "line": 4.5,
-    "over": -869,
+    "over": -967,
     "under": 574
    }
   }
@@ -102,22 +136,22 @@
    {
     "al": "TB",
     "nl": "LAD",
-    "market": 150
+    "market": 154
    },
    {
     "al": "CLE",
     "nl": "LAD",
-    "market": 327
+    "market": 337
    },
    {
     "al": "TB",
     "nl": "MIL",
-    "market": 270
+    "market": 262
    },
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 337
+    "market": 505
    }
   ]
  }
