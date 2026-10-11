@@ -201,16 +201,7 @@ def pin_fair(nm,kind,line,side):
 PSEASON=any(d.month>=10 for d in dates)   # 10/10: K unders went 6-8 on all 2026 PS starts (n 14, -8c); paper in October pending Fable
 
 TR=[]
-def _first_pitch_utc(ev):
-    """Kalshi game code (26OCT071600CLECWS, ET) -> first pitch in UTC; None for non-Kalshi events (AWAY@HOME)."""
-    m=re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',str(ev or '').split('-',1)[-1])
-    if not m or m.group(2) not in MON: return None
-    return dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
-SKIPPED_LIVE=0
 def add(tier,rule,ev,what,side,price,fair,note,ticker=None):
-    global SKIPPED_LIVE
-    fp=_first_pitch_utc(ev)
-    if fp is not None and now>=fp: SKIPPED_LIVE+=1; return   # game already started: in-game prices are never pregame signals
     rd=lambda x: round(float(x),3) if x is not None else None
     TR.append(dict(ts=now.isoformat(),tier=tier,rule=rule,event=ev,what=what,side=side,price=rd(price),fair=rd(fair),note=note,ticker=ticker))
 def nearest50(rs): return min(rs,key=lambda r:abs(r['mid']-.5))
@@ -336,10 +327,9 @@ for (ev,nm),D in P.items():
     if not W: continue
     r=nearest50(W['rungs']); line=r['strike']; s_=SS.get((ev,nm)) or {}; bbp=s_.get('bb_pct')
     hi=bbp is not None and bbp>=0.085
-    _bbtxt=("bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99))) if hi else ("no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid'])
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
-        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {_bbtxt}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
+        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
 # October hitter-under lean (2026 PS: Hits 1+, TB 2+, H+R+RBI 1+/2+ overs ran 4 to 6 pts below mid, 16 games; 2021-25 PS H/PA 3 to 13% below RS)
 if any(d.month==10 for d in dates):
     HU=collections.defaultdict(list)
@@ -425,7 +415,7 @@ if SUBR and any(d.month>=10 for d in dates):
                         best=max(q,key=lambda t:t[0]); e=p0-ipr(best[0])
                         grp='platoon-start LHB' if platL else 'platoon-start RHB' if platR else 'part-timer' if oth else 'regular'
                         lean=(pt or (has and oc[1]>=2)) and e>=0.03
-                        if not lean and e<0.02: continue   # info rows only when the price is at least close (no negative-edge clutter)
+                        if not lean and e<0.02 and grp=='regular': continue
                         add(3 if lean else 4,'PS SUB-RISK HIT UNDER (lean)' if lean else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
                             f"{grp} vs {onm} ({oh}{', opener: no platoon tag' if opn else ''}); RS PH-for {100*rsph:.0f}% ({n} starts); lifted {oc[1]} of {oc[0]} Oct starts; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. One game = one position; small size")
 # Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
@@ -452,7 +442,12 @@ def _sf(pid,d):
     if len(S)<5: return None
     t=sum(x['tbf'] for x in S); cs=[x for x in S if x.get('csw') is not None]
     return dict(sp_k=sum(x['k'] for x in S)/t,sp_csw=sum(x['csw']*x['tbf'] for x in cs)/max(1,sum(x['tbf'] for x in cs)) if cs else None)
-if HGL and PGL:
+# 10/11: PAPER + PLAY FILTER. Walk-forward on Aug 10-Sep 28 (27k Kalshi rungs): the composite's SP-K% weight flips sign by month
+# (Aug +1.3 / Sep -2.3 pts per SD) and no slice was positive in both RS months after fee. PS 9/29-10/8: flagged Hits 1+ -1.8c,
+# H+R+RBI -4.4/-0.1; TB 2+/3+ +4.3/+6.7 (unflagged TB +4.9/+3.0: the October TB effect, not the score).
+# So: every flag is LOGGED as paper with tags for grading; only October TB 2+/3+ rows are a play (tier 3), sized as the October TB lean.
+HS_ON=True
+if HS_ON and HGL and PGL:
     PROB={}
     for d in dates:
         for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team").get('dates',[]):
@@ -475,8 +470,10 @@ if HGL and PGL:
         octb=-0.03 if d0.month>=10 else 0.0
         e_no=-(sc+octb)-fee(1-r['mid'])
         if sc<=-0.03 and e_no>=0.02:
-            add(3,'HITTER UNDER vs SP (lean)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']-sc-octb,3),
-                f"score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee; one game = one position",r['ticker'])
+            play=d0.month>=10 and r['series']=='KXMLBTB'
+            tags=f"[rung {r['series'].replace('KXMLB','')}{int(float(r['strike'])+0.5)}+ | SPK {'hi' if sf['sp_k']>=0.245 else 'lo' if sf['sp_k']<=0.205 else 'mid'} | L10 {'cold' if hf['hot']<=-0.05 else 'hot' if hf['hot']>=0.05 else 'flat'}]"
+            add(3 if play else 4,'HITTER UNDER vs SP: Oct TB (play)' if play else 'HITTER UNDER vs SP (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']+(0.05 if float(r['strike'])<2 else 0.03),3) if play else round(1-r['mid']-sc-octb,3),
+                tags+(" PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score." if play else " PAPER: log only, hits/H+R+RBI score has no out-of-sample edge.")+f" score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee; one game = one position",r['ticker'])
 # HR ATTACK-ANGLE (paper, Bartolo 10/10): Kalshi HR 1+ under-prices steep-attack-angle hitters. Aug-Sep RS 9,338 rungs:
 # +1.06 pts (result - mid) per SD of season attack angle after HR rate / barrel / LA / FB controls (t 2.4; Aug +1.0, Sep +1.1).
 # Top quintile (Savant AA >= 13.0): +2.0 vs mid, but only +0.5 at the ask after fee; PS check (386 rungs) flat. Paper only: log, never size.
@@ -506,7 +503,6 @@ for r in R:
             f"Pinnacle o{r['strike']} {p['o']:+d} / u {p['u']:+d} (no-vig over {p['over']:.3f}) vs Kalshi {r['bid']:.2f}/{r['ask']:.2f}; edge at touch {100*max(ey,en):+.1f}; Pinnacle limit ${p['limit']}",r['ticker'])
 # ---------- 5. output ----------
 stamp=et_now.strftime('%Y%m%d_%H%M')
-print(f'[scan] skipped {SKIPPED_LIVE} triggers on games already started')
 with open(os.path.join(HERE,'scan_log.jsonl'),'a') as f:
     for t in TR: f.write(json.dumps(t)+'\n')
 TN={1:'TIER 1: backtested rules (bet if price holds)',2:'TIER 2: leads (half size or paper)',3:'TIER 3: weaker / already moved (watch)',4:'WATCH: information only, no backtested edge'}
