@@ -1,7 +1,7 @@
 {
 "meta": {
-"built": "2026-10-11T22:45:53.929135+00:00",
-"latest_scan": "2026-10-11T22:03:25.635808+00:00",
+"built": "2026-10-11T23:03:28.483835+00:00",
+"latest_scan": "2026-10-11T23:00:43.527870+00:00",
 "pinnacle_rows_latest": 72,
 "velo_logged": 0,
 "fable_review": {
@@ -49,12 +49,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T06:49:40.104389+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 10,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 11,
 "notes": [
 {
 "rule": "YRFI CURVE (Oct-adj only)",
-"note": "Kalshi total 6.11; YRFI curve 0.373 (Oct-adj 0.408); ask 0.36; edge -0.3 (Oct +3.2); taker $ 92% NRFI (normal is 74%); Pinnacle YRFI +167 / NRFI -200 (fair YRFI 0.351, Kalshi edge vs Pinnacle -2.5)"
+"note": "Kalshi total 6.00; YRFI curve 0.367 (Oct-adj 0.402); ask 0.36; edge -0.9 (Oct +2.6); taker $ 93% NRFI (normal is 74%); Pinnacle YRFI +167 / NRFI -200 (fair YRFI 0.351, Kalshi edge vs Pinnacle -2.5)"
 }
 ],
 "badges": [],
@@ -65,14 +65,14 @@
 "rule": "YRFI CURVE (Oct-adj only)",
 "ticker": "KXMLBRFI-26OCT112000LADMIL",
 "kalshi_px": 0.36,
-"model": 0.408,
+"model": 0.402,
 "model_src": "curve, Oct-adj (pending Fable)",
-"curve": 0.373,
-"curve_oct": 0.408,
-"ktotal": 6.11,
+"curve": 0.367,
+"curve_oct": 0.402,
+"ktotal": 6.0,
 "market": 0.351,
 "market_src": "Pinnacle no-vig",
-"nrfi_pct": 92,
+"nrfi_pct": 93,
 "side": "YES",
 "label": "YRFI",
 "cat": "RFI",
@@ -81,10 +81,10 @@
 "kalshi_mid_side": 0.355,
 "kalshi_cost": 0.3761,
 "kalshi_am": 166,
-"edge": 3.19,
+"edge": 2.59,
 "edge_mkt": -2.51,
-"target_am": 158,
-"target_kalshi_cents": 37
+"target_am": 162,
+"target_kalshi_cents": 36
 },
 "f5": [],
 "level": "lean",
@@ -106,7 +106,7 @@
 "ticker": "KXMLBRFI-26OCT112000LADMIL",
 "level": "lean",
 "size": "small, late only",
-"model": 0.408,
+"model": 0.402,
 "model_src": "curve, Oct-adj (pending Fable)",
 "market": 0.351,
 "market_src": "Pinnacle no-vig",
@@ -116,10 +116,10 @@
 "kalshi_mid_side": 0.355,
 "kalshi_cost": 0.3761,
 "kalshi_am": 166,
-"edge": 3.19,
+"edge": 2.59,
 "edge_mkt": -2.51,
-"target_am": 158,
-"target_kalshi_cents": 37
+"target_am": 162,
+"target_kalshi_cents": 36
 }
 ]
 },
@@ -139,23 +139,43 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T06:49:40.104389+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 10,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 11,
 "notes": [
 {
 "rule": "OCTOBER HITTER UNDERS (lean)",
-"note": "limit NO at the mid, small and spread across hitters; top: Jackson Chourio: 2+ total bases mid 0.385; Mookie Betts: 2+ total bases mid 0.355; William Contreras: 2+ total bases mid 0.325; Will Smith: 2+ total bases mid 0.315; Shohei Ohtani: 2+ total bases mid 0.305; Freddie Freeman: 2+ total bases mid 0.295"
+"note": "limit NO at the mid, small and spread across hitters; top: Jackson Chourio: 2+ total bases mid 0.385; Mookie Betts: 2+ total bases mid 0.355; William Contreras: 2+ total bases mid 0.325; Will Smith: 2+ total bases mid 0.320; Shohei Ohtani: 2+ total bases mid 0.315; Freddie Freeman: 2+ total bases mid 0.295"
 },
 {
 "rule": "PS SUB-RISK (info)",
-"note": "regular vs Jacob Misiorowski (R); RS PH-for 12% (25 starts); lifted 1 of 2 Oct starts; fair P(0 H) 0.607 vs best DK -131 (u0.5 H), edge +4.0. One game = one position; small size"
+"note": "platoon-start LHB vs Jacob Misiorowski (R); RS PH-for 4% (133 starts); lifted 0 of 2 Oct starts; fair P(0 H) 0.489 vs best DK -125 (u0.5 H), edge -6.6. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "regular vs Jacob Misiorowski (R); RS PH-for 12% (25 starts); lifted 1 of 2 Oct starts; fair P(0 H) 0.607 vs best CZR -132 (u0.5 TB), edge +3.8. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "part-timer vs Tarik Skubal (L); RS PH-for 3% (130 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.392 vs best DK -111 (u0.5 H), edge -13.5. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "part-timer vs Tarik Skubal (L); RS PH-for 6% (125 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.400 vs best Fanatics +100 (u0.5 H), edge -10.0. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "platoon-start RHB vs Tarik Skubal (L); RS PH-for 4% (68 starts); lifted 1 of 4 Oct starts; fair P(0 H) 0.477 vs best CZR -106 (u0.5 TB), edge -3.7. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "platoon-start RHB vs Tarik Skubal (L); RS PH-for 7% (107 starts); lifted 1 of 3 Oct starts; fair P(0 H) 0.485 vs best DK +100 (u0.5 H), edge -1.5. One game = one position; small size"
 }
 ],
 "badges": [],
 "started": false,
 "label": "Hitter unders",
 "side": "NO",
-"oct_count": "29",
+"oct_count": "30",
 "oct_rungs": [
 {
 "market": "Jackson Chourio: 2+ total bases",
@@ -183,19 +203,19 @@
 },
 {
 "market": "Will Smith: 2+ total bases",
+"yes_mid": 0.32,
+"no_limit": 0.68,
+"no_fair": 0.71,
+"edge_at_limit": 1.48,
+"buy_no_cents": 67
+},
+{
+"market": "Shohei Ohtani: 2+ total bases",
 "yes_mid": 0.315,
 "no_limit": 0.685,
 "no_fair": 0.715,
 "edge_at_limit": 1.49,
 "buy_no_cents": 67
-},
-{
-"market": "Shohei Ohtani: 2+ total bases",
-"yes_mid": 0.305,
-"no_limit": 0.695,
-"no_fair": 0.725,
-"edge_at_limit": 1.52,
-"buy_no_cents": 69
 },
 {
 "market": "Freddie Freeman: 2+ total bases",
@@ -212,9 +232,9 @@
 "label": "Enrique Hern\u00e1ndez under 0.5 hits",
 "model": 0.607,
 "lean": false,
-"book": "DK",
-"book_odds": -131,
-"book_mkt": "H",
+"book": "CZR",
+"book_odds": -132,
+"book_mkt": "TB",
 "ph_pct": 12,
 "starts": 25,
 "profile": "regular",
@@ -223,8 +243,103 @@
 "opener": false,
 "oct_lifted": 1,
 "oct_starts": 2,
-"edge": 3.99,
+"edge": 3.8,
 "target_am": -142
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Joey Ortiz under 0.5 hits",
+"model": 0.485,
+"lean": false,
+"book": "DK",
+"book_odds": 100,
+"book_mkt": "H",
+"ph_pct": 7,
+"starts": 107,
+"profile": "platoon-start RHB",
+"opp_sp": "Tarik Skubal",
+"opp_hand": "L",
+"opener": false,
+"oct_lifted": 1,
+"oct_starts": 3,
+"edge": -1.5,
+"target_am": 115
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Cooper Pratt under 0.5 hits",
+"model": 0.477,
+"lean": false,
+"book": "CZR",
+"book_odds": -106,
+"book_mkt": "TB",
+"ph_pct": 4,
+"starts": 68,
+"profile": "platoon-start RHB",
+"opp_sp": "Tarik Skubal",
+"opp_hand": "L",
+"opener": false,
+"oct_lifted": 1,
+"oct_starts": 4,
+"edge": -3.76,
+"target_am": 119
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Max Muncy under 0.5 hits",
+"model": 0.489,
+"lean": false,
+"book": "DK",
+"book_odds": -125,
+"book_mkt": "H",
+"ph_pct": 4,
+"starts": 133,
+"profile": "platoon-start LHB",
+"opp_sp": "Jacob Misiorowski",
+"opp_hand": "R",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 2,
+"edge": -6.66,
+"target_am": 113
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Garrett Mitchell under 0.5 hits",
+"model": 0.4,
+"lean": false,
+"book": "Fanatics",
+"book_odds": 100,
+"book_mkt": "H",
+"ph_pct": 6,
+"starts": 125,
+"profile": "part-timer",
+"opp_sp": "Tarik Skubal",
+"opp_hand": "L",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 4,
+"edge": -10.0,
+"target_am": 163
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Jake Bauers under 0.5 hits",
+"model": 0.392,
+"lean": false,
+"book": "DK",
+"book_odds": -111,
+"book_mkt": "H",
+"ph_pct": 3,
+"starts": 130,
+"profile": "part-timer",
+"opp_sp": "Tarik Skubal",
+"opp_hand": "L",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 4,
+"edge": -13.41,
+"target_am": 169
 }
 ],
 "level": "lean",
@@ -247,12 +362,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T20:20:15.492439+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 7,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 8,
 "notes": [
 {
 "rule": "K-SEASON-ANCHOR UNDER (PS paper)",
-"note": "K mkt 7.37 vs season 8.40 (-1.03); same bet as K-LENGTH if both fire; book: DK -109; Pinnacle u7.5 -125 (fair 53.2%)"
+"note": "K mkt 7.36 vs season 8.40 (-1.04); same bet as K-LENGTH if both fire; book: DK -115; Pinnacle u7.5 -125 (fair 53.2%)"
 }
 ],
 "badges": [],
@@ -270,9 +385,9 @@
 "model_src": "market + 0",
 "rule_edge": 0,
 "book": "DK",
-"book_odds": -109,
+"book_odds": -115,
 "inputs": {
-"k_mkt": 7.37,
+"k_mkt": 7.36,
 "k_season": 8.4
 },
 "level": "lead",
@@ -298,7 +413,7 @@
 "market": 0.532,
 "market_src": "Pinnacle no-vig",
 "book": "DK",
-"book_odds": -109,
+"book_odds": -115,
 "kalshi_px": 0.53,
 "first_seen": "2026-10-10T20:20:15.492439+00:00",
 "price_src": "live",
@@ -308,7 +423,7 @@
 "edge": null,
 "edge_mkt": -1.54,
 "book_edge": null,
-"book_edge_mkt": 1.05,
+"book_edge_mkt": -0.29,
 "best_venue": "book"
 }
 ],
@@ -319,7 +434,7 @@
 "edge": null,
 "edge_mkt": -1.54,
 "book_edge": null,
-"book_edge_mkt": 1.05,
+"book_edge_mkt": -0.29,
 "best_venue": "book"
 },
 {
@@ -333,301 +448,254 @@
 "home": "MIL",
 "tier": 3,
 "rules": [
-"HITTER UNDER vs SP (lean)"
+"HITTER UNDER vs SP (paper)",
+"HITTER UNDER vs SP: Oct TB (play)"
 ],
 "live": true,
 "first_seen": "2026-10-10T20:20:15.492439+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 7,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 8,
 "notes": [
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.475, edge +4.9 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.465, edge +4.9 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.430, edge +6.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.430, edge +6.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.480, edge +4.8 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.475, edge +4.8 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.515, edge +6.2 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.510, edge +6.2 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.495, edge +4.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.495, edge +4.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.495, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.485, edge +5.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.490, edge +4.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.490, edge +4.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.485, edge +6.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.485, edge +6.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.385, edge +6.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.380, edge +6.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.445, edge +4.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.435, edge +4.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.505, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.505, edge +5.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.865, edge +5.9 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.865, edge +5.9 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.740, edge +5.3 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.725, edge +5.3 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.815, edge +7.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.815, edge +7.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.685, edge +6.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.680, edge +6.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.845, edge +5.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.835, edge +5.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.720, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.715, edge +5.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.860, edge +7.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.860, edge +7.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.735, edge +6.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.740, edge +6.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.880, edge +5.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.885, edge +5.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.760, edge +5.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.760, edge +5.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.845, edge +6.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.845, edge +6.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.715, edge +5.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.715, edge +5.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.865, edge +5.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.865, edge +5.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.755, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.755, edge +5.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.790, edge +7.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.790, edge +7.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.695, edge +6.7 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 cold] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.685, edge +6.7 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.800, edge +6.9 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.810, edge +7.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.645, edge +6.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.645, edge +6.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.850, edge +5.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.850, edge +5.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.705, edge +4.9 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.705, edge +4.9 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.860, edge +6.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.860, edge +6.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.735, edge +5.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP: Oct TB (play)",
+"note": "[rung TB2+ | SPK hi | L10 flat] PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score. score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.735, edge +5.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.655, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.650, edge +5.1 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.420, edge +5.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.093 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.420, edge +5.0 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.610, edge +6.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.605, edge +6.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.370, edge +6.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.360, edge +6.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.655, edge +5.0 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.640, edge +4.9 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.425, edge +4.8 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.6 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.001 vs season, L10 barrel 21.7%) + October -3; NO limit at mid 0.425, edge +4.8 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.670, edge +6.4 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.670, edge +6.4 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.430, edge +6.2 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.430, edge +6.2 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.670, edge +4.7 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.670, edge +4.7 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.445, edge +4.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.061 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.450, edge +4.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.660, edge +5.3 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.635, edge +5.3 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.420, edge +5.2 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.128 vs season, L10 barrel 5.6%) + October -3; NO limit at mid 0.415, edge +5.2 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.685, edge +4.9 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.685, edge +4.9 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.445, edge +4.7 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.4 pts (opp SP K% 30.1, CSW 30.7; hitter L10 xwOBA -0.090 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.445, edge +4.7 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.625, edge +6.6 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.625, edge +6.6 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.405, edge +6.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.405, edge +6.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.565, edge +6.3 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.565, edge +6.3 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.325, edge +6.5 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.325, edge +6.5 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.635, edge +4.7 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.635, edge +4.7 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.395, edge +4.7 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.3 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.037 vs season, L10 barrel 16.7%) + October -3; NO limit at mid 0.390, edge +4.7 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.675, edge +5.3 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.675, edge +5.3 after fee; one game = one position"
 },
 {
-"rule": "HITTER UNDER vs SP (lean)",
-"note": "score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.445, edge +5.1 after fee; one game = one position"
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA +0.033 vs season, L10 barrel 9.1%) + October -3; NO limit at mid 0.445, edge +5.1 after fee; one game = one position"
 }
 ],
 "badges": [],
 "started": false,
-"label": "Kyle Tucker: 3+ total bases?",
+"label": "Mookie Betts: 1+ hits + runs + RBIs?",
 "side": "NO",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADKTUCKER23-3",
-"kalshi_px": 0.87,
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADMBETTS50-1",
+"kalshi_px": 0.32999999999999996,
 "rule": "HITTER UNDER vs SP (lean)",
-"market": 0.86,
+"market": 0.325,
 "market_src": "Kalshi NO mid",
-"model": 0.939,
+"model": 0.406,
 "model_src": "opp SP K% score (+ October -3)",
 "hsp_rungs": [
-{
-"label": "Kyle Tucker: 3+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADKTUCKER23-3",
-"no_limit": 0.86,
-"no_fair": 0.939,
-"edge_at_limit": 7.06,
-"note": "score -4.9 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.019 vs season, L10 barrel 3.0%) + October -3; NO limit at mid 0.860, edge +7.1 after fee; one game = one position"
-},
-{
-"label": "Will Smith: 3+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADWSMITH16-3",
-"no_limit": 0.815,
-"no_fair": 0.896,
-"edge_at_limit": 7.04,
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.815, edge +7.0 after fee; one game = one position"
-},
-{
-"label": "Shohei Ohtani: 3+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADSOHTANI17-3",
-"no_limit": 0.79,
-"no_fair": 0.872,
-"edge_at_limit": 7.04,
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.790, edge +7.1 after fee; one game = one position"
-},
-{
-"label": "Mookie Betts: 3+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADMBETTS50-3",
-"no_limit": 0.8,
-"no_fair": 0.881,
-"edge_at_limit": 6.98,
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.800, edge +6.9 after fee; one game = one position"
-},
-{
-"label": "Shohei Ohtani: 2+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADSOHTANI17-2",
-"no_limit": 0.695,
-"no_fair": 0.777,
-"edge_at_limit": 6.72,
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.695, edge +6.7 after fee; one game = one position"
-},
-{
-"label": "Will Smith: 2+ total bases?",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADWSMITH16-2",
-"no_limit": 0.685,
-"no_fair": 0.766,
-"edge_at_limit": 6.59,
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.685, edge +6.6 after fee; one game = one position"
-},
 {
 "label": "Mookie Betts: 1+ hits + runs + RBIs?",
 "ticker": "KXMLBHRR-26OCT112000LADMIL-LADMBETTS50-1",
 "no_limit": 0.325,
 "no_fair": 0.406,
 "edge_at_limit": 6.56,
-"note": "score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.325, edge +6.5 after fee; one game = one position"
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.325, edge +6.5 after fee; one game = one position"
 },
 {
 "label": "Shohei Ohtani: 2+ hits + runs + RBIs?",
@@ -635,7 +703,55 @@
 "no_limit": 0.625,
 "no_fair": 0.707,
 "edge_at_limit": 6.56,
-"note": "score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.625, edge +6.6 after fee; one game = one position"
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.625, edge +6.6 after fee; one game = one position"
+},
+{
+"label": "Shohei Ohtani: 1+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADSOHTANI17-1",
+"no_limit": 0.405,
+"no_fair": 0.487,
+"edge_at_limit": 6.51,
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.405, edge +6.5 after fee; one game = one position"
+},
+{
+"label": "Will Smith: 1+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADWSMITH16-1",
+"no_limit": 0.36,
+"no_fair": 0.441,
+"edge_at_limit": 6.49,
+"note": "[rung HRR1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.360, edge +6.5 after fee; one game = one position"
+},
+{
+"label": "Shohei Ohtani: 1+ hits?",
+"ticker": "KXMLBHIT-26OCT112000LADMIL-LADSOHTANI17-1",
+"no_limit": 0.485,
+"no_fair": 0.567,
+"edge_at_limit": 6.45,
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.2 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.097 vs season, L10 barrel 17.4%) + October -3; NO limit at mid 0.485, edge +6.5 after fee; one game = one position"
+},
+{
+"label": "Mookie Betts: 1+ hits?",
+"ticker": "KXMLBHIT-26OCT112000LADMIL-LADMBETTS50-1",
+"no_limit": 0.38,
+"no_fair": 0.461,
+"edge_at_limit": 6.45,
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.031 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.380, edge +6.4 after fee; one game = one position"
+},
+{
+"label": "Will Smith: 2+ hits + runs + RBIs?",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADWSMITH16-2",
+"no_limit": 0.605,
+"no_fair": 0.686,
+"edge_at_limit": 6.43,
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.605, edge +6.4 after fee; one game = one position"
+},
+{
+"label": "Will Smith: 1+ hits?",
+"ticker": "KXMLBHIT-26OCT112000LADMIL-LADWSMITH16-1",
+"no_limit": 0.43,
+"no_fair": 0.511,
+"edge_at_limit": 6.38,
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, hits/H+R+RBI score has no out-of-sample edge. score -5.1 pts (opp SP K% 37.8, CSW 33.8; hitter L10 xwOBA -0.052 vs season, L10 barrel 8.3%) + October -3; NO limit at mid 0.430, edge +6.4 after fee; one game = one position"
 }
 ],
 "level": "lean",
@@ -649,38 +765,39 @@
 "event": "26OCT112000LADMIL",
 "first_pitch": "2026-10-11T20:00:00-04:00",
 "rules": [
-"HITTER UNDER vs SP (lean)"
+"HITTER UNDER vs SP (paper)",
+"HITTER UNDER vs SP: Oct TB (play)"
 ],
 "rule": "HITTER UNDER vs SP (lean)",
-"label": "Kyle Tucker: 3+ total bases?",
+"label": "Mookie Betts: 1+ hits + runs + RBIs?",
 "side": "NO",
-"ticker": "KXMLBTB-26OCT112000LADMIL-LADKTUCKER23-3",
+"ticker": "KXMLBHRR-26OCT112000LADMIL-LADMBETTS50-1",
 "level": "lean",
 "size": "small, one position (NO limit at the mid)",
-"model": 0.939,
+"model": 0.406,
 "model_src": "opp SP K% score (+ October -3)",
-"market": 0.86,
+"market": 0.325,
 "market_src": "Kalshi NO mid",
-"kalshi_px": 0.87,
+"kalshi_px": 0.32999999999999996,
 "first_seen": "2026-10-10T20:20:15.492439+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.86,
-"kalshi_cost": 0.8779,
-"kalshi_am": -719,
-"edge": 6.11,
-"edge_mkt": -1.79,
-"target_am": -1135,
-"target_kalshi_cents": 91
+"kalshi_mid_side": 0.32499999999999996,
+"kalshi_cost": 0.3455,
+"kalshi_am": 189,
+"edge": 6.05,
+"edge_mkt": -2.05,
+"target_am": 159,
+"target_kalshi_cents": 36
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.86,
-"kalshi_cost": 0.8779,
-"kalshi_am": -719,
-"edge": 6.11,
-"edge_mkt": -1.79,
-"target_am": -1135,
-"target_kalshi_cents": 91
+"kalshi_mid_side": 0.32499999999999996,
+"kalshi_cost": 0.3455,
+"kalshi_am": 189,
+"edge": 6.05,
+"edge_mkt": -2.05,
+"target_am": 159,
+"target_kalshi_cents": 36
 },
 {
 "key": "26OCT112000LADMIL|WALK|Jacob Misiorowski",
@@ -697,28 +814,26 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T21:17:19.191535+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 5,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 6,
 "notes": [
 {
 "rule": "WALKS OVER (info: low-BB% pitcher)",
-"note": "season BB% 6.6; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.575; Kalshi 0.54/0.61; book o1.5: DK -138; -"
+"note": "season BB% 6.6; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.505; Kalshi 0.08/0.93; book o2.5: -; -"
 }
 ],
 "badges": [],
 "started": false,
-"label": "Jacob Misiorowski walks o1.5",
+"label": "Jacob Misiorowski walks o2.5",
 "side": "YES",
-"ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-2",
+"ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-3",
 "pitcher": "Jacob Misiorowski",
-"kalshi_px": 0.6,
+"kalshi_px": 0.71,
 "first_px": 0.55,
-"market": 0.575,
+"market": 0.505,
 "market_src": "Kalshi mid",
 "model": null,
 "model_src": "Kalshi mid + 4",
-"book": "DK",
-"book_odds": -138,
 "inputs": {
 "bb_pct": 6.6
 },
@@ -735,38 +850,30 @@
 "rules": [
 "WALKS OVER (info: low-BB% pitcher)"
 ],
-"label": "Jacob Misiorowski walks o1.5",
+"label": "Jacob Misiorowski walks o2.5",
 "side": "YES",
-"ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-2",
+"ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-3",
 "level": "info",
 "size": "none",
 "model_src": "Kalshi mid + 4",
-"market": 0.575,
+"market": 0.505,
 "market_src": "Kalshi mid",
-"book": "DK",
-"book_odds": -138,
-"kalshi_px": 0.6,
+"kalshi_px": 0.71,
 "first_seen": "2026-10-10T21:17:19.191535+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.5800000000000001,
-"kalshi_cost": 0.6168,
-"kalshi_am": -161,
+"kalshi_mid_side": 0.39999999999999997,
+"kalshi_cost": 0.7244,
+"kalshi_am": -263,
 "edge": null,
-"edge_mkt": -4.18,
-"book_edge": null,
-"book_edge_mkt": -0.48,
-"best_venue": "book"
+"edge_mkt": -21.94
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.5800000000000001,
-"kalshi_cost": 0.6168,
-"kalshi_am": -161,
+"kalshi_mid_side": 0.39999999999999997,
+"kalshi_cost": 0.7244,
+"kalshi_am": -263,
 "edge": null,
-"edge_mkt": -4.18,
-"book_edge": null,
-"book_edge_mkt": -0.48,
-"best_venue": "book"
+"edge_mkt": -21.94
 },
 {
 "key": "26OCT112000LADMIL|WALK|Tarik Skubal",
@@ -783,12 +890,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-10T21:17:19.191535+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 6,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 7,
 "notes": [
 {
 "rule": "WALKS OVER (info: low-BB% pitcher)",
-"note": "season BB% 4.4; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.440; Kalshi 0.42/0.46; book o1.5: DK +106; -"
+"note": "season BB% 4.4; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.445; Kalshi 0.42/0.47; book o1.5: DK +106; -"
 }
 ],
 "badges": [],
@@ -797,9 +904,9 @@
 "side": "YES",
 "ticker": "KXMLBWA-26OCT112000LADMIL-LADTSKUBAL29-2",
 "pitcher": "Tarik Skubal",
-"kalshi_px": 0.46,
+"kalshi_px": 0.47,
 "first_px": 0.47,
-"market": 0.44,
+"market": 0.445,
 "market_src": "Kalshi mid",
 "model": null,
 "model_src": "Kalshi mid + 4",
@@ -827,32 +934,32 @@
 "level": "info",
 "size": "none",
 "model_src": "Kalshi mid + 4",
-"market": 0.44,
+"market": 0.445,
 "market_src": "Kalshi mid",
 "book": "DK",
 "book_odds": 106,
-"kalshi_px": 0.46,
+"kalshi_px": 0.47,
 "first_seen": "2026-10-10T21:17:19.191535+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.44,
-"kalshi_cost": 0.4774,
-"kalshi_am": 109,
+"kalshi_mid_side": 0.44499999999999995,
+"kalshi_cost": 0.4874,
+"kalshi_am": 105,
 "edge": null,
-"edge_mkt": -3.74,
+"edge_mkt": -4.24,
 "book_edge": null,
-"book_edge_mkt": -4.54,
-"best_venue": "kalshi"
+"book_edge_mkt": -4.04,
+"best_venue": "book"
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.44,
-"kalshi_cost": 0.4774,
-"kalshi_am": 109,
+"kalshi_mid_side": 0.44499999999999995,
+"kalshi_cost": 0.4874,
+"kalshi_am": 105,
 "edge": null,
-"edge_mkt": -3.74,
+"edge_mkt": -4.24,
 "book_edge": null,
-"book_edge_mkt": -4.54,
-"best_venue": "kalshi"
+"book_edge_mkt": -4.04,
+"best_venue": "book"
 },
 {
 "key": "26OCT122000CLETB|EARLY",
@@ -869,12 +976,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-11T06:55:32.497894+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 4,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 5,
 "notes": [
 {
 "rule": "RFI INFO",
-"note": "Kalshi total 6.77; YRFI curve 0.409 (Oct-adj 0.445); ask 0.42; edge -2.8 (Oct +0.8); taker $ 89% NRFI (normal is 74%)"
+"note": "Kalshi total 6.77; YRFI curve 0.409 (Oct-adj 0.445); ask 0.42; edge -2.8 (Oct +0.8); taker $ 60% NRFI (normal is 74%)"
 }
 ],
 "badges": [],
@@ -892,7 +999,7 @@
 "ktotal": 6.77,
 "market": null,
 "market_src": null,
-"nrfi_pct": 89,
+"nrfi_pct": 60,
 "side": "YES",
 "label": "YRFI",
 "cat": "RFI",
@@ -956,12 +1063,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-11T18:45:29.161401+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 2,
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 3,
 "notes": [
 {
 "rule": "OCTOBER HITTER UNDERS (lean)",
-"note": "limit NO at the mid, small and spread across hitters; top: Junior Caminero: 2+ total bases mid 0.420; Yandy D\u00edaz: 2+ total bases mid 0.400; Jo Adell: 2+ total bases mid 0.345; Brayan Rocchio: 2+ total bases mid 0.255"
+"note": "limit NO at the mid, small and spread across hitters; top: Junior Caminero: 2+ total bases mid 0.420; Jonathan Aranda: 2+ total bases mid 0.380; Jos\u00e9 Ram\u00edrez: 2+ total bases mid 0.355; Jo Adell: 2+ total bases mid 0.345"
 }
 ],
 "badges": [],
@@ -979,12 +1086,20 @@
 "buy_no_cents": 57
 },
 {
-"market": "Yandy D\u00edaz: 2+ total bases",
-"yes_mid": 0.4,
-"no_limit": 0.6,
-"no_fair": 0.63,
-"edge_at_limit": 1.32,
-"buy_no_cents": 59
+"market": "Jonathan Aranda: 2+ total bases",
+"yes_mid": 0.38,
+"no_limit": 0.62,
+"no_fair": 0.65,
+"edge_at_limit": 1.35,
+"buy_no_cents": 61
+},
+{
+"market": "Jos\u00e9 Ram\u00edrez: 2+ total bases",
+"yes_mid": 0.355,
+"no_limit": 0.645,
+"no_fair": 0.675,
+"edge_at_limit": 1.4,
+"buy_no_cents": 63
 },
 {
 "market": "Jo Adell: 2+ total bases",
@@ -993,14 +1108,6 @@
 "no_fair": 0.685,
 "edge_at_limit": 1.42,
 "buy_no_cents": 64
-},
-{
-"market": "Brayan Rocchio: 2+ total bases",
-"yes_mid": 0.255,
-"no_limit": 0.745,
-"no_fair": 0.775,
-"edge_at_limit": 1.67,
-"buy_no_cents": 74
 }
 ],
 "subs": [],
@@ -1023,13 +1130,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $34 vs NO bids $3,945; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $34 vs NO bids $2,744; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1066,13 +1173,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,107 vs NO bids $42,785; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $1,344 vs NO bids $30,573; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1109,8 +1216,8 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1139,6 +1246,49 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Jacob Misiorowski: 7+ strikeouts?",
+"cat": "INFO",
+"game": "LAD @ MIL",
+"event": "26OCT112000LADMIL",
+"date": "2026-10-11",
+"first_pitch": "2026-10-11T20:00:00-04:00",
+"away": "LAD",
+"home": "MIL",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $499 vs NO bids $6,104; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"label": "Jacob Misiorowski: 7+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT112000LADMIL-MILJMISIOROWSKI32-7",
+"kalshi_px": 0.36,
+"first_px": 0.645,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.355,
+"kalshi_cost": 0.3761,
+"kalshi_am": 166,
+"edge": null,
+"edge_mkt": null
+},
+{
 "key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Tarik Skubal: 9+ strikeouts?",
 "cat": "INFO",
 "game": "LAD @ MIL",
@@ -1152,13 +1302,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $227 vs NO bids $24,352; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $751 vs NO bids $30,636; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1169,7 +1319,7 @@
 "side": "NO",
 "ticker": "KXMLBKS-26OCT112000LADMIL-LADTSKUBAL29-9",
 "kalshi_px": 0.72,
-"first_px": 0.295,
+"first_px": 0.29,
 "level": "info",
 "size": "none",
 "panel": "E",
@@ -1195,13 +1345,13 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "BIG TRADES (no backtested edge)",
-"note": "2 prints $1k+ since listing: YES $0 / NO $2,999"
+"note": "3 prints $1k+ since listing: YES $0 / NO $5,004"
 }
 ],
 "badges": [
@@ -1238,13 +1388,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $18,079 vs NO bids $4,882; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $17,309 vs NO bids $3,925; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1268,6 +1418,83 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT112000LADMIL|BIG OUTS TRADE|Tarik Skubal: 18+ Outs Recorded?",
+"cat": "OUTS",
+"game": "LAD @ MIL",
+"event": "26OCT112000LADMIL",
+"date": "2026-10-11",
+"first_pitch": "2026-10-11T20:00:00-04:00",
+"away": "LAD",
+"home": "MIL",
+"tier": 2,
+"rules": [
+"BIG OUTS TRADE"
+],
+"live": true,
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "BIG OUTS TRADE",
+"note": "$1,462 YES at 0.61 (10-11T22:07 UTC); now mid 0.595; price within 2c, followable"
+}
+],
+"badges": [],
+"started": false,
+"label": "Tarik Skubal: 18+ Outs Recorded?",
+"side": "YES",
+"ticker": "KXMLBOUTS-26OCT112000LADMIL-LADTSKUBAL29-18",
+"kalshi_px": 0.6,
+"first_px": 0.61,
+"market": 0.595,
+"market_src": "Kalshi mid",
+"model": 0.61,
+"model_src": "market + 1.5",
+"level": "lead",
+"size": "\u00bc unit",
+"panel": "B",
+"positions": [
+{
+"key": "26OCT112000LADMIL|BIG OUTS TRADE|Tarik Skubal: 18+ Outs Recorded?",
+"cat": "OUTS",
+"game": "LAD @ MIL",
+"event": "26OCT112000LADMIL",
+"first_pitch": "2026-10-11T20:00:00-04:00",
+"rules": [
+"BIG OUTS TRADE"
+],
+"label": "Tarik Skubal: 18+ Outs Recorded?",
+"side": "YES",
+"ticker": "KXMLBOUTS-26OCT112000LADMIL-LADTSKUBAL29-18",
+"level": "lead",
+"size": "\u00bc unit",
+"model": 0.61,
+"model_src": "market + 1.5",
+"market": 0.595,
+"market_src": "Kalshi mid",
+"kalshi_px": 0.6,
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.595,
+"kalshi_cost": 0.6168,
+"kalshi_am": -161,
+"edge": -0.68,
+"edge_mkt": -2.18,
+"target_am": -144,
+"target_kalshi_cents": 57
+}
+],
+"price_src": "live",
+"kalshi_mid_side": 0.595,
+"kalshi_cost": 0.6168,
+"kalshi_am": -161,
+"edge": -0.68,
+"edge_mkt": -2.18,
+"target_am": -144,
+"target_kalshi_cents": 57
+},
+{
 "key": "26OCT112000LADMIL|PRICE MOVE|Jacob Misiorowski: 3+ walks allowed?",
 "cat": "INFO",
 "game": "LAD @ MIL",
@@ -1281,13 +1508,13 @@
 "PRICE MOVE"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "PRICE MOVE",
-"note": "0.380 -> 0.250 since last scan; new taker $ YES 10 / NO 0; 12+ pt jumps partly reverse (limit fade only)"
+"note": "0.250 -> 0.505 since last scan; new taker $ YES 0 / NO 0; 12+ pt jumps partly reverse (limit fade only)"
 }
 ],
 "badges": [
@@ -1297,102 +1524,16 @@
 "label": "Jacob Misiorowski: 3+ walks allowed?",
 "side": "-",
 "ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-3",
-"kalshi_px": 0.3,
-"first_px": 0.25,
+"kalshi_px": 0.71,
+"first_px": 0.505,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.19,
-"kalshi_cost": 0.3147,
-"kalshi_am": 218,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT112000LADMIL|PRICE MOVE|Jacob Misiorowski: 1+ walks allowed?",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"PRICE MOVE"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "PRICE MOVE",
-"note": "0.480 -> 0.780 since last scan; new taker $ YES 0 / NO 0; 12+ pt jumps partly reverse (limit fade only)"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Jacob Misiorowski: 1+ walks allowed?",
-"side": "-",
-"ticker": "KXMLBWA-26OCT112000LADMIL-MILJMISIOROWSKI32-1",
-"kalshi_px": 0.9,
-"first_px": 0.78,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.74,
-"kalshi_cost": 0.9063,
-"kalshi_am": -967,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Will Smith: 1+ hits?",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $3,294 vs NO bids $791; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Will Smith: 1+ hits?",
-"side": "YES",
-"ticker": "KXMLBHIT-26OCT112000LADMIL-LADWSMITH16-1",
-"kalshi_px": 0.58,
-"first_px": 0.57,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.5700000000000001,
-"kalshi_cost": 0.5971,
-"kalshi_am": -148,
+"kalshi_mid_side": 0.39999999999999997,
+"kalshi_cost": 0.7244,
+"kalshi_am": -263,
 "edge": null,
 "edge_mkt": null
 },
@@ -1410,13 +1551,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $3,186 vs NO bids $535; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $4,347 vs NO bids $266; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1440,49 +1581,6 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Jake Bauers: 1+ hits?",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $3,100 vs NO bids $778; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Jake Bauers: 1+ hits?",
-"side": "YES",
-"ticker": "KXMLBHIT-26OCT112000LADMIL-MILJBAUERS9-1",
-"kalshi_px": 0.52,
-"first_px": 0.505,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.515,
-"kalshi_cost": 0.5375,
-"kalshi_am": -116,
-"edge": null,
-"edge_mkt": null
-},
-{
 "key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Andy Pages: 1+ hits?",
 "cat": "INFO",
 "game": "LAD @ MIL",
@@ -1496,13 +1594,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $4,919 vs NO bids $450; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $4,278 vs NO bids $271; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1539,13 +1637,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $3,979 vs NO bids $958; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $2,059 vs NO bids $584; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1556,7 +1654,7 @@
 "side": "YES",
 "ticker": "KXMLBHRR-26OCT112000LADMIL-LADWSMITH16-2",
 "kalshi_px": 0.4,
-"first_px": 0.39,
+"first_px": 0.395,
 "level": "info",
 "size": "none",
 "panel": "E",
@@ -1582,13 +1680,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $4,077 vs NO bids $351; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $3,186 vs NO bids $692; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1599,7 +1697,7 @@
 "side": "YES",
 "ticker": "KXMLBHRR-26OCT112000LADMIL-LADWSMITH16-1",
 "kalshi_px": 0.65,
-"first_px": 0.63,
+"first_px": 0.64,
 "level": "info",
 "size": "none",
 "panel": "E",
@@ -1608,49 +1706,6 @@
 "kalshi_mid_side": 0.64,
 "kalshi_cost": 0.6659,
 "kalshi_am": -199,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Teoscar Hern\u00e1ndez: 2+ hits + runs + RBIs?",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,105 vs NO bids $31; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Teoscar Hern\u00e1ndez: 2+ hits + runs + RBIs?",
-"side": "YES",
-"ticker": "KXMLBHRR-26OCT112000LADMIL-LADTHERNANDEZ37-2",
-"kalshi_px": 0.35,
-"first_px": 0.345,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.345,
-"kalshi_cost": 0.3659,
-"kalshi_am": 173,
 "edge": null,
 "edge_mkt": null
 },
@@ -1668,13 +1723,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $2,968 vs NO bids $219; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $3,348 vs NO bids $144; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1711,13 +1766,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $47 vs NO bids $337; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $47 vs NO bids $280; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1754,13 +1809,13 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "BIG TRADES (no backtested edge)",
-"note": "8 prints $1k+ since listing: YES $0 / NO $22,695; RFI NO size is normal retail flow (74% of RFI money is NRFI, YRFI realizes +2 pts over price)"
+"note": "9 prints $1k+ since listing: YES $0 / NO $23,962; RFI NO size is normal retail flow (74% of RFI money is NRFI, YRFI realizes +2 pts over price)"
 }
 ],
 "badges": [
@@ -1797,13 +1852,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $61 vs NO bids $8,264; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $25 vs NO bids $10,344; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1840,13 +1895,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,230 vs NO bids $14,500; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $2,222 vs NO bids $12,384; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
@@ -1870,49 +1925,6 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|Over 3.5 runs scored",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $58,060 vs NO bids $15,585; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Over 3.5 runs scored",
-"side": "YES",
-"ticker": "KXMLBTOTAL-26OCT112000LADMIL-4",
-"kalshi_px": 0.78,
-"first_px": 0.775,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.775,
-"kalshi_cost": 0.792,
-"kalshi_am": -381,
-"edge": null,
-"edge_mkt": null
-},
-{
 "key": "26OCT122000CLETB|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 3.5 runs",
 "cat": "INFO",
 "game": "CLE @ TB",
@@ -1926,13 +1938,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,781 vs NO bids $582; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $2,444 vs NO bids $582; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -1956,7 +1968,7 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT122000CLETB|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 1.5 runs",
+"key": "26OCT122000CLETB|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 2.5 runs",
 "cat": "INFO",
 "game": "CLE @ TB",
 "event": "26OCT122000CLETB",
@@ -1969,99 +1981,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $2,120 vs NO bids $562; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "First 5 innings: Over 1.5 runs",
-"side": "YES",
-"ticker": "KXMLBF5TOTAL-26OCT122000CLETB-2",
-"kalshi_px": 0.81,
-"first_px": 0.8,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.8,
-"kalshi_cost": 0.8208,
-"kalshi_am": -458,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 4.5 runs",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $4,168 vs NO bids $12,761; heavier bidders NO; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "First 5 innings: Over 4.5 runs",
-"side": "NO",
-"ticker": "KXMLBF5TOTAL-26OCT112000LADMIL-5",
-"kalshi_px": 0.74,
-"first_px": 0.265,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.735,
-"kalshi_cost": 0.7535,
-"kalshi_am": -306,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT112000LADMIL|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 2.5 runs",
-"cat": "INFO",
-"game": "LAD @ MIL",
-"event": "26OCT112000LADMIL",
-"date": "2026-10-11",
-"first_pitch": "2026-10-11T20:00:00-04:00",
-"away": "LAD",
-"home": "MIL",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $67,040 vs NO bids $22,296; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $2,190 vs NO bids $710; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -2070,17 +1996,17 @@
 "started": false,
 "label": "First 5 innings: Over 2.5 runs",
 "side": "YES",
-"ticker": "KXMLBF5TOTAL-26OCT112000LADMIL-3",
-"kalshi_px": 0.55,
-"first_px": 0.545,
+"ticker": "KXMLBF5TOTAL-26OCT122000CLETB-3",
+"kalshi_px": 0.66,
+"first_px": 0.65,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.545,
-"kalshi_cost": 0.5673,
-"kalshi_am": -131,
+"kalshi_mid_side": 0.65,
+"kalshi_cost": 0.6757,
+"kalshi_am": -208,
 "edge": null,
 "edge_mkt": null
 },
@@ -2098,13 +2024,13 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $9,645 vs NO bids $2,380; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $21,099 vs NO bids $3,886; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
@@ -2141,8 +2067,8 @@
 "HR ATTACK-ANGLE YES (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-11T22:03:25.635808+00:00",
-"last_seen": "2026-10-11T22:03:25.635808+00:00",
+"first_seen": "2026-10-11T23:00:43.527870+00:00",
+"last_seen": "2026-10-11T23:00:43.527870+00:00",
 "n_scans": 1,
 "notes": [
 {
