@@ -157,7 +157,7 @@ AN_FUT      = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds
 # AN book id -> brand (state variants collapse to one brand; best price per brand kept)
 # AN futures feeds 68 (DK) and 1006 (FD) are stale legacy boards (pre-round prices); live = DK 1548/3118, FD 69
 AN_BOOKS = {1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel",
-            123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
+            123: "Caesars", 3120: "Caesars", 79: "bet365", 71: "BetRivers",
             972: "BetRivers", 2988: "Fanatics", 247: "Unibet", 1902: "Resorts World", 1903: "Bally Bet"}
 AN_AB = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "ARI": "ARI"}
 
@@ -661,7 +661,7 @@ def main():
 
     out = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "+00:00",
-        "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/MGM/bet365/Fanatics/BetRivers); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
+        "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/bet365/Fanatics/BetRivers; BetMGM excluded); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
         "price_type": "buy",   # every market price = real cost to back that side (ask / 1-bid, Kalshi fee included); do NOT de-vig
         "enabled": {"series_ml": ENABLE_SERIES_ML, "correct_score": ENABLE_CORRECT_SCORE,
                     "spread": ENABLE_SPREAD, "ws_exacta": ENABLE_WS_EXACTA, "games_ou": ENABLE_GAMES_OU},
