@@ -169,7 +169,7 @@ def _parse_data_rows(table_html: str, books: list[str]) -> dict[str, dict]:
         # Walk odds cells against books. cells[1:] may be ordered different
         # than `books[1:]` depending on rendering; we assume same order.
         for cell, book in zip(cells[1:], books):
-            if book is None:  # column we skip (e.g., "Time")
+            if book is None or book == "BetMGM":  # skipped column; BetMGM excluded from best prices (Sean)
                 continue
             # Look for `<span class="data-value"> -110 </span>`
             val = re.search(
@@ -218,7 +218,7 @@ AN_FUT  = "https://api.actionnetwork.com/web/v1/leagues/8/futures/{}?bookIds={}"
 # Futures feeds only: AN book ids 68 (DK) and 1006 (FD) carry stale pre-round futures boards (10/5: DK 68 had
 # TB pennant +260 / CWS +1200, FD 1006 had TB +3500, NYY +400). Live futures are DK 1548/3118 and FD 69.
 AN_BOOKS = {1548: "DraftKings", 3118: "DraftKings", 69: "FanDuel",
-            123: "Caesars", 3120: "Caesars", 75: "BetMGM", 283: "BetMGM", 79: "bet365", 71: "BetRivers",
+            123: "Caesars", 3120: "Caesars", 79: "bet365", 71: "BetRivers",
             972: "BetRivers", 2988: "Fanatics"}
 AN_ABBR = {"CHW": "CWS", "SDP": "SD", "TBR": "TB", "AZ": "ARI", "WAS": "WSH", "KCR": "KC", "SFG": "SF", "OAK": "ATH"}
 
