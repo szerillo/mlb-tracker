@@ -73,6 +73,9 @@ jobs:
           # FORCE_RUN bypasses compute_team_futures' once-a-day guard. Uses whatever FG/PECOTA
           # snapshot is in data/ (those refresh via the Chrome pull / morning run).
           if [ "$before" != "$after" ]; then
+            # Also re-pull the futures MARKET odds (WS / pennant), so the Edges tab compares the
+            # post-game model to post-game prices instead of this morning's (Sean 10/12).
+            python scripts/refresh_team_futures_odds.py || true
             FORCE_RUN=1 python scripts/compute_team_futures.py || true
           fi
         continue-on-error: true
@@ -85,7 +88,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/team_futures.json data/series_odds.json || true
+          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/team_futures.json data/team_futures_odds.json data/series_odds.json || true
           if git diff --cached --quiet; then
             echo "No odds change."
           else
