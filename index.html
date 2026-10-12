@@ -5794,7 +5794,7 @@ function asgAvgWfip(pitchers) {
   let sum = 0, n = 0;
   for (const p of pitchers) {
     const st = lookupPitcherStats(p.name);
-    const w = st?.unified_score;
+    const w = wfipOf(st);
     const v = (w != null && w < 10) ? w
             : (st?.xfip != null && (st?.ip ?? 0) >= 10) ? st.xfip
             : st?.fip_proj;
@@ -5885,7 +5885,7 @@ function renderASGStaff(game, side) {
     const st = lookupPitcherStats(p.name);
     // Same FIP preference ladder the bullpen table uses: weighted FIP, else
     // season xFIP (>=10 IP), else the projection.
-    const wfip = st?.unified_score;
+    const wfip = wfipOf(st);
     const useW = wfip != null && wfip < 10;
     const useX = !useW && st?.xfip != null && (st?.ip ?? 0) >= 10;
     const fipVal = useW ? wfip : (useX ? st.xfip : st?.fip_proj);
@@ -7155,7 +7155,7 @@ function renderSPStatRows(s, thr) {
   var wfipRaw = s.unified_score;
   var pz = (typeof s.proc_z === 'number') ? s.proc_z : null;
   var wfipAdj = (typeof s.unified_adj === 'number' && s.unified_adj < 10) ? s.unified_adj : null;
-  var wfipHead = wfipRaw;   // display = Rankings wFIP; process adj stays inside the run projection only
+  var wfipHead = (wfipAdj != null) ? wfipAdj : wfipRaw;   // process-adjusted wFIP everywhere (Sean 10/12): card = Rankings = run projection = sheet
   var wfipPill = "";
   if (wfipHead != null && wfipHead < 10) {
     var wfipBands = thr.wfip || {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75};
@@ -7667,7 +7667,7 @@ function renderSPBox(name, teamAbbrStr) {
       ${(() => {
         const raw=s.unified_score, pz=(typeof s.proc_z==='number')?s.proc_z:null;
         const adj=(typeof s.unified_adj==='number'&&s.unified_adj<10)?s.unified_adj:null;
-        const w=raw; if(w==null||w>=10) return '';
+        const w=(adj!=null)?adj:raw; if(w==null||w>=10) return '';
         const wb=(thr.wfip||{elite:3.25,good:3.75,bad:4.25,worst:4.75}); const wc=tier(w,wb,false);
         const lab='wFIP';
         const bdg=false?('<span class="proc-badge '+(pz>0?'good':'bad')+'" style="margin-left:3px;font-weight:800;">'+(pz>0?'▲':'▼')+'</span>'):'';
@@ -8317,7 +8317,7 @@ function computeSPRanks() {
   const pool = [];
   Object.entries(pitchers).forEach(([k, s]) => {
     if (!_spSeasonEligible(k, s)) return;   // identical gate to the Rankings page (Sean 9/29)
-    pool.push({ key: k, wfip: s.unified_score });
+    pool.push({ key: k, wfip: wfipOf(s) });
   });
   if (!pool.length) return { byKey: new Map(), total: 0 };
   // Weighted FIP (unified_score) — lower = better; no-wFIP arms sink to bottom.
@@ -8489,10 +8489,20 @@ function getBullpenRank(teamAbbrOrId) {
 //   ≥ 30  → hitter (wRC+ scale — 100 = pool avg, higher better; e.g. 125)
 // Reads `unified_score` + `unified_tier` from the entry. opts.tight = compact
 // variant for table cells; opts.label overrides the auto-prefix.
+// Displayed wFIP = the process-adjusted wFIP (unified_adj, SP-only) when present, else the raw
+// composite. Same number the run projection and the sheet's wfip_lookup use (Sean 10/12).
+function wfipOf(s) {
+  if (!s) return null;
+  if (typeof s.unified_adj === 'number' && s.unified_adj < 10) return s.unified_adj;
+  return s.unified_score;
+}
+
 function unifiedScoreChip(entry, opts={}) {
   if (!entry || entry.unified_score == null) return "";
-  const score = entry.unified_score;
-  const tierLabel = entry.unified_tier || "Avg";
+  const _adjOn = opts.isFip !== false && typeof entry.unified_adj === 'number' && entry.unified_adj < 10;
+  const score = _adjOn ? entry.unified_adj : entry.unified_score;
+  const _t = _adjOn ? (tier(score, {elite: 3.25, good: 3.75, bad: 4.25, worst: 4.75}, false) || 'avg') : null;
+  const tierLabel = _adjOn ? (_t.charAt(0).toUpperCase() + _t.slice(1)) : (entry.unified_tier || "Avg");
   const cls = (tierLabel || "Avg").toLowerCase();
   const cov = entry.unified_weight_covered;
   // Pitcher entries are wFIP (lower=better); hitter entries are wRC+. Decide by
@@ -8731,7 +8741,7 @@ function renderSPRankings(pitchers, nameToTeam) {
       if (present < 3) return;
       pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
     });
-    pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+    pool.forEach(p => { p.wfip = wfipOf(pitchers[p.key] || {}); });
   }
   pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
 
@@ -8834,7 +8844,7 @@ function renderReliverRankings(pitchers, nameToTeam) {
       if (present < 3) return;
       pool.push({ key: k, name: pitcherDisplayName(k), metrics, ip });
     });
-    pool.forEach(p => { p.wfip = (pitchers[p.key] || {}).unified_score; });
+    pool.forEach(p => { p.wfip = wfipOf(pitchers[p.key] || {}); });
   }
   pool.sort((a, b) => (a.wfip ?? 99) - (b.wfip ?? 99));
   const total = pool.length;
