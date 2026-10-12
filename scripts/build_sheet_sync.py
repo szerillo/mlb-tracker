@@ -116,7 +116,8 @@ def mlb_schedule(iso: str) -> dict:
                         for o in g.get("officials", []) or []]
                 hp = next((nm for ty, nm in offs if ty == "Home Plate" and nm), "")
                 out[team_key(a, h)] = {"pk": g.get("gamePk"), "officials": offs, "hp": hp,
-                                       "away": a, "home": h}
+                                       "away": a, "home": h, "gn": g.get("seriesGameNumber"),
+                                       "gtype": g.get("gameType")}
     except Exception as e:
         print(f"  [warn] MLB schedule fetch failed for {iso}: {e}", file=sys.stderr)
     _SCHED_CACHE[iso] = out
@@ -135,6 +136,19 @@ def an_games(iso: str) -> dict[str, dict]:
     except Exception as e:
         print(f"  [warn] AN fetch failed for {iso}: {e}", file=sys.stderr)
     return out
+
+def override_hp(rec: dict) -> str:
+    """Postseason HP from data/ump_overrides.json (official rotation sheet), by series game number."""
+    try:
+        ov = json.load(open(os.path.join(REPO_ROOT, "data", "ump_overrides.json")))
+    except Exception:
+        return ""
+    if rec.get("gtype") == "R" or not rec.get("gn"):
+        return ""
+    for s_ in ov.get("series", []):
+        if team_key(*s_["teams"]) == team_key(rec["away"], rec["home"]):
+            return s_.get("hp", {}).get(str(rec["gn"]), "")
+    return ""
 
 def project_hp(iso: str, key: frozenset) -> str:
     """Crew-rotation projection: walk back 1-3 days; for the first same-series
@@ -172,10 +186,13 @@ def main():
             pk = rec["pk"]
             hp, status = rec["hp"], "posted"
             if not hp:
+                hp = override_hp(rec)
+                status = "assigned" if hp else ""
+            if not hp:
                 hp = project_hp(iso, key)
                 status = "projected" if hp else ""
             if status == "posted":   n_posted += 1
-            elif status == "projected": n_proj += 1
+            elif status in ("projected", "assigned"): n_proj += 1
             # weather present in model -> number (domes are a real 0.0); absent
             # (no forecast yet, e.g. 3-4 days out) -> null so the sheet SKIPS it
             # rather than overwriting a real value with a misleading 0.0.
