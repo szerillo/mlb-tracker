@@ -233,6 +233,8 @@ const PO_FIXED = [
   {label:"📊 Series win-prob row", meta:"current-round series cards + WS exacta", src:PO_PAGE+"?view=series", defH:760, initH:1300, id:"bartolo-po-series"},
   {label:"🗺️ Bracket only", meta:"bracket + reach % tables (no series cards)", src:PO_PAGE+"?view=bracket", defH:720, initH:1300, id:"bartolo-po-bracket"},
   {label:"🎯 Edges", meta:"model vs market — pennant + World Series", src:PO_PAGE+"?view=edges", defH:900, initH:1500, id:"bartolo-po-edges"},
+  {label:"🧊 Pre-playoff board (frozen)", meta:"original pre-playoff projections, locked Sep 29 before the first Wild Card pitch: never updates", src:PO_PAGE+"?asof=preplayoff", defH:1200, initH:2200, id:"bartolo-po-preplayoff"},
+  {label:"🧊 Pre-playoff bracket only (frozen)", meta:"frozen Sep 29 bracket + reach % tables (WC / LDS / pennant / WS)", src:PO_PAGE+"?view=bracket&asof=preplayoff", defH:720, initH:1300, id:"bartolo-po-preplayoff-bracket"},
 ];
 function poCardHTML(o){
   const sep=o.src.includes('?')?'&':'?';

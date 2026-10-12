@@ -324,7 +324,10 @@ body.view-series .pohdr,body.view-bracket .pohdr,body.view-edges .pohdr{display:
     </div>
   </div>
 <script>
-const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/');
+// ?asof=preplayoff -> frozen pre-playoff board (data/frozen/preplayoff_2026/, captured just before the
+// first Wild Card pitch on 9/29). Live game-WP / scoreboard pulls are skipped so it never moves.
+const FROZEN=new URLSearchParams(location.search).get('asof')==='preplayoff';
+const RAW=(location.protocol==='file:'?'https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/':'data/')+(FROZEN?'frozen/preplayoff_2026/':'');
 const LOGO=ab=>'https://a.espncdn.com/i/teamlogos/mlb/500/'+({CWS:'chw',ATH:'ath',WSH:'wsh'}[ab]||ab.toLowerCase())+'.png';
 // team bar colors — tuned to stay visible on the dark panel (lightened where the primary is too dark)
 const TEAMCOLOR={NYY:'#4a90d9',BOS:'#bd3039',TB:'#8fbce6',CLE:'#e31937',HOU:'#eb6e1f',CWS:'#c4ced4',
@@ -335,11 +338,17 @@ const barColor=ab=>TEAMCOLOR[ab]||'#6aa9ff';
 const LEAGUE={NYY:'AL',BOS:'AL',TOR:'AL',TB:'AL',BAL:'AL',CLE:'AL',MIN:'AL',DET:'AL',KC:'AL',CWS:'AL',
  HOU:'AL',SEA:'AL',TEX:'AL',LAA:'AL',ATH:'AL',ATL:'NL',NYM:'NL',PHI:'NL',WSH:'NL',MIA:'NL',MIL:'NL',
  CHC:'NL',CIN:'NL',STL:'NL',PIT:'NL',LAD:'NL',SD:'NL',SF:'NL',ARI:'NL',COL:'NL'};
-const COLS=[
+const COLS_ALL=[
+ {k:'reach_ds_pct',lab:'WC'},
  {k:'reach_cs_pct',lab:'LDS'},
  {k:'ws_app_pct',  lab:'Pennant'},
  {k:'ws_pct',      lab:'WS', ws:true},
 ];
+// Show only rounds still in play: a column drops once every remaining team sits at 100% (or it's a
+// round already finished, e.g. WC/LDS during the LCS). The frozen pre-playoff board keeps all four.
+let COLS=COLS_ALL.filter(c=>FROZEN||c.k!=='reach_ds_pct');
+function roundDone(k,rows){ if(FROZEN) return false; const v=Object.values(rows||{}).map(t=>num(t[k])).filter(x=>x!=null&&x>0);
+  return v.length>0 && v.every(x=>x>=99.5); }
 const MKTS=[
  {key:'pennant', lab:'Pennant', model:'ws_app_pct', mkt:'pennant_implied_pct', odds:'pennant_odds'},
  {key:'ws',      lab:'World Series', model:'ws_pct', mkt:'ws_implied_pct', odds:'ws_odds'},
@@ -671,10 +680,11 @@ async function load(){
       fetch(RAW+'lane2_series.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(RAW+'series_odds.json?cb='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
-    try{ applyTodayWP(series,lane2,await loadTodayWP()); }catch(e){}
+    if(!FROZEN){ try{ applyTodayWP(series,lane2,await loadTodayWP()); }catch(e){} }
+    else { const a=document.getElementById('asof'); if(a) a.textContent='Pre-playoff projections · frozen Sep 29, before the first Wild Card pitch'; }
     try{ syncSeriesToLane2(series,lane2); }catch(e){}
     window.__series=series; window.__sodds=sodds; window.__lane2=lane2;
-    await loadPOGames();
+    if(!FROZEN) await loadPOGames();
     const blend={},mkt={};
     // Overlay a marginalized playoff feed (WS / pennant / round-survival) onto the
     // season-sim base. Used for BOTH v2 (BARTOLO, lane 1) and the native game-sim
@@ -772,6 +782,8 @@ function render(){
 }
 function renderRounds(){
   const rows=DATA[projSrc]; if(!rows) return;
+  { const live=Object.fromEntries(contenders(rows)); COLS=COLS_ALL.filter(c=>(FROZEN||c.k!=='reach_ds_pct')&&!roundDone(c.k,live));
+    if(!COLS.some(c=>c.k===sortK)){ sortK='ws_pct'; dir=-1; } }
   let tot=0;
   document.querySelectorAll('#roundGrid table[data-lg]').forEach(tbl=>{
     const lg=tbl.dataset.lg;
@@ -887,7 +899,9 @@ function renderBracketSection(){
   const grp=(name,opts,cur)=>`<span class="seg" data-grp="${name}">${segHTML(opts,cur)}</span>`;
   const mo=[]; if(window.__hasLane2)mo.push({v:'gamesim',lab:'Game Sim'}); mo.push({v:'mine',lab:'Playoff Fit'}); mo.push({v:'blend',lab:'Composite'});
   if(brkModel==='gamesim'&&!window.__hasLane2)brkModel='mine';
-  const ro=[{v:'cs',lab:'LDS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}];
+  const _gd=Object.fromEntries(contenders(brkData()||{}));
+  const ro=[...(FROZEN?[{v:'ds',lab:'WC'}]:[]),{v:'cs',lab:'LDS'},{v:'pennant',lab:'Pennant'},{v:'ws',lab:'WS'}].filter(o=>!roundDone(RKEY[o.v],_gd));
+  if(!ro.some(o=>o.v===curRound)) curRound='ws';
   seg.innerHTML=grp('bmodel',mo,brkModel)+`<span class="seglab">Win</span>`+grp('bround',ro,curRound);
   seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.closest('.seg').dataset.grp,v=b.dataset.v; if(g==='bmodel')brkModel=v; else curRound=v; render();});
   document.getElementById('brkNote').innerHTML=`Each team's chance to <b>win the ${RLAB[curRound]}</b>, per the ${BMN[brkModel]} model. Hover a team for its full path. <a class="methlink" href="javascript:void(0)" onclick="openMeth('${brkModel}',event)">Methodology</a>`;
