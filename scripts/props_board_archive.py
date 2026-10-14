@@ -397,7 +397,7 @@ def build(SL, PL, live, now):
                      market=x.get('price'), market_src='Kalshi NO mid', model=x.get('fair'),
                      model_src='PS TB effect (mid + 2.5 TB 3+ / + 3 TB 2+)')
             c['hsp_rungs'] = [{'label': r['what'], 'rule': r['rule'], 'ticker': r.get('ticker'), 'no_limit': r.get('price'), 'no_fair': r.get('fair'),
-                               'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note')} for r in rs[:10]]
+                               'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note')} for r in rs[:60]]
             c['level'] = 'lean' if playable else 'info'
             c['size'] = '0.1-0.15u total per game (half if a game/team-total under on this game), NO limit at the mid, TB 3+ first' if playable else 'none'
             c['panel'] = 'D' if playable else 'E'
