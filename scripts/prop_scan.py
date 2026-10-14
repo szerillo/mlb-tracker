@@ -368,7 +368,8 @@ def _sf(pid,d):
 # hits, H+R+RBI, RBI, HR, K all ~0; Aug-Sep RS all ~0 (October regime only). Where the TB 2+ effect sits (result - mid, pre-fee): hitter xwOBA top third
 # +12.6 (se 4.0), lineup slots 1-3 +11.4, HR/PA top third +10.2, BB% top third +10.3, opp SP K% top third +8.4, opp SP BB% top third +10.7 (se 2.9),
 # opp SP high BB & high K +19.4 (n43), road +7.3; bottom-third xwOBA +0.4, slots 7-9 -1.6. TB 3+ is broad (+6 to +9 everywhere), best vs high-K/high-BB SP.
-# 2016-25 true rates: PS TB2+ runs 7.5 pts under each hitter's own RS rate every year; the market discounts ~3.5. One row per rung so the dashboard needs no parsing.
+# 2016-25 true rates: PS TB2+ runs 7.7 pts under each hitter's own RS rate every year (TB3+ 6.0, sd 1.0); the 2026 market discounts ~5.2 / 4.5.
+# Fable review 10/14 (FABLE_REPLY_october_TB_unders): keep as lean, offsets shrunk to +3 / +2.5, TB 3+ first, tags display only. One row per rung.
 if any(d.month==10 for d in dates):
     _xw={}
     for v in (HGL or {}).values():
@@ -391,20 +392,23 @@ if any(d.month==10 for d in dates):
         pp_=_PROB.get((str(d0),team)) if team else None
         sf=_sf(pp_['id'],str(d0)) if pp_ else None
         x=_xw.get(nz(pname(r))); slot=_SLOT.get(nz(pname(r)))
-        eff=0.05 if r['strike']==1.5 else 0.03
-        tags=[]; pri=1
+        # Fable review 10/14: offsets shrunk to the prior-based residual (2016-25 true drop minus the 2026 market discount):
+        # TB 2+ 7.7 - 5.2 = ~2.5 -> +3; TB 3+ 6.0 - 4.5 = ~1.5, 2026 +5.4 -> +2.5. TB 3+ ranks first (survives the 9-family selection test,
+        # year-to-year sd 1.0); TB 2+ second (selection p .26 alone, carried by the pooled TB result and the prior).
+        # Hitter-quality / slot / SP tags are display only: the 2026 subsets conflict (xwOBA top3 +12.6 but RS-TB2+-rate top3 -0.2) and the
+        # market's discount already scales with hitter quality (-2.4 / -5.3 / -8.1 by tercile vs history -5.3 / -7.7 / -9.6). They never size a row.
+        eff=0.03 if r['strike']==1.5 else 0.025
+        tags=[]; pri=2 if r['strike']==2.5 else 1
         if r['strike']==1.5:
-            if x is not None and x>=_hi: tags.append('hitter xwOBA top3'); pri+=1
-            if x is not None and x<=_lo: tags.append('hitter xwOBA bottom3 (no 2+ edge)'); pri-=2
-            if slot and slot<=3: tags.append(f'slot {slot}'); pri+=1
-            if slot and slot>=7: tags.append(f'slot {slot} (no 2+ edge)'); pri-=1
+            if x is not None and x>=_hi: tags.append('hitter xwOBA top3')
+            if x is not None and x<=_lo: tags.append('hitter xwOBA bottom3')
+            if slot: tags.append(f'slot {slot}')
         if sf:
-            if sf['sp_k']>=0.27: tags.append(f"opp SP K% {100*sf['sp_k']:.0f} (high)"); pri+=1
-            if sf['sp_bb']>=0.085: tags.append(f"opp SP BB% {100*sf['sp_bb']:.0f} (high)"); pri+=1
-        if pri<=0: continue
+            if sf['sp_k']>=0.27: tags.append(f"opp SP K% {100*sf['sp_k']:.0f} (high)")
+            if sf['sp_bb']>=0.085: tags.append(f"opp SP BB% {100*sf['sp_bb']:.0f} (high)")
         no=round(1-r['mid'],3); fair=round(1-r['mid']+eff,3)
         add(3,'OCTOBER TB UNDER (lean)' if pri>=2 else 'OCTOBER TB UNDER (lean, lower priority)',r['event'],r['title'],'NO',no,fair,
-            f"limit NO at the mid {no:.3f}; fair = mid + PS TB effect ({100*eff:.0f} pts), edge {100*(eff-fee(no)):+.1f} after fee; priority {pri}"+(" ["+'; '.join(tags)+"]" if tags else "")+(f"; vs {pp_['fullName']}" if pp_ else "")+"; one game = one small position, spread across hitters",r['ticker'])
+            f"limit NO at the mid {no:.3f}; fair = mid + October TB residual ({100*eff:.1f} pts, shrunk 10/14), edge {100*(eff-fee(no)):+.1f} after fee; TB 3+ before TB 2+"+(" [info: "+'; '.join(tags)+"]" if tags else "")+(f"; vs {pp_['fullName']}" if pp_ else "")+"; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",r['ticker'])
 # Postseason sub-risk hitter UNDER, v2 (Bartolo 10/10). Rebuilt on 2016-26 PS play-by-play (7,233 PS starters, pitchers excluded):
 #  - old fair ran ~4 pts low for everyone (Oct contact + PA), so it is recalibrated (fit 2016-25, 2026 OOS Brier .2489 -> .2452);
 #  - the profile that matters is the PLATOON START: a part-timer (RS PH-for >= 3%, 30+ starts) starting because he has the platoon edge on
@@ -511,10 +515,10 @@ if HS_ON and HGL and PGL:
         octb=-0.03 if d0.month>=10 else 0.0
         e_no=-(sc+octb)-fee(1-r['mid'])
         if sc<=-0.03 and e_no>=0.02:
-            play=False
+            # Fable review 10/14: paper only. The 'Oct TB (play)' branch is gone; the October TB under is its own rule above.
             tags=f"[rung {r['series'].replace('KXMLB','')}{int(float(r['strike'])+0.5)}+ | SPK {'hi' if sf['sp_k']>=0.245 else 'lo' if sf['sp_k']<=0.205 else 'mid'} | L10 {'cold' if hf['hot']<=-0.05 else 'hot' if hf['hot']>=0.05 else 'flat'}]"
-            add(3 if play else 4,'HITTER UNDER vs SP: Oct TB (play)' if play else 'HITTER UNDER vs SP (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']+(0.05 if float(r['strike'])<2 else 0.03),3) if play else round(1-r['mid']-sc-octb,3),
-                tags+(" PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score." if play else " PAPER: log only, hits/H+R+RBI score has no out-of-sample edge.")+f" score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee; one game = one position",r['ticker'])
+            add(4,'HITTER UNDER vs SP (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']-sc-octb,3),
+                tags+" PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge."+f" score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee",r['ticker'])
 # HR ATTACK-ANGLE (paper, Bartolo 10/10): Kalshi HR 1+ under-prices steep-attack-angle hitters. Aug-Sep RS 9,338 rungs:
 # +1.06 pts (result - mid) per SD of season attack angle after HR rate / barrel / LA / FB controls (t 2.4; Aug +1.0, Sep +1.1).
 # Top quintile (Savant AA >= 13.0): +2.0 vs mid, but only +0.5 at the ask after fee; PS check (386 rungs) flat. Paper only: log, never size.
