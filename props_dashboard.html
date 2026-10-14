@@ -120,6 +120,9 @@ const PLAIN={'K-LENGTH UNDER':'Short leash: outs market 2+ below his usual lengt
   'F5 OVER':'F5 total priced off the Kalshi game total','YRFI CURVE':'Kalshi RFI below what its own total implies','YRFI CURVE (Oct-adj only)':'Clears only with the October first-inning bump (pending Fable)','RFI INFO':'First-inning board',
   'WALKS OVER (lead)':'High-BB% starter: walk overs settle ~4 pts over the mid','WALKS OVER (info: low-BB% pitcher)':'Low-BB% starter: no edge',
   'OCTOBER HITTER UNDERS (lean)':'October hitter overs run 4 to 6 pts rich','PS SUB-RISK HIT UNDER (lean)':'Pinch-hit risk: fewer October PA','PS SUB-RISK (info)':'Pinch-hit risk (info)',
+  'OCTOBER TB UNDER (lean)':'October total-bases unders: NO at the mid (priority 2+)','OCTOBER TB UNDER (lean, lower priority)':'October total-bases unders (priority 1)',
+  'HITTER UNDER vs SP: Oct TB (play)':'Hitter vs a high-K starter, October TB under (play)','HITTER UNDER vs SP (paper)':'Hitter vs high-K starter (paper)',
+  'K-LENGTH UNDER (PS paper)':'Short leash K under (postseason paper)','K-SEASON-ANCHOR UNDER (PS paper)':'K under season anchor (postseason paper)',
   'HITTER UNDER vs SP (lean)':'Hitter vs a high-K starter: market under-prices the strikeout stuff','HR ATTACK-ANGLE YES (paper)':'Steep attack angle: HR 1+ slightly cheap (paper, log only)',
   'BIG OUTS TRADE':'$1k+ outs trade (follow only within 2¢ of the print)','KALSHI OFF PINNACLE (ungraded)':'Kalshi 2+ pts off Pinnacle (ungraded)',
   'CROSS-VENUE LAG (Fable live test)':'Sportsbooks lead Kalshi: Kalshi price lags the books (game ML / total)','BIG TRADES (no backtested edge)':'Big trades','PRICE MOVE':'Price move','DEPTH IMBALANCE (ungraded)':'Order-book imbalance'};
@@ -247,7 +250,7 @@ function hitRow(c,showGame){
 function hspRow(c,showGame){
   const html=stdRow(c,showGame), rs=c.hsp_rungs||[];
   if(!rs.length) return html;
-  const t=`<table class="t" style="margin:4px 0 8px;grid-column:1/-1"><tr><th>Rung (bet NO, one position per game)</th><th>NO limit (mid)</th><th>NO fair</th><th>Edge at limit</th></tr>${rs.map((r,i)=>`<tr class="${i?'mut':''}"><td>${esc(r.label)}${i?'':' <span class="chip ok">position</span>'}</td><td>${r.no_limit!=null?(r.no_limit*100).toFixed(1)+'¢':'–'}</td><td>${pct(r.no_fair)}</td><td class="${cls(r.edge_at_limit)}">${sgn(r.edge_at_limit)}</td></tr>`).join('')}</table>`;
+  const t=`<table class="t" style="margin:4px 0 8px;grid-column:1/-1"><tr><th>Hitter unders, rungs (bet NO, one position per game)</th><th>NO limit (mid)</th><th>NO fair</th><th>Edge at limit</th></tr>${rs.map((r,i)=>`<tr class="${i?'mut':''}"><td>${esc(r.label)}${i?'':' <span class="chip ok">position</span>'}${r.rule&&/lower priority|paper/.test(r.rule)?' <span class="chip">'+(/paper/.test(r.rule)?'paper':'lower priority')+'</span>':''}</td><td>${r.no_limit!=null?(r.no_limit*100).toFixed(1)+'¢':'–'}</td><td>${pct(r.no_fair)}</td><td class="${cls(r.edge_at_limit)}">${sgn(r.edge_at_limit)}</td></tr>`).join('')}</table>`;
   return html.replace(/<\/div>\s*$/, t+'</div>');
 }
 const cardRow=(c,g)=>c.cat==='EARLY'?earlyRow(c,g):(c.cat==='HIT'?hitRow(c,g):(c.cat==='HSP'?hspRow(c,g):stdRow(c,g)));
