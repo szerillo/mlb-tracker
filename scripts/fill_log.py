@@ -84,11 +84,13 @@ def kalshi_rung(date,game,market,player,side,line,status='open'):
         elif market=='TT':
             if tail.startswith(player) and tail.endswith(str(th)) or (player in t and tail==str(th)): cand.append(m)
         else:
-            if tail==str(th) and nz(player).split()[-1] in nz(title.split(':')[0]): cand.append(m)
+            tn=nz(title.split(':')[0]); pn=nz(player)
+            if tail==str(th) and pn.split()[-1] in tn and (tn[:1]==pn[:1] or tn.split()[-1]!=pn.split()[-1]): cand.append(m)
     if not cand: return None
-    if len(cand)>1:   # two hitters with the same last name in one game: prefer the first-initial match
+    if len(cand)>1:   # same last name twice in one game (Hernandez): the first initial decides; if still ambiguous, give up rather than guess
         c2=[m for m in cand if nz(m.get('title','').split(':')[0])[:1]==nz(player)[:1]]
-        if c2: cand=c2
+        if len(c2)!=1: return None
+        cand=c2
     m=cand[0]; kside='YES' if side=='over' else 'NO'
     bid=m.get('yes_bid_dollars') or m.get('yes_bid'); ask=m.get('yes_ask_dollars') or m.get('yes_ask')
     bid=float(bid) if bid is not None else None; ask=float(ask) if ask is not None else None
@@ -137,9 +139,11 @@ def pinnacle_fair(player,market,side,line,game=None):
                     return (po if side=='over' else 1-po),(pr['over']['price'] if side=='over' else pr['under']['price'])
     return None,None
 def pinnacle_close_from_log(player,market,side,line,start_iso):
-    f=os.path.join(ROOT,'scripts','pinnacle_log.jsonl')
-    if not os.path.exists(f): f=os.path.join(HERE,'pinnacle_log.jsonl')
-    if not os.path.exists(f): return None
+    # the scan writes pinnacle_log.jsonl into SCAN_DIR (data/prop_scan in the repo workflow) or next to itself
+    cands=[os.path.join(ROOT,'data','prop_scan','pinnacle_log.jsonl'),os.path.join(ROOT,'scripts','pinnacle_log.jsonl'),os.path.join(HERE,'pinnacle_log.jsonl')]
+    if os.environ.get('SCAN_DIR'): cands.insert(0,os.path.join(os.environ['SCAN_DIR'],'pinnacle_log.jsonl'))
+    f=next((c for c in cands if os.path.exists(c)),None)
+    if not f: return None
     best=None
     for l in open(f):
         try: r=json.loads(l)
@@ -234,6 +238,22 @@ def cmd_add(a):
     rid=f"{date}-{len(rows)+1:03d}"
     row=dict(id=rid,date=date,game=game,market=market,player=player,side=side,line=line,book=book,book_price=price,stake=stake,rule=rule,note=note,
              fill_ts=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'))
+    try:
+        _pk,_start,_state=game_start(date,game)
+        # lineup check: a hitter ticket on a player who is not in the posted lineup is no action (Hernandez 10/14)
+        if _pk and market in ('H','TB','HR','HRR','RBI') and player not in ('-',''):
+            _lu={}
+            for _dd in (g(f"{MLB}/schedule?sportId=1&date={date}&hydrate=lineups") or {}).get('dates',[]):
+                for _gm in _dd['games']:
+                    if _gm['gamePk']==_pk: _lu=_gm.get('lineups') or {}
+            _names=[nz(p['fullName']) for k in ('awayPlayers','homePlayers') for p in _lu.get(k,[])]
+            _pn=nz(player); _ok=lambda n: n==_pn or (n.split()[-1]==_pn.split()[-1] and n[:1]==_pn[:1])
+            if _names and not any(_ok(n) for n in _names):
+                row['note']=(row.get('note') or '')+('; ' if row.get('note') else '')+'WARNING: not in the posted lineup'; print('WARNING: %s is not in the posted lineup (posted: %d names). Ticket is likely no action.'%(player,len(_names)))
+            elif not _names: print('note: lineups not posted yet; re-check the player is starting')
+        if _state and _state!='Preview':
+            row['note']=(note+'; ' if note else '')+'LATE: logged after first pitch, fill-time ruler is not pregame'; print('WARNING: game already started; the grader needs the rule tag and ruler BEFORE first pitch')
+    except Exception: pass
     k=None
     try: k=kalshi_rung(date,game,market,player,side,line)
     except Exception as e: print('kalshi lookup failed:',e)

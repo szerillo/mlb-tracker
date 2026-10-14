@@ -320,6 +320,10 @@ for code,rs in tot.items():
 # Caution: the hitters in a day-after-night lineup are the ones the manager chose to play tired; that selection is part of the effect and may not carry to 2027.
 # Fable team-level recheck 10/14 (october/rs_dan_perteam_2024_26.pkl, per team, local time, 2024-26 RS, 2,635 team-games): team runs -0.07 (se .06),
 # hits -0.08 (se .07) vs own average: no team-level effect on a sample 11x the Kalshi window. Prior: the hitter-level result fades. Paper at 150 rows, by month.
+
+# Fable 10/14: it is the results, not the mids (listed hitters -4.2 TB 2+ vs own rate; mid -0.6 vs own). Paper at 150 graded rows, grade by month.
+# Caution: the hitters in a day-after-night lineup are the ones the manager chose to play tired; that selection is part of the effect and may not carry to 2027.
+# Promotion needs the listed-vs-unlisted team TB check (Kalshi lists ~93% of starters in these games, so the split is thin: listed -5.1 pts n 1,439, unlisted +0.9 n 101; team TB -0.68 se .42, team runs -0.28 se .20 vs own averages).
 _TZ={**{k:-4 for k in 'BAL BOS NYY TB TOR ATL MIA NYM PHI WSH CIN CLE DET PIT'.split()},**{k:-5 for k in 'CWS KC MIN HOU TEX CHC MIL STL'.split()},'COL':-6,'AZ':-7,**{k:-7 for k in 'LAA ATH SEA LAD SD SF'.split()}}
 try:
     _loc={}   # (date, team abbr) -> local start hour
@@ -467,6 +471,26 @@ if any(d.month==10 for d in dates):
         if pa>=150 and v.get('name'): _xw[nz(v['name'])]=sum(x.get('xwoba_num',0) for x in G)/pa
     _q=sorted(_xw.values()); _hi=_q[int(len(_q)*2/3)] if _q else 9; _lo=_q[int(len(_q)/3)] if _q else -1
     _PROB={}; _SLOT={}
+    # sportsbook under prices for the same rungs (u1.5 TB = TB 2+ NO, u2.5 TB = TB 3+ NO), so the board can show the accessible version.
+    # Fable 10/14: the October TB lean is a Kalshi finding and does not transfer to book TB unders without its own grade; these print as info.
+    _BTB=collections.defaultdict(list)
+    try:
+        for d in dates:
+            x=g(f"https://api.actionnetwork.com/web/v2/scoreboard/mlb/markets?bookIds={','.join(BOOKS)}&customPickTypes=core_bet_type_77_total_bases&date={d.strftime('%Y%m%d')}")
+            pl_={p['id']:nz(p['full_name']) for p in x.get('players',[])}
+            for bid,ev in (x.get('markets') or {}).items():
+                if bid not in BOOKS: continue
+                for typ,outs in ev.get('event',{}).items():
+                    for o in outs:
+                        if o.get('side')=='under' and o.get('odds') is not None and pl_.get(o.get('player_id')) and o.get('value') in (1.5,2.5):
+                            _BTB[(pl_[o['player_id']],o['value'])].append((o['odds'],BOOKS[bid]))
+    except Exception as _e: print('book TB prices skipped:',_e)
+    def _btb(nm,strike,no_mid=None):
+        L=_BTB.get((nz(nm),strike))
+        if not L: return ''
+        o,b=max(L,key=lambda t:t[0]); q=100/(o+100) if o>0 else -o/(-o+100)
+        inside=no_mid is not None and q<=no_mid+0.002
+        return f"; book u{strike} TB: {b} {o:+d} (implied {q:.3f}"+("; AT/INSIDE the Kalshi NO mid: the lean's fair applies at the book, log as 'OCTOBER TB UNDER (book)'" if inside else ", info: book TB unders are ungraded")+")"
     for d in dates:
         for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team,lineups").get('dates',[]):
             for gm in dd['games']:
@@ -498,7 +522,7 @@ if any(d.month==10 for d in dates):
             if sf['sp_bb']>=0.085: tags.append(f"opp SP BB% {100*sf['sp_bb']:.0f} (high)")
         no=round(1-r['mid'],3); fair=round(1-r['mid']+eff,3)
         add(3,'OCTOBER TB UNDER (lean)' if pri>=2 else 'OCTOBER TB UNDER (lean, lower priority)',r['event'],r['title'],'NO',no,fair,
-            f"limit NO at the mid {no:.3f}; fair = mid + October TB residual ({100*eff:.1f} pts, shrunk 10/14), edge {100*(eff-fee(no)):+.1f} after fee; TB 3+ before TB 2+"+(" [info: "+'; '.join(tags)+"]" if tags else "")+(f"; vs {pp_['fullName']}" if pp_ else "")+"; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",r['ticker'])
+            f"limit NO at the mid {no:.3f}; fair = mid + October TB residual ({100*eff:.1f} pts, shrunk 10/14), edge {100*(eff-fee(no)):+.1f} after fee; TB 3+ before TB 2+"+(" [info: "+'; '.join(tags)+"]" if tags else "")+(f"; vs {pp_['fullName']}" if pp_ else "")+_btb(pname(r),r['strike'],no)+"; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",r['ticker'])
 # Postseason sub-risk hitter UNDER, v2 (Bartolo 10/10). Rebuilt on 2016-26 PS play-by-play (7,233 PS starters, pitchers excluded):
 #  - old fair ran ~4 pts low for everyone (Oct contact + PA), so it is recalibrated (fit 2016-25, 2026 OOS Brier .2489 -> .2452);
 #  - the profile that matters is the PLATOON START: a part-timer (RS PH-for >= 3%, 30+ starts) starting because he has the platoon edge on
