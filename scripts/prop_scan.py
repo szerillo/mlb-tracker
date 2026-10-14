@@ -330,16 +330,31 @@ for (ev,nm),D in P.items():
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
         f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
-# October hitter-under lean (2026 PS: Hits 1+, TB 2+, H+R+RBI 1+/2+ overs ran 4 to 6 pts below mid, 16 games; 2021-25 PS H/PA 3 to 13% below RS)
+# October hitter-under lean. 29 PS games (9/29-10/13), all Kalshi rungs, true quotes: TB 2+ NO at mid +3.4c after fee (se 1.8), TB 3+ +3.6 (se 1.3);
+# hits, H+R+RBI, RBI, HR all ~0. Where the TB 2+ effect sits (result - mid, pre-fee): hitter xwOBA top third +12.6 (se 4.0), lineup slots 1-3 +11.4 (4.3),
+# HR/PA top third +10.2, BB% top third +10.3, opp SP K% top third +8.4, road team +7.3; bottom-third xwOBA +0.4, slots 7-9 -1.6. TB 3+ is broad (+6 to +9 everywhere).
+# 2016-25 true rates agree: PS TB2+ runs 7.5 pts under each hitter's own RS rate, most for high-H/PA hitters (-9.9). So: TB 2+ unders on good hitters / vs high-K SP; TB 3+ anywhere.
 if any(d.month==10 for d in dates):
     HU=collections.defaultdict(list)
+    try: _HG=json.load(open('data/hitter_gamelogs.json')).get('hitters',{})
+    except Exception: _HG=(g("https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/hitter_gamelogs.json") or {}).get('hitters',{})
+    _xw={}
+    for v in (_HG or {}).values():
+        G=[x for x in v.get('games',[]) if x.get('pa')]; pa=sum(x['pa'] for x in G)
+        if pa>=150 and v.get('name'): _xw[nz(v['name'])]=sum(x.get('xwoba_num',0) for x in G)/pa
+    _q=sorted(_xw.values()); _hi=_q[int(len(_q)*2/3)] if _q else 9; _lo=_q[int(len(_q)/3)] if _q else -1
     for r in R:
         if r['mid'] is None or r['ask']-r['bid']>0.03: continue
-        if (r['series'],r['strike']) in (('KXMLBTB',1.5),('KXMLBTB',2.5)): HU[r['event'].split('-',1)[1]].append(r)   # 10/10: narrowed to TB 2+/3+ (24 PS games: TB2+ -5.7 pts, hits/HRR back to fair)
+        if (r['series'],r['strike']) in (('KXMLBTB',1.5),('KXMLBTB',2.5)): HU[r['event'].split('-',1)[1]].append(r)
     for code,L in HU.items():
-        L.sort(key=lambda r:-r['mid'])
+        for r in L:
+            x=_xw.get(nz(pname(r))); r['_xw']=x
+            r['_pri']=(2 if (x is not None and x>=_hi) else 0 if (x is not None and x<=_lo) else 1) if r['strike']==1.5 else 1
+        L.sort(key=lambda r:(-r['_pri'],-r['mid']))
+        top=[r for r in L if r['_pri']>=1][:8]
         add(3,'OCTOBER HITTER UNDERS (lean)',code,f"{len(L)} tight TB 2+/3+ rungs",'NO',None,None,
-            "limit NO at the mid, small and spread across hitters; top: "+'; '.join(f"{r['title'].replace('?','')} mid {r['mid']:.3f}" for r in L[:6]),None)
+            "limit NO at the mid, small and spread; priority = TB 2+ on top-third xwOBA hitters (29-game PS: +12.6 pts) or vs high-K SP, and any TB 3+; skip TB 2+ on bottom-third xwOBA hitters (+0.4). "
+            +'; '.join(f"{r['title'].replace('?','')} mid {r['mid']:.3f}"+(" [xwOBA top3]" if r['_pri']==2 else "") for r in top),None)
 # Postseason sub-risk hitter UNDER, v2 (Bartolo 10/10). Rebuilt on 2016-26 PS play-by-play (7,233 PS starters, pitchers excluded):
 #  - old fair ran ~4 pts low for everyone (Oct contact + PA), so it is recalibrated (fit 2016-25, 2026 OOS Brier .2489 -> .2452);
 #  - the profile that matters is the PLATOON START: a part-timer (RS PH-for >= 3%, 30+ starts) starting because he has the platoon edge on
