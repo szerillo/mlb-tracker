@@ -1,0 +1,39 @@
+name: sharp-prices (light 20-minute price logger)
+# The four venue loggers on their own schedule and their own concurrency group, with no sleeps, so a snapshot lands every 20
+# minutes instead of whenever the 25-minute oblog job gets through its queue. Nothing else runs here.
+# Once this is on, delete the same four steps from kalshi_oblog.yml (kalshi_oblog_once / an_props_log_once / novig_log_once /
+# game_lines_log) so the same price is not logged twice; the boards in that job keep reading the files these write.
+# Times are UTC (ET + 4 during EDT): every 20 min, 10 AM to 1:59 AM ET.
+on:
+  schedule:
+    - cron: '0,20,40 14-23,0-5 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: sharp-prices
+  cancel-in-progress: false
+jobs:
+  snap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LAST90_EXTRA_SNAPS: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python3 scripts/kalshi_oblog_once.py || true
+      - run: python3 scripts/an_props_log_once.py || true
+      - run: python3 scripts/novig_log_once.py || true
+      - run: python3 scripts/game_lines_log.py || true
+      - name: commit
+        run: |
+          git config user.name "sharp-prices-bot"; git config user.email "actions@users.noreply.github.com"
+          git add data/kalshi_oblog data/an_props_log data/novig_log data/game_lines && git commit -m "price snapshot $(date -u +%Y-%m-%dT%H:%M)" || exit 0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -X theirs && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((RANDOM % 15 + 5))
+          done
+          exit 1

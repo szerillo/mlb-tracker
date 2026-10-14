@@ -1,0 +1,44 @@
+name: sharp-tracker (fold logs, grade, export dashboard)
+# Rebuilds the sharp tracker view from the append-only price logs, pulls results, grades fills, refits weights (gated),
+# and writes data/sharp/dashboard.json for sharp_dashboard.html. Reads the logs the other jobs write; places nothing.
+# Times are UTC (ET + 4 during EDT): every 20 min, 10 AM to 1:59 AM ET, offset :10 from the logger jobs.
+on:
+  schedule:
+    - cron: '10,30,50 14-23,0-5 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: sharp-tracker
+  cancel-in-progress: false
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: fold logs into the tracker schema (events + ticks)
+        run: python3 sharp/build_db.py
+      - name: results (statsapi finals + box scores)
+        run: python3 sharp/results.py
+      - name: closing-line table
+        run: python3 sharp/grade.py
+      - name: grade fills
+        run: python3 -m sharp.fills grade
+      - name: weights (gated; prior stays until the sample is in)
+        run: python3 sharp/weights_fit.py
+      - name: export dashboard
+        run: python3 sharp/export.py
+      - name: commit
+        run: |
+          git config user.name "sharp-bot"; git config user.email "actions@users.noreply.github.com"
+          git add data/sharp/schedule_cache.json data/sharp/kalshi_markets.json data/sharp/results.jsonl data/sharp/weights_fitted.json data/sharp/dashboard.json data/sharp/fills.jsonl 2>/dev/null || true
+          git commit -m "sharp tracker $(date -u +%Y-%m-%dT%H:%M)" || exit 0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -X theirs && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((RANDOM % 15 + 5))
+          done
+          exit 1

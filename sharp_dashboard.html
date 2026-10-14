@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sharp Tracker · MLB</title>
+<style>
+  :root{--bg:#0d1117;--panel:#141a23;--panel2:#1a2230;--border:#263042;--text:#e6e9ef;--muted:#8b96a8;--accent:#5eead4;--good:#4ade80;--bad:#f87171;--warn:#fbbf24;
+        --over:#74d98e;--under:#ff8e6e;--x:#60a5fa;--sharp:#a78bfa}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+  .wrap{max-width:1360px;margin:0 auto;padding:12px 16px 60px}
+  h1{font-size:18px;font-weight:800;letter-spacing:.03em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:10px}
+  .strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 12px}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted);background:var(--panel)}
+  .pill b{color:var(--text)} .pill.ok{color:var(--good);border-color:#1f6f4a} .pill.bad{color:var(--bad);border-color:#7f2a2a} .pill.warn{color:var(--warn);border-color:#7a5b12}
+  .tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--border);margin:6px 0 14px}
+  .tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;cursor:pointer;font:inherit;font-weight:600}
+  .tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .banner{background:#3a2a12;border:1px solid #7a5b12;color:#fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
+  .banner.red{background:#3a1d1d;border-color:#7f2a2a;color:#fecaca}
+  .sec{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin:12px 0;overflow:hidden}
+  .sec-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--border)}
+  .sec-h .name{font-weight:800;font-size:15px} .sec-h .meta{color:var(--muted);font-size:12px} .sec-h .right{margin-left:auto;font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px} th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:7px 10px;background:rgba(255,255,255,.015);border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:7px 10px;border-top:1px solid var(--border);vertical-align:top} tr:hover td{background:rgba(255,255,255,.02)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+  .num{text-align:right;font-variant-numeric:tabular-nums} th.num{text-align:right}
+  .pos{color:var(--good);font-weight:700} .neg{color:var(--bad)} .dim{color:var(--muted)}
+  .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:1px 6px;margin-left:4px}
+  .b-prior{background:#3a2a12;color:#fde68a} .b-fit{background:#143a2a;color:#86efac} .b-x{background:#1e2a44;color:#93c5fd} .b-stale{background:#3a1d1d;color:#fecaca} .b-gate{background:#262c38;color:var(--muted)}
+  .chip{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin:1px 2px 1px 0;font-size:11.5px;background:var(--panel2);white-space:nowrap}
+  .chip.x{border-color:#2b4a7a} .chip.sharp{border-color:#4c3d8a} .chip.off{opacity:.45;text-decoration:line-through} .chip .p{font-weight:700}
+  .chip.best{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .bar{height:7px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:4px} .bar i{display:block;height:100%;background:var(--accent)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 10px;font-size:12px;color:var(--muted)}
+  .controls select,.controls input{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font:inherit;font-size:12px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 12px}
+  .tile{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 12px} .tile .k{font-size:20px;font-weight:800} .tile .l{font-size:11px;color:var(--muted)}
+  .side-over{color:var(--over)} .side-under{color:var(--under)}
+  details>summary{cursor:pointer;color:var(--muted);font-size:12px;padding:6px 14px;list-style:none} details>summary::-webkit-details-marker{display:none}
+  .small{font-size:12px;color:var(--muted)}
+  @media (max-width:760px){.hide-m{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SHARP TRACKER · MLB</h1>
+  <div class="sub" id="sub">loading data/sharp/dashboard.json…</div>
+  <div id="banners"></div>
+  <div class="strip" id="strip"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const am = p => p == null ? '—' : (p > 0 ? '+' : '') + p;
+const pct = (p, d = 1) => p == null ? '—' : (100 * p).toFixed(d);
+const MKT = {ml:'Moneyline', rl:'Run line', total:'Total', tt_away:'Team total (away)', tt_home:'Team total (home)', f5_ml:'F5 moneyline', f5_rl:'F5 run line',
+             f5_total:'F5 total', f5_tt_away:'F5 team total (away)', f5_tt_home:'F5 team total (home)', rfi:'1st inning (YRFI/NRFI)'};
+const XV = new Set(['Kalshi', 'Novig']), SHARP = new Set(['Pinnacle', 'Circa']);
+const ET = iso => new Date(iso).toLocaleString('en-US', {timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'});
+let D = null, tab = 'board';
+const TABS = [['board', 'Board'], ['props', 'Props'], ['venues', 'Venue tests'], ['ledger', 'Ledger'], ['health', 'Log health'], ['constants', 'Constants']];
+
+function sideLabel(c, g) {
+  if (c.side === 'home' || c.side === 'away') return (c.participant || c.side) + (c.line != null ? ' ' + (c.line > 0 ? '+' : '') + c.line : '');
+  const who = c.participant && c.market.includes('tt') ? c.participant + ' ' : (c.player ? c.player + ' ' : '');
+  return `${who}<span class="side-${c.side}">${c.side === 'over' ? 'Over' : 'Under'} ${c.line}</span>`;
+}
+function fairCell(c) {
+  if (c.fair == null) return `<span class="dim">— <span class="small">(${c.fair_n} venue${c.fair_n === 1 ? '' : 's'})</span></span>`;
+  return `<span class="mono">${pct(c.fair)}%</span> <span class="dim mono">${am(c.fair_american)}</span><span class="badge ${c.fair_status === 'fitted' ? 'b-fit' : 'b-prior'}">${c.fair_status === 'fitted' ? 'fitted' : 'prior wts'}</span><span class="small"> n=${c.fair_n}</span>`;
+}
+function bestCell(c) {
+  if (!c.best || !c.best.length) return '<span class="dim">—</span>';
+  const b = c.best[0]; const fee = b.cost_american !== b.american ? ` <span class="dim small">(${am(b.cost_american)} after fee)</span>` : '';
+  const more = c.best.slice(1, 3).map(x => `<span class="dim small">${esc(x.venue)} ${am(x.american)}</span>`).join(' · ');
+  return `<b>${esc(b.venue)}</b> <span class="mono">${am(b.american)}</span>${fee}${b.limit ? ` <span class="dim small">lim $${b.limit}</span>` : ''}<br>${more}`;
+}
+function edgeCell(c) {
+  if (c.edge_pts == null) return '<span class="dim">—</span>';
+  const cls = c.edge_pts >= 1 ? 'pos' : (c.edge_pts < 0 ? 'neg' : 'dim');
+  return `<span class="mono ${cls}">${c.edge_pts > 0 ? '+' : ''}${c.edge_pts.toFixed(1)}</span>`;
+}
+function ladder(c) {
+  const bestV = c.best && c.best[0] ? c.best[0].venue : null;
+  return c.ladder.map(l => {
+    const cls = ['chip', XV.has(l.venue) ? 'x' : (SHARP.has(l.venue) ? 'sharp' : ''), l.p == null ? 'off' : '', l.venue === bestV ? 'best' : ''].join(' ');
+    const raw = l.american != null ? am(l.american) : (l.ask != null ? l.ask.toFixed(2) : '');
+    const tip = `${l.venue}: ${raw}${l.bid != null ? ` bid ${l.bid} / ask ${l.ask}` : ''}${l.limit ? ` · limit $${l.limit}` : ''} · ${l.age_min} min old · weight ${l.w}${l.why ? ' · excluded: ' + l.why : ''}${l.flags ? ' · ' + l.flags : ''}`;
+    return `<span class="${cls}" title="${esc(tip)}">${esc(l.venue)} <span class="p">${l.p == null ? l.why : pct(l.p, 1)}</span></span>`;
+  }).join('');
+}
+
+function renderBoard() {
+  if (!D.board.length) return '<div class="sec"><div class="sec-h"><span class="name">No upcoming games in the log</span></div></div>';
+  return D.board.map(g => {
+    const stale = g.stale_min > 60 ? `<span class="badge b-stale">priced ${g.stale_min} min ago (log stale)</span>` : '';
+    const lim = Object.entries(g.pinnacle_limits || {}).filter(([m, x]) => x.first !== x.now).map(([m, x]) => `${MKT[m] || m}: $${x.first}→$${x.now}`).join(' · ');
+    const rows = g.markets.map(c => `<tr>
+      <td><span class="dim small">${MKT[c.market] || c.market}</span><br>${sideLabel(c, g)}</td>
+      <td>${fairCell(c)}</td><td>${bestCell(c)}</td><td class="num">${edgeCell(c)}</td>
+      <td class="hide-m small">${c.open_american != null ? `<span class="mono">${am(c.open_american)}</span> open` : '<span class="dim">—</span>'}${c.public && c.public.tickets_pct != null ? `<br><span class="dim">tix ${c.public.tickets_pct}% · $ ${c.public.money_pct}%</span>` : ''}</td>
+      <td>${ladder(c)}</td></tr>`).join('');
+    return `<div class="sec"><div class="sec-h"><span class="name">${g.away} @ ${g.home}</span><span class="meta">${ET(g.start_utc)} ET · T-${Math.round(g.minutes_to_start / 60 * 10) / 10}h</span>${stale}
+      <span class="right">${lim ? 'Pinnacle limits ' + lim : ''}</span></div>
+      <table><thead><tr><th>Market</th><th>Fair (ruler)</th><th>Best bettable</th><th class="num">Edge pts</th><th class="hide-m">Open · public</th><th>Venue ladder (devigged %, hover for raw)</th></tr></thead><tbody>${rows}</tbody></table>
+      <details><summary>${g.props.length} prop cells for this game — see the Props tab for the ranked list</summary></details></div>`;
+  }).join('');
+}
+
+function renderProps() {
+  const all = []; D.board.forEach(g => g.props.forEach(c => all.push({...c, game: `${g.away}@${g.home}`, start: g.start_utc})));
+  const stats = [...new Set(all.map(c => c.stat))].sort();
+  const st = window._pf || (window._pf = {stat: '', side: '', minv: 3, q: ''});
+  let rows = all.filter(c => (!st.stat || c.stat === st.stat) && (!st.side || c.side === st.side) && c.fair_n >= st.minv && (!st.q || (c.player || '').toLowerCase().includes(st.q.toLowerCase())));
+  rows.sort((a, b) => (b.edge_pts ?? -99) - (a.edge_pts ?? -99));
+  const tr = rows.slice(0, 300).map(c => `<tr><td class="small dim">${c.game}</td><td>${esc(c.player)} <span class="dim small">${c.stat}</span><br>${sideLabel(c)}</td>
+    <td>${fairCell(c)}</td><td>${bestCell(c)}</td><td class="num">${edgeCell(c)}</td><td>${ladder(c)}</td></tr>`).join('');
+  return `<div class="controls">Stat <select onchange="_pf.stat=this.value;draw()"><option value="">all</option>${stats.map(s => `<option ${st.stat === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+    Side <select onchange="_pf.side=this.value;draw()"><option value="">both</option><option value="over" ${st.side === 'over' ? 'selected' : ''}>over</option><option value="under" ${st.side === 'under' ? 'selected' : ''}>under</option></select>
+    Min venues in fair <input type="number" min="1" max="9" value="${st.minv}" style="width:52px" onchange="_pf.minv=+this.value;draw()">
+    Player <input value="${esc(st.q)}" placeholder="search" oninput="_pf.q=this.value;draw()">
+    <span>${rows.length} cells · sorted by edge vs the ruler · the prior weights put Novig+Kalshi at ~75% of the prop fair until fitted</span></div>
+    <div class="sec"><table><thead><tr><th>Game</th><th>Player · prop</th><th>Fair (ruler)</th><th>Best bettable</th><th class="num">Edge pts</th><th>Venue ladder</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+
+function gateBar(t) {
+  const pctg = Math.min(100, 100 * (t.n || 0) / (t.gate || 1));
+  return `<div class="small">${t.published ? '<span class="pos">published</span>' : `<span class="badge b-gate">gated</span> ${t.n} of ${t.gate}`}</div><div class="bar"><i style="width:${pctg}%"></i></div>`;
+}
+function venueTable(venues, cols) {
+  if (!venues) return '';
+  const vs = Object.entries(venues).sort((a, b) => (b[1].n || b[1].n_pairs || 0) - (a[1].n || a[1].n_pairs || 0));
+  return `<table><thead><tr><th>Venue</th>${cols.map(c => `<th class="num">${c[0]}</th>`).join('')}</tr></thead><tbody>${vs.map(([v, x]) =>
+    `<tr><td>${v}</td>${cols.map(c => `<td class="num mono">${c[1](x) ?? '—'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function renderVenues() {
+  const V = D.venues; const card = (title, t, body) => `<div class="sec"><div class="sec-h"><span class="name">${title}</span><span class="meta">${t.name || ''}</span><span class="right">${t.note || ''}</span></div><div style="padding:8px 14px">${gateBar(t)}</div>${body || ''}</div>`;
+  let h = `<div class="banner">Tests are pre-registered and gated (spec §6). Below the gate the dashboard shows progress only; numbers appear once the sample is in. Current sample: <b>${D.counts.settled}</b> settled games, <b>${D.counts.prop_rows_settled}</b> settled prop rows.</div>`;
+  for (const m of ['game', 'prop']) h += card(`Test A · accuracy · ${m}`, V.A[m], venueTable(V.A[m].venues, [['n', x => x.n], ['Brier', x => x.brier], ['priced %', x => pct(x.priced)], ['hit %', x => pct(x.hit)]]));
+  for (const m of ['game', 'prop']) {
+    const t = V.B[m]; let body = '';
+    if (t.table) body = ['24h', '6h', '1h'].map(hz => `<div class="sec-h"><span class="meta">T-${hz}</span></div>` + venueTable(t.table[hz], [['n', x => x.n], ['closure %', x => x.closure_pct], ['95% CI', x => x.ci ? x.ci.map(v => (100 * v).toFixed(0)).join('…') : null], ['n ctrl', x => x.n_ctrl], ['closure ctrl %', x => x.closure_ctrl_pct]])).join('');
+    h += card(`Test B · speed · ${m}`, t, body);
+  }
+  h += card('Test C · edge conversion (props)', V.C, venueTable(V.C.venues, [['pairs', x => x.n_pairs], ['bets', x => x.n_bets], ['hit %', x => pct(x.hit)], ['paid %', x => pct(x.paid)], ['expected %', x => pct(x.expected)], ['edge real %', x => x.edge_real_pct]]));
+  const dt = V.D; let dbody = '';
+  if (dt.venues) dbody = `<table><thead><tr><th>Venue</th><th class="num">overs n</th><th class="num">priced</th><th class="num">hit</th><th class="num">over tax pts</th><th class="num">unders n</th><th class="num">priced</th><th class="num">hit</th></tr></thead><tbody>${Object.entries(dt.venues).map(([v, x]) =>
+    `<tr><td>${v}</td><td class="num mono">${x.over?.n ?? '—'}</td><td class="num mono">${pct(x.over?.priced)}</td><td class="num mono">${pct(x.over?.hit)}</td><td class="num mono">${x.over?.tax_pts ?? '—'}</td><td class="num mono">${x.under?.n ?? '—'}</td><td class="num mono">${pct(x.under?.priced)}</td><td class="num mono">${pct(x.under?.hit)}</td></tr>`).join('')}</tbody></table>`;
+  h += card('Test D · the over tax', dt, dbody);
+  for (const m of ['game', 'prop']) h += card(`Opener test · ${m}`, V.opener[m], venueTable(V.opener[m].venues, [['n', x => x.n], ['open %', x => pct(x.open)], ['close %', x => pct(x.close)], ['hit %', x => pct(x.hit)]]));
+  h += card('Steam test', V.steam, '');
+  const w = D.weights;
+  h += `<div class="sec"><div class="sec-h"><span class="name">Ruler weights in force</span><span class="meta">game: ${w.game_status} · props: ${w.prop_status}</span></div><div style="padding:8px 14px" class="small">
+    Game lines: ${Object.entries(w.game).filter(([k, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(' · ')}<br>Props: ${Object.entries(w.prop).filter(([k, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(' · ')}<br>
+    <span class="dim">Prior = the thread's hand-set vector (one person's judgment on pooled sports, Pinnacle unranked). It is the ridge target, not a result. Fit status: ${JSON.stringify(w.fit_file)}</span></div></div>`;
+  return h;
+}
+
+function renderLedger() {
+  const L = D.ledger; const S = L.summary; const a = S['all:all'] || {n: 0, pnl: 0, units: 0};
+  const tiles = `<div class="tiles"><div class="tile"><div class="k">${L.fills.length}</div><div class="l">fills logged</div></div><div class="tile"><div class="k">${a.n}</div><div class="l">graded</div></div>
+    <div class="tile"><div class="k ${a.pnl >= 0 ? 'pos' : 'neg'}">${a.pnl >= 0 ? '+' : ''}${(a.pnl || 0).toFixed(2)}u</div><div class="l">P/L (${a.roi ?? '—'}% ROI)</div></div><div class="tile"><div class="k">${a.clv_avg ?? '—'}</div><div class="l">avg CLV vs ruler at close (pts, n=${a.n_clv || 0})</div></div></div>`;
+  const groups = ['venue', 'market', 'side', 'tag', 'mclass'].map(k => { const rows = Object.entries(S).filter(([key]) => key.startsWith(k + ':'));
+    if (!rows.length) return ''; return `<div class="sec"><div class="sec-h"><span class="name">By ${k}</span></div><table><thead><tr><th>${k}</th><th class="num">n</th><th class="num">W-L-P</th><th class="num">P/L u</th><th class="num">ROI %</th><th class="num">CLV pts</th></tr></thead><tbody>${rows.map(([key, s]) =>
+      `<tr><td>${esc(key.slice(k.length + 1))}</td><td class="num mono">${s.n}</td><td class="num mono">${s.w}-${s.l}-${s.p}</td><td class="num mono ${s.pnl >= 0 ? 'pos' : 'neg'}">${s.pnl}</td><td class="num mono">${s.roi ?? '—'}</td><td class="num mono">${s.clv_avg ?? '—'}</td></tr>`).join('')}</tbody></table></div>`; }).join('');
+  const fills = `<div class="sec"><div class="sec-h"><span class="name">Fills</span><span class="meta">written before first pitch; late rows excluded from CLV</span></div><table><thead><tr><th>Written</th><th>Bet</th><th>Venue · price</th><th class="num">Stake</th><th>Tag</th><th class="num">Fair @ fill</th><th class="num">Fair @ close</th><th class="num">CLV fill</th><th class="num">CLV close</th><th>Result</th><th class="num">P/L</th></tr></thead><tbody>${L.fills.map(f =>
+    `<tr><td class="small dim">${ET(f.ts_utc)}${f.late ? ' <span class="badge b-stale">late</span>' : ''}</td><td>${f.event_id} ${MKT[f.market] || f.market} ${esc(f.player_name || f.participant || '')} ${f.side} ${f.line ?? ''}</td><td>${f.venue} <span class="mono">${am(f.price_american)}</span></td><td class="num mono">${f.stake}</td><td class="small">${esc(f.rule_tag)}</td>
+     <td class="num mono">${pct(f.fair_at_fill)}${f.fair_at_fill_status ? `<span class="badge ${f.fair_at_fill_status === 'fitted' ? 'b-fit' : 'b-prior'}">${f.fair_at_fill_status}</span>` : ''}</td><td class="num mono">${pct(f.fair_at_close)}</td><td class="num mono ${(f.clv_fill_pts ?? 0) > 0 ? 'pos' : 'neg'}">${f.clv_fill_pts ?? '—'}</td><td class="num mono ${(f.clv_close_pts ?? 0) > 0 ? 'pos' : 'neg'}">${f.clv_close_pts ?? '—'}</td><td>${f.result ?? '<span class="dim">open</span>'}</td><td class="num mono">${f.pnl_units ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="banner">Log a fill from GitHub → Actions → "sharp-tracker: log a fill" (inputs: game, market, side, line, player, venue, price, stake, tag), or locally with <span class="mono">python3 -m sharp.fills add …</span> and commit data/sharp/fills.jsonl. Rows added after first pitch are tagged late and excluded from CLV.</div>${tiles}${groups}${fills}`;
+}
+
+function renderHealth() {
+  const H = D.health; const bad = H.cadence.filter(c => c.snaps_per_game < 20);
+  const cad = `<div class="sec"><div class="sec-h"><span class="name">Snapshots per game, by venue</span><span class="meta">${H.note}</span></div><table><thead><tr><th>Venue</th><th>Class</th><th class="num">Games</th><th class="num">Snapshots / game</th><th class="num">Feed lag (s)</th></tr></thead><tbody>${H.cadence.map(c =>
+    `<tr><td>${c.venue}</td><td>${c.mclass}</td><td class="num mono">${c.games}</td><td class="num mono ${c.snaps_per_game < 20 ? 'neg' : 'pos'}">${c.snaps_per_game}</td><td class="num mono">${H.feed_lag[c.venue] ?? '<span class="dim">unmeasured</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+  const days = [...new Set(H.by_day.map(r => r.et_date))].sort().slice(-14); const venues = [...new Set(H.by_day.map(r => r.venue))].sort();
+  const key = {}; H.by_day.forEach(r => key[r.et_date + '|' + r.venue] = (key[r.et_date + '|' + r.venue] || 0) + r.n_ticks);
+  const mat = `<div class="sec"><div class="sec-h"><span class="name">Ticks per day</span><span class="meta">a venue dropping to zero is a feed problem to fix the same day</span></div><div style="overflow:auto"><table><thead><tr><th>Venue</th>${days.map(d => `<th class="num">${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${venues.map(v =>
+    `<tr><td>${v}</td>${days.map(d => { const n = key[d + '|' + v] || 0; return `<td class="num mono ${n ? '' : 'neg'}">${n || '0'}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+  return (bad.length ? `<div class="banner red"><b>Cadence problem.</b> ${bad.length} venue/class pairs are averaging under 20 snapshots per game against ~40 expected from a 20-minute job. The 20-minute job (kalshi_oblog.yml) is not landing every 20 minutes: it shares a concurrency group with the prop scan, takes 10+ minutes itself (two 5-minute sleeps inside game_lines_log.py), and GitHub drops scheduled runs while one is queued. Until the price logger runs on its own light workflow, T-6h snapshots and most closes inside 20 minutes will be missing and Tests A–D will take far longer to reach their gates.</div>` : '') + cad + mat;
+}
+
+function renderConstants() {
+  return `<div class="sec"><div class="sec-h"><span class="name">Constants</span><span class="meta">every entry carries a provenance line; an entry without one is a bug (spec §12)</span></div><table><thead><tr><th>Name</th><th>Value</th><th>Status</th><th>Source / provenance</th></tr></thead><tbody>${D.constants.map(c =>
+    `<tr><td class="mono">${esc(c.name)}</td><td class="mono small">${esc(typeof c.value === 'object' ? JSON.stringify(c.value) : c.value)}</td><td><span class="badge ${c.status === 'fitted' ? 'b-fit' : (c.status === 'prior' ? 'b-prior' : 'b-gate')}">${c.status}</span>${c.fit_date ? ' ' + c.fit_date : ''}</td><td class="small">${esc(c.source)}${c.note ? ' — ' + esc(c.note) : ''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function draw() {
+  $('#tabs').innerHTML = TABS.map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" onclick="tab='${k}';draw()">${l}</button>`).join('');
+  $('#view').innerHTML = {board: renderBoard, props: renderProps, venues: renderVenues, ledger: renderLedger, health: renderHealth, constants: renderConstants}[tab]();
+}
+async function load() {
+  const u = new URLSearchParams(location.search).get('data') || 'data/sharp/dashboard.json';
+  try {
+    D = await (await fetch(u, {cache: 'no-store'})).json();
+  } catch (e) { $('#sub').textContent = 'could not load ' + u + ' (' + e + ')'; return; }
+  const built = new Date(D.built); const ageMin = Math.round((Date.now() - built) / 60000);
+  $('#sub').innerHTML = `built ${ET(D.built)} ET (${ageMin} min ago) · ${D.counts.events} events · ${D.counts.settled} settled · ${D.counts.ticks.toLocaleString()} ticks · spec ${D.spec}`;
+  $('#strip').innerHTML = `<span class="pill">Ruler weights: <b>${D.weights.game_status}</b> (game) · <b>${D.weights.prop_status}</b> (props)</span>
+    <span class="pill ${D.board.some(g => g.stale_min > 60) ? 'bad' : 'ok'}">board priced ${D.board.length ? D.board[0].stale_min + ' min ago' : '—'}</span>
+    <span class="pill">Test gates: A/B ${D.venues.A.game.n}/${D.venues.A.game.gate} games · C ${D.venues.C.n}/${D.venues.C.gate} pairs · D ${D.venues.D.n}/${D.venues.D.gate} prop rows</span>
+    <span class="pill">BetMGM logged, never shown as bettable</span>`;
+  const b = [];
+  if (ageMin > 90) b.push(`<div class="banner red">The export is ${ageMin} minutes old — the workflow has not run. Prices on the board are not current.</div>`);
+  if (D.weights.game_status !== 'fitted') b.push(`<div class="banner">Fair prices use the <b>prior</b> weight vector (unfitted). Edges are a ruler-vs-price gap under those weights, not a validated result; nothing in the first month produces a bet on its own. Weights fit automatically once the game-line gate (${D.venues.A.game.gate} settled games) is reached.</div>`);
+  $('#banners').innerHTML = b.join('');
+  draw();
+}
+load();
+</script>
+</body>
+</html>
