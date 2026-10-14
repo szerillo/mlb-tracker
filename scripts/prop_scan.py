@@ -201,7 +201,16 @@ def pin_fair(nm,kind,line,side):
 PSEASON=any(d.month>=10 for d in dates)   # 10/10: K unders went 6-8 on all 2026 PS starts (n 14, -8c); paper in October pending Fable
 
 TR=[]
+def _first_pitch_utc(ev):
+    """Kalshi game code (26OCT071600CLECWS, ET) -> first pitch in UTC; None for non-Kalshi events (AWAY@HOME)."""
+    m=re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',str(ev or '').split('-',1)[-1])
+    if not m or m.group(2) not in MON: return None
+    return dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
+SKIPPED_LIVE=0
 def add(tier,rule,ev,what,side,price,fair,note,ticker=None):
+    global SKIPPED_LIVE
+    fp=_first_pitch_utc(ev)
+    if fp is not None and now>=fp: SKIPPED_LIVE+=1; return   # game already started: in-game prices are never pregame signals
     rd=lambda x: round(float(x),3) if x is not None else None
     TR.append(dict(ts=now.isoformat(),tier=tier,rule=rule,event=ev,what=what,side=side,price=rd(price),fair=rd(fair),note=note,ticker=ticker))
 def nearest50(rs): return min(rs,key=lambda r:abs(r['mid']-.5))
@@ -327,9 +336,10 @@ for (ev,nm),D in P.items():
     if not W: continue
     r=nearest50(W['rungs']); line=r['strike']; s_=SS.get((ev,nm)) or {}; bbp=s_.get('bb_pct')
     hi=bbp is not None and bbp>=0.085
+    _bbtxt=("bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99))) if hi else ("no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid'])
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
-        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
+        f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {_bbtxt}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
 # Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
 # a hitter's recent quality of contact (L10 xwOBA vs season, L10 barrel%). Fit on all Sept RS Kalshi hitter rungs (true quotes);
 # validated on 24 PS games (slope 0.88). Score = pts of (result - mid). Lean NO when score <= -3 pts (Oct adds the -3 pt October base).
@@ -534,6 +544,7 @@ for r in R:
             f"Pinnacle o{r['strike']} {p['o']:+d} / u {p['u']:+d} (no-vig over {p['over']:.3f}) vs Kalshi {r['bid']:.2f}/{r['ask']:.2f}; edge at touch {100*max(ey,en):+.1f}; Pinnacle limit ${p['limit']}",r['ticker'])
 # ---------- 5. output ----------
 stamp=et_now.strftime('%Y%m%d_%H%M')
+print(f'[scan] skipped {SKIPPED_LIVE} triggers on games already started')
 with open(os.path.join(HERE,'scan_log.jsonl'),'a') as f:
     for t in TR: f.write(json.dumps(t)+'\n')
 TN={1:'TIER 1: backtested rules (bet if price holds)',2:'TIER 2: leads (half size or paper)',3:'TIER 3: weaker / already moved (watch)',4:'WATCH: information only, no backtested edge'}
