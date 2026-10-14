@@ -35,11 +35,13 @@ RULE_EDGE = {'K-LENGTH UNDER': 5, 'K-SEASON-ANCHOR UNDER': 5, 'VELO-DECLINE K UN
 OCT_HIT_EDGE = 3   # October hitter unders: NO fair = Kalshi NO mid + 3 pts
 RULE_TIER = {'K-LENGTH UNDER': 1, 'K-SEASON-ANCHOR UNDER': 1, 'F5 OVER': 1, 'YRFI CURVE': 1, 'YRFI CURVE (Oct-adj only)': 3,
              'RFI INFO': 4, 'K-LENGTH OVER': 2, 'DEEP-SPOT OVERS': 2, 'VELO-DECLINE K UNDER (paper)': 2, 'BIG OUTS TRADE': 2,
-             'WALKS OVER (lead)': 3, 'WALKS OVER (info: low-BB% pitcher)': 4, 'OCTOBER HITTER UNDERS (lean)': 3,
+             'WALKS OVER (lead)': 3, 'WALKS OVER (info: low-BB% pitcher)': 4,
              'PS SUB-RISK HIT UNDER (lean)': 3, 'PS SUB-RISK (info)': 4, 'KALSHI OFF PINNACLE (ungraded)': 3,
              'HITTER UNDER vs SP (lean)': 3, 'HR ATTACK-ANGLE YES (paper)': 4,
-             'HITTER UNDER vs SP: Oct TB (play)': 3, 'HITTER UNDER vs SP (paper)': 4,
+             'HITTER UNDER vs SP (paper)': 4,
              'OCTOBER TB UNDER (lean)': 3, 'OCTOBER TB UNDER (lean, lower priority)': 3,
+             'OCTOBER F5 UNDER (paper)': 4, 'OCTOBER F7 TIE NO (paper)': 4, 'F5 OVER: high F5 share (paper)': 4,
+             'DAY-AFTER-NIGHT UNDER (paper)': 4,
              'K-LENGTH UNDER (PS paper)': 2, 'K-SEASON-ANCHOR UNDER (PS paper)': 2,
              'BIG TRADES (no backtested edge)': 4, 'PRICE MOVE': 4, 'DEPTH IMBALANCE (ungraded)': 4, 'VELO-DECLINE (price too short)': 4}
 K_ORDER = ['K-LENGTH UNDER', 'K-SEASON-ANCHOR UNDER', 'VELO-DECLINE K UNDER (paper)', 'K-LENGTH OVER', 'DEEP-SPOT OVERS', 'VELO-DECLINE (price too short)']
@@ -136,11 +138,24 @@ def pitcher_of(w):
     m = re.match(r'^(.*?)\s+(K|walks|outs|Outs)\b', str(w or ''))
     return m.group(1) if m else str(w or '').split(':')[0]
 
+# Retired row names (10/14): the old aggregated October hitter row and the dead "Oct TB (play)" branch. Dropped if an old scan emits them.
+RETIRED = ('OCTOBER HITTER UNDERS', 'HITTER UNDER vs SP: Oct TB (play)')
+# Paper rules (log only, never a position): always the Info panel, whatever tier the scan gives them.
+PAPER_INFO = ('HITTER UNDER vs SP', 'OCTOBER F5 UNDER', 'OCTOBER F7 TIE NO', 'F5 OVER: high F5 share', 'DAY-AFTER-NIGHT UNDER', 'HR ATTACK-ANGLE YES')
+F5_SHARE_RE = re.compile(r'F5[ -]?share\s*(?:of\s+\w+\s*)?[:=]?\s*(0?\.\d+|\d{2}(?:\.\d+)?\s*%)', re.I)
+
+def f5_share_of(note):
+    m = F5_SHARE_RE.search(note or '')
+    if not m: return None
+    v = m.group(1).replace('%', '').strip(); v = float(v)
+    return round(v / 100 if v > 1 else v, 3)
+
 def cat_of(rule):
+    if rule.startswith(PAPER_INFO): return 'INFO'
     if rule in ('F5 OVER',) or 'RFI' in rule: return 'EARLY'
     if rule.startswith('K-') or 'DEEP-SPOT' in rule or rule.startswith('VELO-DECLINE'): return 'K'
     if rule.startswith('WALKS'): return 'WALK'
-    if rule.startswith('HITTER UNDER vs SP') or rule.startswith('OCTOBER TB UNDER'): return 'HSP'   # per-hitter Kalshi TB/HRR unders (10/14 names)
+    if rule.startswith('OCTOBER TB UNDER'): return 'HSP'   # per-hitter Kalshi TB unders, one position per game (10/14 names)
     if 'HITTER UNDERS' in rule or 'SUB-RISK' in rule: return 'HIT'
     if rule == 'BIG OUTS TRADE': return 'OUTS'
     if rule.startswith('KALSHI OFF PINNACLE'): return 'KOP'
@@ -207,7 +222,12 @@ def build(SL, PL, live, now):
         if e: kev[e['code']] = e
     hist = collections.defaultdict(lambda: collections.defaultdict(list))   # key -> ts -> rows
     meta_ev = {}
+    f5_hi = {}   # game code -> F5 share from the 'F5 OVER: high F5 share' paper row on the latest scan
     for x in SL:
+        if x['ts'] == latest and x['rule'].startswith('F5 OVER: high F5 share'):
+            e_ = event_of(x, kev); f5_hi[e_['code']] = f5_share_of(x.get('note')) or True
+    for x in SL:
+        if x['rule'].startswith(RETIRED): continue
         if 'hits allowed' in (x.get('what') or '').lower() or str(x.get('ticker') or '').startswith('KXMLBHA'): continue   # no-bet market
         ev = event_of(x, kev)
         if (ev['date'] or '') < keep_from: continue
@@ -282,9 +302,14 @@ def build(SL, PL, live, now):
                 m = re.search(r'F5 o([\d.]+)', r['what'])
                 rr = {'rule': 'F5 OVER', 'ticker': r.get('ticker'), 'kalshi_px': r.get('price'), 'model': r.get('fair'), 'model_src': 'F5 NB on Kalshi total',
                       'market': None, 'side': 'YES', 'label': f"F5 o{m.group(1) if m else '?'}", 'strike': float(m.group(1)) if m else None, 'cat': 'F5', 'level': 'bet'}
+                sh = f5_share_of(r.get('note')); hi = f5_hi.get(ev['code'])
+                if sh is None and isinstance(hi, float): sh = hi
+                if sh is not None: rr['f5_share'] = sh
+                if hi: rr['f5_share_high'] = True   # tag only (paper rule); never changes size or edge
                 pricing(rr, live_g); rungs.append(rr)
             rungs.sort(key=lambda r: -(r['edge'] if r.get('edge') is not None else -99))
             c['yrfi'] = yr; c['f5'] = rungs
+            if f5_hi.get(ev['code']): c['badges'].append('high F5 share' + (f" {f5_hi[ev['code']]:.3f}" if isinstance(f5_hi[ev['code']], float) else ''))
             has1 = bool(rungs) or (yr and yr['rule'] == 'YRFI CURVE')
             c['level'] = 'bet' if has1 else ('lean' if yr and yr['rule'] == 'YRFI CURVE (Oct-adj only)' else 'info')
             c['size'] = 'small, one position' if has1 else ('small, late only' if c['level'] == 'lean' else 'none')
@@ -340,18 +365,18 @@ def build(SL, PL, live, now):
                               for s in subs[:1] if s['lean']]   # sub-risk v2 (10/10): one game = one position, the best-edge lean
             if subs and subs[0]['lean']: subs[0]['position'] = True
         elif cat == 'HSP':
-            # Hitter under vs a high-K starter (Bartolo 10/10). Every firing rung is shown; the best edge after fee is the one position.
-            # Also carries the 10/14 rules: OCTOBER TB UNDER (lean / lower priority) and HITTER UNDER vs SP: Oct TB (play) / (paper).
+            # October TB unders (Fable 10/14): OCTOBER TB UNDER (lean) = TB 3+, (lean, lower priority) = TB 2+. Every firing rung is shown;
+            # one position per game, TB 3+ first. HITTER UNDER vs SP is paper and goes to Info.
             def _e(r): return (r['fair'] - r['price'] - fee(r['price'])) if r.get('fair') is not None and r.get('price') is not None else -9
             best = {}
             for r in rows:   # one row per rung; a playable (tier-3) row beats a paper row on the same rung
                 cur = best.get(r['what'])
                 if cur is None or (r['tier'], -_e(r)) < (cur['tier'], -_e(cur)): best[r['what']] = r
-            rs = sorted(best.values(), key=lambda r: (r['tier'] > 3, -(r['tier'] == 3 and 'lower priority' not in r['rule']), -_e(r)))
+            rs = sorted(best.values(), key=lambda r: (r['tier'] > 3, 'lower priority' in r['rule'], -_e(r)))
             x = rs[0]; playable = x['tier'] <= 3
             c.update(label=x['what'], side='NO', ticker=x.get('ticker'), kalshi_px=x.get('price'), rule=x['rule'],
                      market=x.get('price'), market_src='Kalshi NO mid', model=x.get('fair'),
-                     model_src=('PS TB effect' if x['rule'].startswith('OCTOBER TB') else 'opp SP score (+ October)'))
+                     model_src='PS TB effect (mid + 2.5 TB 3+ / + 3 TB 2+)')
             c['hsp_rungs'] = [{'label': r['what'], 'rule': r['rule'], 'ticker': r.get('ticker'), 'no_limit': r.get('price'), 'no_fair': r.get('fair'),
                                'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note')} for r in rs[:10]]
             c['level'] = 'lean' if playable else 'info'
@@ -374,7 +399,11 @@ def build(SL, PL, live, now):
                 c['level'] = 'watch'; c['size'] = 'paper'; c['badges'].append('ungraded'); c['panel'] = 'B'
             else:
                 c['level'] = 'info'; c['size'] = 'none'; c['panel'] = 'E'
-                c['badges'].append('paper: log only' if 'paper' in x['rule'] else 'no backtested edge')
+                paper = 'paper' in x['rule'] or x['rule'].startswith(PAPER_INFO)
+                c['badges'].append('paper: log only' if paper else 'no backtested edge')
+                if x['rule'].startswith('F5 OVER: high F5 share'):
+                    sh = f5_share_of(x.get('note'))
+                    if sh is not None: c['inputs'] = {'f5_share': sh}
             c['positions'] = [pos_from(c)] if cat != 'INFO' else []
         if not live_now:
             c['level'] = 'gone'; c['panel'] = 'E'; c['status'] = f"No longer firing (last seen {dt.datetime.fromisoformat(last_ts).astimezone(ET).strftime('%-I:%M %p')} ET)"
@@ -422,13 +451,16 @@ def lag_cards(now, live):
 # ---------- tickets ----------
 def read_tickets():
     out = []
-    for p in (os.path.join(SCAN, 'tickets.csv'), os.path.join(SCAN, 'october_ticket_log.csv'), os.path.join(ROOT, 'october_ticket_log.csv'), os.path.join(ROOT, 'data', 'october_ticket_log.csv')):
+    for p in (os.path.join(ROOT, 'data', 'fills.csv'), os.path.join(SCAN, 'tickets.csv'), os.path.join(SCAN, 'october_ticket_log.csv'), os.path.join(ROOT, 'october_ticket_log.csv'), os.path.join(ROOT, 'data', 'october_ticket_log.csv')):
         if not os.path.exists(p): continue
         for r in csv.DictReader(open(p)):
             if not (r.get('date') or '').strip(): continue
             if 'notes' in r and 'example row' in (r.get('notes') or ''): continue
-            bet = r.get('bet') or ' '.join(x for x in (r.get('market'), r.get('selection'), r.get('line')) if x)
-            price = r.get('price') or r.get('price_paid')
+            if (r.get('result') or '').upper() == 'VOID': continue
+            if 'fill_ts' in r:   # data/fills.csv (fill_log.py)
+                bet = ' '.join(x for x in (r.get('player') if r.get('player') not in (None, '', '-') else None, r.get('market'), r.get('side'), r.get('line')) if x)
+            else: bet = r.get('bet') or ' '.join(x for x in (r.get('market'), r.get('selection'), r.get('line')) if x)
+            price = r.get('price') or r.get('price_paid') or r.get('book_price')
             out.append({'date': r['date'].strip(), 'game': (r.get('game') or '').strip(), 'bet': bet.strip(), 'book': (r.get('book') or '').strip(),
                         'price': (price or '').strip(), 'size': (r.get('size') or r.get('stake') or '').strip(), 'src': os.path.basename(p)})
     return out
