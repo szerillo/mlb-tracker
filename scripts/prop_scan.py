@@ -330,31 +330,71 @@ for (ev,nm),D in P.items():
     add(3 if hi else 4,'WALKS OVER (lead)' if hi else 'WALKS OVER (info: low-BB% pitcher)',ev,f"{nm} walks o{line}",'YES',round(r['ask'],2),round(r['mid'],3),
         (f"season BB% {100*bbp:.1f}" if bbp is not None else "season BB% n/a") +
         f"; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); {"bet only at or better than Kalshi mid %.3f + 4 pts = fair about %.3f" % (r['mid'],min(r['mid']+.04,.99)) if hi else "no edge for low-BB%% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid %.3f" % r['mid']}; Kalshi {r['bid']:.2f}/{r['ask']:.2f}; book o{line}: {best_book(nm,'BB',line,'over')}; {pin_fair(nm,'BB',line,'over')}",r['ticker'])
-# October hitter-under lean. 29 PS games (9/29-10/13), all Kalshi rungs, true quotes: TB 2+ NO at mid +3.4c after fee (se 1.8), TB 3+ +3.6 (se 1.3);
-# hits, H+R+RBI, RBI, HR all ~0. Where the TB 2+ effect sits (result - mid, pre-fee): hitter xwOBA top third +12.6 (se 4.0), lineup slots 1-3 +11.4 (4.3),
-# HR/PA top third +10.2, BB% top third +10.3, opp SP K% top third +8.4, road team +7.3; bottom-third xwOBA +0.4, slots 7-9 -1.6. TB 3+ is broad (+6 to +9 everywhere).
-# 2016-25 true rates agree: PS TB2+ runs 7.5 pts under each hitter's own RS rate, most for high-H/PA hitters (-9.9). So: TB 2+ unders on good hitters / vs high-K SP; TB 3+ anywhere.
+# Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
+# a hitter's recent quality of contact (L10 xwOBA vs season, L10 barrel%). Fit on all Sept RS Kalshi hitter rungs (true quotes);
+# validated on 24 PS games (slope 0.88). Score = pts of (result - mid). Lean NO when score <= -3 pts (Oct adds the -3 pt October base).
+HS=dict(mu={"sp_k":0.2244,"sp_csw":0.2689,"hot":-0.0035,"brl_l10":0.0795},sd={"sp_k":0.0497,"sp_csw":0.0208,"hot":0.0591,"brl_l10":0.0660},
+        coef={"sp_k":-0.0301,"sp_csw":0.0147,"hot":0.0085,"brl_l10":0.0038})
+def _loadj(path,url):
+    try: return json.load(open(path))
+    except Exception: return g(url)
+try:
+    RAWD="https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/"
+    HGL=_loadj('data/hitter_gamelogs.json',RAWD+'hitter_gamelogs.json').get('hitters',{}); PGL=_loadj('data/pitcher_gamelogs.json',RAWD+'pitcher_gamelogs.json').get('pitchers',{})
+except Exception: HGL={};PGL={}
+HGLn={nz(v['name']):v for v in HGL.values() if v.get('name')}; PGLi={str(v.get('mlbam_id')):v for v in PGL.values()}
+def _hf(h,d):
+    G=[x for x in h.get('games',[]) if x['date']<d and x.get('pa')]
+    if sum(x['pa'] for x in G)<150 or len(G)<10: return None
+    xw=lambda L: sum(x.get('xwoba_num',0) for x in L)/max(1,sum(x['pa'] for x in L))
+    bip=sum(x.get('bip',0) for x in G[-10:])
+    return dict(hot=xw(G[-10:])-xw(G),brl_l10=sum(x.get('barrels',0) for x in G[-10:])/bip if bip else None)
+def _sf(pid,d):
+    v=PGLi.get(str(pid)); S=[x for x in (v or {}).get('starts',[]) if x['date']<d and x.get('tbf')]
+    if len(S)<5: return None
+    t=sum(x['tbf'] for x in S); cs=[x for x in S if x.get('csw') is not None]
+    return dict(sp_bb=sum(x.get('bb',0) for x in S)/t,sp_k=sum(x['k'] for x in S)/t,sp_csw=sum(x['csw']*x['tbf'] for x in cs)/max(1,sum(x['tbf'] for x in cs)) if cs else None)
+# October TB unders. 29 PS games (9/29-10/13), all Kalshi rungs, true quotes: TB 2+ NO at mid +3.4c after fee (se 1.8), TB 3+ +3.6 (se 1.3);
+# hits, H+R+RBI, RBI, HR, K all ~0; Aug-Sep RS all ~0 (October regime only). Where the TB 2+ effect sits (result - mid, pre-fee): hitter xwOBA top third
+# +12.6 (se 4.0), lineup slots 1-3 +11.4, HR/PA top third +10.2, BB% top third +10.3, opp SP K% top third +8.4, opp SP BB% top third +10.7 (se 2.9),
+# opp SP high BB & high K +19.4 (n43), road +7.3; bottom-third xwOBA +0.4, slots 7-9 -1.6. TB 3+ is broad (+6 to +9 everywhere), best vs high-K/high-BB SP.
+# 2016-25 true rates: PS TB2+ runs 7.5 pts under each hitter's own RS rate every year; the market discounts ~3.5. One row per rung so the dashboard needs no parsing.
 if any(d.month==10 for d in dates):
-    HU=collections.defaultdict(list)
-    try: _HG=json.load(open('data/hitter_gamelogs.json')).get('hitters',{})
-    except Exception: _HG=(g("https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/hitter_gamelogs.json") or {}).get('hitters',{})
     _xw={}
-    for v in (_HG or {}).values():
+    for v in (HGL or {}).values():
         G=[x for x in v.get('games',[]) if x.get('pa')]; pa=sum(x['pa'] for x in G)
         if pa>=150 and v.get('name'): _xw[nz(v['name'])]=sum(x.get('xwoba_num',0) for x in G)/pa
     _q=sorted(_xw.values()); _hi=_q[int(len(_q)*2/3)] if _q else 9; _lo=_q[int(len(_q)/3)] if _q else -1
+    _PROB={}; _SLOT={}
+    for d in dates:
+        for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team,lineups").get('dates',[]):
+            for gm in dd['games']:
+                for sd_,od in (('away','home'),('home','away')):
+                    ab=gm['teams'][sd_]['team'].get('abbreviation'); pp_=gm['teams'][od].get('probablePitcher')
+                    if ab and pp_: _PROB[(str(d),ab)]=pp_
+                    for i,p in enumerate((gm.get('lineups') or {}).get(sd_+'Players',[])): _SLOT[nz(p['fullName'])]=i+1
     for r in R:
-        if r['mid'] is None or r['ask']-r['bid']>0.03: continue
-        if (r['series'],r['strike']) in (('KXMLBTB',1.5),('KXMLBTB',2.5)): HU[r['event'].split('-',1)[1]].append(r)
-    for code,L in HU.items():
-        for r in L:
-            x=_xw.get(nz(pname(r))); r['_xw']=x
-            r['_pri']=(2 if (x is not None and x>=_hi) else 0 if (x is not None and x<=_lo) else 1) if r['strike']==1.5 else 1
-        L.sort(key=lambda r:(-r['_pri'],-r['mid']))
-        top=[r for r in L if r['_pri']>=1][:8]
-        add(3,'OCTOBER HITTER UNDERS (lean)',code,f"{len(L)} tight TB 2+/3+ rungs",'NO',None,None,
-            "limit NO at the mid, small and spread; priority = TB 2+ on top-third xwOBA hitters (29-game PS: +12.6 pts) or vs high-K SP, and any TB 3+; skip TB 2+ on bottom-third xwOBA hitters (+0.4). "
-            +'; '.join(f"{r['title'].replace('?','')} mid {r['mid']:.3f}"+(" [xwOBA top3]" if r['_pri']==2 else "") for r in top),None)
+        if r['mid'] is None or r['ask']-r['bid']>0.03 or (r['series'],r['strike']) not in (('KXMLBTB',1.5),('KXMLBTB',2.5)): continue
+        code=r['event'].split('-',1)[1]; d0=codes.get(code[:7]); pl=r['ticker'].split('-')[2]
+        if not d0: continue
+        team=next((ab for (dd,ab) in _PROB if dd==str(d0) and pl.startswith(ab) and (code[11:].startswith(ab) or code.endswith(ab))),None)
+        pp_=_PROB.get((str(d0),team)) if team else None
+        sf=_sf(pp_['id'],str(d0)) if pp_ else None
+        x=_xw.get(nz(pname(r))); slot=_SLOT.get(nz(pname(r)))
+        eff=0.05 if r['strike']==1.5 else 0.03
+        tags=[]; pri=1
+        if r['strike']==1.5:
+            if x is not None and x>=_hi: tags.append('hitter xwOBA top3'); pri+=1
+            if x is not None and x<=_lo: tags.append('hitter xwOBA bottom3 (no 2+ edge)'); pri-=2
+            if slot and slot<=3: tags.append(f'slot {slot}'); pri+=1
+            if slot and slot>=7: tags.append(f'slot {slot} (no 2+ edge)'); pri-=1
+        if sf:
+            if sf['sp_k']>=0.27: tags.append(f"opp SP K% {100*sf['sp_k']:.0f} (high)"); pri+=1
+            if sf['sp_bb']>=0.085: tags.append(f"opp SP BB% {100*sf['sp_bb']:.0f} (high)"); pri+=1
+        if pri<=0: continue
+        no=round(1-r['mid'],3); fair=round(1-r['mid']+eff,3)
+        add(3,'OCTOBER TB UNDER (lean)' if pri>=2 else 'OCTOBER TB UNDER (lean, lower priority)',r['event'],r['title'],'NO',no,fair,
+            f"limit NO at the mid {no:.3f}; fair = mid + PS TB effect ({100*eff:.0f} pts), edge {100*(eff-fee(no)):+.1f} after fee; priority {pri}"+(" ["+'; '.join(tags)+"]" if tags else "")+(f"; vs {pp_['fullName']}" if pp_ else "")+"; one game = one small position, spread across hitters",r['ticker'])
 # Postseason sub-risk hitter UNDER, v2 (Bartolo 10/10). Rebuilt on 2016-26 PS play-by-play (7,233 PS starters, pitchers excluded):
 #  - old fair ran ~4 pts low for everyone (Oct contact + PA), so it is recalibrated (fit 2016-25, 2026 OOS Brier .2489 -> .2452);
 #  - the profile that matters is the PLATOON START: a part-timer (RS PH-for >= 3%, 30+ starts) starting because he has the platoon edge on
@@ -433,30 +473,6 @@ if SUBR and any(d.month>=10 for d in dates):
                         if not lean and e<0.02 and grp=='regular': continue
                         add(3 if lean else 4,'PS SUB-RISK HIT UNDER (lean)' if lean else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
                             f"{grp} vs {onm} ({oh}{', opener: no platoon tag' if opn else ''}); RS PH-for {100*rsph:.0f}% ({n} starts); lifted {oc[1]} of {oc[0]} Oct starts; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. One game = one position; small size")
-# Hitter-vs-SP score (Bartolo 10/10): the market under-weights the opposing starter's K% (and recent CSW), and slightly under-weights
-# a hitter's recent quality of contact (L10 xwOBA vs season, L10 barrel%). Fit on all Sept RS Kalshi hitter rungs (true quotes);
-# validated on 24 PS games (slope 0.88). Score = pts of (result - mid). Lean NO when score <= -3 pts (Oct adds the -3 pt October base).
-HS=dict(mu={"sp_k":0.2244,"sp_csw":0.2689,"hot":-0.0035,"brl_l10":0.0795},sd={"sp_k":0.0497,"sp_csw":0.0208,"hot":0.0591,"brl_l10":0.0660},
-        coef={"sp_k":-0.0301,"sp_csw":0.0147,"hot":0.0085,"brl_l10":0.0038})
-def _loadj(path,url):
-    try: return json.load(open(path))
-    except Exception: return g(url)
-try:
-    RAWD="https://raw.githubusercontent.com/szerillo/mlb-tracker/main/data/"
-    HGL=_loadj('data/hitter_gamelogs.json',RAWD+'hitter_gamelogs.json').get('hitters',{}); PGL=_loadj('data/pitcher_gamelogs.json',RAWD+'pitcher_gamelogs.json').get('pitchers',{})
-except Exception: HGL={};PGL={}
-HGLn={nz(v['name']):v for v in HGL.values() if v.get('name')}; PGLi={str(v.get('mlbam_id')):v for v in PGL.values()}
-def _hf(h,d):
-    G=[x for x in h.get('games',[]) if x['date']<d and x.get('pa')]
-    if sum(x['pa'] for x in G)<150 or len(G)<10: return None
-    xw=lambda L: sum(x.get('xwoba_num',0) for x in L)/max(1,sum(x['pa'] for x in L))
-    bip=sum(x.get('bip',0) for x in G[-10:])
-    return dict(hot=xw(G[-10:])-xw(G),brl_l10=sum(x.get('barrels',0) for x in G[-10:])/bip if bip else None)
-def _sf(pid,d):
-    v=PGLi.get(str(pid)); S=[x for x in (v or {}).get('starts',[]) if x['date']<d and x.get('tbf')]
-    if len(S)<5: return None
-    t=sum(x['tbf'] for x in S); cs=[x for x in S if x.get('csw') is not None]
-    return dict(sp_k=sum(x['k'] for x in S)/t,sp_csw=sum(x['csw']*x['tbf'] for x in cs)/max(1,sum(x['tbf'] for x in cs)) if cs else None)
 # 10/11: PAPER + PLAY FILTER. Walk-forward on Aug 10-Sep 28 (27k Kalshi rungs): the composite's SP-K% weight flips sign by month
 # (Aug +1.3 / Sep -2.3 pts per SD) and no slice was positive in both RS months after fee. PS 9/29-10/8: flagged Hits 1+ -1.8c,
 # H+R+RBI -4.4/-0.1; TB 2+/3+ +4.3/+6.7 (unflagged TB +4.9/+3.0: the October TB effect, not the score).
@@ -485,7 +501,7 @@ if HS_ON and HGL and PGL:
         octb=-0.03 if d0.month>=10 else 0.0
         e_no=-(sc+octb)-fee(1-r['mid'])
         if sc<=-0.03 and e_no>=0.02:
-            play=d0.month>=10 and r['series']=='KXMLBTB'
+            play=False
             tags=f"[rung {r['series'].replace('KXMLB','')}{int(float(r['strike'])+0.5)}+ | SPK {'hi' if sf['sp_k']>=0.245 else 'lo' if sf['sp_k']<=0.205 else 'mid'} | L10 {'cold' if hf['hot']<=-0.05 else 'hot' if hf['hot']>=0.05 else 'flat'}]"
             add(3 if play else 4,'HITTER UNDER vs SP: Oct TB (play)' if play else 'HITTER UNDER vs SP (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']+(0.05 if float(r['strike'])<2 else 0.03),3) if play else round(1-r['mid']-sc-octb,3),
                 tags+(" PLAY: October TB under; fair = mid + PS TB effect (TB2+ +5, TB3+ +3 pts), not the score." if play else " PAPER: log only, hits/H+R+RBI score has no out-of-sample edge.")+f" score {100*sc:+.1f} pts (opp SP K% {100*sf['sp_k']:.1f}, CSW {100*sf['sp_csw']:.1f}; hitter L10 xwOBA {hf['hot']:+.3f} vs season, L10 barrel {100*hf['brl_l10']:.1f}%)"+(" + October -3" if octb else "")+f"; NO limit at mid {1-r['mid']:.3f}, edge {100*e_no:+.1f} after fee; one game = one position",r['ticker'])
