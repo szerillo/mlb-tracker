@@ -119,9 +119,11 @@ const PLAIN={'K-LENGTH UNDER':'Short leash: outs market 2+ below his usual lengt
   'K-LENGTH OVER':'Long leash: outs market 2+ above his usual length','DEEP-SPOT OVERS':'K market above his season K/start',
   'F5 OVER':'F5 total priced off the Kalshi game total','YRFI CURVE':'Kalshi RFI below what its own total implies','YRFI CURVE (Oct-adj only)':'Clears only with the October first-inning bump (pending Fable)','RFI INFO':'First-inning board',
   'WALKS OVER (lead)':'High-BB% starter: walk overs settle ~4 pts over the mid','WALKS OVER (info: low-BB% pitcher)':'Low-BB% starter: no edge',
-  'OCTOBER HITTER UNDERS (lean)':'October hitter overs run 4 to 6 pts rich','PS SUB-RISK HIT UNDER (lean)':'Pinch-hit risk: fewer October PA','PS SUB-RISK (info)':'Pinch-hit risk (info)',
-  'OCTOBER TB UNDER (lean)':'October total-bases unders: NO at the mid (priority 2+)','OCTOBER TB UNDER (lean, lower priority)':'October total-bases unders (priority 1)',
-  'HITTER UNDER vs SP: Oct TB (play)':'Hitter vs a high-K starter, October TB under (play)','HITTER UNDER vs SP (paper)':'Hitter vs high-K starter (paper)',
+  'PS SUB-RISK HIT UNDER (lean)':'Pinch-hit risk: fewer October PA','PS SUB-RISK (info)':'Pinch-hit risk (info)',
+  'OCTOBER TB UNDER (lean)':'October TB 3+ under: NO at the mid, fair = mid + 2.5','OCTOBER TB UNDER (lean, lower priority)':'October TB 2+ under: NO at the mid, fair = mid + 3 (after TB 3+)',
+  'HITTER UNDER vs SP (paper)':'Hitter vs a high-K starter (paper, log only)',
+  'OCTOBER F5 UNDER (paper)':'October F5 under (paper, log only)','OCTOBER F7 TIE NO (paper)':'October tied after 7: NO (paper, log only)',
+  'F5 OVER: high F5 share (paper)':'High F5 share of the game total (paper, log only)','DAY-AFTER-NIGHT UNDER (paper)':'Day game after a night game: under (paper, log only)',
   'K-LENGTH UNDER (PS paper)':'Short leash K under (postseason paper)','K-SEASON-ANCHOR UNDER (PS paper)':'K under season anchor (postseason paper)',
   'HITTER UNDER vs SP (lean)':'Hitter vs a high-K starter: market under-prices the strikeout stuff','HR ATTACK-ANGLE YES (paper)':'Steep attack angle: HR 1+ slightly cheap (paper, log only)',
   'BIG OUTS TRADE':'$1k+ outs trade (follow only within 2¢ of the print)','KALSHI OFF PINNACLE (ungraded)':'Kalshi 2+ pts off Pinnacle (ungraded)',
@@ -132,7 +134,7 @@ const PANELS=[['A','Bet now','Tier 1. Strikeout cards bet only once confirmed on
   ['D','Props leans','Tier 3: walks (high-BB% starters), hitter unders. Small and spread.'],
   ['E','Info','No backtested edge, missed, or no longer firing.']];
 const state={view:'panel',day:'today',open:{}};
-let B=null, BS=null, GR=[], LIVE={ts:null,m:{}};
+let B=null, BS=null, TS=null, GR=[], LIVE={ts:null,m:{}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fee=p=>0.07*p*(1-p);
 const imp=o=>o>0?100/(o+100):-o/(-o+100);
@@ -157,7 +159,8 @@ function pregameRow(x){ const m=String(x.event||'').split('-').slice(1).join('-'
 async function getText(u){ try{ const r=await fetch(u+'?t='+Date.now()); return r.ok?await r.text():''; }catch(e){ return ''; } }
 
 async function load(){
-  const [bT,bsT,grT]=await Promise.all([getText(BASE+'board_latest.json'),getText(BASE+'board_summary.json'),getText(BASE+'scan_graded.json')]);
+  const [bT,bsT,grT,tsT]=await Promise.all([getText(BASE+'board_latest.json'),getText(BASE+'board_summary.json'),getText(BASE+'scan_graded.json'),getText(BASE+'tickets_summary.json')]);
+  try{TS=JSON.parse(tsT||'null');}catch(e){TS=null;}
   try{B=JSON.parse(bT||'null');}catch(e){B=null;} try{BS=JSON.parse(bsT||'null');}catch(e){BS=null;} try{GR=JSON.parse(grT||'[]');}catch(e){GR=[];}
   if(!B||!B.cards){ document.getElementById('board').innerHTML='<div class="banner">Board file not built yet (data/prop_scan/board_latest.json). It is written right after each prop scan.</div>'; return; }
   render(); refreshLive();
@@ -227,7 +230,7 @@ function earlyRow(c,showGame){
   if(y){ html+=`<div class="sub"><b>${esc(PLAIN[y.rule]||y.rule)}</b> · Kalshi total ${y.ktotal??'–'}</div>`;
     if(y.level!=='info'&&y.target_kalshi_cents) html+=`<span class="play ${w.open?'':'dim'}">Buy YRFI at ${y.target_kalshi_cents}¢ or less</span> ${y.edge!=null&&y.edge<2?'<span class="chip warn">price worse than target now</span>':''}`; }
   if((c.f5||[]).length){
-    html+=`<table class="t"><tr><th>F5 rung</th><th>Model</th><th>Ask</th><th>Edge after fee</th><th>Buy at or less</th></tr>${c.f5.map((r,i)=>`<tr class="${i===0?'hl':''}"><td>${esc(r.label)}${i===0?' <span class="chip ok">best</span>':''}${r.edge!=null&&r.edge<2?' <span class="chip warn">below +2 now</span>':''}</td><td>${pct(r.model)}</td><td>${r.kalshi_px!=null?(r.kalshi_px*100).toFixed(0)+'¢':'–'}</td><td class="${cls(r.edge)}">${sgn(r.edge)}</td><td>${r.target_kalshi_cents??'–'}¢</td></tr>`).join('')}</table><div class="sub">All F5 rungs and the YRFI in one game are ONE early-scoring position: take the best edge, one size.</div>`;
+    html+=`<table class="t"><tr><th>F5 rung</th><th>Model</th><th>Ask</th><th>Edge after fee</th><th>Buy at or less</th></tr>${c.f5.map((r,i)=>`<tr class="${i===0?'hl':''}"><td>${esc(r.label)}${i===0?' <span class="chip ok">best</span>':''}${r.edge!=null&&r.edge<2?' <span class="chip warn">below +2 now</span>':''}${r.f5_share!=null||r.f5_share_high?` <span class="chip${r.f5_share_high?' warn':''}" title="F5 share of the game total (league .573). Tag only, does not change size.">F5 share ${r.f5_share!=null?r.f5_share.toFixed(3).replace(/^0/,''):'high'}</span>`:''}</td><td>${pct(r.model)}</td><td>${r.kalshi_px!=null?(r.kalshi_px*100).toFixed(0)+'¢':'–'}</td><td class="${cls(r.edge)}">${sgn(r.edge)}</td><td>${r.target_kalshi_cents??'–'}¢</td></tr>`).join('')}</table><div class="sub">All F5 rungs and the YRFI in one game are ONE early-scoring position: take the best edge, one size.</div>`;
   }
   html+=`</div>${open?`<div class="why">${c.notes.map(n=>`<div><b>${esc(n.rule)}</b>: ${esc(n.note)}</div>`).join('')}</div>`:''}</div>`;
   return html;
@@ -261,7 +264,7 @@ function boardC(list){
     <div class="note" style="margin-top:6px">Rule: YES only, curve − (ask + fee) ≥ +2 (Tier 1). The Oct-adjusted column is pending Fable (Tier 3, small, late only). No NRFI tickets off the curve in October. Normal NRFI share of first-inning money is 74%.</div></div>`;
 }
 function ticketsHTML(list,compact){
-  if(!list.length) return compact?'':'<div class="empty">No tickets logged (data/prop_scan/tickets.csv or october_ticket_log.csv).</div>';
+  if(!list.length) return compact?'':'<div class="empty">No tickets logged (data/fills.csv, via fill_log.py add).</div>';
   return `<div class="pad tw"><table class="t"><tr><th>${compact?'Held':'Date'}</th>${compact?'':'<th>Game</th>'}<th>Bet</th><th>Book</th><th>Price</th><th>Size</th><th>Overlap with live cards</th></tr>${list.map(t=>`<tr><td>${esc(compact?'ticket':t.date)}</td>${compact?'':`<td>${esc(t.game)}</td>`}<td>${esc(t.bet)}</td><td>${esc(t.book)}</td><td>${esc(t.price)}</td><td>${esc(t.size)}</td><td style="text-align:left">${(t.flags||[]).map(f=>`<span class="chip ${/CONFLICT/.test(f.text)?'bad':'warn'}">${esc(f.text)}</span>`).join('')||'<span class="mut">–</span>'}</td></tr>`).join('')}</table></div>`;
 }
 function scorecard(){
@@ -272,6 +275,10 @@ function scorecard(){
       return `<tr><td>${esc(isRule?(PLAIN[k]||k):(LVL_NAME[k]||k))}</td><td>${r.n}</td><td>${pct(r.win_pct,0)}</td><td class="${cls(r.pl_per_contract)}">${r.pl_per_contract==null?'–':sgn(r.pl_per_contract*100)+'¢'}</td><td class="${cls(r.clv_kalshi_pts)}">${sgn(r.clv_kalshi_pts)}</td><td class="${cls(r.clv_pinnacle_pts)}">${sgn(r.clv_pinnacle_pts)} <span class="mut">(${r.n_pin})</span></td><td>${drop?'<b class="neg">DROP</b>':''}</td></tr>`;}).join('')}</table>`;
     h+=`<div class="note">Board positions as shown on this tab (first appearance), graded vs closes frozen in the last 30 min before first pitch. Pinnacle close = last snapshot before first pitch.</div>${tb(BS.by_rule,'Rule',true)}${tb(BS.by_level,'Call',false)}`;
   } else h+='<div class="note">No graded board positions yet. Fills in as games settle.</div>';
+  if(TS&&TS.n){
+    const tt=(obj,lab)=>`<table class="t"><tr><th>${lab}</th><th>Fills</th><th>CLV (close)</th><th>Beat close</th><th>Settled</th><th>ROI</th></tr>${Object.entries(obj||{}).map(([k,r])=>`<tr><td>${esc(PLAIN[k]||k)}</td><td>${r.n}</td><td class="${cls(r.clv_pts)}">${sgn(r.clv_pts)} <span class="mut">(${r.n_clv})</span></td><td>${pct(r.beat_close_pct,0)}</td><td>${r.n_settled}</td><td class="${cls(r.roi)}">${r.roi==null?'–':sgn(r.roi*100)+'%'}</td></tr>`).join('')}</table>`;
+    h+=`<div class="note" style="margin-top:10px"><b>My fills</b> (data/fills.csv): CLV vs the close on the same line and side, Pinnacle no-vig first, then Novig, then the Kalshi mid.</div>${tt({All:TS.all},'')}${tt(TS.by_side,'Side')}${tt(TS.by_rule,'Rule at fill')}`;
+  }
   const vl=B&&B.meta?B.meta.velo_logged:0;
   h+=`<div class="note" style="margin-top:8px"><b>Auto DROP</b>: any Tier 2/3 rule with 30+ graded bets and CLV ≤ 0. <b>Fable review</b>: velocity decline at 150 logged (now ${vl}); HR anchor at 200 (paper, not in the scan).</div>`;
   const byR={}; (GR||[]).filter(x=>!/hits allowed/i.test(x.what||'')&&pregameRow(x)).forEach(x=>{const r=byR[x.rule]=byR[x.rule]||{tier:x.tier,n:0,pl:0,clv:0,nc:0,w:0}; r.n++; r.pl+=(x.pl||0); if(x.clv!=null){r.clv+=x.clv;r.nc++;} if(x.result===(x.side==='YES'?'yes':'no')) r.w++;});
