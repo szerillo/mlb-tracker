@@ -25,6 +25,8 @@ jobs:
         run: python3 scripts/game_lines_log.py || true
       - name: venue checkpoints (Novig / Pinnacle / Circa / DK / FD at T-24h, T-6h, T-1h)
         run: python3 scripts/venue_checkpoints.py || true
+      - name: save Action Network pregame line history (wiped by AN after each game)
+        run: python3 scripts/an_line_history.py || true
       - name: sides board (scoreboard open-window badges, lag rule, paper bets) + archive + closes
         run: python3 scripts/sides_board.py || true
       - name: grade sides board
@@ -36,7 +38,7 @@ jobs:
         run: python3 scripts/build_bet_tracker.py || true
       - run: |
           git config user.name "oblog-bot"; git config user.email "actions@users.noreply.github.com"
-          git add data/kalshi_oblog data/an_props_log data/novig_log data/prop_scan data/game_lines data/venue_checkpoints data/bet_tracker.json && git commit -m "kalshi orderbook snapshot + props/sides boards" || exit 0
+          git add data/kalshi_oblog data/an_props_log data/novig_log data/prop_scan data/game_lines data/venue_checkpoints data/line_history data/bet_tracker.json && git commit -m "kalshi orderbook snapshot + props/sides boards" || exit 0
           for i in 1 2 3 4 5; do
             if git pull --rebase -X theirs && git push; then exit 0; fi
             git rebase --abort 2>/dev/null || true
