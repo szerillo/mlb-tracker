@@ -10,7 +10,7 @@ HERE=os.environ.get('SCAN_DIR') or os.path.dirname(os.path.abspath(__file__)); o
 MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 PSER={'KXMLBKS':'K','KXMLBOUTS':'OUTS','KXMLBHA':'HA','KXMLBWA':'BB'}
 HSER={'KXMLBHIT':'H','KXMLBTB':'TB','KXMLBHR':'HR','KXMLBHRR':'HRR','KXMLBRBI':'RBI'}
-GSER=['KXMLBRFI','KXMLBTOTAL','KXMLBF5TOTAL']
+GSER=['KXMLBRFI','KXMLBTOTAL','KXMLBF5TOTAL','KXMLBF7','KXMLBEXTRAS']
 BIG=1000; MOVE=0.05; IMB=3.0; MINDEP=200
 fee=lambda p:0.07*p*(1-p)
 nz=lambda s: unicodedata.normalize('NFKD',s or '').encode('ascii','ignore').decode().lower().replace('.','').replace(' jr','').replace("'",'').strip()
@@ -25,12 +25,35 @@ def g(u,hdr=None):
 now=dt.datetime.now(dt.timezone.utc); et_now=now-dt.timedelta(hours=4)
 dates=[dt.date.fromisoformat(x) for x in sys.argv[1:]] or [et_now.date(),et_now.date()+dt.timedelta(days=1)]
 codes={d.strftime('%y')+MON[d.month-1]+d.strftime('%d'):d for d in dates}
+# Real first pitch from MLB (Bartolo 10/14): Kalshi game codes keep the time set at listing, so a moved game (TB @ CLE ALCS G3,
+# 6 PM -> 1 PM for weather; ticker still says 1800) would pass the ticker-time check while in progress. Use the EARLIER of the two.
+_TN={'CHW':'CWS','ARI':'AZ','WAS':'WSH','WSN':'WSH','OAK':'ATH','KCR':'KC','SDP':'SD','SFG':'SF','TBR':'TB'}
+_MLB_FP={}
+try:
+    for _d in dates:
+        for _dd in g(f"{MLB}/schedule?sportId=1&date={_d}&hydrate=team").get('dates',[]):
+            for _gm in _dd['games']:
+                _a=_TN.get(_gm['teams']['away']['team'].get('abbreviation'),_gm['teams']['away']['team'].get('abbreviation'))
+                _h=_TN.get(_gm['teams']['home']['team'].get('abbreviation'),_gm['teams']['home']['team'].get('abbreviation'))
+                _t=dt.datetime.fromisoformat(_gm['gameDate'].replace('Z','+00:00'))
+                _k=(str(_d),_a+_h); _MLB_FP[_k]=min(_MLB_FP.get(_k,_t),_t)
+except Exception as _e: print('MLB first-pitch map skipped:',_e)
+def _mlb_fp(ev):
+    m=re.match(r'^(\d\d)([A-Z]{3})(\d\d)\d{4}([A-Z]+?)(G\d)?$',str(ev or '').split('-',1)[-1].split('-')[0])
+    if not m or m.group(2) not in MON: return None
+    d=dt.date(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3))); t=m.group(4)
+    for i in range(2,len(t)-1):
+        k=(str(d),_TN.get(t[:i],t[:i])+_TN.get(t[i:],t[i:]))
+        if k in _MLB_FP: return _MLB_FP[k]
+    return None
 # ---------- 1. markets ----------
 def pregame(ev):
     """True only before first pitch (ticker time is ET). Kalshi keeps game markets open in-game; never scan those."""
     m=re.search(r'-(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',ev)
     if not m: return False
     t=dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone(dt.timedelta(hours=-4)))
+    mf=_mlb_fp(ev)
+    if mf is not None and mf<t: t=mf
     return now < t - dt.timedelta(minutes=2)
 def series_markets(s):
     out=[];cur=''
@@ -205,7 +228,9 @@ def _first_pitch_utc(ev):
     """Kalshi game code (26OCT071600CLECWS, ET) -> first pitch in UTC; None for non-Kalshi events (AWAY@HOME)."""
     m=re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)',str(ev or '').split('-',1)[-1])
     if not m or m.group(2) not in MON: return None
-    return dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
+    t=dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
+    mf=_mlb_fp(ev)
+    return mf if (mf is not None and mf<t) else t
 SKIPPED_LIVE=0
 def add(tier,rule,ev,what,side,price,fair,note,ticker=None):
     global SKIPPED_LIVE
@@ -279,7 +304,72 @@ for code,rs in tot.items():
     for x in sorted(f5.get(code,[]),key=lambda r:r['strike']):
         p=float(stats.nbinom.sf(math.floor(x['strike']),mu,0.5))   # P(F5 runs >= strike+0.5), r=mu, p=.5 gives var=2*mean
         e=p-x['ask']-fee(x['ask'])
-        if e>=.02: add(1,'F5 OVER',x['event'],f"{code} F5 o{x['strike']}",'YES',x['ask'],round(p,3),f"Kalshi full-game fair total {T:.2f} -> F5 mean {mu:.2f}; model {p:.3f} vs ask {x['ask']:.2f}; edge {100*e:+.1f} after fee (backtest +39% on 49, Aug +53 / Sep +32); all F5 rungs in one game = ONE position, take the best edge",x['ticker'])
+        # F5 share (Bartolo 10/14 dig): Kalshi's own F5 curve / full-game curve. RS Aug-Sep, 634 games: share >= .545 (top quartile) -> F5 central rungs
+        # settled +9.1 over the mid (YES +7.4 after fee; Aug +9.6 / Sep +6.1); the other three quartiles ~0. The F5 market shrinks toward a fixed share.
+        _F=None; _rs=sorted(f5.get(code,[]),key=lambda r:r['strike'])
+        for a_,b_ in zip(_rs,_rs[1:]):
+            if a_['mid'] is not None and b_['mid'] is not None and a_['mid']>=.5>=b_['mid']: _F=a_['strike']+(a_['mid']-.5)/(a_['mid']-b_['mid']+1e-9)*(b_['strike']-a_['strike'])
+        share=(_F/T) if _F else None; stag=f"; F5 share {share:.3f}"+(" (top quartile: +7.4 after fee in RS; Fable 10/14: tag only, sizing unchanged until 100 live fills graded by quartile)" if share>=0.545 else " (below .545: RS edge ~0 outside the top quartile)") if share else ""
+        if e>=.02: add(1,'F5 OVER',x['event'],f"{code} F5 o{x['strike']}",'YES',x['ask'],round(p,3),f"Kalshi full-game fair total {T:.2f} -> F5 mean {mu:.2f}; model {p:.3f} vs ask {x['ask']:.2f}; edge {100*e:+.1f} after fee (backtest +39% on 49, Aug +53 / Sep +32); all F5 rungs in one game = ONE position, take the best edge"+stag,x['ticker'])
+        elif share and share>=0.545 and 0.35<=x['mid']<=0.65 and not any(d.month==10 for d in dates):
+            add(4,'F5 OVER: high F5 share (paper)',x['event'],f"{code} F5 o{x['strike']}",'YES',round(x['mid'],3),round(x['mid']+0.07,3),f"F5 share {share:.3f} (Kalshi F5 {_F:.2f} / full game {T:.2f}); RS top-quartile share games settled +9.1 over the mid on central F5 rungs, both months; model edge only {100*e:+.1f} so paper; regular season only (October F5 prior points the other way)",x['ticker'])
+# DAY GAME AFTER A NIGHT GAME (Bartolo 10/14 dig, paper): RS Aug-Sep Kalshi, hitters in a day game (local start <= 14:30) whose team played a night game
+# (local start >= 18:00) the day before: TB 2+ settled -3.4 (Aug) / -3.5 (Sep) vs the mid, NO +1.8 / +1.9 after fee (n 764 / 814); hits 1+ Sep only.
+# Catchers: hits 1+ -7.8, TB 2+ -7.1 vs mid (n 124, NO +6 after fee). Paper: log, catchers flagged first.
+# Fable 10/14: it is the results, not the mids (listed hitters -4.2 TB 2+ vs own rate; mid -0.6 vs own). Paper at 150 graded rows, grade by month.
+# Caution: the hitters in a day-after-night lineup are the ones the manager chose to play tired; that selection is part of the effect and may not carry to 2027.
+# Fable team-level recheck 10/14 (october/rs_dan_perteam_2024_26.pkl, per team, local time, 2024-26 RS, 2,635 team-games): team runs -0.07 (se .06),
+# hits -0.08 (se .07) vs own average: no team-level effect on a sample 11x the Kalshi window. Prior: the hitter-level result fades. Paper at 150 rows, by month.
+_TZ={**{k:-4 for k in 'BAL BOS NYY TB TOR ATL MIA NYM PHI WSH CIN CLE DET PIT'.split()},**{k:-5 for k in 'CWS KC MIN HOU TEX CHC MIL STL'.split()},'COL':-6,'AZ':-7,**{k:-7 for k in 'LAA ATH SEA LAD SD SF'.split()}}
+try:
+    _loc={}   # (date, team abbr) -> local start hour
+    _cpos={}  # (date, team abbr, nz name) -> position
+    for d in sorted({dd for d0 in dates for dd in (d0-dt.timedelta(days=1),d0)}):
+        for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=team,lineups").get('dates',[]):
+            for gm in dd['games']:
+                hab=gm['teams']['home']['team'].get('abbreviation'); aab=gm['teams']['away']['team'].get('abbreviation')
+                if not hab or not aab or not gm.get('gameDate'): continue
+                t=dt.datetime.fromisoformat(gm['gameDate'].replace('Z','+00:00'))+dt.timedelta(hours=_TZ.get(hab,-4)); hr=t.hour+t.minute/60
+                _loc[(str(d),hab)]=hr; _loc[(str(d),aab)]=hr
+                for sd_,ab in (('away',aab),('home',hab)):
+                    for p in (gm.get('lineups') or {}).get(sd_+'Players',[]): _cpos[(str(d),ab,nz(p['fullName']))]=(p.get('primaryPosition') or {}).get('abbreviation')
+    for r in R:
+        if r['mid'] is None or r['ask']-r['bid']>0.05 or (r['series'],r['strike']) not in (('KXMLBTB',1.5),('KXMLBHIT',0.5)): continue
+        code=r['event'].split('-',1)[1]; d0=codes.get(code[:7]); pl=r['ticker'].split('-')[2]
+        if not d0: continue
+        team=next((ab for ab in _TZ if pl.startswith(ab) and (code[11:].startswith(ab) or code.endswith(ab))),None)
+        if not team: continue
+        today=_loc.get((str(d0),team)); yest=_loc.get((str(d0-dt.timedelta(days=1)),team))
+        if today is None or yest is None or today>14.5 or yest<18: continue
+        pos_=_cpos.get((str(d0),team,nz(pname(r)))); isc=pos_=='C'
+        if r['series']=='KXMLBHIT' and not isc: continue
+        eff=0.06 if isc else 0.03
+        add(4,'DAY-AFTER-NIGHT UNDER (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']+eff,3),f"day game ({today:.1f} local) after a night game ({yest:.1f} local yesterday); "+("CATCHER: RS hits/TB 2+ settled -7 to -8 vs mid (n 124)" if isc else "RS TB 2+ settled -3.4/-3.5 vs mid in Aug/Sep (n ~1,600)")+f"; NO at the mid, edge {100*(eff-fee(1-r['mid'])):+.1f} after fee; paper",r['ticker'])
+except Exception as _e: print('day-after-night block skipped:',_e)
+# OCTOBER GAME-MARKET PAPER ROWS (Bartolo 10/14, FABLE_REPLY_other_markets): priors from 351 PS games 2016-25 (linescores) vs the 2026 PS Kalshi mids (29 games).
+#  YRFI: PS 1st-inning scoring .533 (RS .505; every year .45-.68); RS Kalshi RFI mid .481 settled .502; PS mids .434, settled .483. Already in the live YRFI curve (October lift).
+#  F5 total: PS P(F5 >= 5) .430 (RS .511); PS Kalshi mid for 5+ .512, settled .448. The F5 market sits at RS level while the full-game market is below the
+#   PS norm. NO on 5+/6+, fair from the existing .573 x full-game-total negative binomial when it is >= 3 pts under the mid.
+#  F7 tie: PS .083 (RS .109); PS mid .128, settled .034; RS mid .115 settled .096. NO, fair = 1 - mid + 3.
+#  Extras: PS .080 vs mid .102: +1.5 after fee, too thin to list. All paper (Tier 4): log and grade, Fable rules on promotion.
+if any(d.month==10 for d in dates):
+    # (YRFI paper row removed 10/14: the live YRFI curve already applies the October lift, -0.15 on the NRFI logit, about +3.5 pts YRFI; same thing.)
+    for code,rs in tot.items():
+        rs=sorted(rs,key=lambda r:r['strike']); T=None
+        for a,b in zip(rs,rs[1:]):
+            if a['mid']>=.5>=b['mid']: T=a['strike']+(a['mid']-.5)/(a['mid']-b['mid']+1e-9)*(b['strike']-a['strike'])
+        if T is None: continue
+        mu=0.573*T
+        for x in sorted(f5.get(code,[]),key=lambda r:r['strike']):
+            if x['strike'] not in (4.5,5.5) or x['mid'] is None or x['ask']-x['bid']>0.05: continue
+            p_=float(stats.nbinom.sf(math.floor(x['strike']),mu,0.5))
+            if x['mid']-p_>=0.03:
+                e=(x['mid']-p_)-fee(1-x['mid'])
+                add(4,'OCTOBER F5 UNDER (paper)',x['event'],f"{code} F5 u{x['strike']}",'NO',round(1-x['mid'],3),round(1-p_,3),f"limit NO at the mid {1-x['mid']:.3f}; full-game fair total {T:.2f} -> F5 mean {mu:.2f}, P(over) {p_:.3f} vs mid {x['mid']:.3f}; PS F5 >= 5 runs .430 (2016-25) vs the market's .51; edge {100*e:+.1f} after fee; one per game",x['ticker'])
+    for r in R:
+        if r['series']=='KXMLBF7' and r['ticker'].endswith('-TIE') and r['mid'] is not None and r['bid'] and r['ask']-r['bid']<=0.05:
+            e=0.03-fee(1-r['mid'])
+            add(4,'OCTOBER F7 TIE NO (paper)',r['event'],r['title'],'NO',round(1-r['mid'],3),round(1-r['mid']+0.03,3),f"limit NO at the mid {1-r['mid']:.3f}; PS first-7 tie rate .083 (2016-25) vs RS .109 and the market's ~.12; edge {100*e:+.1f} after fee",r['ticker'])
 # big outs trades (lead) + watch items
 for r in R:
     for b in r['big']:
@@ -475,7 +565,11 @@ if SUBR and any(d.month>=10 for d in dates):
                         bs=p.get('batSide',{}).get('code')
                         if bs is None:
                             bs=(g(f"{MLB}/people/{p['id']}").get('people',[{}])[0].get('batSide') or {}).get('code')
-                        pt=rsph>=0.03 and n>=30
+                        # 10/14 data fix: sub_risk_2026.json now also carries the slot-sub lift rate by opposing SP hand (a sub batted in the
+                        # starter's slot, the same definition as the PS 'lifted' the v2 fit used). PH-for alone missed DH swaps (Vaughn 2.6% vs 61% vs LHP).
+                        rsub=(sr.get('rep_vsL') if oh=='L' else sr.get('rep_vsR')) if oh else None
+                        if rsub is None: rsub=sr.get('rep',0.0)
+                        pt=(rsph>=0.03 or rsub>=0.25) and n>=30
                         platL=int(pt and not opn and bs=='L' and oh=='R'); platR=int(pt and not opn and bs=='R' and oh=='L'); oth=int(pt and not platL and not platR)
                         oc=OCT[p['id']]; has=int(oc[0]>=2); prx=(oc[1]/oc[0] if oc[0] else 0.0)*has
                         p0=P0V2['c']+P0V2['old']*p0o+P0V2['platL']*platL+P0V2['platR']*platR+P0V2['oth']*oth+P0V2['prx']*prx+P0V2['has']*has
@@ -486,7 +580,7 @@ if SUBR and any(d.month>=10 for d in dates):
                         lean=(pt or (has and oc[1]>=2)) and e>=0.03
                         if not lean and e<0.02 and grp=='regular': continue
                         add(3 if lean else 4,'PS SUB-RISK HIT UNDER (lean)' if lean else 'PS SUB-RISK (info)',gl,f"{p['fullName']} under 0.5 hits",'UNDER',None,round(p0,3),
-                            f"{grp} vs {onm} ({oh}{', opener: no platoon tag' if opn else ''}); RS PH-for {100*rsph:.0f}% ({n} starts); lifted {oc[1]} of {oc[0]} Oct starts; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. One game = one position; small size")
+                            f"{grp} vs {onm} ({oh}{', opener: no platoon tag' if opn else ''}); RS PH-for {100*rsph:.0f}%, slot-sub vs {oh or '?'}HP {100*rsub:.0f}% ({n} starts); lifted {oc[1]} of {oc[0]} Oct starts; fair P(0 H) {p0:.3f} vs best {best[1]} {int(best[0]):+d} (u0.5 {best[2]}), edge {100*e:+.1f}. One game = one position; small size")
 # 10/11: PAPER + PLAY FILTER. Walk-forward on Aug 10-Sep 28 (27k Kalshi rungs): the composite's SP-K% weight flips sign by month
 # (Aug +1.3 / Sep -2.3 pts per SD) and no slice was positive in both RS months after fee. PS 9/29-10/8: flagged Hits 1+ -1.8c,
 # H+R+RBI -4.4/-0.1; TB 2+/3+ +4.3/+6.7 (unflagged TB +4.9/+3.0: the October TB effect, not the score).
@@ -548,7 +642,6 @@ for r in R:
             f"Pinnacle o{r['strike']} {p['o']:+d} / u {p['u']:+d} (no-vig over {p['over']:.3f}) vs Kalshi {r['bid']:.2f}/{r['ask']:.2f}; edge at touch {100*max(ey,en):+.1f}; Pinnacle limit ${p['limit']}",r['ticker'])
 # ---------- 5. output ----------
 stamp=et_now.strftime('%Y%m%d_%H%M')
-print(f'[scan] skipped {SKIPPED_LIVE} triggers on games already started')
 with open(os.path.join(HERE,'scan_log.jsonl'),'a') as f:
     for t in TR: f.write(json.dumps(t)+'\n')
 TN={1:'TIER 1: backtested rules (bet if price holds)',2:'TIER 2: leads (half size or paper)',3:'TIER 3: weaker / already moved (watch)',4:'WATCH: information only, no backtested edge'}
@@ -567,3 +660,4 @@ for (ev,nm),D in sorted(P.items()):
     L.append(f"| {ev.split('-',1)[-1]} | {nm} | {s.get('gs','-')} | {f(D.get('K',{}).get('mean'))} | {f(s.get('k_gs'))} | {f(D.get('OUTS',{}).get('mean'),1)} | {f(s.get('outs_gs'),1)} | {f(s.get('l5_outs'),1)} | {f(s.get('l5_pitches'),0)} |")
 open(os.path.join(HERE,f'scan_{stamp}.md'),'w').write('\n'.join(L)+'\n')
 print('\n'.join(L))
+print(f'[scan] skipped {SKIPPED_LIVE} triggers on games already started')
