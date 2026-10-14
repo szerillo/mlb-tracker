@@ -80,6 +80,23 @@ def pregame(row):
     try: return dt.datetime.fromisoformat(row['ts']) < dt.datetime.fromisoformat(e['start'])
     except Exception: return True
 
+_MLB_FP = {}; _MLB_DONE = set()
+def _mlb_fp(d, teams):
+    """Real first pitch from MLB StatsAPI (Kalshi codes keep the listing time when a game is moved). None if not found."""
+    if d not in _MLB_DONE:
+        _MLB_DONE.add(d)
+        try:
+            for dd in g(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={d}&hydrate=team").get('dates', []):
+                for gm in dd['games']:
+                    a = norm_team(gm['teams']['away']['team'].get('abbreviation')); h = norm_team(gm['teams']['home']['team'].get('abbreviation'))
+                    t = dt.datetime.fromisoformat(gm['gameDate'].replace('Z', '+00:00')); k = (d, a + h)
+                    _MLB_FP[k] = min(_MLB_FP.get(k, t), t)
+        except Exception: pass
+    for i in range(2, len(teams) - 1):
+        k = (d, norm_team(teams[:i]) + norm_team(teams[i:]))
+        if k in _MLB_FP: return _MLB_FP[k]
+    return None
+
 def parse_event(ev):
     c = str(ev or '').split('-', 1)[-1]
     m = re.match(r'^(\d\d)([A-Z]{3})(\d\d)(\d\d)(\d\d)([A-Z]+?)(G\d?)?$', c)
@@ -87,6 +104,8 @@ def parse_event(ev):
     yy, mon, dd, hh, mi, teams = m.groups()[:6]
     away, home = split_teams(teams)
     start = dt.datetime(2000 + int(yy), MON[mon], int(dd), int(hh), int(mi), tzinfo=ET)
+    mf = _mlb_fp(start.date().isoformat(), teams)
+    if mf is not None and mf < start: start = mf.astimezone(ET)   # game moved earlier (e.g. weather): use the real first pitch
     return {'code': c, 'away': away, 'home': home, 'label': f'{away} @ {home}' if away else teams,
             'date': start.date().isoformat(), 'start': start.isoformat()}
 
@@ -305,7 +324,7 @@ def build(SL, PL, live, now):
                 sh = f5_share_of(r.get('note')); hi = f5_hi.get(ev['code'])
                 if sh is None and isinstance(hi, float): sh = hi
                 if sh is not None: rr['f5_share'] = sh
-                if hi: rr['f5_share_high'] = True   # tag only (paper rule); never changes size or edge
+                if hi or (sh is not None and sh >= 0.545): rr['f5_share_high'] = True   # top quartile (>= .545): tag only, never changes size or edge
                 pricing(rr, live_g); rungs.append(rr)
             rungs.sort(key=lambda r: -(r['edge'] if r.get('edge') is not None else -99))
             c['yrfi'] = yr; c['f5'] = rungs
@@ -416,7 +435,7 @@ def build(SL, PL, live, now):
 def pos_from(c):
     """A gradeable position (what board_grade.py reads)."""
     keys = ('key', 'cat', 'rule_edge', 'game', 'event', 'first_pitch', 'rules', 'rule', 'label', 'side', 'ticker', 'level', 'size', 'model', 'model_src',
-            'market', 'market_src', 'book', 'book_odds', 'kalshi_px', 'first_seen', 'locked_from', 'now_label', 'status')
+            'market', 'market_src', 'book', 'book_odds', 'kalshi_px', 'first_seen', 'locked_from', 'now_label', 'status', 'f5_share')
     p = {k: c.get(k) for k in keys if c.get(k) is not None}
     if 'rule' in p and 'rules' not in p: p['rules'] = [p['rule']]
     return p

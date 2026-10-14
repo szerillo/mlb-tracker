@@ -54,7 +54,7 @@ def grade_board():
         px = r.get('kalshi_px')
         c = C.get(k, {}); kc = (c.get('kalshi_close') or {}).get('mid_side'); pc = (c.get('pinnacle_close') or {}).get('p_side')
         cost = px + fee(px) if px is not None else None
-        rows.append({**{f: r.get(f) for f in ('key', 'game', 'first_pitch', 'cat', 'rules', 'label', 'side', 'ticker', 'level', 'size', 'model', 'market', 'edge', 'book', 'book_odds', 'best_venue', 'ts')},
+        rows.append({**{f: r.get(f) for f in ('key', 'game', 'first_pitch', 'cat', 'rules', 'label', 'side', 'ticker', 'level', 'size', 'model', 'market', 'edge', 'book', 'book_odds', 'best_venue', 'ts', 'f5_share')},
                      'entry_kalshi_px': px, 'entry_cost': cost, 'result': m['result'], 'win': win,
                      'pl_kalshi': (win - cost) if cost is not None else None,
                      'pl_book': ((100 / abs(r['book_odds']) if r['book_odds'] < 0 else r['book_odds'] / 100) if win else -1) if r.get('book_odds') is not None else None,
@@ -74,7 +74,13 @@ def grade_board():
     for x in rows:
         by_level[x['level']].append(x)
         for ru in x['rules'] or []: by_rule[ru].append(x)
-    json.dump({'by_level': summ(by_level), 'by_rule': summ(by_rule), 'n': len(rows)}, open(os.path.join(SCAN, 'board_summary.json'), 'w'), indent=1)
+    # Fable 10/14: grade live F5 OVER by Kalshi F5-share quartile (Q4 = share >= .545); revisit sizing at 100 fills
+    by_f5q = collections.defaultdict(list)
+    for x in rows:
+        if 'F5 OVER' in (x['rules'] or []):
+            sh = x.get('f5_share'); by_f5q['no share' if sh is None else ('Q4 (>= .545)' if sh >= 0.545 else 'Q1-Q3 (< .545)')].append(x)
+    json.dump({'by_level': summ(by_level), 'by_rule': summ(by_rule), 'f5_over_by_share': summ(by_f5q), 'n': len(rows)},
+              open(os.path.join(SCAN, 'board_summary.json'), 'w'), indent=1)
     print(f"[board_grade] {len(rows)} settled board calls graded")
 
 FILLS = os.path.join(SCAN, '..', 'fills.csv')   # data/fills.csv, written by fill_log.py (add / close)

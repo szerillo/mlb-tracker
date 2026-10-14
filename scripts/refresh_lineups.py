@@ -321,6 +321,41 @@ def yesterday_starting_catchers(y_games):
     return result
 
 
+# ---------- lineup post log (Fable 10/14: lineup-post timing test) ----------
+# One row per (game, side, source) each time the posted order or its raw status CHANGES, stamped with the time this run first saw it.
+# Raw = before the 5-hour "confirmed" cap below. The refresh runs every 15 min in the afternoon, so first-seen is within ~15 min of the post.
+POST_LOG = os.path.join(os.path.dirname(__file__), "..", "data", "lineup_post_log.jsonl")
+_POST_SEEN = None
+def _post_log(pk, g, c, rw):
+    global _POST_SEEN
+    import hashlib
+    if _POST_SEEN is None:
+        _POST_SEEN = {}
+        if os.path.exists(POST_LOG):
+            for l in open(POST_LOG):
+                try: r = json.loads(l); _POST_SEEN[(r["game_pk"], r["side"], r["source"])] = (r["raw_status"], r["order_hash"])
+                except Exception: pass
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    rows = []
+    for side in ("away", "home"):
+        srcs = []
+        if c and c.get(side): srcs.append(("MLB", "official" if _is_official(g) else "batting_order", [p.get("name") for p in c[side]]))
+        if rw and rw.get("lineups", {}).get(side):
+            L = rw["lineups"][side]; srcs.append(("Rotowire", (L[0].get("status") or "unknown") if L else "unknown", [p.get("name") for p in L]))
+        for src, st, names in srcs:
+            h = hashlib.md5("|".join(n or "" for n in names).encode()).hexdigest()[:10]
+            k = (pk, side, src)
+            if _POST_SEEN.get(k) == (st, h): continue
+            _POST_SEEN[k] = (st, h)
+            rows.append({"seen_at": now, "game_pk": pk, "game_time": g.get("time"), "side": side,
+                         "team": g["away"] if side == "away" else g["home"], "source": src, "raw_status": st,
+                         "order_hash": h, "names": names})
+    if rows:
+        os.makedirs(os.path.dirname(POST_LOG), exist_ok=True)
+        with open(POST_LOG, "a") as f:
+            for r in rows: f.write(json.dumps(r) + "\n")
+
+
 def main():
     import sys
     sys.path.insert(0, os.path.dirname(__file__))
@@ -428,6 +463,7 @@ def main():
         # Scheduled, incl. tomorrow's slate) MLB pre-fills a PROJECTED order, so
         # label it "projected" rather than falsely "confirmed".
         c = confirmed_by_pk.get(pk)
+        _post_log(pk, g, c, rw)
         # A lineup may only be "confirmed" if the game is actually official
         # (Pre-Game / Warmup / Live / Final) OR first pitch is imminent (lineups
         # post a few hours out). Otherwise — tomorrow's slate, or a game many
