@@ -104,6 +104,9 @@
   .foot{font-size:12px;color:var(--muted);padding:8px 14px 12px}
   .empty2{color:var(--muted);padding:16px 14px;font-size:13px}
   details.more{margin:0 0 12px} details.more>summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 2px}
+  .tier{border-top:1px solid var(--border)} .tier:first-child{border-top:0}
+  .tier-h{display:flex;align-items:center;gap:8px;padding:10px 14px 2px} .tier-n{font-weight:700}
+  tr.dimrow td{opacity:.6}
   .show-m{display:none} .tw{overflow-x:auto}
   @media (max-width:760px){ table.L th,table.L td{padding:8px 8px} .hide-m{display:none} .show-m{display:block} }
 </style>
@@ -270,28 +273,39 @@ function detailRow(id,cols,c){ if(!state.open[id]) return '';
   const extra=[c.status,c.locked_from?`Line moved: first fired on ${c.locked_from}; now ${c.now_label}`:null,(c.badges||[]).join(' · ')].filter(Boolean).map(x=>`<div>${esc(x)}</div>`).join('');
   return `<tr class="det"><td colspan="${cols}">${extra}${why||'No notes.'}</td></tr>`; }
 
-// ---- plays: one line per position you would actually bet ----
-function playsOf(cards){
-  const P=[];
+// ---- flagged: everything the rules flag, grouped by call (highlighted, not a bet list) ----
+const TIERS=[['bet','Bet','Tier 1 rules, confirmed'],['pending','Pending','K trigger seen before 10 AM: confirm on the 10 AM scan'],['lead','Leads','Tier 2: ¼ size or paper'],['lean','Leans','Tier 3: small']];
+function flaggedOf(cards){
+  const F=[];
   cards.forEach(c=>{
     if(!LIVE_LV.includes(c.level)) return;
-    if(c.cat==='HSP'){ const r=hspRungs(c).filter(r=>!r.paper).sort((a,b)=>(b.edge+(b.mk==='TB3'?.001:0))-(a.edge+(a.mk==='TB3'?.001:0)))[0]; if(!r) return;
-      P.push({c,lvl:c.level,bet:`${esc(r.player)} ${esc(r.line)} <span class="mut">(NO)</span>`,price:`Kalshi ${r.limit}`,edge:r.edge,target:r.limit,size:'0.1-0.15u / game'}); return; }
-    if(c.cat==='HIT'){ const s=(c.subs||[]).find(s=>s.lean); if(!s) return;
-      P.push({c,lvl:'lean',bet:`${esc(s.label)}`,price:s.book?`${esc(s.book)} ${amTxt(s.book_odds)}`:'–',edge:s.edge,target:amTxt(s.target_am),size:c.size}); return; }
-    if(c.cat==='EARLY'){ if(c.level!=='bet') return; const y=c.yrfi&&c.yrfi.level==='bet'?c.yrfi:null, f=(c.f5||[])[0];
-      const o=(f&&(!y||(f.edge||-99)>(y.edge||-99)))?f:y; if(!o) return;
-      P.push({c,lvl:'bet',bet:`${esc(o.label)} <span class="mut">YES</span>`,price:o.kalshi_px!=null?`Kalshi ${(o.kalshi_px*100).toFixed(0)}¢`:'–',edge:o.edge,target:o.target_kalshi_cents!=null?o.target_kalshi_cents+'¢':'–',size:c.size}); return; }
-    if(!sizeOK(c.size)) return;
-    const v=venue(c); P.push({c,lvl:c.level,bet:betText(c),price:v.txt,edge:v.edge,target:v.target,size:c.size});
+    const rule=(c.rules||[]).map(r=>PLAIN[r]||r).join(' + ');
+    if(c.cat==='HSP'){ const L=hspRungs(c).filter(r=>!r.paper).sort((a,b)=>(b.edge+(b.mk==='TB3'?.001:0))-(a.edge+(a.mk==='TB3'?.001:0))); if(!L.length) return; const r=L[0];
+      F.push({c,lvl:c.level,id:c.key,bet:`${esc(r.player)} ${esc(r.line)} <span class="mut">NO</span>`,more:L.length>1?`+${L.length-1} more hitter unders in this game (Hitter unders tab)`:'',rule:'October TB unders (one position per game)',price:`Kalshi ${r.limit}`,edge:r.edge,target:r.limit,size:'0.1-0.15u / game',paper:false}); return; }
+    if(c.cat==='HIT'){ const sb=(c.subs||[]).find(x=>x.lean); if(!sb) return;
+      F.push({c,lvl:'lean',id:c.key,bet:esc(sb.label),rule:'Pinch-hit risk: fewer October PA',price:sb.book?`${esc(sb.book)} ${amTxt(sb.book_odds)}`:'–',edge:sb.edge,target:amTxt(sb.target_am),size:c.size,paper:false}); return; }
+    if(c.cat==='EARLY'){ if(!['bet','lean'].includes(c.level)) return; const y=c.yrfi&&c.yrfi.level!=='info'?c.yrfi:null, f=(c.f5||[])[0];
+      const o=(f&&(!y||(f.edge??-99)>(y.edge??-99)))?f:y; if(!o) return;
+      F.push({c,lvl:c.level,id:c.key,bet:`${esc(o.label)} <span class="mut">YES</span>`,rule:PLAIN[o.rule]||o.rule||'Early scoring',price:o.kalshi_px!=null?`Kalshi ${(o.kalshi_px*100).toFixed(0)}¢`:'–',edge:o.edge,target:o.target_kalshi_cents!=null?o.target_kalshi_cents+'¢':'–',size:c.size,paper:false}); return; }
+    const v=venue(c);
+    F.push({c,lvl:c.level,id:c.key,bet:betText(c),rule,price:v.txt,edge:v.edge,target:v.target,size:c.size,paper:!sizeOK(c.size)||/paper/i.test(rule)});
   });
-  return P.sort((a,b)=>ORDER[a.lvl]-ORDER[b.lvl]||new Date(a.c.first_pitch||0)-new Date(b.c.first_pitch||0));
+  return F;
 }
-function playsHTML(P){
-  if(!P.length) return '<div class="empty2">No plays in the latest scan. Leads and paper rows are in the tabs below.</div>';
-  return `<div class="tw"><table class="L"><tr><th class="hide-m">Call</th><th>Bet</th><th class="hide-m">Game</th><th class="r">Price</th><th class="r">Edge</th><th class="r hide-m">Bet at or better</th><th class="r hide-m">Size</th></tr>${P.map(p=>{
-    const below=p.edge!=null&&p.edge<(p.c.cat==='HSP'?1:2);   // hitter unders are a +1.3ish lean by design
-    return `<tr><td class="hide-m">${badge(p.lvl)}</td><td><span class="show-m" style="margin-bottom:3px">${badge(p.lvl)}</span>${p.bet}${below?' <span class="chip warn">below +2 now</span>':''}<div class="g show-m">${esc(p.c.game)} · ${tShort(p.c.first_pitch)} · ${esc(p.size||'')}</div></td><td class="hide-m">${gameCell(p.c)}</td><td class="num">${p.price}</td>${edgeTd(p.edge)}<td class="num hide-m">${p.target}</td><td class="r g hide-m">${esc(p.size||'–')}</td></tr>`;}).join('')}</table></div>`;
+const AREA=c=>['K','OUTS','WALK','KOP'].includes(c.cat)?'P':(['HSP','HIT'].includes(c.cat)?'H':(c.cat==='EARLY'?'E':'G'));
+const AREAS=[['P','Pitchers','strikeouts, outs, walks'],['H','Hitters','TB and hits unders'],['E','YRFI / NRFI & F5','first inning and first five'],['G','Game lines','cross-venue lag (live test)']];
+function flaggedHTML(F){
+  if(!F.length) return '<div class="empty2">Nothing flagged in the latest scan. Everything else is in the tabs below.</div>';
+  let h='';
+  AREAS.forEach(([ar,name,sub])=>{
+    const L=F.filter(x=>AREA(x.c)===ar).sort((a,b)=>(a.paper-b.paper)||ORDER[a.lvl]-ORDER[b.lvl]||(b.edge??-99)-(a.edge??-99));
+    if(!L.length) return;
+    h+=`<div class="tier"><div class="tier-h"><span class="tier-n">${name}</span> <span class="g">${L.length} · ${sub}</span></div>
+    <div class="tw"><table class="L"><tr><th class="hide-m" style="width:84px">Call</th><th>Bet</th><th class="hide-m">Game</th><th class="r">Price</th><th class="r">Edge</th><th class="r hide-m">Bet at or better</th><th class="r hide-m">Size</th></tr>${L.map(x=>{
+      const id=x.id.replace(/\W/g,'_'); const below=!x.paper&&x.edge!=null&&x.edge<(x.c.cat==='HSP'?1:2);
+      return `<tr class="click${x.paper?' dimrow':''}" data-id="${id}"><td class="hide-m">${badge(x.lvl)}</td><td><span class="show-m" style="margin-bottom:3px">${badge(x.lvl)}</span>${x.bet}${x.paper?' <span class="chip">paper</span>':''}${below?' <span class="chip warn">below target now</span>':''}<div class="g">${esc(x.rule)}</div>${x.more?`<div class="g">${esc(x.more)}</div>`:''}<div class="g show-m">${esc(x.c.game)} · ${tShort(x.c.first_pitch)} · ${esc(x.size||'')}</div></td><td class="hide-m">${gameCell(x.c)}</td><td class="num">${x.price}</td>${edgeTd(x.edge)}<td class="num hide-m">${x.target}</td><td class="r g hide-m">${esc(x.size||'–')}</td></tr>${detailRow(id,7,x.c)}`;}).join('')}</table></div></div>`;
+  });
+  return h;
 }
 
 // ---- generic market table (K / outs / walks / game lines) ----
@@ -304,19 +318,20 @@ function marketTable(list,emptyTxt){
 }
 
 // ---- hitter unders: sub-tabs TB u2.5 / TB u1.5 / Hits u0.5 ----
-const HMK=[['TB3','TB u2.5'],['TB2','TB u1.5'],['H05','Hits u0.5']];
+const HMK=[['TB3','TB u2.5'],['TB2','TB u1.5'],['H05','Hits u0.5']];   // + 'ALL' = biggest edges across markets
 function hitterHTML(cards){
   const rows=[]; cards.filter(c=>c.cat==='HSP').forEach(c=>hspRungs(c).forEach(r=>rows.push({...r,c})));
   cards.filter(c=>c.cat==='HIT'&&!cards.some(x=>x.cat==='HSP'&&x.event===c.event)).forEach(c=>(c.subs||[]).forEach(sb=>rows.push({player:(sb.label||'').replace(/ under 0\.5 hits/,''),mk:'H05',line:'Hits u0.5',venue:sb.book?sb.book+' '+amTxt(sb.book_odds):'book',limit:amTxt(sb.target_am),fair:sb.model,edge:sb.edge,paper:!sb.lean,sub:true,c})));
   if(!rows.length) return '<div class="empty2">No hitter unders in the latest scan.</div>';
-  const have=HMK.filter(([k])=>rows.some(r=>r.mk===k));
-  const bestMk=have.map(([k])=>[k,Math.max(...rows.filter(r=>r.mk===k).map(r=>r.edge??-99))]).sort((a,b)=>b[1]-a[1])[0][0];
-  const tab=have.some(([k])=>k===state.htab)?state.htab:bestMk;
-  const L=rows.filter(r=>r.mk===tab).sort((a,b)=>(b.edge??-99)-(a.edge??-99));
-  const isSub=tab==='H05';
-  return `<div class="subtabs">${have.map(([k,l])=>`<button data-htab="${k}" class="${k===tab?'on':''}">${l} <span class="mut">${rows.filter(r=>r.mk===k).length}</span></button>`).join('')}</div>
-  <div class="tw"><table class="L" style="margin-top:6px"><tr><th>Player</th><th class="hide-m">Game</th><th class="r">${isSub?'Best book':'Kalshi NO at'}</th><th class="r hide-m">Fair (under)</th><th class="r">Edge</th></tr>${L.map(r=>`<tr><td>${esc(r.player)}${r.paper?' <span class="chip">'+(r.sub?'info':'paper')+'</span>':''}<div class="g show-m">${esc(r.c.game)} · ${tShort(r.c.first_pitch)}</div></td><td class="hide-m">${gameCell(r.c)}</td><td class="num">${isSub?esc(r.venue):r.limit}</td><td class="num hide-m">${pct(r.fair)}</td>${edgeTd(r.edge)}</tr>`).join('')}</table></div>
-  <div class="foot">One position per game across every hitter under: 0.1-0.15u total (half if a game or team-total under is on the card), Kalshi NO at the mid, TB u2.5 first. ${isSub?'Hits u0.5 edges are against the best book.':'Edges are after the Kalshi fee at the mid.'}</div>`;
+  const have=[['ALL','Biggest edges'],...HMK.filter(([k])=>rows.some(r=>r.mk===k))];
+  const tab=have.some(([k])=>k===state.htab)?state.htab:'ALL';
+  const all=tab==='ALL';
+  const L=rows.filter(r=>all||r.mk===tab).sort((a,b)=>((b.edge??-99)+(b.mk==='TB3'?.001:0))-((a.edge??-99)+(a.mk==='TB3'?.001:0)));
+  const shown=all&&!state.hAll?L.slice(0,10):L;
+  const cnt=k=>k==='ALL'?rows.length:rows.filter(r=>r.mk===k).length;
+  return `<div class="subtabs">${have.map(([k,l])=>`<button data-htab="${k}" class="${k===tab?'on':''}">${l} <span class="mut">${cnt(k)}</span></button>`).join('')}</div>
+  <div class="tw"><table class="L" style="margin-top:6px"><tr><th>Player</th>${all?'<th>Market</th>':''}<th class="hide-m">Game</th><th class="r">Bet at</th><th class="r hide-m">Fair (under)</th><th class="r">Edge</th></tr>${shown.map(r=>`<tr><td>${esc(r.player)}${r.paper?' <span class="chip">'+(r.sub?'info':'paper')+'</span>':''}<div class="g show-m">${esc(r.c.game)} · ${tShort(r.c.first_pitch)}</div></td>${all?`<td>${esc(r.line)}</td>`:''}<td class="hide-m">${gameCell(r.c)}</td><td class="num">${r.sub?esc(r.venue):'Kalshi '+r.limit}</td><td class="num hide-m">${pct(r.fair)}</td>${edgeTd(r.edge)}</tr>`).join('')}</table></div>
+  <div class="foot">${all&&L.length>10?`<button class="lnk" data-hall="1">${state.hAll?'Show top 10':'Show all '+L.length}</button> · `:''}One position per game across every hitter under: 0.1-0.15u total (half if a game or team-total under is on the card), Kalshi NO at the mid, TB u2.5 first. Kalshi edges are after the fee at the mid; hits u0.5 edges are against the best book.</div>`;
 }
 
 // ---- info: everything paper, ungraded, missed, no longer firing ----
@@ -340,24 +355,24 @@ function render(){
   document.getElementById('banners').innerHTML=(pinOK?'':'<div class="banner">Pinnacle feed unavailable this run: Pinnacle fields are blank. That is a feed failure, not "no edge".</div>')+(age>3?'<div class="banner">Latest scan is more than 3 hours old. Prices are live where a Kalshi ticker exists, but triggers may be stale.</div>':'');
   // split
   const isInfo=c=>c.cat==='INFO'||['info','gone','missed','watch'].includes(c.level)&&!['EARLY','HSP','HIT'].includes(c.cat)||c.cat==='KOP';
-  const P=playsOf(cards);
+  const F=flaggedOf(cards);
   const K=cards.filter(c=>['K','OUTS'].includes(c.cat)&&!isInfo(c));
   const W=cards.filter(c=>c.cat==='WALK'&&!isInfo(c));
   const G=cards.filter(c=>c.cat==='LAG'&&!isInfo(c));
   const E=cards.filter(c=>c.cat==='EARLY');
   const Hn=(()=>{let n=0; cards.filter(c=>c.cat==='HSP').forEach(c=>n+=new Set(hspRungs(c).map(r=>r.player)).size); cards.filter(c=>c.cat==='HIT').forEach(c=>n+=(c.subs||[]).length); return n;})();
   const I=cards.filter(isInfo);
-  const TABS=[['K','K / Outs',K.length],['H','Hitter unders',Hn],['E','Early (YRFI / F5)',E.length],['W','Walks',W.length],...(G.length?[['G','Game lines',G.length]]:[]),['I','Info',I.length]];
+  const PT=[...K,...W];
+  const TABS=[['P','Pitchers',PT.length],['H','Hitters',Hn],['E','YRFI / NRFI & F5',E.length],...(G.length?[['G','Game lines',G.length]]:[]),['I','Info',I.length]];
   const tab=TABS.some(t=>t[0]===state.tab)?state.tab:(TABS.find(t=>t[0]!=='I'&&t[2])||TABS[0])[0];
   let body='';
-  if(tab==='K') body=marketTable(K,'No strikeout or outs leads in the latest scan.');
+  if(tab==='P') body=marketTable(PT,'No strikeout, outs or walk rows in the latest scan.');
   else if(tab==='H') body=hitterHTML(cards);
   else if(tab==='E') body=boardC(E.sort((a,b)=>new Date(a.first_pitch)-new Date(b.first_pitch)));
-  else if(tab==='W') body=marketTable(W,'No walk overs in the latest scan.');
   else if(tab==='G') body=marketTable(G,'No game-line lag cards.');
   else body=infoHTML(I);
   const tk=(B.tickets||[]).filter(t=>state.day==='all'||t.date===(state.day==='today'?today:tom));
-  let html=`<div class="card"><div class="card-h"><span class="name">Plays</span><span class="meta">${P.length} · what to bet now, one line each</span></div>${playsHTML(P)}</div>
+  let html=`<div class="card"><div class="card-h"><span class="name">Flagged</span><span class="meta">${F.length} · what the rules flag right now. Highlights, not a bet list: click a row for the why</span></div>${flaggedHTML(F)}</div>
   <div class="card"><div class="tabs">${TABS.map(([k,l,n])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${l}<span class="n">${n}</span></button>`).join('')}</div>${body}</div>`;
   const nStarted=all.length-cards.length;
   if(nStarted) html+=`<div class="note" style="margin:-6px 0 12px">${nStarted} item(s) on games already started are hidden (pregame prices only).</div>`;
@@ -368,7 +383,8 @@ function render(){
 document.getElementById('segDay').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; state.day=b.dataset.d; document.querySelectorAll('#segDay button').forEach(x=>x.classList.toggle('on',x===b)); render();});
 document.getElementById('board').addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]'); if(t){state.tab=t.dataset.tab; render(); return;}
-  const h=e.target.closest('[data-htab]'); if(h){state.htab=h.dataset.htab; render(); return;}
+  const h=e.target.closest('[data-htab]'); if(h){state.htab=h.dataset.htab; state.hAll=false; render(); return;}
+  const ha=e.target.closest('[data-hall]'); if(ha){state.hAll=!state.hAll; render(); return;}
   const r=e.target.closest('tr.click'); if(r){state.open[r.dataset.id]=!state.open[r.dataset.id]; render(); return;}
 });
 document.getElementById('board').addEventListener('toggle',e=>{const d=e.target; if(d.dataset&&d.dataset.k) state.open[d.dataset.k]=d.open;},true);
