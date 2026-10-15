@@ -1,7 +1,7 @@
 {
 "meta": {
-"built": "2026-10-15T14:55:57.869794+00:00",
-"latest_scan": "2026-10-15T14:52:22.006904+00:00",
+"built": "2026-10-15T15:29:01.078675+00:00",
+"latest_scan": "2026-10-15T15:25:24.186673+00:00",
 "pinnacle_rows_latest": 87,
 "velo_logged": 0,
 "fable_review": {
@@ -41,6 +41,85 @@
 "VELO-DECLINE (price too short)": 4
 }
 },
+"games": [
+{
+"event": "26OCT151800TBCLE",
+"away": "TB",
+"home": "CLE",
+"label": "TB @ CLE",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"away_logo": "https://www.mlbstatic.com/team-logos/139.svg",
+"home_logo": "https://www.mlbstatic.com/team-logos/114.svg",
+"started": false,
+"n_cards": 46,
+"n_positions": 6,
+"levels": {
+"info": 42,
+"lean": 2,
+"lead": 1,
+"gone": 1
+},
+"start_et": "1:00 PM ET",
+"start_local_day": "Thu 10/15"
+},
+{
+"event": "26OCT152000MILLAD",
+"away": "MIL",
+"home": "LAD",
+"label": "MIL @ LAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away_logo": "https://www.mlbstatic.com/team-logos/158.svg",
+"home_logo": "https://www.mlbstatic.com/team-logos/119.svg",
+"started": false,
+"n_cards": 16,
+"n_positions": 3,
+"levels": {
+"lead": 1,
+"lean": 2,
+"info": 13
+},
+"start_et": "8:00 PM ET",
+"start_local_day": "Thu 10/15"
+},
+{
+"event": "26OCT152100MILLAD",
+"away": "MIL",
+"home": "LAD",
+"label": "MIL @ LAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away_logo": "https://www.mlbstatic.com/team-logos/158.svg",
+"home_logo": "https://www.mlbstatic.com/team-logos/119.svg",
+"started": false,
+"n_cards": 1,
+"n_positions": 0,
+"levels": {
+"info": 1
+},
+"start_et": "8:00 PM ET",
+"start_local_day": "Thu 10/15"
+},
+{
+"event": "26OCT161800TBCLE",
+"away": "TB",
+"home": "CLE",
+"label": "TB @ CLE",
+"date": "2026-10-16",
+"first_pitch": "2026-10-16T18:00:00-04:00",
+"away_logo": "https://www.mlbstatic.com/team-logos/139.svg",
+"home_logo": "https://www.mlbstatic.com/team-logos/114.svg",
+"started": false,
+"n_cards": 1,
+"n_positions": 0,
+"levels": {
+"info": 1
+},
+"start_et": "6:00 PM ET",
+"start_local_day": "Fri 10/16"
+}
+],
 "cards": [
 {
 "key": "26OCT151800TBCLE|EARLY",
@@ -57,16 +136,22 @@
 ],
 "live": true,
 "first_seen": "2026-10-14T05:56:21.248422+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 14,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 15,
 "notes": [
 {
 "rule": "RFI INFO",
-"note": "Kalshi total 6.62; YRFI curve 0.401 (Oct-adj 0.437); ask 0.43; edge -4.7 (Oct -1.0); taker $ 86% NRFI (normal is 74%)"
+"note": "Kalshi total 6.62; YRFI curve 0.401 (Oct-adj 0.437); ask 0.43; edge -4.7 (Oct -1.0); taker $ 89% NRFI (normal is 74%)"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "RFI INFO",
+"why": "YRFI curve vs the Kalshi ask, shown for every game; no edge at this price."
+}
+],
 "label": "Early scoring (YRFI / F5 overs)",
 "side": "YES",
 "yrfi": {
@@ -80,7 +165,7 @@
 "ktotal": 6.62,
 "market": null,
 "market_src": null,
-"nrfi_pct": 86,
+"nrfi_pct": 89,
 "side": "YES",
 "label": "YRFI",
 "cat": "RFI",
@@ -144,23 +229,29 @@
 ],
 "live": true,
 "first_seen": "2026-10-14T13:43:33.873926+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 9,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 10,
 "notes": [
 {
 "rule": "WALKS OVER (info: low-BB% pitcher)",
-"note": "season BB% 8.2; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.510; Kalshi 0.47/0.55; book o1.5: DK +101; -"
+"note": "season BB% 8.2; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.500; Kalshi 0.47/0.53; book o1.5: DK +101; -"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "WALKS OVER (info: low-BB% pitcher)",
+"why": "Starter BB% under 8.5%: no edge (overs ran 0.8 pts below the mid). Info only."
+}
+],
 "label": "Gavin Williams walks o1.5",
 "side": "YES",
 "ticker": "KXMLBWA-26OCT151800TBCLE-CLEGWILLIAMS32-2",
 "pitcher": "Gavin Williams",
-"kalshi_px": 0.54,
+"kalshi_px": 0.56,
 "first_px": 0.5,
-"market": 0.51,
+"market": 0.5,
 "market_src": "Kalshi mid",
 "model": null,
 "model_src": "Kalshi mid + 4",
@@ -188,31 +279,31 @@
 "level": "info",
 "size": "none",
 "model_src": "Kalshi mid + 4",
-"market": 0.51,
+"market": 0.5,
 "market_src": "Kalshi mid",
 "book": "DK",
 "book_odds": 101,
-"kalshi_px": 0.54,
+"kalshi_px": 0.56,
 "first_seen": "2026-10-14T13:43:33.873926+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.505,
-"kalshi_cost": 0.5574,
-"kalshi_am": -126,
+"kalshi_mid_side": 0.52,
+"kalshi_cost": 0.5772,
+"kalshi_am": -137,
 "edge": null,
-"edge_mkt": -4.74,
+"edge_mkt": -7.72,
 "book_edge": null,
-"book_edge_mkt": 1.25,
+"book_edge_mkt": 0.25,
 "best_venue": "book"
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.505,
-"kalshi_cost": 0.5574,
-"kalshi_am": -126,
+"kalshi_mid_side": 0.52,
+"kalshi_cost": 0.5772,
+"kalshi_am": -137,
 "edge": null,
-"edge_mkt": -4.74,
+"edge_mkt": -7.72,
 "book_edge": null,
-"book_edge_mkt": 1.25,
+"book_edge_mkt": 0.25,
 "best_venue": "book"
 },
 {
@@ -230,16 +321,22 @@
 ],
 "live": true,
 "first_seen": "2026-10-14T13:56:27.602926+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 5,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 6,
 "notes": [
 {
 "rule": "WALKS OVER (info: low-BB% pitcher)",
-"note": "season BB% 6.7; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.365; Kalshi 0.32/0.41; book o1.5: CZR +166; -"
+"note": "season BB% 6.7; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); no edge for low-BB% pitchers (overs ran 0.8 pts BELOW mid); fair = Kalshi mid 0.365; Kalshi 0.34/0.39; book o1.5: CZR +166; -"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "WALKS OVER (info: low-BB% pitcher)",
+"why": "Starter BB% under 8.5%: no edge (overs ran 0.8 pts below the mid). Info only."
+}
+],
 "label": "Griffin Jax walks o1.5",
 "side": "YES",
 "ticker": "KXMLBWA-26OCT151800TBCLE-TBGJAX22-2",
@@ -317,20 +414,36 @@
 ],
 "live": true,
 "first_seen": "2026-10-14T13:56:27.602926+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 11,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 12,
 "notes": [
 {
-"rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.680; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 4; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.720; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.675; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 4; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.855; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.800; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.715; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.905; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
+"note": "limit NO at the mid 0.805; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.850; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
@@ -338,11 +451,19 @@
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.770; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.8 after fee; TB 3+ before TB 2+ [info: slot 8; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: slot 8; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.870; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.750; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 8]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.755; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 8]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.860; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
@@ -354,23 +475,35 @@
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
+"note": "limit NO at the mid 0.720; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
 "note": "limit NO at the mid 0.725; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 7; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 3]; vs Griffin Jax; book u1.5 TB: CZR -193 (implied 0.659, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
+"rule": "OCTOBER TB UNDER (lean)",
+"note": "limit NO at the mid 0.860; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+},
+{
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.660; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 5; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -207 (implied 0.674, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.665; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 5; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -207 (implied 0.674, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean)",
-"note": "limit NO at the mid 0.800; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.805; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -185 (implied 0.649, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: CZR -190 (implied 0.655, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean)",
@@ -382,7 +515,7 @@
 },
 {
 "rule": "OCTOBER TB UNDER (lean)",
-"note": "limit NO at the mid 0.830; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.825; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
@@ -415,16 +548,39 @@
 ],
 "badges": [],
 "started": false,
-"label": "Brayan Rocchio: 3+ total bases?",
-"side": "NO",
-"ticker": "KXMLBTB-26OCT151800TBCLE-CLEBROCCHIO4-3",
-"kalshi_px": 0.89,
+"why": [
+{
 "rule": "OCTOBER TB UNDER (lean)",
-"market": 0.885,
+"why": "TB 3+ NO. October true rates drop 6 pts every year 2016-25 and Kalshi discounts only ~4.5; fair = NO mid + 2.5. Limit at the mid, one position per game, TB 3+ first."
+},
+{
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
+"why": "TB 2+ NO. Same effect, weaker evidence (selection test p .26 alone); fair = NO mid + 3. Second to TB 3+."
+}
+],
+"label": "Taylor Walls: 3+ total bases?",
+"side": "NO",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-3",
+"kalshi_px": 0.92,
+"rule": "OCTOBER TB UNDER (lean)",
+"market": 0.905,
 "market_src": "Kalshi NO mid",
-"model": 0.91,
+"model": 0.93,
 "model_src": "PS TB effect (mid + 2.5 TB 3+ / + 3 TB 2+)",
 "hsp_rungs": [
+{
+"label": "Taylor Walls: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-3",
+"no_limit": 0.905,
+"no_fair": 0.93,
+"edge_at_limit": 1.9,
+"note": "limit NO at the mid 0.905; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
 {
 "label": "Brayan Rocchio: 3+ total bases?",
 "rule": "OCTOBER TB UNDER (lean)",
@@ -432,25 +588,128 @@
 "no_limit": 0.885,
 "no_fair": 0.91,
 "edge_at_limit": 1.79,
-"note": "limit NO at the mid 0.885; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.8 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.885; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.8 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Petey Halpin: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-CLEPHALPIN0-3",
+"no_limit": 0.87,
+"no_fair": 0.895,
+"edge_at_limit": 1.71,
+"note": "limit NO at the mid 0.870; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Patrick Bailey: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-CLEPBAILEY16-3",
+"no_limit": 0.86,
+"no_fair": 0.885,
+"edge_at_limit": 1.66,
+"note": "limit NO at the mid 0.860; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Chandler Simpson: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBCSIMPSON14-3",
+"no_limit": 0.86,
+"no_fair": 0.885,
+"edge_at_limit": 1.66,
+"note": "limit NO at the mid 0.860; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Travis Bazzana: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-CLETBAZZANA37-3",
+"no_limit": 0.855,
+"no_fair": 0.88,
+"edge_at_limit": 1.63,
+"note": "limit NO at the mid 0.855; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Steven Kwan: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-CLESKWAN38-3",
+"no_limit": 0.85,
+"no_fair": 0.875,
+"edge_at_limit": 1.61,
+"note": "limit NO at the mid 0.850; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jonathan Aranda: 3+ total bases?",
 "rule": "OCTOBER TB UNDER (lean)",
 "ticker": "KXMLBTB-26OCT151800TBCLE-TBJARANDA8-3",
-"no_limit": 0.83,
-"no_fair": 0.855,
-"edge_at_limit": 1.51,
-"note": "limit NO at the mid 0.830; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.825,
+"no_fair": 0.85,
+"edge_at_limit": 1.49,
+"note": "limit NO at the mid 0.825; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Yandy D\u00edaz: 3+ total bases?",
 "rule": "OCTOBER TB UNDER (lean)",
 "ticker": "KXMLBTB-26OCT151800TBCLE-TBYDIAZ2-3",
-"no_limit": 0.8,
-"no_fair": 0.825,
-"edge_at_limit": 1.38,
-"note": "limit NO at the mid 0.800; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.805,
+"no_fair": 0.83,
+"edge_at_limit": 1.4,
+"note": "limit NO at the mid 0.805; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Victor Mesa Jr.: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBVMESA25-3",
+"no_limit": 0.795,
+"no_fair": 0.82,
+"edge_at_limit": 1.36,
+"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Chase DeLauter: 3+ total bases?",
+"rule": "OCTOBER TB UNDER (lean)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-CLECDELAUTER24-3",
+"no_limit": 0.795,
+"no_fair": 0.82,
+"edge_at_limit": 1.36,
+"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jo Adell: 3+ total bases?",
@@ -459,7 +718,11 @@
 "no_limit": 0.79,
 "no_fair": 0.815,
 "edge_at_limit": 1.34,
-"note": "limit NO at the mid 0.790; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.790; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jos\u00e9 Ram\u00edrez: 3+ total bases?",
@@ -468,7 +731,11 @@
 "no_limit": 0.785,
 "no_fair": 0.81,
 "edge_at_limit": 1.32,
-"note": "limit NO at the mid 0.785; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.785; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Junior Caminero: 3+ total bases?",
@@ -477,34 +744,50 @@
 "no_limit": 0.765,
 "no_fair": 0.79,
 "edge_at_limit": 1.24,
-"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+ [info: opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Taylor Walls: 2+ total bases?",
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-2",
-"no_limit": 0.8,
-"no_fair": 0.83,
-"edge_at_limit": 1.88,
-"note": "limit NO at the mid 0.800; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.805,
+"no_fair": 0.835,
+"edge_at_limit": 1.9,
+"note": "limit NO at the mid 0.805; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.9 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA bottom3; slot 9; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Richie Palacios: 2+ total bases?",
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBRPALACIOS1-2",
-"no_limit": 0.77,
-"no_fair": 0.8,
-"edge_at_limit": 1.76,
-"note": "limit NO at the mid 0.770; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.8 after fee; TB 3+ before TB 2+ [info: slot 8; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.765,
+"no_fair": 0.795,
+"edge_at_limit": 1.74,
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: slot 8; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 8; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Petey Halpin: 2+ total bases?",
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "ticker": "KXMLBTB-26OCT151300TBCLE-CLEPHALPIN0-2",
-"no_limit": 0.75,
-"no_fair": 0.78,
-"edge_at_limit": 1.69,
-"note": "limit NO at the mid 0.750; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 8]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.755,
+"no_fair": 0.785,
+"edge_at_limit": 1.71,
+"note": "limit NO at the mid 0.755; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 8]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA bottom3; slot 8",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Brayan Rocchio: 2+ total bases?",
@@ -513,7 +796,11 @@
 "no_limit": 0.745,
 "no_fair": 0.775,
 "edge_at_limit": 1.67,
-"note": "limit NO at the mid 0.745; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.745; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.7 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 9]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA bottom3; slot 9",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Patrick Bailey: 2+ total bases?",
@@ -522,7 +809,11 @@
 "no_limit": 0.735,
 "no_fair": 0.765,
 "edge_at_limit": 1.64,
-"note": "limit NO at the mid 0.735; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 7]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.735; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 7]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 7",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jonny DeLuca: 2+ total bases?",
@@ -531,16 +822,37 @@
 "no_limit": 0.725,
 "no_fair": 0.755,
 "edge_at_limit": 1.6,
-"note": "limit NO at the mid 0.725; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 7; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.725; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 7; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA bottom3; slot 7; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Liam Hicks: 2+ total bases?",
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBLHICKS34-2",
+"no_limit": 0.72,
+"no_fair": 0.75,
+"edge_at_limit": 1.59,
+"note": "limit NO at the mid 0.720; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 6; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Travis Bazzana: 2+ total bases?",
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "ticker": "KXMLBTB-26OCT151300TBCLE-CLETBAZZANA37-2",
-"no_limit": 0.72,
-"no_fair": 0.75,
-"edge_at_limit": 1.59,
-"note": "limit NO at the mid 0.720; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.715,
+"no_fair": 0.745,
+"edge_at_limit": 1.57,
+"note": "limit NO at the mid 0.715; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.6 after fee; TB 3+ before TB 2+ [info: slot 6]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 6",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Nathaniel Lowe: 2+ total bases?",
@@ -549,7 +861,11 @@
 "no_limit": 0.705,
 "no_fair": 0.735,
 "edge_at_limit": 1.54,
-"note": "limit NO at the mid 0.705; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 5]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.705; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 5]; vs Griffin Jax; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 5",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jonathan Aranda: 2+ total bases?",
@@ -558,16 +874,37 @@
 "no_limit": 0.685,
 "no_fair": 0.715,
 "edge_at_limit": 1.49,
-"note": "limit NO at the mid 0.685; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 2; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.685; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 2; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 2; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Victor Mesa Jr.: 2+ total bases?",
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBVMESA25-2",
-"no_limit": 0.68,
-"no_fair": 0.71,
-"edge_at_limit": 1.48,
-"note": "limit NO at the mid 0.680; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 4; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"no_limit": 0.675,
+"no_fair": 0.705,
+"edge_at_limit": 1.46,
+"note": "limit NO at the mid 0.675; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 4; opp SP K% 34 (high)]; vs Gavin Williams; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 4; opp SP K% 34 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
+},
+{
+"label": "Chandler Simpson: 2+ total bases?",
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBCSIMPSON14-2",
+"no_limit": 0.665,
+"no_fair": 0.695,
+"edge_at_limit": 1.44,
+"note": "limit NO at the mid 0.665; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 5; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -207 (implied 0.674, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA bottom3; slot 5; opp SP K% 34 (high)",
+"book": "DK",
+"book_odds": -207,
+"book_inside_mid": false
 },
 {
 "label": "Steven Kwan: 2+ total bases?",
@@ -576,16 +913,11 @@
 "no_limit": 0.66,
 "no_fair": 0.69,
 "edge_at_limit": 1.43,
-"note": "limit NO at the mid 0.660; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1]; vs Griffin Jax; book u1.5 TB: CZR -205 (implied 0.672, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
-},
-{
-"label": "Chandler Simpson: 2+ total bases?",
-"rule": "OCTOBER TB UNDER (lean, lower priority)",
-"ticker": "KXMLBTB-26OCT151300TBCLE-TBCSIMPSON14-2",
-"no_limit": 0.66,
-"no_fair": 0.69,
-"edge_at_limit": 1.43,
-"note": "limit NO at the mid 0.660; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA bottom3; slot 5; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -207 (implied 0.674, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.660; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1]; vs Griffin Jax; book u1.5 TB: CZR -205 (implied 0.672, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 1",
+"book": "CZR",
+"book_odds": -205,
+"book_inside_mid": false
 },
 {
 "label": "Jo Adell: 2+ total bases?",
@@ -594,7 +926,11 @@
 "no_limit": 0.645,
 "no_fair": 0.675,
 "edge_at_limit": 1.4,
-"note": "limit NO at the mid 0.645; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: slot 4]; vs Griffin Jax; book u1.5 TB: DK -183 (implied 0.647; AT/INSIDE the Kalshi NO mid: the lean's fair applies at the book, log as 'OCTOBER TB UNDER (book)'); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.645; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: slot 4]; vs Griffin Jax; book u1.5 TB: DK -183 (implied 0.647; AT/INSIDE the Kalshi NO mid: the lean's fair applies at the book, log as 'OCTOBER TB UNDER (book)'); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 4",
+"book": "DK",
+"book_odds": -183,
+"book_inside_mid": true
 },
 {
 "label": "Chase DeLauter: 2+ total bases?",
@@ -603,7 +939,11 @@
 "no_limit": 0.635,
 "no_fair": 0.665,
 "edge_at_limit": 1.38,
-"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 3]; vs Griffin Jax; book u1.5 TB: CZR -193 (implied 0.659, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 3]; vs Griffin Jax; book u1.5 TB: CZR -193 (implied 0.659, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 3",
+"book": "CZR",
+"book_odds": -193,
+"book_inside_mid": false
 },
 {
 "label": "Junior Caminero: 2+ total bases?",
@@ -612,7 +952,11 @@
 "no_limit": 0.635,
 "no_fair": 0.665,
 "edge_at_limit": 1.38,
-"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 3; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: CZR -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 3; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: CZR -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 3; opp SP K% 34 (high)",
+"book": "CZR",
+"book_odds": -176,
+"book_inside_mid": false
 },
 {
 "label": "Yandy D\u00edaz: 2+ total bases?",
@@ -621,7 +965,11 @@
 "no_limit": 0.63,
 "no_fair": 0.66,
 "edge_at_limit": 1.37,
-"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: DK -185 (implied 0.649, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; slot 1; opp SP K% 34 (high)]; vs Gavin Williams; book u1.5 TB: CZR -190 (implied 0.655, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; slot 1; opp SP K% 34 (high)",
+"book": "CZR",
+"book_odds": -190,
+"book_inside_mid": false
 },
 {
 "label": "Jos\u00e9 Ram\u00edrez: 2+ total bases?",
@@ -630,7 +978,11 @@
 "no_limit": 0.63,
 "no_fair": 0.66,
 "edge_at_limit": 1.37,
-"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: slot 2]; vs Griffin Jax; book u1.5 TB: DK -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.630; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: slot 2]; vs Griffin Jax; book u1.5 TB: DK -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "slot 2",
+"book": "DK",
+"book_odds": -176,
+"book_inside_mid": false
 }
 ],
 "level": "lean",
@@ -648,35 +1000,35 @@
 "OCTOBER TB UNDER (lean, lower priority)"
 ],
 "rule": "OCTOBER TB UNDER (lean)",
-"label": "Brayan Rocchio: 3+ total bases?",
+"label": "Taylor Walls: 3+ total bases?",
 "side": "NO",
-"ticker": "KXMLBTB-26OCT151800TBCLE-CLEBROCCHIO4-3",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-3",
 "level": "lean",
 "size": "0.1-0.15u total per game (half if a game/team-total under on this game), NO limit at the mid, TB 3+ first",
-"model": 0.91,
+"model": 0.93,
 "model_src": "PS TB effect (mid + 2.5 TB 3+ / + 3 TB 2+)",
-"market": 0.885,
+"market": 0.905,
 "market_src": "Kalshi NO mid",
-"kalshi_px": 0.89,
+"kalshi_px": 0.92,
 "first_seen": "2026-10-14T13:56:27.602926+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.885,
-"kalshi_cost": 0.8969,
-"kalshi_am": -869,
-"edge": 1.31,
-"edge_mkt": -1.19,
-"target_am": -809,
-"target_kalshi_cents": 88
+"kalshi_mid_side": 0.905,
+"kalshi_cost": 0.9252,
+"kalshi_am": -1236,
+"edge": 0.48,
+"edge_mkt": -2.02,
+"target_am": -1011,
+"target_kalshi_cents": 90
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.885,
-"kalshi_cost": 0.8969,
-"kalshi_am": -869,
-"edge": 1.31,
-"edge_mkt": -1.19,
-"target_am": -809,
-"target_kalshi_cents": 88
+"kalshi_mid_side": 0.905,
+"kalshi_cost": 0.9252,
+"kalshi_am": -1236,
+"edge": 0.48,
+"edge_mkt": -2.02,
+"target_am": -1011,
+"target_kalshi_cents": 90
 },
 {
 "key": "26OCT151800TBCLE|K|Gavin Williams|under",
@@ -693,16 +1045,22 @@
 ],
 "live": true,
 "first_seen": "2026-10-14T22:18:03.292923+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 7,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 8,
 "notes": [
 {
 "rule": "K-SEASON-ANCHOR UNDER (PS paper)",
-"note": "K mkt 6.45 vs season 7.75 (-1.30); same bet as K-LENGTH if both fire; book: BetRivers -125; Pinnacle u6.5 -120 (fair 52.2%)"
+"note": "K mkt 6.44 vs season 7.75 (-1.31); same bet as K-LENGTH if both fire; book: BetRivers -113; Pinnacle u6.5 -120 (fair 52.2%)"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "K-SEASON-ANCHOR UNDER (PS paper)",
+"why": "Same as K-SEASON-ANCHOR UNDER, October paper. Base rule: The K market mean is 1+ K under the starter's season K per start with the outs market also short: same short-start read from the K side. Fair = market + 5."
+}
+],
 "label": "Gavin Williams K u6.5",
 "side": "NO",
 "ticker": "KXMLBKS-26OCT151800TBCLE-CLEGWILLIAMS32-7",
@@ -716,9 +1074,9 @@
 "model_src": "market + 0",
 "rule_edge": 0,
 "book": "BetRivers",
-"book_odds": -125,
+"book_odds": -113,
 "inputs": {
-"k_mkt": 6.45,
+"k_mkt": 6.44,
 "k_season": 7.75
 },
 "level": "lead",
@@ -745,7 +1103,7 @@
 "market": 0.522,
 "market_src": "Pinnacle no-vig",
 "book": "BetRivers",
-"book_odds": -125,
+"book_odds": -113,
 "kalshi_px": 0.52,
 "first_seen": "2026-10-14T22:18:03.292923+00:00",
 "price_src": "live",
@@ -754,9 +1112,9 @@
 "kalshi_am": -116,
 "edge": -1.55,
 "edge_mkt": -1.55,
-"book_edge": -3.36,
-"book_edge_mkt": -3.36,
-"best_venue": "kalshi",
+"book_edge": -0.85,
+"book_edge_mkt": -0.85,
+"best_venue": "book",
 "target_am": -101,
 "target_kalshi_cents": 48
 }
@@ -767,9 +1125,9 @@
 "kalshi_am": -116,
 "edge": -1.55,
 "edge_mkt": -1.55,
-"book_edge": -3.36,
-"book_edge_mkt": -3.36,
-"best_venue": "kalshi",
+"book_edge": -0.85,
+"book_edge_mkt": -0.85,
+"best_venue": "book",
 "target_am": -101,
 "target_kalshi_cents": 48
 },
@@ -789,20 +1147,30 @@
 ],
 "live": true,
 "first_seen": "2026-10-15T04:38:10.617139+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 5,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 6,
 "notes": [
 {
 "rule": "K-LENGTH UNDER (PS paper)",
-"note": "outs mkt 15.0 vs season 17.1 (-2.1); L5 outs 17.6; book u6.5: DK -151; Pinnacle u6.5 -156 (fair 58.7%)"
+"note": "outs mkt 15.1 vs season 17.1 (-2.0); L5 outs 17.6; book u6.5: DK -151; Pinnacle u6.5 -156 (fair 58.7%)"
 },
 {
 "rule": "K-SEASON-ANCHOR UNDER (PS paper)",
-"note": "K mkt 5.99 vs season 7.54 (-1.55); same bet as K-LENGTH if both fire; book: DK -151; Pinnacle u6.5 -156 (fair 58.7%)"
+"note": "K mkt 6.01 vs season 7.54 (-1.53); same bet as K-LENGTH if both fire; book: DK -151; Pinnacle u6.5 -156 (fair 58.7%)"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "K-LENGTH UNDER (PS paper)",
+"why": "Same as K-LENGTH UNDER but logged only in October: the Aug-Sep edge did not hold out of sample in the postseason (1-3 on fills). Base rule: The outs market is 2+ outs under the starter's season average: the market expects a short start, so the K line (which still sits near season) is too high. Fair = market + 5."
+},
+{
+"rule": "K-SEASON-ANCHOR UNDER (PS paper)",
+"why": "Same as K-SEASON-ANCHOR UNDER, October paper. Base rule: The K market mean is 1+ K under the starter's season K per start with the outs market also short: same short-start read from the K side. Fair = market + 5."
+}
+],
 "label": "Tyler Glasnow K u5.5",
 "side": "NO",
 "ticker": "KXMLBKS-26OCT152000MILLAD-LADTGLASNOW31-6",
@@ -820,10 +1188,10 @@
 "model_src": "market + 0",
 "rule_edge": 0,
 "inputs": {
-"outs_mkt": 15.0,
+"outs_mkt": 15.1,
 "outs_season": 17.1,
-"outs_gap": -2.1,
-"k_mkt": 5.99,
+"outs_gap": -2.0,
+"k_mkt": 6.01,
 "k_season": 7.54
 },
 "level": "lead",
@@ -889,8 +1257,8 @@
 ],
 "live": true,
 "first_seen": "2026-10-15T04:38:10.617139+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 4,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 5,
 "notes": [
 {
 "rule": "OCTOBER TB UNDER (lean)",
@@ -934,7 +1302,7 @@
 },
 {
 "rule": "OCTOBER TB UNDER (lean, lower priority)",
-"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: Fanatics -185 (implied 0.649, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: Fanatics -180 (implied 0.643, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
 },
 {
 "rule": "OCTOBER TB UNDER (lean)",
@@ -943,6 +1311,16 @@
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "OCTOBER TB UNDER (lean)",
+"why": "TB 3+ NO. October true rates drop 6 pts every year 2016-25 and Kalshi discounts only ~4.5; fair = NO mid + 2.5. Limit at the mid, one position per game, TB 3+ first."
+},
+{
+"rule": "OCTOBER TB UNDER (lean, lower priority)",
+"why": "TB 2+ NO. Same effect, weaker evidence (selection test p .26 alone); fair = NO mid + 3. Second to TB 3+."
+}
+],
 "label": "Brice Turang: 3+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT152000MILLAD-MILBTURANG2-3",
@@ -960,7 +1338,11 @@
 "no_limit": 0.825,
 "no_fair": 0.85,
 "edge_at_limit": 1.49,
-"note": "limit NO at the mid 0.825; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.825; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Andy Pages: 3+ total bases?",
@@ -969,7 +1351,11 @@
 "no_limit": 0.815,
 "no_fair": 0.84,
 "edge_at_limit": 1.44,
-"note": "limit NO at the mid 0.815; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.815; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "William Contreras: 3+ total bases?",
@@ -978,7 +1364,11 @@
 "no_limit": 0.795,
 "no_fair": 0.82,
 "edge_at_limit": 1.36,
-"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.795; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Freddie Freeman: 3+ total bases?",
@@ -987,7 +1377,11 @@
 "no_limit": 0.785,
 "no_fair": 0.81,
 "edge_at_limit": 1.32,
-"note": "limit NO at the mid 0.785; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.785; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Jackson Chourio: 3+ total bases?",
@@ -996,7 +1390,11 @@
 "no_limit": 0.765,
 "no_fair": 0.79,
 "edge_at_limit": 1.24,
-"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+ [info: opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Shohei Ohtani: 3+ total bases?",
@@ -1005,7 +1403,11 @@
 "no_limit": 0.765,
 "no_fair": 0.79,
 "edge_at_limit": 1.24,
-"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Mookie Betts: 3+ total bases?",
@@ -1014,7 +1416,11 @@
 "no_limit": 0.765,
 "no_fair": 0.79,
 "edge_at_limit": 1.24,
-"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.765; fair = mid + October TB residual (2.5 pts, shrunk 10/14), edge +1.2 after fee; TB 3+ before TB 2+; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": null,
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Brice Turang: 2+ total bases?",
@@ -1023,7 +1429,11 @@
 "no_limit": 0.68,
 "no_fair": 0.71,
 "edge_at_limit": 1.48,
-"note": "limit NO at the mid 0.680; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.680; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.5 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": null,
+"book_odds": null,
+"book_inside_mid": false
 },
 {
 "label": "Shohei Ohtani: 2+ total bases?",
@@ -1032,7 +1442,11 @@
 "no_limit": 0.635,
 "no_fair": 0.665,
 "edge_at_limit": 1.38,
-"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: CZR -190 (implied 0.655, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.635; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: CZR -190 (implied 0.655, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3",
+"book": "CZR",
+"book_odds": -190,
+"book_inside_mid": false
 },
 {
 "label": "William Contreras: 2+ total bases?",
@@ -1041,7 +1455,11 @@
 "no_limit": 0.625,
 "no_fair": 0.655,
 "edge_at_limit": 1.36,
-"note": "limit NO at the mid 0.625; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; book u1.5 TB: CZR -197 (implied 0.663, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.625; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.4 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; book u1.5 TB: CZR -197 (implied 0.663, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": "CZR",
+"book_odds": -197,
+"book_inside_mid": false
 },
 {
 "label": "Jackson Chourio: 2+ total bases?",
@@ -1050,7 +1468,11 @@
 "no_limit": 0.61,
 "no_fair": 0.64,
 "edge_at_limit": 1.33,
-"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; book u1.5 TB: CZR -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)]; vs Tyler Glasnow; book u1.5 TB: CZR -176 (implied 0.638, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3; opp SP K% 33 (high); opp SP BB% 10 (high)",
+"book": "CZR",
+"book_odds": -176,
+"book_inside_mid": false
 },
 {
 "label": "Freddie Freeman: 2+ total bases?",
@@ -1059,7 +1481,11 @@
 "no_limit": 0.61,
 "no_fair": 0.64,
 "edge_at_limit": 1.33,
-"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: Fanatics -185 (implied 0.649, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size"
+"note": "limit NO at the mid 0.610; fair = mid + October TB residual (3.0 pts, shrunk 10/14), edge +1.3 after fee; TB 3+ before TB 2+ [info: hitter xwOBA top3]; book u1.5 TB: Fanatics -180 (implied 0.643, info: book TB unders are ungraded); one game = one small position (0.1-0.15u risk total), spread across hitters; tags never size",
+"tags": "hitter xwOBA top3",
+"book": "Fanatics",
+"book_odds": -180,
+"book_inside_mid": false
 }
 ],
 "level": "lean",
@@ -1132,6 +1558,12 @@
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "K-SEASON-ANCHOR UNDER (PS paper)",
+"why": "Same as K-SEASON-ANCHOR UNDER, October paper. Base rule: The K market mean is 1+ K under the starter's season K per start with the outs market also short: same short-start read from the K side. Fair = market + 5."
+}
+],
 "label": "Griffin Jax K u1.5",
 "side": "NO",
 "ticker": "KXMLBKS-26OCT151800TBCLE-TBGJAX22-2",
@@ -1177,25 +1609,31 @@
 ],
 "live": true,
 "first_seen": "2026-10-15T13:49:00.925197+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 2,
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 3,
 "notes": [
 {
 "rule": "WALKS OVER (lead)",
-"note": "season BB% 8.7; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); bet only at or better than Kalshi mid 0.535 + 4 pts = fair about 0.575; Kalshi 0.42/0.65; book o1.5: -; -"
+"note": "season BB% 8.7; edge concentrates in BB% >= 8.5 (market prices walks too flat across pitchers); bet only at or better than Kalshi mid 0.655 + 4 pts = fair about 0.695; Kalshi 0.46/0.85; book o1.5: -; -"
 }
 ],
 "badges": [],
 "started": false,
+"why": [
+{
+"rule": "WALKS OVER (lead)",
+"why": "Starter season BB% >= 8.5%: the walks market prices walks too flat across pitchers; overs on high-BB starters ran above the mid. Fair = Kalshi mid + 4."
+}
+],
 "label": "Tyler Glasnow walks o1.5",
 "side": "YES",
 "ticker": "KXMLBWA-26OCT152000MILLAD-LADTGLASNOW31-2",
 "pitcher": "Tyler Glasnow",
-"kalshi_px": 0.65,
+"kalshi_px": 0.69,
 "first_px": 0.74,
-"market": 0.535,
+"market": 0.655,
 "market_src": "Kalshi mid",
-"model": 0.5750000000000001,
+"model": 0.6950000000000001,
 "model_src": "Kalshi mid + 4",
 "inputs": {
 "bb_pct": 8.7
@@ -1218,30 +1656,207 @@
 "ticker": "KXMLBWA-26OCT152000MILLAD-LADTGLASNOW31-2",
 "level": "lean",
 "size": "\u00bc unit",
-"model": 0.5750000000000001,
+"model": 0.6950000000000001,
 "model_src": "Kalshi mid + 4",
-"market": 0.535,
+"market": 0.655,
 "market_src": "Kalshi mid",
-"kalshi_px": 0.65,
+"kalshi_px": 0.69,
 "first_seen": "2026-10-15T13:49:00.925197+00:00",
 "price_src": "live",
-"kalshi_mid_side": 0.575,
-"kalshi_cost": 0.6659,
-"kalshi_am": -199,
-"edge": -9.09,
-"edge_mkt": -13.09,
-"target_am": -125,
-"target_kalshi_cents": 53
+"kalshi_mid_side": 0.615,
+"kalshi_cost": 0.705,
+"kalshi_am": -239,
+"edge": -1.0,
+"edge_mkt": -5.0,
+"target_am": -208,
+"target_kalshi_cents": 65
 }
 ],
 "price_src": "live",
-"kalshi_mid_side": 0.575,
-"kalshi_cost": 0.6659,
-"kalshi_am": -199,
-"edge": -9.09,
-"edge_mkt": -13.09,
-"target_am": -125,
-"target_kalshi_cents": 53
+"kalshi_mid_side": 0.615,
+"kalshi_cost": 0.705,
+"kalshi_am": -239,
+"edge": -1.0,
+"edge_mkt": -5.0,
+"target_am": -208,
+"target_kalshi_cents": 65
+},
+{
+"key": "26OCT151800TBCLE|HIT",
+"cat": "HIT",
+"game": "TB @ CLE",
+"event": "26OCT151800TBCLE",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 3,
+"rules": [
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"live": true,
+"first_seen": "2026-10-15T14:52:22.006904+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 2,
+"notes": [
+{
+"rule": "PS SUB-RISK (info)",
+"note": "platoon-start LHB vs Gavin Williams (R); RS PH-for 4%, slot-sub vs RHP 0% (124 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.435 vs best CZR +108 (u0.5 TB), edge -4.6. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "regular vs Griffin Jax (R); RS PH-for 1%, slot-sub vs RHP 0% (123 starts); lifted 0 of 7 Oct starts; fair P(0 H) 0.415 vs best DK +162 (u0.5 H), edge +3.3. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK (info)",
+"note": "part-timer vs Griffin Jax (R); RS PH-for 10%, slot-sub vs RHP 0% (92 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.494 vs best DK +101 (u0.5 H), edge -0.4. One game = one position; small size"
+},
+{
+"rule": "PS SUB-RISK HIT UNDER (lean)",
+"note": "platoon-start LHB vs Griffin Jax (R); RS PH-for 6%, slot-sub vs RHP 0% (48 starts); lifted 2 of 3 Oct starts; fair P(0 H) 0.622 vs best DK -106 (u0.5 H), edge +10.8. One game = one position; small size"
+}
+],
+"badges": [],
+"started": false,
+"why": [
+{
+"rule": "PS SUB-RISK HIT UNDER (lean)",
+"why": "Pinch-hit risk v2 (7,233 PS starters 2016-26): a part-timer starting because he has the platoon edge on the starter gets lifted late for the platoon reliever; P(0 hits) runs 6 to 10 pts above the naive fair, more if he has been lifted already this October. Lean when the best book is 3+ pts over fair."
+},
+{
+"rule": "PS SUB-RISK (info)",
+"why": "Same model, below the lean bar or a regular: shown so the whole lineup's lift risk is visible."
+}
+],
+"label": "Hitter unders",
+"side": "NO",
+"oct_rungs": [],
+"subs": [
+{
+"rule": "PS SUB-RISK HIT UNDER (lean)",
+"label": "Petey Halpin under 0.5 hits",
+"model": 0.622,
+"lean": true,
+"book": "DK",
+"book_odds": -106,
+"book_mkt": "H",
+"ph_pct": 6,
+"starts": 48,
+"profile": "platoon-start LHB",
+"opp_sp": "Griffin Jax",
+"opp_hand": "R",
+"opener": false,
+"oct_lifted": 2,
+"oct_starts": 3,
+"slot_sub_hand": "RHP",
+"slot_sub_pct": 0,
+"note": "platoon-start LHB vs Griffin Jax (R); RS PH-for 6%, slot-sub vs RHP 0% (48 starts); lifted 2 of 3 Oct starts; fair P(0 H) 0.622 vs best DK -106 (u0.5 H), edge +10.8. One game = one position; small size",
+"edge": 10.74,
+"target_am": -151,
+"position": true
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Jos\u00e9 Ram\u00edrez under 0.5 hits",
+"model": 0.415,
+"lean": false,
+"book": "DK",
+"book_odds": 162,
+"book_mkt": "H",
+"ph_pct": 1,
+"starts": 123,
+"profile": "regular",
+"opp_sp": "Griffin Jax",
+"opp_hand": "R",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 7,
+"slot_sub_hand": "RHP",
+"slot_sub_pct": 0,
+"note": "regular vs Griffin Jax (R); RS PH-for 1%, slot-sub vs RHP 0% (123 starts); lifted 0 of 7 Oct starts; fair P(0 H) 0.415 vs best DK +162 (u0.5 H), edge +3.3. One game = one position; small size",
+"edge": 3.33,
+"target_am": 153
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Patrick Bailey under 0.5 hits",
+"model": 0.494,
+"lean": false,
+"book": "DK",
+"book_odds": 101,
+"book_mkt": "H",
+"ph_pct": 10,
+"starts": 92,
+"profile": "part-timer",
+"opp_sp": "Griffin Jax",
+"opp_hand": "R",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 4,
+"slot_sub_hand": "RHP",
+"slot_sub_pct": 0,
+"note": "part-timer vs Griffin Jax (R); RS PH-for 10%, slot-sub vs RHP 0% (92 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.494 vs best DK +101 (u0.5 H), edge -0.4. One game = one position; small size",
+"edge": -0.35,
+"target_am": 111
+},
+{
+"rule": "PS SUB-RISK (info)",
+"label": "Liam Hicks under 0.5 hits",
+"model": 0.435,
+"lean": false,
+"book": "CZR",
+"book_odds": 108,
+"book_mkt": "TB",
+"ph_pct": 4,
+"starts": 124,
+"profile": "platoon-start LHB",
+"opp_sp": "Gavin Williams",
+"opp_hand": "R",
+"opener": false,
+"oct_lifted": 0,
+"oct_starts": 4,
+"slot_sub_hand": "RHP",
+"slot_sub_pct": 0,
+"note": "platoon-start LHB vs Gavin Williams (R); RS PH-for 4%, slot-sub vs RHP 0% (124 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.435 vs best CZR +108 (u0.5 TB), edge -4.6. One game = one position; small size",
+"edge": -4.58,
+"target_am": 141
+}
+],
+"level": "lean",
+"size": "small, spread (cap the game)",
+"panel": "D",
+"positions": [
+{
+"key": "26OCT151800TBCLE|HIT|Petey Halpin under 0.5 hits",
+"cat": "HIT",
+"game": "TB @ CLE",
+"event": "26OCT151800TBCLE",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"rules": [
+"PS SUB-RISK HIT UNDER (lean)",
+"PS SUB-RISK (info)"
+],
+"label": "Petey Halpin under 0.5 hits",
+"side": "UNDER",
+"level": "lean",
+"size": "small, spread (cap the game)",
+"model": 0.622,
+"book": "DK",
+"book_odds": -106,
+"first_seen": "2026-10-15T14:52:22.006904+00:00",
+"price_src": "scan",
+"kalshi_cost": null,
+"kalshi_am": null,
+"edge": null,
+"edge_mkt": null,
+"book_edge": 10.74,
+"book_edge_mkt": null,
+"best_venue": "book",
+"target_am": -151,
+"target_kalshi_cents": 58
+}
+]
 },
 {
 "key": "26OCT152000MILLAD|OCTOBER F5 UNDER (paper)|26OCT152000MILLAD F5 u4.5",
@@ -1257,19 +1872,25 @@
 "OCTOBER F5 UNDER (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "OCTOBER F5 UNDER (paper)",
-"note": "limit NO at the mid 0.540; full-game fair total 7.67 -> F5 mean 4.39, P(over) 0.418 vs mid 0.460; PS F5 >= 5 runs .430 (2016-25) vs the market's .51; edge +2.5 after fee; one per game"
+"note": "limit NO at the mid 0.540; full-game fair total 7.62 -> F5 mean 4.36, P(over) 0.414 vs mid 0.460; PS F5 >= 5 runs .430 (2016-25) vs the market's .51; edge +2.9 after fee; one per game"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "OCTOBER F5 UNDER (paper)",
+"why": "October F5 scoring drops half a run (P(F5>=5) .43 vs .51) while the F5 market sits at regular-season level. NO on 5+/6+ when the 0.573 x total model is 3+ pts under the mid. Paper."
+}
+],
 "label": "26OCT152000MILLAD F5 u4.5",
 "side": "NO",
 "ticker": "KXMLBF5TOTAL-26OCT152000MILLAD-5",
@@ -1300,19 +1921,25 @@
 "OCTOBER F5 UNDER (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "OCTOBER F5 UNDER (paper)",
-"note": "limit NO at the mid 0.665; full-game fair total 7.67 -> F5 mean 4.39, P(over) 0.301 vs mid 0.335; PS F5 >= 5 runs .430 (2016-25) vs the market's .51; edge +1.8 after fee; one per game"
+"note": "limit NO at the mid 0.665; full-game fair total 7.62 -> F5 mean 4.36, P(over) 0.298 vs mid 0.335; PS F5 >= 5 runs .430 (2016-25) vs the market's .51; edge +2.1 after fee; one per game"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "OCTOBER F5 UNDER (paper)",
+"why": "October F5 scoring drops half a run (P(F5>=5) .43 vs .51) while the F5 market sits at regular-season level. NO on 5+/6+ when the 0.573 x total model is 3+ pts under the mid. Paper."
+}
+],
 "label": "26OCT152000MILLAD F5 u5.5",
 "side": "NO",
 "ticker": "KXMLBF5TOTAL-26OCT152000MILLAD-6",
@@ -1343,8 +1970,8 @@
 "OCTOBER F7 TIE NO (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1356,6 +1983,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "OCTOBER F7 TIE NO (paper)",
+"why": "First-7 ties run .083 in October vs .109 RS; the market prices ~.12. Fair = NO + 3. Paper."
+}
+],
 "label": "first 7 innings tie",
 "side": "NO",
 "ticker": "KXMLBF7-26OCT152000MILLAD-TIE",
@@ -1386,8 +2019,8 @@
 "OCTOBER F7 TIE NO (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -1399,6 +2032,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "OCTOBER F7 TIE NO (paper)",
+"why": "First-7 ties run .083 in October vs .109 RS; the market prices ~.12. Fair = NO + 3. Paper."
+}
+],
 "label": "first 7 innings tie",
 "side": "NO",
 "ticker": "KXMLBF7-26OCT151800TBCLE-TIE",
@@ -1416,6 +2055,104 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT152000MILLAD|DEPTH IMBALANCE (ungraded)|Tyler Glasnow: 8+ strikeouts?",
+"cat": "INFO",
+"game": "MIL @ LAD",
+"event": "26OCT152000MILLAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away": "MIL",
+"home": "LAD",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $491 vs NO bids $7,749; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Tyler Glasnow: 8+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT152000MILLAD-LADTGLASNOW31-8",
+"kalshi_px": 0.73,
+"first_px": 0.275,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.725,
+"kalshi_cost": 0.7438,
+"kalshi_am": -290,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT152000MILLAD|DEPTH IMBALANCE (ungraded)|Tyler Glasnow: 5+ strikeouts?",
+"cat": "INFO",
+"game": "MIL @ LAD",
+"event": "26OCT152000MILLAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away": "MIL",
+"home": "LAD",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $1,250 vs NO bids $99; heavier bidders YES; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Tyler Glasnow: 5+ strikeouts?",
+"side": "YES",
+"ticker": "KXMLBKS-26OCT152000MILLAD-LADTGLASNOW31-5",
+"kalshi_px": 0.72,
+"first_px": 0.715,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.715,
+"kalshi_cost": 0.7341,
+"kalshi_am": -276,
+"edge": null,
+"edge_mkt": null
+},
+{
 "key": "26OCT151800TBCLE|DEPTH IMBALANCE (ungraded)|Griffin Jax: 5+ strikeouts?",
 "cat": "INFO",
 "game": "TB @ CLE",
@@ -1429,32 +2166,38 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $184 vs NO bids $16,559; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $141 vs NO bids $17,648; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "Griffin Jax: 5+ strikeouts?",
 "side": "NO",
 "ticker": "KXMLBKS-26OCT151800TBCLE-TBGJAX22-5",
-"kalshi_px": 0.69,
+"kalshi_px": 0.7,
 "first_px": 0.315,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.685,
-"kalshi_cost": 0.705,
-"kalshi_am": -239,
+"kalshi_mid_side": 0.6950000000000001,
+"kalshi_cost": 0.7147,
+"kalshi_am": -251,
 "edge": null,
 "edge_mkt": null
 },
@@ -1472,19 +2215,25 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "BIG TRADES (no backtested edge)",
-"note": "1 prints $1k+ since listing: YES $1,363 / NO $0"
+"note": "2 prints $1k+ since listing: YES $3,323 / NO $0"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "BIG TRADES (no backtested edge)",
+"why": "Large prints; informational, no edge (RFI NO flow is normal retail)."
+}
+],
 "label": "Gavin Williams: 7+ strikeouts?",
 "side": "YES",
 "ticker": "KXMLBKS-26OCT151800TBCLE-CLEGWILLIAMS32-7",
@@ -1515,118 +2264,38 @@
 "PRICE MOVE"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "PRICE MOVE",
-"note": "0.635 -> 0.535 since last scan; new taker $ YES 0 / NO 0"
+"note": "0.535 -> 0.655 since last scan; new taker $ YES 0 / NO 0; 12+ pt jumps partly reverse (limit fade only)"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "PRICE MOVE",
+"why": "Mid moved 5+ pts since the last scan; informational."
+}
+],
 "label": "Tyler Glasnow: 2+ walks allowed?",
 "side": "-",
 "ticker": "KXMLBWA-26OCT152000MILLAD-LADTGLASNOW31-2",
-"kalshi_px": 0.65,
-"first_px": 0.535,
+"kalshi_px": 0.69,
+"first_px": 0.655,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.575,
-"kalshi_cost": 0.6659,
-"kalshi_am": -199,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT151800TBCLE|DEPTH IMBALANCE (ungraded)|Gavin Williams: 2+ walks allowed?",
-"cat": "INFO",
-"game": "TB @ CLE",
-"event": "26OCT151800TBCLE",
-"date": "2026-10-15",
-"first_pitch": "2026-10-15T13:00:00-04:00",
-"away": "TB",
-"home": "CLE",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $525 vs NO bids $112; heavier bidders YES; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Gavin Williams: 2+ walks allowed?",
-"side": "YES",
-"ticker": "KXMLBWA-26OCT151800TBCLE-CLEGWILLIAMS32-2",
-"kalshi_px": 0.54,
-"first_px": 0.51,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.505,
-"kalshi_cost": 0.5574,
-"kalshi_am": -126,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT151800TBCLE|PRICE MOVE|Gavin Williams: 1+ walks allowed?",
-"cat": "INFO",
-"game": "TB @ CLE",
-"event": "26OCT151800TBCLE",
-"date": "2026-10-15",
-"first_pitch": "2026-10-15T13:00:00-04:00",
-"away": "TB",
-"home": "CLE",
-"tier": 4,
-"rules": [
-"PRICE MOVE"
-],
-"live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "PRICE MOVE",
-"note": "0.475 -> 0.810 since last scan; new taker $ YES 0 / NO 0; 12+ pt jumps partly reverse (limit fade only)"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "Gavin Williams: 1+ walks allowed?",
-"side": "-",
-"ticker": "KXMLBWA-26OCT151800TBCLE-CLEGWILLIAMS32-1",
-"kalshi_px": 0.88,
-"first_px": 0.81,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.81,
-"kalshi_cost": 0.8874,
-"kalshi_am": -788,
+"kalshi_mid_side": 0.615,
+"kalshi_cost": 0.705,
+"kalshi_am": -239,
 "edge": null,
 "edge_mkt": null
 },
@@ -1644,19 +2313,25 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $513 vs NO bids $9,272; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $512 vs NO bids $9,290; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "1st inning: Over 0.5 runs",
 "side": "NO",
 "ticker": "KXMLBRFI-26OCT161800TBCLE",
@@ -1687,19 +2362,25 @@
 "BIG TRADES (no backtested edge)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "BIG TRADES (no backtested edge)",
-"note": "5 prints $1k+ since listing: YES $1,075 / NO $25,343; RFI NO size is normal retail flow (74% of RFI money is NRFI, YRFI realizes +2 pts over price)"
+"note": "9 prints $1k+ since listing: YES $1,075 / NO $36,111; RFI NO size is normal retail flow (74% of RFI money is NRFI, YRFI realizes +2 pts over price)"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "BIG TRADES (no backtested edge)",
+"why": "Large prints; informational, no edge (RFI NO flow is normal retail)."
+}
+],
 "label": "1st inning: Over 0.5 runs",
 "side": "NO",
 "ticker": "KXMLBRFI-26OCT151800TBCLE",
@@ -1717,6 +2398,104 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT152100MILLAD|BIG TRADES (no backtested edge)|1st inning: Over 0.5 runs",
+"cat": "INFO",
+"game": "MIL @ LAD",
+"event": "26OCT152100MILLAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away": "MIL",
+"home": "LAD",
+"tier": 4,
+"rules": [
+"BIG TRADES (no backtested edge)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "BIG TRADES (no backtested edge)",
+"note": "1 prints $1k+ since listing: YES $2,155 / NO $0; RFI NO size is normal retail flow (74% of RFI money is NRFI, YRFI realizes +2 pts over price)"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "BIG TRADES (no backtested edge)",
+"why": "Large prints; informational, no edge (RFI NO flow is normal retail)."
+}
+],
+"label": "1st inning: Over 0.5 runs",
+"side": "YES",
+"ticker": "KXMLBRFI-26OCT152100MILLAD",
+"kalshi_px": 0.45,
+"first_px": 0.445,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.445,
+"kalshi_cost": 0.4673,
+"kalshi_am": 114,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT152000MILLAD|DEPTH IMBALANCE (ungraded)|Over 10.5 runs scored",
+"cat": "INFO",
+"game": "MIL @ LAD",
+"event": "26OCT152000MILLAD",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T20:00:00-04:00",
+"away": "MIL",
+"home": "LAD",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $8,936 vs NO bids $41,430; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 10.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT152000MILLAD-11",
+"kalshi_px": 0.75,
+"first_px": 0.26,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.74,
+"kalshi_cost": 0.7631,
+"kalshi_am": -322,
+"edge": null,
+"edge_mkt": null
+},
+{
 "key": "26OCT151800TBCLE|DEPTH IMBALANCE (ungraded)|Over 4.5 runs scored",
 "cat": "INFO",
 "game": "TB @ CLE",
@@ -1730,19 +2509,25 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $129,738 vs NO bids $34,143; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $66,775 vs NO bids $22,153; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "Over 4.5 runs scored",
 "side": "YES",
 "ticker": "KXMLBTOTAL-26OCT151800TBCLE-5",
@@ -1773,19 +2558,25 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $17,981 vs NO bids $87,435; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $18,618 vs NO bids $83,396; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "Over 9.5 runs scored",
 "side": "NO",
 "ticker": "KXMLBTOTAL-26OCT151800TBCLE-10",
@@ -1816,19 +2607,25 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $840 vs NO bids $2,822; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $839 vs NO bids $2,834; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "First 5 innings: Over 6.5 runs",
 "side": "NO",
 "ticker": "KXMLBF5TOTAL-26OCT152000MILLAD-7",
@@ -1846,49 +2643,6 @@
 "edge_mkt": null
 },
 {
-"key": "26OCT152000MILLAD|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 4.5 runs",
-"cat": "INFO",
-"game": "MIL @ LAD",
-"event": "26OCT152000MILLAD",
-"date": "2026-10-15",
-"first_pitch": "2026-10-15T20:00:00-04:00",
-"away": "MIL",
-"home": "LAD",
-"tier": 4,
-"rules": [
-"DEPTH IMBALANCE (ungraded)"
-],
-"live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $12,074 vs NO bids $40,564; heavier bidders NO; logged for grading"
-}
-],
-"badges": [
-"no backtested edge"
-],
-"started": false,
-"label": "First 5 innings: Over 4.5 runs",
-"side": "NO",
-"ticker": "KXMLBF5TOTAL-26OCT152000MILLAD-5",
-"kalshi_px": 0.55,
-"first_px": 0.46,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.54,
-"kalshi_cost": 0.5673,
-"kalshi_am": -131,
-"edge": null,
-"edge_mkt": null
-},
-{
 "key": "26OCT151800TBCLE|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 5.5 runs",
 "cat": "INFO",
 "game": "TB @ CLE",
@@ -1902,32 +2656,38 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $1,358 vs NO bids $7,537; heavier bidders NO; logged for grading"
+"note": "resting within 3c: YES bids $1,197 vs NO bids $16,902; heavier bidders NO; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "First 5 innings: Over 5.5 runs",
 "side": "NO",
 "ticker": "KXMLBF5TOTAL-26OCT151800TBCLE-6",
-"kalshi_px": 0.78,
-"first_px": 0.225,
+"kalshi_px": 0.77,
+"first_px": 0.235,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.775,
-"kalshi_cost": 0.792,
-"kalshi_am": -381,
+"kalshi_mid_side": 0.765,
+"kalshi_cost": 0.7824,
+"kalshi_am": -360,
 "edge": null,
 "edge_mkt": null
 },
@@ -1945,19 +2705,25 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $17,633 vs NO bids $5,033; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $24,686 vs NO bids $7,870; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "First 5 innings: Over 2.5 runs",
 "side": "YES",
 "ticker": "KXMLBF5TOTAL-26OCT151800TBCLE-3",
@@ -1988,189 +2754,89 @@
 "DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "DEPTH IMBALANCE (ungraded)",
-"note": "resting within 3c: YES bids $5,078 vs NO bids $1,417; heavier bidders YES; logged for grading"
+"note": "resting within 3c: YES bids $10,848 vs NO bids $1,667; heavier bidders YES; logged for grading"
 }
 ],
 "badges": [
 "no backtested edge"
 ],
 "started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
 "label": "First 5 innings: Over 1.5 runs",
 "side": "YES",
 "ticker": "KXMLBF5TOTAL-26OCT151800TBCLE-2",
-"kalshi_px": 0.79,
-"first_px": 0.785,
+"kalshi_px": 0.78,
+"first_px": 0.775,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.785,
-"kalshi_cost": 0.8016,
-"kalshi_am": -404,
+"kalshi_mid_side": 0.775,
+"kalshi_cost": 0.792,
+"kalshi_am": -381,
 "edge": null,
 "edge_mkt": null
 },
 {
-"key": "26OCT151800TBCLE|HIT",
-"cat": "HIT",
+"key": "26OCT151800TBCLE|DEPTH IMBALANCE (ungraded)|Tampa Bay first 7 innings winner",
+"cat": "INFO",
 "game": "TB @ CLE",
 "event": "26OCT151800TBCLE",
 "date": "2026-10-15",
 "first_pitch": "2026-10-15T13:00:00-04:00",
 "away": "TB",
 "home": "CLE",
-"tier": 3,
+"tier": 4,
 "rules": [
-"PS SUB-RISK HIT UNDER (lean)",
-"PS SUB-RISK (info)"
+"DEPTH IMBALANCE (ungraded)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
-"rule": "PS SUB-RISK (info)",
-"note": "platoon-start LHB vs Gavin Williams (R); RS PH-for 4%, slot-sub vs RHP 0% (124 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.435 vs best CZR +108 (u0.5 TB), edge -4.6. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK (info)",
-"note": "regular vs Griffin Jax (R); RS PH-for 1%, slot-sub vs RHP 0% (123 starts); lifted 0 of 7 Oct starts; fair P(0 H) 0.415 vs best DK +162 (u0.5 H), edge +3.3. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK (info)",
-"note": "part-timer vs Griffin Jax (R); RS PH-for 10%, slot-sub vs RHP 0% (92 starts); lifted 0 of 4 Oct starts; fair P(0 H) 0.494 vs best DK +101 (u0.5 H), edge -0.4. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK HIT UNDER (lean)",
-"note": "platoon-start LHB vs Griffin Jax (R); RS PH-for 6%, slot-sub vs RHP 0% (48 starts); lifted 2 of 3 Oct starts; fair P(0 H) 0.622 vs best CZR -104 (u0.5 TB), edge +11.3. One game = one position; small size"
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $2,576 vs NO bids $650; heavier bidders YES; logged for grading"
 }
 ],
-"badges": [],
+"badges": [
+"no backtested edge"
+],
 "started": false,
-"label": "Hitter unders",
-"side": "NO",
-"oct_rungs": [],
-"subs": [
+"why": [
 {
-"rule": "PS SUB-RISK HIT UNDER (lean)",
-"label": "Petey Halpin under 0.5 hits",
-"model": 0.622,
-"lean": true,
-"book": "CZR",
-"book_odds": -104,
-"book_mkt": "TB",
-"ph_pct": 6,
-"starts": 48,
-"profile": "platoon-start LHB",
-"opp_sp": "Griffin Jax",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 2,
-"oct_starts": 3,
-"edge": 11.22,
-"target_am": -151,
-"position": true
-},
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Jos\u00e9 Ram\u00edrez under 0.5 hits",
-"model": 0.415,
-"lean": false,
-"book": "DK",
-"book_odds": 162,
-"book_mkt": "H",
-"ph_pct": 1,
-"starts": 123,
-"profile": "regular",
-"opp_sp": "Griffin Jax",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 0,
-"oct_starts": 7,
-"edge": 3.33,
-"target_am": 153
-},
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Patrick Bailey under 0.5 hits",
-"model": 0.494,
-"lean": false,
-"book": "DK",
-"book_odds": 101,
-"book_mkt": "H",
-"ph_pct": 10,
-"starts": 92,
-"profile": "part-timer",
-"opp_sp": "Griffin Jax",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 0,
-"oct_starts": 4,
-"edge": -0.35,
-"target_am": 111
-},
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Liam Hicks under 0.5 hits",
-"model": 0.435,
-"lean": false,
-"book": "CZR",
-"book_odds": 108,
-"book_mkt": "TB",
-"ph_pct": 4,
-"starts": 124,
-"profile": "platoon-start LHB",
-"opp_sp": "Gavin Williams",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 0,
-"oct_starts": 4,
-"edge": -4.58,
-"target_am": 141
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
 }
 ],
-"level": "lean",
-"size": "small, spread (cap the game)",
-"panel": "D",
-"positions": [
-{
-"key": "26OCT151800TBCLE|HIT|Petey Halpin under 0.5 hits",
-"cat": "HIT",
-"game": "TB @ CLE",
-"event": "26OCT151800TBCLE",
-"first_pitch": "2026-10-15T13:00:00-04:00",
-"rules": [
-"PS SUB-RISK HIT UNDER (lean)",
-"PS SUB-RISK (info)"
-],
-"label": "Petey Halpin under 0.5 hits",
-"side": "UNDER",
-"level": "lean",
-"size": "small, spread (cap the game)",
-"model": 0.622,
-"book": "CZR",
-"book_odds": -104,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"price_src": "scan",
-"kalshi_cost": null,
-"kalshi_am": null,
+"label": "Tampa Bay first 7 innings winner",
+"side": "YES",
+"ticker": "KXMLBF7-26OCT151800TBCLE-TB",
+"kalshi_px": 0.37,
+"first_px": 0.365,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.365,
+"kalshi_cost": 0.3863,
+"kalshi_am": 159,
 "edge": null,
-"edge_mkt": null,
-"book_edge": 11.22,
-"book_edge_mkt": null,
-"best_venue": "book",
-"target_am": -151,
-"target_kalshi_cents": 58
-}
-]
+"edge_mkt": null
 },
 {
 "key": "26OCT151800TBCLE|HITTER UNDER vs SP (paper)|Victor Mesa Jr.: 1+ hits?",
@@ -2186,8 +2852,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2199,6 +2865,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Victor Mesa Jr.: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151300TBCLE-TBVMESA25-1",
@@ -2229,32 +2901,38 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.585, edge +5.4 after fee"
+"note": "[rung HIT1+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.575, edge +5.4 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Taylor Walls: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151300TBCLE-TBTWALLS6-1",
-"kalshi_px": 0.5900000000000001,
-"first_px": 0.585,
+"kalshi_px": 0.5800000000000001,
+"first_px": 0.575,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.585,
-"kalshi_cost": 0.6069,
-"kalshi_am": -154,
+"kalshi_mid_side": 0.575,
+"kalshi_cost": 0.5971,
+"kalshi_am": -148,
 "edge": null,
 "edge_mkt": null
 },
@@ -2272,30 +2950,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.505, edge +5.3 after fee"
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.515, edge +5.3 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Richie Palacios: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151300TBCLE-TBRPALACIOS1-1",
 "kalshi_px": 0.52,
-"first_px": 0.505,
+"first_px": 0.515,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.505,
+"kalshi_mid_side": 0.515,
 "kalshi_cost": 0.5375,
 "kalshi_am": -116,
 "edge": null,
@@ -2315,8 +2999,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2328,6 +3012,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Liam Hicks: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151300TBCLE-TBLHICKS34-1",
@@ -2358,75 +3048,38 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.345, edge +5.1 after fee"
+"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.340, edge +5.1 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Chandler Simpson: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151300TBCLE-TBCSIMPSON14-1",
 "kalshi_px": 0.35,
-"first_px": 0.345,
+"first_px": 0.34,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.345,
+"kalshi_mid_side": 0.33999999999999997,
 "kalshi_cost": 0.3659,
 "kalshi_am": 173,
-"edge": null,
-"edge_mkt": null
-},
-{
-"key": "26OCT152000MILLAD|HITTER UNDER vs SP (paper)|Brice Turang: 1+ hits?",
-"cat": "INFO",
-"game": "MIL @ LAD",
-"event": "26OCT152000MILLAD",
-"date": "2026-10-15",
-"first_pitch": "2026-10-15T20:00:00-04:00",
-"away": "MIL",
-"home": "LAD",
-"tier": 4,
-"rules": [
-"HITTER UNDER vs SP (paper)"
-],
-"live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
-"n_scans": 1,
-"notes": [
-{
-"rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HIT1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.0 pts (opp SP K% 33.4, CSW 32.4; hitter L10 xwOBA -0.014 vs season, L10 barrel 6.7%) + October -3; NO limit at mid 0.410, edge +4.3 after fee"
-}
-],
-"badges": [
-"paper: log only"
-],
-"started": false,
-"label": "Brice Turang: 1+ hits?",
-"side": "NO",
-"ticker": "KXMLBHIT-26OCT152000MILLAD-MILBTURANG2-1",
-"kalshi_px": 0.42000000000000004,
-"first_px": 0.41,
-"level": "info",
-"size": "none",
-"panel": "E",
-"positions": [],
-"price_src": "live",
-"kalshi_mid_side": 0.41000000000000003,
-"kalshi_cost": 0.4371,
-"kalshi_am": 129,
 "edge": null,
 "edge_mkt": null
 },
@@ -2444,8 +3097,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2457,6 +3110,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Yandy D\u00edaz: 1+ hits?",
 "side": "NO",
 "ticker": "KXMLBHIT-26OCT151800TBCLE-TBYDIAZ2-1",
@@ -2474,6 +3133,55 @@
 "edge_mkt": null
 },
 {
+"key": "26OCT151800TBCLE|HITTER UNDER vs SP (paper)|Victor Mesa Jr.: 3+ total bases?",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT151800TBCLE",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"HITTER UNDER vs SP (paper)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.049 vs season, L10 barrel 3.8%) + October -3; NO limit at mid 0.795, edge +5.8 after fee"
+}
+],
+"badges": [
+"paper: log only"
+],
+"started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
+"label": "Victor Mesa Jr.: 3+ total bases?",
+"side": "NO",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBVMESA25-3",
+"kalshi_px": 0.8200000000000001,
+"first_px": 0.795,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.8,
+"kalshi_cost": 0.8303,
+"kalshi_am": -489,
+"edge": null,
+"edge_mkt": null
+},
+{
 "key": "26OCT151800TBCLE|HITTER UNDER vs SP (paper)|Victor Mesa Jr.: 2+ total bases?",
 "cat": "INFO",
 "game": "TB @ CLE",
@@ -2487,32 +3195,87 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.049 vs season, L10 barrel 3.8%) + October -3; NO limit at mid 0.680, edge +5.4 after fee"
+"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.9 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.049 vs season, L10 barrel 3.8%) + October -3; NO limit at mid 0.675, edge +5.4 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Victor Mesa Jr.: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBVMESA25-2",
-"kalshi_px": 0.69,
-"first_px": 0.68,
+"kalshi_px": 0.6799999999999999,
+"first_px": 0.675,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.6799999999999999,
-"kalshi_cost": 0.705,
-"kalshi_am": -239,
+"kalshi_mid_side": 0.675,
+"kalshi_cost": 0.6952,
+"kalshi_am": -228,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT151800TBCLE|HITTER UNDER vs SP (paper)|Taylor Walls: 3+ total bases?",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT151800TBCLE",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"HITTER UNDER vs SP (paper)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung TB3+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.905, edge +6.5 after fee"
+}
+],
+"badges": [
+"paper: log only"
+],
+"started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
+"label": "Taylor Walls: 3+ total bases?",
+"side": "NO",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-3",
+"kalshi_px": 0.92,
+"first_px": 0.905,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.905,
+"kalshi_cost": 0.9252,
+"kalshi_am": -1236,
 "edge": null,
 "edge_mkt": null
 },
@@ -2530,30 +3293,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB2+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.800, edge +6.0 after fee"
+"note": "[rung TB2+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.805, edge +6.0 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Taylor Walls: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBTWALLS6-2",
 "kalshi_px": 0.81,
-"first_px": 0.8,
+"first_px": 0.805,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.8,
+"kalshi_mid_side": 0.8049999999999999,
 "kalshi_cost": 0.8208,
 "kalshi_am": -458,
 "edge": null,
@@ -2573,32 +3342,87 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.770, edge +5.8 after fee"
+"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.765, edge +5.8 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Richie Palacios: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBRPALACIOS1-2",
 "kalshi_px": 0.78,
-"first_px": 0.77,
+"first_px": 0.765,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.77,
+"kalshi_mid_side": 0.765,
 "kalshi_cost": 0.792,
 "kalshi_am": -381,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT151800TBCLE|HITTER UNDER vs SP (paper)|Liam Hicks: 3+ total bases?",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT151800TBCLE",
+"date": "2026-10-15",
+"first_pitch": "2026-10-15T13:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"HITTER UNDER vs SP (paper)"
+],
+"live": true,
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA +0.003 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.865, edge +5.4 after fee"
+}
+],
+"badges": [
+"paper: log only"
+],
+"started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
+"label": "Liam Hicks: 3+ total bases?",
+"side": "NO",
+"ticker": "KXMLBTB-26OCT151300TBCLE-TBLHICKS34-3",
+"kalshi_px": 0.88,
+"first_px": 0.865,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.865,
+"kalshi_cost": 0.8874,
+"kalshi_am": -788,
 "edge": null,
 "edge_mkt": null
 },
@@ -2616,30 +3440,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA +0.003 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.715, edge +4.8 after fee"
+"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.2 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA +0.003 vs season, L10 barrel 3.3%) + October -3; NO limit at mid 0.720, edge +4.8 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Liam Hicks: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBLHICKS34-2",
 "kalshi_px": 0.73,
-"first_px": 0.715,
+"first_px": 0.72,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.715,
+"kalshi_mid_side": 0.72,
 "kalshi_cost": 0.7438,
 "kalshi_am": -290,
 "edge": null,
@@ -2659,30 +3489,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.855, edge +5.8 after fee"
+"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.860, edge +5.8 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Chandler Simpson: 3+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBCSIMPSON14-3",
 "kalshi_px": 0.87,
-"first_px": 0.855,
+"first_px": 0.86,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.855,
+"kalshi_mid_side": 0.86,
 "kalshi_cost": 0.8779,
 "kalshi_am": -719,
 "edge": null,
@@ -2702,30 +3538,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.660, edge +5.1 after fee"
+"note": "[rung TB2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.7 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.015 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.665, edge +5.1 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Chandler Simpson: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151300TBCLE-TBCSIMPSON14-2",
 "kalshi_px": 0.6699999999999999,
-"first_px": 0.66,
+"first_px": 0.665,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.66,
+"kalshi_mid_side": 0.665,
 "kalshi_cost": 0.6855,
 "kalshi_am": -218,
 "edge": null,
@@ -2745,8 +3587,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2758,6 +3600,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Brice Turang: 3+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT152000MILLAD-MILBTURANG2-3",
@@ -2788,8 +3636,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2801,6 +3649,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Brice Turang: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT152000MILLAD-MILBTURANG2-2",
@@ -2831,30 +3685,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 5.3%) + October -3; NO limit at mid 0.800, edge +5.7 after fee"
+"note": "[rung TB3+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 5.3%) + October -3; NO limit at mid 0.805, edge +5.7 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Yandy D\u00edaz: 3+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151800TBCLE-TBYDIAZ2-3",
 "kalshi_px": 0.81,
-"first_px": 0.8,
+"first_px": 0.805,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.8,
+"kalshi_mid_side": 0.8049999999999999,
 "kalshi_cost": 0.8208,
 "kalshi_am": -458,
 "edge": null,
@@ -2874,8 +3734,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2887,6 +3747,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Yandy D\u00edaz: 2+ total bases?",
 "side": "NO",
 "ticker": "KXMLBTB-26OCT151800TBCLE-TBYDIAZ2-2",
@@ -2917,8 +3783,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2930,19 +3796,25 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Victor Mesa Jr.: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBVMESA25-2",
-"kalshi_px": 0.62,
+"kalshi_px": 0.61,
 "first_px": 0.61,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.61,
-"kalshi_cost": 0.6365,
-"kalshi_am": -175,
+"kalshi_mid_side": 0.605,
+"kalshi_cost": 0.6267,
+"kalshi_am": -168,
 "edge": null,
 "edge_mkt": null
 },
@@ -2960,8 +3832,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -2973,6 +3845,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Victor Mesa Jr.: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBVMESA25-1",
@@ -3003,32 +3881,38 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.710, edge +5.7 after fee"
+"note": "[rung HRR2+ | SPK hi | L10 cold] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.064 vs season, L10 barrel 4.3%) + October -3; NO limit at mid 0.705, edge +5.7 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Taylor Walls: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBTWALLS6-2",
-"kalshi_px": 0.72,
-"first_px": 0.71,
+"kalshi_px": 0.71,
+"first_px": 0.705,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.705,
-"kalshi_cost": 0.7341,
-"kalshi_am": -276,
+"kalshi_mid_side": 0.7050000000000001,
+"kalshi_cost": 0.7244,
+"kalshi_am": -263,
 "edge": null,
 "edge_mkt": null
 },
@@ -3046,8 +3930,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3059,6 +3943,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Taylor Walls: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBTWALLS6-1",
@@ -3089,8 +3979,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3102,6 +3992,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Richie Palacios: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBRPALACIOS1-2",
@@ -3112,7 +4008,7 @@
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.6699999999999999,
+"kalshi_mid_side": 0.675,
 "kalshi_cost": 0.6952,
 "kalshi_am": -228,
 "edge": null,
@@ -3132,30 +4028,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.440, edge +5.3 after fee"
+"note": "[rung HRR1+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -4.1 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 0.0%) + October -3; NO limit at mid 0.445, edge +5.3 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Richie Palacios: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBRPALACIOS1-1",
 "kalshi_px": 0.44999999999999996,
-"first_px": 0.44,
+"first_px": 0.445,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.43999999999999995,
+"kalshi_mid_side": 0.44499999999999995,
 "kalshi_cost": 0.4673,
 "kalshi_am": 114,
 "edge": null,
@@ -3175,8 +4077,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3188,6 +4090,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Liam Hicks: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBLHICKS34-2",
@@ -3218,8 +4126,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3231,6 +4139,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Liam Hicks: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBLHICKS34-1",
@@ -3261,8 +4175,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3274,6 +4188,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Chandler Simpson: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBCSIMPSON14-2",
@@ -3304,8 +4224,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3317,6 +4237,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Chandler Simpson: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151300TBCLE-TBCSIMPSON14-1",
@@ -3347,8 +4273,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3360,6 +4286,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Brice Turang: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT152000MILLAD-MILBTURANG2-2",
@@ -3390,8 +4322,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3403,6 +4335,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Brice Turang: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT152000MILLAD-MILBTURANG2-1",
@@ -3433,30 +4371,36 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
 "rule": "HITTER UNDER vs SP (paper)",
-"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 5.3%) + October -3; NO limit at mid 0.525, edge +5.0 after fee"
+"note": "[rung HRR2+ | SPK hi | L10 flat] PAPER: log only, the hits/H+R+RBI score has no out-of-sample edge. score -3.8 pts (opp SP K% 34.3, CSW 32.8; hitter L10 xwOBA -0.043 vs season, L10 barrel 5.3%) + October -3; NO limit at mid 0.520, edge +5.0 after fee"
 }
 ],
 "badges": [
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Yandy D\u00edaz: 2+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151800TBCLE-TBYDIAZ2-2",
 "kalshi_px": 0.53,
-"first_px": 0.525,
+"first_px": 0.52,
 "level": "info",
 "size": "none",
 "panel": "E",
 "positions": [],
 "price_src": "live",
-"kalshi_mid_side": 0.525,
+"kalshi_mid_side": 0.52,
 "kalshi_cost": 0.5474,
 "kalshi_am": -121,
 "edge": null,
@@ -3476,8 +4420,8 @@
 "HITTER UNDER vs SP (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3489,6 +4433,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HITTER UNDER vs SP (paper)",
+"why": "Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only."
+}
+],
 "label": "Yandy D\u00edaz: 1+ hits + runs + RBIs?",
 "side": "NO",
 "ticker": "KXMLBHRR-26OCT151800TBCLE-TBYDIAZ2-1",
@@ -3519,8 +4469,8 @@
 "HR ATTACK-ANGLE YES (paper)"
 ],
 "live": true,
-"first_seen": "2026-10-15T14:52:22.006904+00:00",
-"last_seen": "2026-10-15T14:52:22.006904+00:00",
+"first_seen": "2026-10-15T15:25:24.186673+00:00",
+"last_seen": "2026-10-15T15:25:24.186673+00:00",
 "n_scans": 1,
 "notes": [
 {
@@ -3532,6 +4482,12 @@
 "paper: log only"
 ],
 "started": false,
+"why": [
+{
+"rule": "HR ATTACK-ANGLE YES (paper)",
+"why": "Hitters with Savant attack angle >= 13 deg beat the Kalshi HR 1+ mid by ~2 pts in Aug-Sep; not enough to clear the ask. Paper."
+}
+],
 "label": "Shohei Ohtani: 1+ home runs?",
 "side": "YES",
 "ticker": "KXMLBHR-26OCT152000MILLAD-LADSOHTANI17-1",
