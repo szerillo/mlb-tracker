@@ -158,7 +158,7 @@ def pitcher_of(w):
     return m.group(1) if m else str(w or '').split(':')[0]
 
 # Retired row names (10/14): the old aggregated October hitter row and the dead "Oct TB (play)" branch. Dropped if an old scan emits them.
-RETIRED = ('OCTOBER HITTER UNDERS', 'HITTER UNDER vs SP: Oct TB (play)')
+RETIRED = ('OCTOBER HITTER UNDERS', 'HITTER UNDER vs SP: Oct TB (play)', 'OCTOBER YRFI YES (paper)')
 # Paper rules (log only, never a position): always the Info panel, whatever tier the scan gives them.
 PAPER_INFO = ('HITTER UNDER vs SP', 'OCTOBER F5 UNDER', 'OCTOBER F7 TIE NO', 'F5 OVER: high F5 share', 'DAY-AFTER-NIGHT UNDER', 'HR ATTACK-ANGLE YES')
 F5_SHARE_RE = re.compile(r'F5[ -]?share\s*(?:of\s+\w+\s*)?[:=]?\s*(0?\.\d+|\d{2}(?:\.\d+)?\s*%)', re.I)
@@ -168,6 +168,59 @@ def f5_share_of(note):
     if not m: return None
     v = m.group(1).replace('%', '').strip(); v = float(v)
     return round(v / 100 if v > 1 else v, 3)
+
+# Plain-English definition of every rule (Fable note 10/15): the first line of 'why it flagged' on the card.
+RULE_WHY = {
+ 'K-LENGTH UNDER': 'The outs market is 2+ outs under the starter\'s season average: the market expects a short start, so the K line (which still sits near season) is too high. Fair = market + 5.',
+ 'K-SEASON-ANCHOR UNDER': 'The K market mean is 1+ K under the starter\'s season K per start with the outs market also short: same short-start read from the K side. Fair = market + 5.',
+ 'K-LENGTH UNDER (PS paper)': 'Same as K-LENGTH UNDER but logged only in October: the Aug-Sep edge did not hold out of sample in the postseason (1-3 on fills).',
+ 'K-SEASON-ANCHOR UNDER (PS paper)': 'Same as K-SEASON-ANCHOR UNDER, October paper.',
+ 'K-LENGTH OVER': 'Outs market 2+ outs over season average with the K line lagging.',
+ 'DEEP-SPOT OVERS': 'Outs market far above season norm (deep leash expected) and the K ladder has not moved with it.',
+ 'F5 OVER': 'Kalshi prices the first 5 innings at about .53 of the full-game total; the real share is .56 to .57. Fair = 0.573 x Kalshi full-game fair total, negative binomial. Backtest +39% Aug-Sep.',
+ 'F5 OVER: high F5 share (paper)': 'Same mispricing, located: when Kalshi\'s own F5 curve is >= .545 of its full-game curve the F5 over settled +9 over the mid (both months). Paper; tag only on the live rule.',
+ 'YRFI CURVE': 'First-inning run probability from the empirical curve on Kalshi\'s own fair total (YRFI = 1 - 1/(1+e^-(1.92 - 0.229 T))), October lift +3.5. YES only, +2 after fee. Backtest n 65, +17%.',
+ 'YRFI CURVE (Oct-adj only)': 'YRFI clears the bar only with the October lift; lean.',
+ 'RFI INFO': 'YRFI curve vs the Kalshi ask, shown for every game; no edge at this price.',
+ 'WALKS OVER (lead)': 'Starter season BB% >= 8.5%: the walks market prices walks too flat across pitchers; overs on high-BB starters ran above the mid. Fair = Kalshi mid + 4.',
+ 'WALKS OVER (info: low-BB% pitcher)': 'Starter BB% under 8.5%: no edge (overs ran 0.8 pts below the mid). Info only.',
+ 'PS SUB-RISK HIT UNDER (lean)': 'Pinch-hit risk v2 (7,233 PS starters 2016-26): a part-timer starting because he has the platoon edge on the starter gets lifted late for the platoon reliever; P(0 hits) runs 6 to 10 pts above the naive fair, more if he has been lifted already this October. Lean when the best book is 3+ pts over fair.',
+ 'PS SUB-RISK (info)': 'Same model, below the lean bar or a regular: shown so the whole lineup\'s lift risk is visible.',
+ 'OCTOBER TB UNDER (lean)': 'TB 3+ NO. October true rates drop 6 pts every year 2016-25 and Kalshi discounts only ~4.5; fair = NO mid + 2.5. Limit at the mid, one position per game, TB 3+ first.',
+ 'OCTOBER TB UNDER (lean, lower priority)': 'TB 2+ NO. Same effect, weaker evidence (selection test p .26 alone); fair = NO mid + 3. Second to TB 3+.',
+ 'HITTER UNDER vs SP (paper)': 'Opposing-starter K%/CSW and hitter cold-streak score. Dead out of sample (sign flips by month); logged only.',
+ 'HR ATTACK-ANGLE YES (paper)': 'Hitters with Savant attack angle >= 13 deg beat the Kalshi HR 1+ mid by ~2 pts in Aug-Sep; not enough to clear the ask. Paper.',
+ 'DAY-AFTER-NIGHT UNDER (paper)': 'Day game (<= 2:30 local) after a night game (>= 6 PM local) the day before: listed hitters settled 3 to 4 pts under their own rate and the market does not discount; catchers 7 to 8. Paper at 150 rows; Fable\'s team-level recheck is null, prior: fades.',
+ 'OCTOBER F5 UNDER (paper)': 'October F5 scoring drops half a run (P(F5>=5) .43 vs .51) while the F5 market sits at regular-season level. NO on 5+/6+ when the 0.573 x total model is 3+ pts under the mid. Paper.',
+ 'OCTOBER F7 TIE NO (paper)': 'First-7 ties run .083 in October vs .109 RS; the market prices ~.12. Fair = NO + 3. Paper.',
+ 'BIG OUTS TRADE': 'A $1k+ print on an outs rung; the hazard sim predicts the open-to-close move but only a limit at the open mid works.',
+ 'BIG TRADES (no backtested edge)': 'Large prints; informational, no edge (RFI NO flow is normal retail).',
+ 'PRICE MOVE': 'Mid moved 5+ pts since the last scan; informational.',
+ 'DEPTH IMBALANCE (ungraded)': 'Order-book depth skew; ungraded.',
+ 'KALSHI OFF PINNACLE (ungraded)': 'Kalshi price differs from Pinnacle no-vig; ungraded.',
+ 'VELO-DECLINE K UNDER (paper)': 'Four-seam velo last 3 starts under season by 1+ mph; Fable paper at 150 rows.',
+ 'CROSS-VENUE LAG (Fable live test)': 'Sportsbook consensus disagrees with Kalshi on a total (0.3+ runs) or ML (2+ pts); the books were right in backtest (t 3.0). Live test.',
+}
+
+TEAM_ID = {'ARI':109,'AZ':109,'ATL':144,'BAL':110,'BOS':111,'CHC':112,'CWS':145,'CHW':145,'CIN':113,'CLE':114,'COL':115,'DET':116,'HOU':117,'KC':118,'LAA':108,'LAD':119,
+           'MIA':146,'MIL':158,'MIN':142,'NYM':121,'NYY':147,'ATH':133,'OAK':133,'PHI':143,'PIT':134,'SD':135,'SF':137,'SEA':136,'STL':138,'TB':139,'TEX':140,'TOR':141,'WSH':120,'WAS':120}
+LOGO = lambda ab: f"https://www.mlbstatic.com/team-logos/{TEAM_ID.get(norm_team(ab), 0)}.svg"
+
+def games_meta(cards, now):
+    G = {}
+    for c in cards:
+        if not c.get('event') or not c.get('away'): continue
+        g = G.setdefault(c['event'], {'event': c['event'], 'away': c['away'], 'home': c['home'], 'label': c['game'], 'date': c['date'],
+                                      'first_pitch': c.get('first_pitch'), 'away_logo': LOGO(c['away']), 'home_logo': LOGO(c['home']),
+                                      'started': bool(c.get('started')), 'n_cards': 0, 'n_positions': 0, 'levels': {}})
+        g['n_cards'] += 1; g['n_positions'] += len(c.get('positions') or [])
+        g['levels'][c['level']] = g['levels'].get(c['level'], 0) + 1
+    out = sorted(G.values(), key=lambda g: (g['first_pitch'] or '9999', g['label']))
+    for g in out:
+        if g['first_pitch']:
+            t = dt.datetime.fromisoformat(g['first_pitch']).astimezone(ET); g['start_et'] = t.strftime('%-I:%M %p ET'); g['start_local_day'] = t.strftime('%a %-m/%-d')
+    return out
+
 
 def cat_of(rule):
     if rule.startswith(PAPER_INFO): return 'INFO'
@@ -266,6 +319,12 @@ def build(SL, PL, live, now):
              'away': ev['away'], 'home': ev['home'], 'tier': tier, 'rules': rules, 'live': live_now,
              'first_seen': first_ts, 'last_seen': last_ts, 'n_scans': len(tss), 'notes': [{'rule': r['rule'], 'note': r['note']} for r in rows], 'badges': []}
         c['started'] = bool(started)
+        def _why(r):
+            w = RULE_WHY.get(r)
+            m = re.match(r'Same as ([A-Z0-9 :()\-]+?)(?: but|,|\.)', w or '')
+            base = RULE_WHY.get(m.group(1).strip()) if m else None
+            return f"{w} Base rule: {base}" if base else w
+        c['why'] = [{'rule': r, 'why': _why(r)} for r in rules if RULE_WHY.get(r)]
         if started: live_g = {}   # in-game quotes are not pregame prices
         else: live_g = live
         N = parse_note('; '.join(r.get('note') or '' for r in rows))
@@ -372,6 +431,15 @@ def build(SL, PL, live, now):
                 if m: s['profile'], s['opp_sp'], s['opp_hand'], s['opener'] = m.group(1), m.group(2), m.group(3), bool(m.group(4))
                 m = re.search(r'lifted (\d+) of (\d+) Oct starts', n)
                 if m: s['oct_lifted'], s['oct_starts'] = int(m.group(1)), int(m.group(2))
+                m = re.search(r'slot-sub vs (\wHP) (\d+)%', n)
+                if m: s['slot_sub_hand'], s['slot_sub_pct'] = m.group(1), int(m.group(2))
+                m = re.search(r'\bslot (\d)\b', n)
+                if m: s['slot'] = int(m.group(1))
+                m = re.search(r'\bbats ([LRS])\b', n)
+                if m: s['bats'] = m.group(1)
+                m = re.search(r'Kalshi hits 1\+ NO mid ([\d.]+)', n)
+                if m: s['kalshi_no_mid'] = float(m.group(1))
+                s['note'] = n
                 if s.get('book_odds') is not None and s.get('model') is not None:
                     s['edge'] = round((s['model'] - imp(s['book_odds'])) * 100, 2); s['target_am'] = to_am(s['model'] - .02)
                 subs.append(s)
@@ -396,8 +464,14 @@ def build(SL, PL, live, now):
             c.update(label=x['what'], side='NO', ticker=x.get('ticker'), kalshi_px=x.get('price'), rule=x['rule'],
                      market=x.get('price'), market_src='Kalshi NO mid', model=x.get('fair'),
                      model_src='PS TB effect (mid + 2.5 TB 3+ / + 3 TB 2+)')
+            def _tags(n):
+                m = re.search(r'\[info: (.*?)\]', n or ''); return m.group(1) if m else None
+            def _book(n):
+                m = re.search(r'book u[\d.]+ TB: (\S+) ([+-]\d+)', n or ''); return (m.group(1), int(m.group(2))) if m else (None, None)
             c['hsp_rungs'] = [{'label': r['what'], 'rule': r['rule'], 'ticker': r.get('ticker'), 'no_limit': r.get('price'), 'no_fair': r.get('fair'),
-                               'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note')} for r in rs[:60]]
+                               'edge_at_limit': round(_e(r) * 100, 2), 'note': r.get('note'), 'tags': _tags(r.get('note')),
+                               'book': _book(r.get('note'))[0], 'book_odds': _book(r.get('note'))[1],
+                               'book_inside_mid': bool(re.search(r'AT/INSIDE the Kalshi NO mid', r.get('note') or ''))} for r in rs[:60]]
             c['level'] = 'lean' if playable else 'info'
             c['size'] = '0.1-0.15u total per game (half if a game/team-total under on this game), NO limit at the mid, TB 3+ first' if playable else 'none'
             c['panel'] = 'D' if playable else 'E'
@@ -527,7 +601,7 @@ def main():
     meta = {'built': now_s, 'latest_scan': latest, 'pinnacle_rows_latest': pin_n, 'velo_logged': velo_logged,
             'fable_review': {'VELO-DECLINE K UNDER (paper)': 150, 'HR anchor (paper, not in scan)': 200},
             'rule_tier': RULE_TIER}
-    json.dump({'meta': meta, 'cards': cards, 'tickets': tickets}, open(os.path.join(SCAN, 'board_latest.json'), 'w'), indent=0, default=str)
+    json.dump({'meta': meta, 'games': games_meta(cards, now), 'cards': cards, 'tickets': tickets}, open(os.path.join(SCAN, 'board_latest.json'), 'w'), indent=0, default=str)
     # archive positions (live, game not started)
     os.makedirs(BOARD, exist_ok=True); os.makedirs(CLOSE, exist_ok=True)
     by_date = collections.defaultdict(list)
