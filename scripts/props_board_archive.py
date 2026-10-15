@@ -292,16 +292,26 @@ def build(SL, PL, live, now):
     for x in SL:
         e = parse_event(x.get('event'))
         if e: kev[e['code']] = e
+    # One game = one key (Sean 10/15): Kalshi sometimes lists a game's markets under two event codes (MIL @ LAD hitter markets
+    # under 26OCT152100MILLAD, everything else under 26OCT152000MILLAD). Merge codes with the same date + teams onto the
+    # earliest code, so cards, tabs and the one-position-per-game rules see one game. (Doubleheaders are not split; none in October.)
+    _by = collections.defaultdict(list)
+    for e in kev.values(): _by[(e['date'], norm_team(e['away'] or ''), norm_team(e['home'] or ''))].append(e)
+    canon = {}
+    for L in _by.values():
+        L.sort(key=lambda e: e['code'])          # same date + teams: the earlier listing time sorts first
+        for e in L: canon[e['code']] = L[0]
+    _ev = lambda x: (lambda e: canon.get(e['code'], e))(event_of(x, kev))
     hist = collections.defaultdict(lambda: collections.defaultdict(list))   # key -> ts -> rows
     meta_ev = {}
     f5_hi = {}   # game code -> F5 share from the 'F5 OVER: high F5 share' paper row on the latest scan
     for x in SL:
         if x['ts'] == latest and x['rule'].startswith('F5 OVER: high F5 share'):
-            e_ = event_of(x, kev); f5_hi[e_['code']] = f5_share_of(x.get('note')) or True
+            e_ = _ev(x); f5_hi[e_['code']] = f5_share_of(x.get('note')) or True
     for x in SL:
         if x['rule'].startswith(RETIRED): continue
         if 'hits allowed' in (x.get('what') or '').lower() or str(x.get('ticker') or '').startswith('KXMLBHA'): continue   # no-bet market
-        ev = event_of(x, kev)
+        ev = _ev(x)
         if (ev['date'] or '') < keep_from: continue
         cat = cat_of(x['rule'])
         if cat == 'INFO' and x['ts'] != latest: continue
