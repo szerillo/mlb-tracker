@@ -11,12 +11,13 @@ name: Weather refresh
 #   13:00 UTC = 09:00 ET
 #   14:00 UTC = 10:00 ET
 #   15:00 UTC = 11:00 ET
+#   21:00 UTC = 17:00 ET (added 10/14: a pre-game snapshot for night games in the Roth weather-source log)
 # (Note: during EDT, subtract 4; during EST, subtract 5. Cron is UTC — these
 #  times float ±1 hour across DST transitions, which is fine for weather.)
 
 on:
   schedule:
-    - cron: "0 9,11,13,14,15 * * *"
+    - cron: "0 9,11,13,14,15,21 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -53,6 +54,10 @@ jobs:
         continue-on-error: true
         env:
           FORCE_RUN: "1"
+
+      - name: Log Kevin Roth forecasts (mysportsweather.com, accuracy test only)
+        run: python scripts/log_roth.py
+        continue-on-error: true
 
       - name: Commit changed data (if any)
         run: |
