@@ -177,7 +177,9 @@ def run_all(preview=False):
                B={m: test_b(conn, m, preview) for m in ('game', 'prop')},
                C=test_c(conn, preview), D=test_d(conn, preview),
                opener={m: test_opener(conn, m, preview) for m in ('game', 'prop')},
-               steam=dict(test='steam', published=False, note='not implemented yet: needs a tick-level pass (3+ point hourly moves, continuation to close and to result)'))
+               steam=dict(test='steam', published=False, note='not implemented yet: needs a tick-level pass (3+ point hourly moves, continuation to close and to result)'),
+               E={'novig_prop': test_e(conn, 'Novig', 60, 'prop', preview), 'novig_game': test_e(conn, 'Novig', 60, 'game', preview),
+                  'kalshi_prop': test_e(conn, 'Kalshi', 60, 'prop', preview), 'pinnacle_prop': test_e(conn, 'Pinnacle', 60, 'prop', preview)})
     conn.close(); return out
 
 
@@ -185,3 +187,42 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('--preview', action='store_true', help='print below-gate numbers, labelled PREVIEW (local only)')
     a = ap.parse_args()
     print(json.dumps(run_all(a.preview), indent=1, default=str))
+
+
+# ------------------------------------------------------------------ E: EV vs Novig at T-1h ----
+def test_e(conn, ruler='Novig', horizon_min=60, mclass='prop', preview=False):
+    """Sean 10/14 (table from another account): bets at a book whose price beats the ruler's devigged price ~1h before start, bucketed by
+    EV, graded at the book price. Same line, same side, same player; ruler must be a two-sided quote inside the spread rule.
+    ROI per bucket with a t-stat that treats bets as independent (it overstates: both sides and same-game props are correlated)."""
+    import math, datetime as dt
+    from sharp import fair as F, norm as N, settle as S
+    res = {r[0]: dict(status=r[1], home_score=r[3], away_score=r[4], f5_home=r[5], f5_away=r[6], rfi=r[7], players=json.loads(r[8] or '{}'))
+           for r in conn.execute("SELECT * FROM results")}
+    bets = []
+    for ev, start, away, home in conn.execute("SELECT event_id, start_utc, away, home FROM events").fetchall():
+        r = res.get(ev)
+        if not r or r['status'] != 'final': continue
+        eq = F.EventQuotes(conn, ev); st = N.parse_ts(start); ts = N.iso(st - dt.timedelta(minutes=horizon_min))
+        meth = C.DEVIG_METHOD[('mlb', mclass)]['value']
+        for (v, m, l, s, p), L in eq.idx.items():
+            if N.MARKET_CLASS(m) != mclass or v == ruler or C.VENUE_CLASS.get(v) in ('reference', 'exchange') or v in C.UNBETTABLE_VENUES['value']: continue
+            q = eq.latest(v, m, l, s, ts, C.HORIZON_TOLERANCE_MIN['value'], p)
+            if not q or q[5] is None: continue
+            pr, why = eq.venue_prob(ruler, m, l, s, ts, meth, p, max_age=C.HORIZON_TOLERANCE_MIN['value'])
+            if pr is None: continue
+            out = S.outcome(m, l, s, p, r, v, (away, home))
+            if out not in (0, 1): continue
+            cost = q[5]; ev_pct = pr / cost - 1
+            bets.append(dict(ev=ev_pct, pnl=S.pnl(out, cost), venue=v, side=s))
+    table = []
+    for lo in (0.0, 0.02, 0.04, 0.06, 0.08):
+        x = [b['pnl'] for b in bets if b['ev'] >= lo]
+        if len(x) < 2: table.append(dict(filter=f"EV>={int(lo*100)}%", bets=len(x))); continue
+        mu = statistics.mean(x); sd = statistics.pstdev(x) or 1e-9
+        table.append(dict(filter=f"EV>={int(lo*100)}%", bets=len(x), roi_pct=round(100 * mu, 2), t=round(mu / (sd / math.sqrt(len(x))), 2)))
+    by_side = {s: dict(n=len([b for b in bets if b['side'] == s and b['ev'] >= 0.02]),
+                       roi_pct=(round(100 * statistics.mean([b['pnl'] for b in bets if b['side'] == s and b['ev'] >= 0.02]), 2)
+                                if [b for b in bets if b['side'] == s and b['ev'] >= 0.02] else None)) for s in ('over', 'under')}
+    out = dict(test='E', name=f'EV vs {ruler} at T-{horizon_min}m ({mclass}), graded at the book price', ruler=ruler, horizon_min=horizon_min,
+               table=table, by_side_ev2=by_side, note_t='t treats bets as independent; both sides and same-game props are correlated, so it overstates')
+    return publish(out, C.MIN_PROP_ROWS['value'] if mclass == 'prop' else C.MIN_EVENTS_GAME_LINES['value'], len(bets), preview)

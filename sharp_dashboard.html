@@ -154,6 +154,10 @@ function renderVenues() {
   h += card('Test D · the over tax', dt, dbody);
   for (const m of ['game', 'prop']) h += card(`Opener test · ${m}`, V.opener[m], venueTable(V.opener[m].venues, [['n', x => x.n], ['open %', x => pct(x.open)], ['close %', x => pct(x.close)], ['hit %', x => pct(x.hit)]]));
   h += card('Steam test', V.steam, '');
+  for (const [k, t] of Object.entries(V.E || {})) {
+    const body = t.table ? `<table><thead><tr><th>Filter</th><th class="num">Bets</th><th class="num">ROI %</th><th class="num">t</th></tr></thead><tbody>${t.table.map(r => `<tr><td>${r.filter}</td><td class="num mono">${r.bets}</td><td class="num mono ${(r.roi_pct ?? 0) >= 0 ? 'pos' : 'neg'}">${r.roi_pct ?? '—'}</td><td class="num mono">${r.t ?? '—'}</td></tr>`).join('')}</tbody></table><div class="small" style="padding:6px 14px">${t.note_t || ''}</div>` : '';
+    h += card(`Test E · ${k.replace('_', ' ')}`, t, body);
+  }
   const w = D.weights;
   h += `<div class="sec"><div class="sec-h"><span class="name">Ruler weights in force</span><span class="meta">game: ${w.game_status} · props: ${w.prop_status}</span></div><div style="padding:8px 14px" class="small">
     Game lines: ${Object.entries(w.game).filter(([k, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(' · ')}<br>Props: ${Object.entries(w.prop).filter(([k, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(' · ')}<br>
