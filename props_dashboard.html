@@ -308,10 +308,15 @@ function flaggedHTML(F){
   return h;
 }
 
+// ---- sub-tabs inside a section: [key,label,count] ----
+function subtabs(sec,tabs,cur){ return `<div class="subtabs">${tabs.map(([k,l,n])=>`<button data-st="${sec}" data-sk="${k}" class="${k===cur?'on':''}">${l} <span class="mut">${n}</span></button>`).join('')}</div>`; }
+function pickTab(sec,tabs){ state.st=state.st||{}; return tabs.some(t=>t[0]===state.st[sec])?state.st[sec]:tabs[0][0]; }
+
 // ---- generic market table (K / outs / walks / game lines) ----
-function marketTable(list,emptyTxt){
+function marketTable(list,emptyTxt,byEdge){
   if(!list.length) return `<div class="empty2">${emptyTxt}</div>`;
-  list.sort((a,b)=>ORDER[a.level]-ORDER[b.level]||new Date(a.first_pitch||0)-new Date(b.first_pitch||0));
+  if(byEdge) list.sort((a,b)=>(venue(b).edge??-99)-(venue(a).edge??-99));
+  else list.sort((a,b)=>ORDER[a.level]-ORDER[b.level]||new Date(a.first_pitch||0)-new Date(b.first_pitch||0));
   return `<div class="tw"><table class="L"><tr><th class="hide-m">Call</th><th>Bet</th><th class="hide-m">Game</th><th class="r">Price</th><th class="r hide-m">Fair</th><th class="r">Edge</th><th class="r hide-m">Bet at or better</th><th class="r hide-m">Size</th></tr>${list.map(c=>{
     const id=c.key.replace(/\W/g,'_'), v=venue(c);
     return `<tr class="click" data-id="${id}"><td class="hide-m">${badge(c.level)}</td><td><span class="show-m" style="margin-bottom:3px">${badge(c.level)}</span>${betText(c)}<div class="g hide-m">${esc((c.rules||[]).map(r=>PLAIN[r]||r).join(' + '))}</div><div class="g show-m">${esc(c.game)} · ${tShort(c.first_pitch)} · ${esc(c.size||'')}</div></td><td class="hide-m">${gameCell(c)}</td><td class="num">${v.txt}</td><td class="num hide-m">${pct(c.model)}</td>${edgeTd(v.edge)}<td class="num hide-m">${v.target}</td><td class="r g hide-m">${esc(c.size||'–')}</td></tr>${detailRow(id,8,c)}`;}).join('')}</table></div>`;
@@ -324,16 +329,39 @@ function hitterHTML(cards){
   cards.filter(c=>c.cat==='HIT'&&!cards.some(x=>x.cat==='HSP'&&x.event===c.event)).forEach(c=>(c.subs||[]).forEach(sb=>rows.push({player:(sb.label||'').replace(/ under 0\.5 hits/,''),mk:'H05',line:'Hits u0.5',venue:sb.book?sb.book+' '+amTxt(sb.book_odds):'book',limit:amTxt(sb.target_am),fair:sb.model,edge:sb.edge,paper:!sb.lean,sub:true,c})));
   if(!rows.length) return '<div class="empty2">No hitter unders in the latest scan.</div>';
   const have=[['ALL','Biggest edges'],...HMK.filter(([k])=>rows.some(r=>r.mk===k))];
-  const tab=have.some(([k])=>k===state.htab)?state.htab:'ALL';
+  const tab=pickTab('H',have);
   const all=tab==='ALL';
   const L=rows.filter(r=>all||r.mk===tab).sort((a,b)=>((b.edge??-99)+(b.mk==='TB3'?.001:0))-((a.edge??-99)+(a.mk==='TB3'?.001:0)));
   const shown=all&&!state.hAll?L.slice(0,10):L;
   const cnt=k=>k==='ALL'?rows.length:rows.filter(r=>r.mk===k).length;
-  return `<div class="subtabs">${have.map(([k,l])=>`<button data-htab="${k}" class="${k===tab?'on':''}">${l} <span class="mut">${cnt(k)}</span></button>`).join('')}</div>
+  return `${subtabs('H',have.map(([k,l])=>[k,l,cnt(k)]),tab)}
   <div class="tw"><table class="L" style="margin-top:6px"><tr><th>Player</th>${all?'<th>Market</th>':''}<th class="hide-m">Game</th><th class="r">Bet at</th><th class="r hide-m">Fair (under)</th><th class="r">Edge</th></tr>${shown.map(r=>`<tr><td>${esc(r.player)}${r.paper?' <span class="chip">'+(r.sub?'info':'paper')+'</span>':''}<div class="g show-m">${esc(r.c.game)} · ${tShort(r.c.first_pitch)}</div></td>${all?`<td>${esc(r.line)}</td>`:''}<td class="hide-m">${gameCell(r.c)}</td><td class="num">${r.sub?esc(r.venue):'Kalshi '+r.limit}</td><td class="num hide-m">${pct(r.fair)}</td>${edgeTd(r.edge)}</tr>`).join('')}</table></div>
   <div class="foot">${all&&L.length>10?`<button class="lnk" data-hall="1">${state.hAll?'Show top 10':'Show all '+L.length}</button> · `:''}One position per game across every hitter under: 0.1-0.15u total (half if a game or team-total under is on the card), Kalshi NO at the mid, TB u2.5 first. Kalshi edges are after the fee at the mid; hits u0.5 edges are against the best book.</div>`;
 }
 
+// ---- game props: YRFI / NRFI / F5 (+ lag cards) ----
+function gameHTML(E,G){
+  const rows=[];
+  E.forEach(c=>{ const y=c.yrfi; if(y) rows.push({c,mk:'Y',label:'YRFI',price:y.kalshi_px,model:y.model,edge:y.edge,target:y.target_kalshi_cents,lvl:y.level,src:y.model_src});
+    (c.f5||[]).forEach(r=>rows.push({c,mk:'F',label:r.label,price:r.kalshi_px,model:r.model,edge:r.edge,target:r.target_kalshi_cents,lvl:'bet',src:r.f5_share!=null?'F5 share '+r.f5_share.toFixed(3).replace(/^0/,''):''})); });
+  const tabs=[['ALL','Biggest edges',rows.length+G.length],['Y','YRFI / NRFI',E.length],['F','F5',rows.filter(r=>r.mk==='F').length],...(G.length?[['G','Game lines',G.length]]:[])].filter(t=>t[0]==='ALL'||t[2]);
+  const tab=pickTab('E',tabs);
+  let inner;
+  if(tab==='Y') inner=boardC(E.sort((a,b)=>new Date(a.first_pitch)-new Date(b.first_pitch)));
+  else if(tab==='G') inner=marketTable(G,'No game-line lag cards.',true);
+  else { const L=rows.filter(r=>tab==='ALL'||r.mk===tab).sort((a,b)=>(b.edge??-99)-(a.edge??-99));
+    inner=!L.length?'<div class="empty2">No rows.</div>':`<div class="tw"><table class="L"><tr><th>Market</th><th class="hide-m">Game</th><th class="r">Kalshi ask</th><th class="r hide-m">Model</th><th class="r">Edge</th><th class="r hide-m">Buy at or less</th><th class="r hide-m">Window</th></tr>${L.map(r=>{const w=windowTxt(r.c.first_pitch); return `<tr><td>${esc(r.label)} <span class="mut">YES</span>${r.src?`<div class="g">${esc(r.src)}</div>`:''}<div class="g show-m">${esc(r.c.game)} · ${tShort(r.c.first_pitch)}</div></td><td class="hide-m">${gameCell(r.c)}</td><td class="num">${r.price!=null?(r.price*100).toFixed(0)+'¢':'–'}</td><td class="num hide-m">${pct(r.model)}</td>${edgeTd(r.edge)}<td class="num hide-m">${r.target!=null?r.target+'¢':'–'}</td><td class="r g hide-m">${esc(w.txt)}</td></tr>`;}).join('')}</table></div>
+    <div class="foot">YES only. YRFI and every F5 rung in one game are one early-scoring position: take the best edge. Tier 1 needs +2 after fee inside the 120-minute window.</div>`; }
+  return subtabs('E',tabs,tab)+inner;
+}
+// ---- pitcher props: strikeouts / outs / walks ----
+function pitcherHTML(PT){
+  const isK=c=>c.cat==='K'&&/\bK\b/.test(c.label||''), isO=c=>c.cat==='OUTS'||(c.cat==='K'&&/outs/i.test(c.label||'')), isW=c=>c.cat==='WALK';
+  const tabs=[['ALL','Biggest edges',PT.length],['K','Strikeouts',PT.filter(isK).length],['O','Outs',PT.filter(isO).length],['W','Walks',PT.filter(isW).length]].filter(t=>t[0]==='ALL'||t[2]);
+  const tab=pickTab('P',tabs);
+  const L=tab==='ALL'?PT.slice():PT.filter(tab==='K'?isK:(tab==='O'?isO:isW));
+  return subtabs('P',tabs,tab)+marketTable(L,'No strikeout, outs or walk rows in the latest scan.',tab==='ALL');
+}
 // ---- info: everything paper, ungraded, missed, no longer firing ----
 function infoHTML(list){
   if(!list.length) return '<div class="empty2">Nothing here.</div>';
@@ -363,17 +391,18 @@ function render(){
   const Hn=(()=>{let n=0; cards.filter(c=>c.cat==='HSP').forEach(c=>n+=new Set(hspRungs(c).map(r=>r.player)).size); cards.filter(c=>c.cat==='HIT').forEach(c=>n+=(c.subs||[]).length); return n;})();
   const I=cards.filter(isInfo);
   const PT=[...K,...W];
-  const TABS=[['P','Pitchers',PT.length],['H','Hitters',Hn],['E','YRFI / NRFI & F5',E.length],...(G.length?[['G','Game lines',G.length]]:[]),['I','Info',I.length]];
-  const tab=TABS.some(t=>t[0]===state.tab)?state.tab:(TABS.find(t=>t[0]!=='I'&&t[2])||TABS[0])[0];
-  let body='';
-  if(tab==='P') body=marketTable(PT,'No strikeout, outs or walk rows in the latest scan.');
-  else if(tab==='H') body=hitterHTML(cards);
-  else if(tab==='E') body=boardC(E.sort((a,b)=>new Date(a.first_pitch)-new Date(b.first_pitch)));
-  else if(tab==='G') body=marketTable(G,'No game-line lag cards.');
-  else body=infoHTML(I);
+  const sec=(name,meta,inner)=>`<div class="card"><div class="card-h"><span class="name">${name}</span><span class="meta">${meta}</span></div>${inner}</div>`;
+  const nFlag=L=>L.filter(c=>LIVE_LV.includes(c.level)).length;
+  let html='';
+  // 1. Game props: YRFI / NRFI / F5 (+ game-line lag cards when they fire)
+  html+=sec('Game Props','YRFI / NRFI / F5 · every game · window = last 120 min before first pitch',gameHTML(E,G));
+  // 2. Pitcher props: K, outs, walks
+  html+=sec('Pitcher Props',`${PT.length} · strikeouts, outs, walks${nFlag(PT)?' · '+nFlag(PT)+' flagged':''}`,pitcherHTML(PT));
+  // 3. Hitter props: biggest edges + one tab per market
+  html+=sec('Hitter Props',`${Hn} hitters · TB and hits unders · one position per game`,hitterHTML(cards));
+  // 4. Info (collapsed)
+  html+=`<details class="more"${state.open.__info?' open':''} data-k="__info"><summary>Info: paper, ungraded, no longer firing (${I.length})</summary><div class="card">${infoHTML(I)}</div></details>`;
   const tk=(B.tickets||[]).filter(t=>state.day==='all'||t.date===(state.day==='today'?today:tom));
-  let html=`<div class="card"><div class="card-h"><span class="name">Flagged</span><span class="meta">${F.length} · what the rules flag right now. Highlights, not a bet list: click a row for the why</span></div>${flaggedHTML(F)}</div>
-  <div class="card"><div class="tabs">${TABS.map(([k,l,n])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${l}<span class="n">${n}</span></button>`).join('')}</div>${body}</div>`;
   const nStarted=all.length-cards.length;
   if(nStarted) html+=`<div class="note" style="margin:-6px 0 12px">${nStarted} item(s) on games already started are hidden (pregame prices only).</div>`;
   html+=`<details class="more"${state.open.__tk?' open':''} data-k="__tk"><summary>My tickets (${tk.length})</summary>${ticketsHTML(tk,false)}</details>`;
@@ -383,7 +412,7 @@ function render(){
 document.getElementById('segDay').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; state.day=b.dataset.d; document.querySelectorAll('#segDay button').forEach(x=>x.classList.toggle('on',x===b)); render();});
 document.getElementById('board').addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]'); if(t){state.tab=t.dataset.tab; render(); return;}
-  const h=e.target.closest('[data-htab]'); if(h){state.htab=h.dataset.htab; state.hAll=false; render(); return;}
+  const st=e.target.closest('[data-st]'); if(st){state.st=state.st||{}; state.st[st.dataset.st]=st.dataset.sk; if(st.dataset.st==='H') state.hAll=false; render(); return;}
   const ha=e.target.closest('[data-hall]'); if(ha){state.hAll=!state.hAll; render(); return;}
   const r=e.target.closest('tr.click'); if(r){state.open[r.dataset.id]=!state.open[r.dataset.id]; render(); return;}
 });
