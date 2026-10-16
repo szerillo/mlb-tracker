@@ -636,6 +636,7 @@ const _NEXTKEYS={WC:['reach_ds','reach_cs','pen','ws'],LDS:['reach_cs','pen','ws
 function applyTodayWP(series,lane2,TW){
   if(!series||!series.series||!Object.keys(TW).length) return;
   for(const s of series.series){
+    if(s.preview) continue;   // WS preview cards are conditional (if X wins the LCS): never re-price the bracket from them
     const gs=s.games||[], w=s.wins||{a:0,b:0}, nx=(w.a||0)+(w.b||0);
     if(nx>=gs.length) continue;
     const key=gs[nx].home+'|'+gs[nx].away; if(TW[key]==null) continue;
@@ -659,6 +660,7 @@ function applyTodayWP(series,lane2,TW){
 function syncSeriesToLane2(series,lane2){
   if(!series||!series.series||!lane2) return;
   for(const s of series.series){
+    if(s.preview) continue;   // conditional WS previews: the bracket walk already weights each opponent by its pennant odds
     const ks=_NEXTKEYS[s.round]||[]; if(!ks.length) continue;
     const pk=s.league==='AL'?'al_pennant':'nl_pennant';
     for(const [t,p] of [[s.a,s.model.p_a],[s.b,s.model.p_b]]){
