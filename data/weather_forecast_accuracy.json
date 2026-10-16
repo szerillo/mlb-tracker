@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-15T22:41:48Z",
+  "generated_at": "2026-10-16T00:46:27Z",
   "method": "our NWS forecast + BP vs PropFinder observed actuals (source=obs) and actual runs",
   "date_range": [
     "2026-06-30",
-    "2026-10-14"
+    "2026-10-15"
   ],
   "forecast_input_accuracy": {
-    "n_games": 744,
+    "n_games": 745,
     "our_temp_MAE_f": 2.25,
     "our_wind_MAE_mph": 2.44,
     "our_winddir_MAE_deg": 33.03,
@@ -17,12 +17,12 @@
     }
   },
   "run_adjustment_calibration": {
-    "n_played": 742,
-    "calibrated_slope_runs_per_pct": 0.0892,
+    "n_played": 743,
+    "calibrated_slope_runs_per_pct": 0.0891,
     "ours": {
-      "slope": 0.1405,
-      "r": 0.156,
-      "n": 742,
+      "slope": 0.1411,
+      "r": 0.157,
+      "n": 743,
       "realized_x": 1.58
     },
     "bp": {
@@ -14911,6 +14911,26 @@
       "our_dir_err": 6.0,
       "total": 11,
       "our_adj": 1.3,
+      "bp_adj": null
+    },
+    {
+      "date": "2026-10-15",
+      "pk": 849818,
+      "venue": "Progressive Field",
+      "obs_temp": 64.1,
+      "obs_wind": 6.9,
+      "obs_dir": 150.0,
+      "obs_src": "obs",
+      "our_temp": 66.0,
+      "our_wind": 5.0,
+      "our_dir": 112.5,
+      "bp_temp": null,
+      "our_temp_err": 1.9000000000000057,
+      "bp_temp_err": null,
+      "our_wind_err": 1.9000000000000004,
+      "our_dir_err": 37.5,
+      "total": 5,
+      "our_adj": -1.4,
       "bp_adj": null
     }
   ]
