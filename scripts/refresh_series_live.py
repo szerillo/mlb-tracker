@@ -297,10 +297,27 @@ def main():
         s=build_series(gt,key,idx,b['wins'])
         if s: series.append(s)
     for key,b in nb.items():
+        if not key <= (AL|NL): continue          # MLB lists the WS early as e.g. MIL vs "AL": handled as a preview below
         s=build_series(nxt,key,idx,b['wins'])
         if s: series.append(s)
+    # World Series PREVIEW (Sean 10/16): a pennant winner waiting on the other LCS gets one card per possible opponent,
+    # priced from the grid's WS rows (Sean's game-by-game WS projections), so its side of the board is not blank.
+    if gt=='L':
+        for key,b in buckets.items():
+            if max(b['wins'].values() or [0])<need: continue
+            champ=max(b['wins'],key=b['wins'].get); lg_c='AL' if champ in AL else 'NL'
+            if any(champ in k2 and k2<=(AL|NL) for k2 in nb): continue   # real WS series already built
+            for k3,b3 in buckets.items():
+                if k3==key or max(b3['wins'].values() or [0])>=need: continue
+                ls=next((x for x in series if {x['a'],x['b']}==set(k3)),None)
+                for opp in k3:
+                    s=build_series('W',frozenset({champ,opp}),idx,{})
+                    if not s: continue
+                    s.update(preview=True,league=lg_c,if_opp=opp,
+                             if_opp_p=(ls['model']['p_a'] if ls and ls['a']==opp else ls['model']['p_b']) if ls else None)
+                    series.append(s)
     # order: round, then AL before NL, host first
-    series.sort(key=lambda s:(ROUND_ORDER.index([k for k,v in ROUND_CODE.items() if v==s["round"]][0]), s["league"]!="AL", s["host"]))
+    series.sort(key=lambda s:(ROUND_ORDER.index([k for k,v in ROUND_CODE.items() if v==s["round"]][0]), s["league"]!="AL", -(s.get("if_opp_p") or 0), s["host"]))
     # attach per-team projection ranks (rotation/bullpen/offense) from the engine's feed
     tp=(json.load(open(TPROJ)).get("teams",{}) if os.path.exists(TPROJ) else {})
     if tp:
