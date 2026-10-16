@@ -541,11 +541,11 @@ function seriesRowHTML(s, mkt){
   </details>`;
   const favA=m.p_a>=m.p_b;
   return `<div class="scard">
-    <div class="shd">${s.preview?`<span class="lgtag ws">WS</span> World Series preview · if <b>${s.if_opp}</b> wins the ${s.league==='NL'?'ALCS':'NLCS'}${s.if_opp_p!=null?` (${(s.if_opp_p*100).toFixed(0)}%)`:''} · ${siteLabel(s)}`:`<span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · ${siteLabel(s)}${s.state?`<span class="slive">● ${s.state}</span>`:''}`}</div>
+    <div class="shd">${s.preview?`<span class="lgtag ws">WS</span> World Series · ${siteLabel(s)}`:`<span class="lgtag ${s.league.toLowerCase()}">${s.league}</span> ${RLABF(s.round)} · ${siteLabel(s)}${s.state?`<span class="slive">● ${s.state}</span>`:''}`}</div>
     ${line(s.b,s.seed_b,m.p_b,m.ml_b,mml_b,dvb,!favA,'b')}
     ${line(s.a,s.seed_a,m.p_a,m.ml_a,mml_a,dva,favA,'a')}
     ${sbGameSlot(s)}
-    ${details}
+    ${s.preview?'':details}
   </div>`;
 }
 // Where each game is played, from the per-game home teams: WC "all @ TB"; LDS "G1-2, G5 @ TB · G3-4 @ NYY"
