@@ -105,7 +105,7 @@ def parse_event(ev):
     away, home = split_teams(teams)
     start = dt.datetime(2000 + int(yy), MON[mon], int(dd), int(hh), int(mi), tzinfo=ET)
     mf = _mlb_fp(start.date().isoformat(), teams)
-    if mf is not None and mf < start: start = mf.astimezone(ET)   # game moved earlier (e.g. weather): use the real first pitch
+    if mf is not None: start = mf.astimezone(ET)   # MLB's scheduled first pitch wins (moved earlier or later than the Kalshi listing time)
     return {'code': c, 'away': away, 'home': home, 'label': f'{away} @ {home}' if away else teams,
             'date': start.date().isoformat(), 'start': start.isoformat()}
 
