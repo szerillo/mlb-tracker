@@ -243,7 +243,12 @@ WIND_CAP = 5.00
 # total, which overshoots — wind effect saturates (25mph doesn't help 2.5x a 10mph).
 # ~0.30 keeps the common 5-12mph range near-linear and tapers the tail.
 WIND_SOFT = 0.45
-DP_C = 0.0014
+# 2026-10-15 Fable ruling (REPLY_weather_dewpoint_ruling_2026-10-15.md): dew point ZEROED (wrong sign and ~3x the physical size in
+# four datasets; 7/27 W5 already said no dew-point term). Was 0.0014. Pressure term OFF until live pressure is fed (with the 1015
+# default it was a fixed per-park offset; park offsets live in the park factor). Re-test the -0.26 %/mb slope on a season of live
+# NWS gridpoint pressure before turning it back on. Temp / wind scale unchanged until the offseason per-park retest.
+DP_C = 0.0
+PRES_ON = False
 PRES_C = 0.0030   # 2026-06 recal: wind-controlled pressure slope ~-0.24 %/mb (earlier -0.39 was wind confound); net ~-0.26.
 CARRY_INT = 0.0003
 CARRY_SCALE = 0.005
@@ -528,7 +533,7 @@ def compute_v8(park, wx, treat_as_open=False):
     dp_adj = (today_dp - base_dp) * DP_C * altitude_mult
 
     # Pressure component
-    p_adj = -(pres - base["pres"]) * PRES_C * altitude_mult
+    p_adj = (-(pres - base["pres"]) * PRES_C * altitude_mult) if PRES_ON else 0.0
 
     # Carry offset
     carry_raw = base["carry"]
