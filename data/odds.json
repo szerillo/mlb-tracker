@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T23:55:35.070175Z",
+  "generated_at": "2026-10-17T03:09:59.600279Z",
   "source": "Action Network gameprojections API (v2) \u00b7 best across DK/FD/BM/Caesars/BetRivers/bet365/Fanatics",
   "source_url": "https://api.actionnetwork.com/web/v2/scoreboard/gameprojections/mlb?bookIds=15,30,68,69,71,75,79,123,2988&date=20261016&periods=event",
   "date": "2026-10-16",
@@ -10,7 +10,7 @@
       "an_event_id": 303428,
       "matchup": "Tampa Bay Rays @ Cleveland Guardians",
       "start_time": "2026-10-17T00:00:00.000Z",
-      "status": "Del ",
+      "status": "Ppd",
       "moneyline": {
         "away": {
           "odds": -112,
@@ -72,7 +72,8 @@
           },
           "source": "posted"
         }
-      }
+      },
+      "odds_locked": true
     },
     {
       "game_pk": 849816,
@@ -81,18 +82,67 @@
       "start_time": "2026-10-18T00:00:00.000Z",
       "status": "scheduled",
       "moneyline": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": -112,
+          "line": 0,
+          "book": "FanDuel"
+        },
+        "home": {
+          "odds": -102,
+          "line": 0,
+          "book": "BetMGM"
+        }
       },
       "run_line": {
-        "away": null,
-        "home": null
+        "away": {
+          "odds": 165,
+          "line": -1.5,
+          "book": "bet365"
+        },
+        "home": {
+          "odds": -188,
+          "line": 1.5,
+          "book": "DraftKings"
+        }
       },
       "total": {
-        "over": null,
-        "under": null
+        "over": {
+          "odds": -112,
+          "line": 6.5,
+          "book": "FanDuel"
+        },
+        "under": {
+          "odds": -105,
+          "line": 6.5,
+          "book": "BetMGM"
+        }
       },
-      "team_total": null
+      "team_total": {
+        "away": {
+          "line": 3.5,
+          "over": {
+            "odds": 116,
+            "book": "FanDuel"
+          },
+          "under": {
+            "odds": -125,
+            "book": "DraftKings"
+          },
+          "source": "posted"
+        },
+        "home": {
+          "line": 2.5,
+          "over": {
+            "odds": -155,
+            "book": "BetRivers"
+          },
+          "under": {
+            "odds": 120,
+            "book": "BetRivers"
+          },
+          "source": "posted"
+        }
+      }
     }
   ]
 }
