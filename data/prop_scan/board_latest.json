@@ -1,8 +1,8 @@
 {
 "meta": {
-"built": "2026-10-17T01:15:10.623731+00:00",
-"latest_scan": "2026-10-16T23:53:33.152644+00:00",
-"pinnacle_rows_latest": 41,
+"built": "2026-10-17T05:26:52.607141+00:00",
+"latest_scan": "2026-10-17T05:24:43.210551+00:00",
+"pinnacle_rows_latest": 37,
 "velo_logged": 0,
 "fable_review": {
 "VELO-DECLINE K UNDER (paper)": 150,
@@ -43,201 +43,563 @@
 },
 "games": [
 {
-"event": "26OCT161800TBCLE",
+"event": "26OCT172000TBCLE",
 "away": "TB",
 "home": "CLE",
 "label": "TB @ CLE",
-"date": "2026-10-16",
-"first_pitch": "2026-10-16T20:00:00-04:00",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
 "away_logo": "https://www.mlbstatic.com/team-logos/139.svg",
 "home_logo": "https://www.mlbstatic.com/team-logos/114.svg",
-"started": true,
-"n_cards": 1,
+"started": false,
+"n_cards": 6,
 "n_positions": 1,
 "levels": {
-"lean": 1
+"info": 6
 },
 "start_et": "8:00 PM ET",
-"start_local_day": "Fri 10/16"
+"start_local_day": "Sat 10/17"
+},
+{
+"event": "26OCT181700TBCLE",
+"away": "TB",
+"home": "CLE",
+"label": "TB @ CLE",
+"date": "2026-10-18",
+"first_pitch": "2026-10-18T17:00:00-04:00",
+"away_logo": "https://www.mlbstatic.com/team-logos/139.svg",
+"home_logo": "https://www.mlbstatic.com/team-logos/114.svg",
+"started": false,
+"n_cards": 2,
+"n_positions": 2,
+"levels": {
+"lead": 2
+},
+"start_et": "5:00 PM ET",
+"start_local_day": "Sun 10/18"
 }
 ],
 "cards": [
 {
-"key": "26OCT161800TBCLE|HIT",
-"cat": "HIT",
+"key": "26OCT181700TBCLE|K|Nick Martinez|under",
+"cat": "K",
 "game": "TB @ CLE",
-"event": "26OCT161800TBCLE",
-"date": "2026-10-16",
-"first_pitch": "2026-10-16T20:00:00-04:00",
+"event": "26OCT181700TBCLE",
+"date": "2026-10-18",
+"first_pitch": "2026-10-18T17:00:00-04:00",
 "away": "TB",
 "home": "CLE",
-"tier": 3,
+"tier": 2,
 "rules": [
-"PS SUB-RISK HIT UNDER (lean)",
-"PS SUB-RISK (info)"
+"K-LENGTH UNDER (PS paper)"
 ],
 "live": true,
-"first_seen": "2026-10-16T22:41:27.320170+00:00",
-"last_seen": "2026-10-16T23:53:33.152644+00:00",
-"n_scans": 2,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
 "notes": [
 {
-"rule": "PS SUB-RISK (info)",
-"note": "part-timer vs Shawn Armstrong (R, opener: no platoon tag); RS PH-for 4%, slot-sub vs RHP 16% (124 starts); lifted 0 of 5 Oct starts; fair P(0 H) 0.360 vs best DK +141 (u0.5 H), edge -5.5. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK (info)",
-"note": "platoon-start LHB vs Nick Martinez (R); RS PH-for 3%, slot-sub vs RHP 33% (101 starts); lifted 0 of 7 Oct starts; fair P(0 H) 0.470 vs best Fanatics +120 (u0.5 H), edge +1.5. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK (info)",
-"note": "part-timer vs Nick Martinez (R); RS PH-for 10%, slot-sub vs RHP 16% (92 starts); lifted 0 of 5 Oct starts; fair P(0 H) 0.494 vs best Fanatics +110 (u0.5 H), edge +1.8. One game = one position; small size"
-},
-{
-"rule": "PS SUB-RISK HIT UNDER (lean)",
-"note": "platoon-start LHB vs Nick Martinez (R); RS PH-for 6%, slot-sub vs RHP 27% (48 starts); lifted 2 of 4 Oct starts; fair P(0 H) 0.603 vs best DK -106 (u0.5 H), edge +8.9. One game = one position; small size"
+"rule": "K-LENGTH UNDER (PS paper)",
+"note": "outs mkt 11.5 vs season 17.4 (-5.9); L5 outs 15.8; book u1.5: -; -"
 }
 ],
 "badges": [],
-"started": true,
+"started": false,
 "why": [
 {
-"rule": "PS SUB-RISK HIT UNDER (lean)",
-"why": "Pinch-hit risk v2 (7,233 PS starters 2016-26): a part-timer starting because he has the platoon edge on the starter gets lifted late for the platoon reliever; P(0 hits) runs 6 to 10 pts above the naive fair, more if he has been lifted already this October. Lean when the best book is 3+ pts over fair."
-},
-{
-"rule": "PS SUB-RISK (info)",
-"why": "Same model, below the lean bar or a regular: shown so the whole lineup's lift risk is visible."
+"rule": "K-LENGTH UNDER (PS paper)",
+"why": "Same as K-LENGTH UNDER but logged only in October: the Aug-Sep edge did not hold out of sample in the postseason (1-3 on fills). Base rule: The outs market is 2+ outs under the starter's season average: the market expects a short start, so the K line (which still sits near season) is too high. Fair = market + 5."
 }
 ],
-"label": "Hitter unders",
+"label": "Nick Martinez K u1.5",
 "side": "NO",
-"oct_rungs": [],
-"subs": [
-{
-"rule": "PS SUB-RISK HIT UNDER (lean)",
-"label": "Petey Halpin under 0.5 hits",
-"model": 0.603,
-"lean": true,
-"book": "DK",
-"book_odds": -106,
-"book_mkt": "H",
-"ph_pct": 6,
-"starts": 48,
-"profile": "platoon-start LHB",
-"opp_sp": "Nick Martinez",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 2,
-"oct_starts": 4,
-"slot_sub_hand": "RHP",
-"slot_sub_pct": 27,
-"note": "platoon-start LHB vs Nick Martinez (R); RS PH-for 6%, slot-sub vs RHP 27% (48 starts); lifted 2 of 4 Oct starts; fair P(0 H) 0.603 vs best DK -106 (u0.5 H), edge +8.9. One game = one position; small size",
-"edge": 8.84,
-"target_am": -140,
-"position": true
+"ticker": "KXMLBKS-26OCT181700TBCLE-TBNMARTINEZ28-2",
+"pitcher": "Nick Martinez",
+"direction": "under",
+"kalshi_px": 0.99,
+"first_px": 0.99,
+"market": 0.5,
+"market_src": "Kalshi mid",
+"model": 0.5,
+"model_src": "market + 0",
+"rule_edge": 0,
+"inputs": {
+"outs_mkt": 11.5,
+"outs_season": 17.4,
+"outs_gap": -5.9
 },
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Patrick Bailey under 0.5 hits",
-"model": 0.494,
-"lean": false,
-"book": "Fanatics",
-"book_odds": 110,
-"book_mkt": "H",
-"ph_pct": 10,
-"starts": 92,
-"profile": "part-timer",
-"opp_sp": "Nick Martinez",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 0,
-"oct_starts": 5,
-"slot_sub_hand": "RHP",
-"slot_sub_pct": 16,
-"note": "part-timer vs Nick Martinez (R); RS PH-for 10%, slot-sub vs RHP 16% (92 starts); lifted 0 of 5 Oct starts; fair P(0 H) 0.494 vs best Fanatics +110 (u0.5 H), edge +1.8. One game = one position; small size",
-"edge": 1.78,
-"target_am": 111
-},
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Nathaniel Lowe under 0.5 hits",
-"model": 0.47,
-"lean": false,
-"book": "Fanatics",
-"book_odds": 120,
-"book_mkt": "H",
-"ph_pct": 3,
-"starts": 101,
-"profile": "platoon-start LHB",
-"opp_sp": "Nick Martinez",
-"opp_hand": "R",
-"opener": false,
-"oct_lifted": 0,
-"oct_starts": 7,
-"slot_sub_hand": "RHP",
-"slot_sub_pct": 33,
-"note": "platoon-start LHB vs Nick Martinez (R); RS PH-for 3%, slot-sub vs RHP 33% (101 starts); lifted 0 of 7 Oct starts; fair P(0 H) 0.470 vs best Fanatics +120 (u0.5 H), edge +1.5. One game = one position; small size",
-"edge": 1.55,
-"target_am": 122
-},
-{
-"rule": "PS SUB-RISK (info)",
-"label": "Liam Hicks under 0.5 hits",
-"model": 0.36,
-"lean": false,
-"book": "DK",
-"book_odds": 141,
-"book_mkt": "H",
-"ph_pct": 4,
-"starts": 124,
-"profile": "part-timer",
-"opp_sp": "Shawn Armstrong",
-"opp_hand": "R",
-"opener": true,
-"oct_lifted": 0,
-"oct_starts": 5,
-"slot_sub_hand": "RHP",
-"slot_sub_pct": 16,
-"note": "part-timer vs Shawn Armstrong (R, opener: no platoon tag); RS PH-for 4%, slot-sub vs RHP 16% (124 starts); lifted 0 of 5 Oct starts; fair P(0 H) 0.360 vs best DK +141 (u0.5 H), edge -5.5. One game = one position; small size",
-"edge": -5.49,
-"target_am": 194
-}
-],
-"level": "lean",
-"size": "small, spread (cap the game)",
-"panel": "D",
+"level": "lead",
+"size": "none",
+"panel": "B",
 "positions": [
 {
-"key": "26OCT161800TBCLE|HIT|Petey Halpin under 0.5 hits",
-"cat": "HIT",
+"key": "26OCT181700TBCLE|K|Nick Martinez|under",
+"cat": "K",
+"rule_edge": 0,
 "game": "TB @ CLE",
-"event": "26OCT161800TBCLE",
-"first_pitch": "2026-10-16T20:00:00-04:00",
+"event": "26OCT181700TBCLE",
+"first_pitch": "2026-10-18T17:00:00-04:00",
 "rules": [
-"PS SUB-RISK HIT UNDER (lean)",
-"PS SUB-RISK (info)"
+"K-LENGTH UNDER (PS paper)"
 ],
-"label": "Petey Halpin under 0.5 hits",
-"side": "UNDER",
-"level": "lean",
-"size": "small, spread (cap the game)",
-"model": 0.603,
-"book": "DK",
-"book_odds": -106,
-"first_seen": "2026-10-16T22:41:27.320170+00:00",
-"price_src": "scan",
-"kalshi_cost": null,
-"kalshi_am": null,
-"edge": null,
+"label": "Nick Martinez K u1.5",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT181700TBCLE-TBNMARTINEZ28-2",
+"level": "lead",
+"size": "none",
+"model": 0.5,
+"model_src": "market + 0",
+"market": 0.5,
+"market_src": "Kalshi mid",
+"kalshi_px": 0.99,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.5,
+"kalshi_cost": 0.9907,
+"kalshi_am": -10645,
+"edge": -49.07,
+"edge_mkt": -49.07,
+"target_am": 108,
+"target_kalshi_cents": 46
+}
+],
+"price_src": "live",
+"kalshi_mid_side": 0.5,
+"kalshi_cost": 0.9907,
+"kalshi_am": -10645,
+"edge": -49.07,
+"edge_mkt": -49.07,
+"target_am": 108,
+"target_kalshi_cents": 46
+},
+{
+"key": "26OCT181700TBCLE|K|Nick Martinez|over",
+"cat": "K",
+"game": "TB @ CLE",
+"event": "26OCT181700TBCLE",
+"date": "2026-10-18",
+"first_pitch": "2026-10-18T17:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 2,
+"rules": [
+"DEEP-SPOT OVERS"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEEP-SPOT OVERS",
+"note": "K mkt 2118587842.93 vs season 3.52 (+2118587839.42); one position, not two"
+}
+],
+"badges": [],
+"started": false,
+"why": [
+{
+"rule": "DEEP-SPOT OVERS",
+"why": "Outs market far above season norm (deep leash expected) and the K ladder has not moved with it."
+}
+],
+"label": "Nick Martinez K o1.5 / outs o11.5",
+"side": "YES",
+"ticker": "KXMLBKS-26OCT181700TBCLE-TBNMARTINEZ28-2",
+"pitcher": "Nick Martinez",
+"direction": "over",
+"kalshi_px": 0.99,
+"first_px": 0.99,
+"market": 0.5,
+"market_src": "Kalshi mid",
+"model": 0.54,
+"model_src": "market + 4",
+"rule_edge": 4,
+"inputs": {
+"k_mkt": 2118587842.93,
+"k_season": 3.52
+},
+"level": "lead",
+"size": "\u00bc unit",
+"panel": "B",
+"positions": [
+{
+"key": "26OCT181700TBCLE|K|Nick Martinez|over",
+"cat": "K",
+"rule_edge": 4,
+"game": "TB @ CLE",
+"event": "26OCT181700TBCLE",
+"first_pitch": "2026-10-18T17:00:00-04:00",
+"rules": [
+"DEEP-SPOT OVERS"
+],
+"label": "Nick Martinez K o1.5 / outs o11.5",
+"side": "YES",
+"ticker": "KXMLBKS-26OCT181700TBCLE-TBNMARTINEZ28-2",
+"level": "lead",
+"size": "\u00bc unit",
+"model": 0.54,
+"model_src": "market + 4",
+"market": 0.5,
+"market_src": "Kalshi mid",
+"kalshi_px": 0.99,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.5,
+"kalshi_cost": 0.9907,
+"kalshi_am": -10645,
+"edge": -45.07,
+"edge_mkt": -49.07,
+"target_am": -108,
+"target_kalshi_cents": 50
+}
+],
+"price_src": "live",
+"kalshi_mid_side": 0.5,
+"kalshi_cost": 0.9907,
+"kalshi_am": -10645,
+"edge": -45.07,
+"edge_mkt": -49.07,
+"target_am": -108,
+"target_kalshi_cents": 50
+},
+{
+"key": "26OCT172000TBCLE|EARLY",
+"cat": "EARLY",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"RFI INFO"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "RFI INFO",
+"note": "Kalshi total 6.58; YRFI curve 0.398 (Oct-adj 0.435); ask 0.45; edge -6.9 (Oct -3.3); taker $ 76% NRFI (normal is 74%)"
+}
+],
+"badges": [],
+"started": false,
+"why": [
+{
+"rule": "RFI INFO",
+"why": "YRFI curve vs the Kalshi ask, shown for every game; no edge at this price."
+}
+],
+"label": "Early scoring (YRFI / F5 overs)",
+"side": "YES",
+"yrfi": {
+"rule": "RFI INFO",
+"ticker": "KXMLBRFI-26OCT172000TBCLE",
+"kalshi_px": 0.45,
+"model": 0.398,
+"model_src": "curve on Kalshi total",
+"curve": 0.398,
+"curve_oct": 0.435,
+"ktotal": 6.58,
+"market": null,
+"market_src": null,
+"nrfi_pct": 76,
+"side": "YES",
+"label": "YRFI",
+"cat": "RFI",
+"level": "info",
+"price_src": "live",
+"kalshi_mid_side": 0.445,
+"kalshi_cost": 0.4673,
+"kalshi_am": 114,
+"edge": -6.93,
 "edge_mkt": null,
-"book_edge": 8.84,
-"book_edge_mkt": null,
-"best_venue": "book",
-"target_am": -140,
-"target_kalshi_cents": 56
+"target_am": 165,
+"target_kalshi_cents": 36
+},
+"f5": [],
+"level": "info",
+"size": "none",
+"panel": "C",
+"positions": [
+{
+"key": "26OCT172000TBCLE|RFI",
+"cat": "RFI",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"rules": [
+"RFI INFO"
+],
+"rule": "RFI INFO",
+"label": "YRFI",
+"side": "YES",
+"ticker": "KXMLBRFI-26OCT172000TBCLE",
+"level": "info",
+"size": "none",
+"model": 0.398,
+"model_src": "curve on Kalshi total",
+"kalshi_px": 0.45,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.445,
+"kalshi_cost": 0.4673,
+"kalshi_am": 114,
+"edge": -6.93,
+"edge_mkt": null,
+"target_am": 165,
+"target_kalshi_cents": 36
 }
 ]
+},
+{
+"key": "26OCT172000TBCLE|DEPTH IMBALANCE (ungraded)|1st inning: Over 0.5 runs",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $51 vs NO bids $225; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "1st inning: Over 0.5 runs",
+"side": "NO",
+"ticker": "KXMLBRFI-26OCT172000TBCLE",
+"kalshi_px": 0.56,
+"first_px": 0.445,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.5549999999999999,
+"kalshi_cost": 0.5772,
+"kalshi_am": -137,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT172000TBCLE|DEPTH IMBALANCE (ungraded)|Over 8.5 runs scored",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $3,023 vs NO bids $9,261; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 8.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT172000TBCLE-9",
+"kalshi_px": 0.7,
+"first_px": 0.31,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.69,
+"kalshi_cost": 0.7147,
+"kalshi_am": -251,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT172000TBCLE|DEPTH IMBALANCE (ungraded)|Over 3.5 runs scored",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $57 vs NO bids $667; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 3.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT172000TBCLE-4",
+"kalshi_px": 0.36,
+"first_px": 0.785,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.21499999999999997,
+"kalshi_cost": 0.3761,
+"kalshi_am": 166,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT172000TBCLE|DEPTH IMBALANCE (ungraded)|Tampa Bay first 7 innings winner",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $4,201 vs NO bids $1,281; heavier bidders YES; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Tampa Bay first 7 innings winner",
+"side": "YES",
+"ticker": "KXMLBF7-26OCT172000TBCLE-TB",
+"kalshi_px": 0.61,
+"first_px": 0.43,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.43,
+"kalshi_cost": 0.6267,
+"kalshi_am": -168,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT172000TBCLE|PRICE MOVE|Will there be extra innings in the Tampa Bay vs Cleveland game originally scheduled for Oct 17, 2026?",
+"cat": "INFO",
+"game": "TB @ CLE",
+"event": "26OCT172000TBCLE",
+"date": "2026-10-17",
+"first_pitch": "2026-10-17T20:00:00-04:00",
+"away": "TB",
+"home": "CLE",
+"tier": 4,
+"rules": [
+"PRICE MOVE"
+],
+"live": true,
+"first_seen": "2026-10-17T05:24:43.210551+00:00",
+"last_seen": "2026-10-17T05:24:43.210551+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "PRICE MOVE",
+"note": "0.080 -> 0.160 since last scan; new taker $ YES 56 / NO 0"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "PRICE MOVE",
+"why": "Mid moved 5+ pts since the last scan; informational."
+}
+],
+"label": "Will there be extra innings in the Tampa Bay vs Cleveland game originally scheduled for Oct 17, 2026?",
+"side": "-",
+"ticker": "KXMLBEXTRAS-26OCT172000TBCLE-EXTRAS",
+"kalshi_px": 0.2,
+"first_px": 0.16,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.16,
+"kalshi_cost": 0.2112,
+"kalshi_am": 373,
+"edge": null,
+"edge_mkt": null
 }
 ],
 "tickets": [
