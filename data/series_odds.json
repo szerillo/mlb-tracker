@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-18T05:34:22+00:00",
+ "generated_at": "2026-10-18T05:39:10+00:00",
  "source": "Series ML: best of Kalshi + Pinnacle + Bovada + sportsbooks via Action Network; series props: best of Kalshi + Bovada + pasted DK/Caesars (data/series_odds_manual.json); Kalshi + sportsbooks via Action Network (DK/FD/Caesars/bet365/Fanatics/BetRivers; BetMGM excluded); Kalshi: KXMLBSERIES (series ML), KXMLBSERIESSCORE (exact score + derived -1.5g), KXMLBSERIESGAMES (total games ladder), KXMLBSERIESSPREAD (series -1.5/-2.5), KXTEAMSINWS (WS matchup)",
  "price_type": "buy",
  "enabled": {
@@ -26,6 +26,7 @@
      "FanDuel": -146,
      "DraftKings": -140,
      "Pinnacle": -130,
+     "Bovada": -145,
      "Kalshi": -142
     },
     "b": {
@@ -33,19 +34,20 @@
      "FanDuel": 122,
      "DraftKings": 115,
      "Pinnacle": 113,
+     "Bovada": 120,
      "Kalshi": 119
     }
    },
    "exact": {
-    "a-4-3": 218,
-    "a-4-2": 208,
-    "b-4-3": 313,
+    "a-4-3": 229,
+    "a-4-2": 218,
+    "b-4-3": 331,
     "b-4-2": 351,
     "b-4-1": 2243
    },
    "spread": {
     "a_minus_1_5": 229,
-    "b_minus_1_5": 296,
+    "b_minus_1_5": 350,
     "b_plus_1_5": -788,
     "b_minus_2_5": 9252,
     "a_plus_1_5": -430
@@ -53,17 +55,31 @@
    "games": {
     "ladder": {
      "6.5": {
-      "over": -116,
-      "under": -121
-     },
-     "5.5": {
-      "over": null,
-      "under": 4579
+      "over": -110,
+      "under": -110
      }
     },
-    "line": 5.5,
-    "over": null,
-    "under": 4579
+    "line": 6.5,
+    "over": -110,
+    "under": -110,
+    "book": {
+     "6.5 over": "Bovada",
+     "6.5 under": "Bovada"
+    }
+   },
+   "exact_book": {
+    "a-4-3": "Kalshi",
+    "a-4-2": "Kalshi",
+    "b-4-3": "Kalshi",
+    "b-4-2": "Kalshi",
+    "b-4-1": "Kalshi"
+   },
+   "spread_book": {
+    "a_minus_1_5": "Kalshi",
+    "b_minus_1_5": "Bovada",
+    "b_plus_1_5": "Kalshi",
+    "b_minus_2_5": "Kalshi",
+    "a_plus_1_5": "Kalshi"
    }
   },
   {
@@ -100,12 +116,12 @@
    {
     "al": "TB",
     "nl": "MIL",
-    "market": -145
+    "market": -142
    },
    {
     "al": "CLE",
     "nl": "MIL",
-    "market": 123
+    "market": 124
    }
   ]
  }
