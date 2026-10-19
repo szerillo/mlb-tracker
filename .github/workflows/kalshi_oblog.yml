@@ -1,7 +1,7 @@
 name: kalshi-prop-orderbook-log
 on:
   schedule:
-    - cron: '*/20 14-23,0-3 * * *'   # every 20 min, 10 AM to 11:59 PM ET
+    - cron: '*/20 18-23,0-3 * * *'   # 10/19: every 20 min, 2 PM to 11:59 PM ET (night games only now)
   workflow_dispatch:
 permissions:
   contents: write

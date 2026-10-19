@@ -13,11 +13,9 @@ name: Player Futures (daily)
 # the update window we'll narrow.
 
 on:
-  schedule:
-    - cron: "0 12 * * *"     # 12:00 UTC = 8:00 AM ET
-    - cron: "0 13 * * *"     # 13:00 UTC = 9:00 AM ET
-    - cron: "30 14 * * *"    # 14:30 UTC = 10:30 AM ET
-    - cron: "30 22 * * *"    # 22:30 UTC = 6:30 PM ET
+  # 10/19 Sean: few games left, cut to OFF (manual run only). Restore the old crons in the offseason / next April.
+  # schedule:
+  #   - cron: "0 12 * * *"
   workflow_dispatch:
 
 concurrency:

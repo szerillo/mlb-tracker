@@ -18,7 +18,6 @@ name: Model grades (vs close)
 on:
   schedule:
     - cron: "10 4 * * *"    # 00:10 AM ET - freeze the midnight snapshot
-    - cron: "10 5 * * *"    # 01:10 AM ET - redundant midnight catch (write-once)
     - cron: "0 16 * * *"    # 12:00 PM ET - grade prior slates (finals are in)
   workflow_dispatch:
 

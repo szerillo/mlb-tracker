@@ -14,9 +14,9 @@ name: Morning stats refresh (FG + Savant)
 
 on:
   workflow_dispatch:
+  # 10/19 Sean: few games left, cut to once a day (or off). Restore the old crons in the offseason / next April.
   schedule:
-    # 8, 10, 11 AM ET  (EDT = UTC-4)  -> 12,14,15 UTC   (8=provisional, 10+11=settled window/probe)
-    - cron: "0 12,14,15 * * *"
+    - cron: "0 14 * * *"
 
 concurrency:
   group: morning-stats

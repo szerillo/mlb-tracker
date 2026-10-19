@@ -9,7 +9,7 @@ on:
   workflow_dispatch: {}            # manual "Run workflow" button
   schedule:
     # Every 30 min, ~9:30am–8:00pm ET (13:30–24:00 UTC). Adjust as you like.
-    - cron: "*/30 13-23 * * *"
+    - cron: "0 15,22 * * *"   # 10/19: 11 AM + 6 PM ET only (one game a day; ump term is display-only)
 
 permissions:
   contents: write                  # only needed if WRITE_JSON commits data/ump_assignments.json
