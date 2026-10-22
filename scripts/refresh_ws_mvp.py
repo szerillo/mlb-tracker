@@ -32,7 +32,8 @@ def kalshi():
         for m in d.get('markets', []):
             nm = m.get('yes_sub_title') or ''
             ask = float(m.get('yes_ask_dollars') or 0); bid = float(m.get('yes_bid_dollars') or 0)
-            if nm and 0 < ask < 1: out[nz(nm)] = {'ask': ask, 'bid': bid, 'ticker': m['ticker']}
+            na = float(m.get('no_ask_dollars') or 0)
+            if nm and 0 < ask < 1: out[nz(nm)] = {'ask': ask, 'bid': bid, 'no_ask': na if 0 < na < 1 else None, 'ticker': m['ticker']}
     except Exception as e:
         print('[ws_mvp] Kalshi fetch failed:', e)
     return out
@@ -59,6 +60,9 @@ def main():
             r.update(best_venue=AB[best[1]], best_odds=best[2], best_implied=round(best[0], 4),
                      edge_pts=round((pm - best[0]) * 100, 2), ev=round(pm / best[0] - 1, 3))
             r['stars'] = 2 if r['edge_pts'] >= 4 else (1 if r['edge_pts'] >= 2 else 0)
+        if q and q.get('no_ask'):                       # Kalshi NO side (Fable's book leans on these)
+            cn = q['no_ask'] + fee(q['no_ask'])
+            r.update(kalshi_no_ask=q['no_ask'], no_edge_pts=round(((1 - pm) - cn) * 100, 2))
         rows.append(r)
     rows.sort(key=lambda r: -r['p_model'])
     out = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'series': M.get('series'), 'stage': M.get('stage'),
@@ -66,7 +70,8 @@ def main():
            'kalshi_live': bool(K), 'players': rows}
     json.dump(out, open(os.path.join(D, 'ws_mvp.json'), 'w'), indent=1)
     pos = [r for r in rows if (r.get('edge_pts') or 0) > 0]
-    print(f"[ws_mvp] {len(rows)} players, {len(pos)} positive edges; Kalshi live: {bool(K)}")
+    neg = [r for r in rows if (r.get('no_edge_pts') or 0) > 0]
+    print(f"[ws_mvp] {len(rows)} players, {len(pos)} positive YES edges, {len(neg)} Kalshi NO edges; Kalshi live: {bool(K)}")
 
 if __name__ == '__main__':
     main()
