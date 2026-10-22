@@ -1862,6 +1862,20 @@ body.embed-mode .cf-tabs button{padding:5px 6px;font-size:11px}.apx-edgebar{disp
   .pf-section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
   .pf-section h3 { margin: 0 0 6px; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--text); text-align: center; }
   .pf-section .pf-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; text-align: center; }
+  /* World Series MVP board (Sean's projections, 10/21) */
+  .wsmvp-sec { grid-column: 1 / -1; }
+  .wsmvp-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .wsmvp-tbl th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  .wsmvp-tbl th:first-child, .wsmvp-tbl td:first-child { text-align: left; }
+  .wsmvp-tbl td { padding: 6px 8px; border-bottom: 1px solid rgba(127,127,127,.12); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wsmvp-tbl td.nm { display: flex; align-items: center; gap: 7px; }
+  .wsmvp-tbl td.nm img { width: 20px; height: 20px; }
+  .wsmvp-tbl .tag { font-size: .62rem; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+  .wsmvp-tbl .pos { color: #22c55e; font-weight: 700; } .wsmvp-tbl .neg { color: var(--muted); }
+  .wsmvp-tbl .bar { display: inline-block; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; background: #3b82f6; opacity: .7; }
+  .wsmvp-note { font-size: .7rem; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+  @media (max-width: 680px) { .wsmvp-tbl .hm { display: none; } }
+  body.force-mobile .wsmvp-tbl .hm { display: none; }
   .pf-filter-note { font-size: 0.74rem; color: var(--muted); margin-top: 4px; text-align: center;
     line-height: 1.4; }
   .pf-filter-note b { color: var(--accent); font-weight: 600; }
@@ -2656,6 +2670,11 @@ body.embed-mode.embed-futures #tab-futures,
       <div class="pf-filter-note">Top 5 and others with a <b>&ge;1% model chance</b>, and <b>+EV longshots</b></div>
     </div>
     <div class="pf-grid">
+      <div class="pf-section wsmvp-sec" id="pf-ws-mvp" style="display:none">
+        <h3>World Series MVP</h3>
+        <div class="pf-sub" id="pf-ws-mvp-sub"></div>
+        <div id="wsmvp-body"></div>
+      </div>
       <div class="pf-section" id="pf-AL_MVP">
         <h3>AL MVP</h3>
         <div class="pf-sub" id="pf-AL_MVP-sub"></div>
@@ -10640,8 +10659,33 @@ function _pfWireControls(){
   }));
   _PF_CTL_WIRED=true;
 }
+// World Series MVP board: data/ws_mvp.json (Sean's projections; P(MVP) = P(series win) x player share, Fable 10/20).
+// Embed: ?embed=player-futures&market=ws-mvp
+async function renderWsMvp(){
+  const sec=document.getElementById('pf-ws-mvp'), body=document.getElementById('wsmvp-body'); if(!sec||!body) return;
+  let D=null; try{ const r=await fetch('data/ws_mvp.json?cb='+Date.now()); if(r.ok) D=await r.json(); }catch(e){}
+  if(!D||!D.players||!D.players.length){ sec.style.display='none'; return; }
+  sec.style.display='';
+  const TID={MIL:158,TB:139,CLE:114,LAD:119}, logo=t=>`<img src="https://www.mlbstatic.com/team-logos/${TID[t]||0}.svg" alt="">`;
+  const pc=v=>v==null?'–':(v>=10?v.toFixed(1):v.toFixed(1))+'%', am=o=>o==null?'–':(o>0?'+':'')+o, c=v=>v==null?'–':v.toFixed(1)+'¢';
+  const ed=(v,unit)=>v==null?'<span class="neg">–</span>':`<span class="${v>0?'pos':'neg'}">${v>0?'+':''}${unit==='pts'?(v*100).toFixed(1):(v*100).toFixed(0)+'%'}</span>`;
+  const P=D.players.slice().sort((a,b)=>(b.p_model||0)-(a.p_model||0)), mx=Math.max(...P.map(x=>x.p_model||0));
+  const sp=D.series_p||{}, spm=D.series_p_market||{};
+  document.getElementById('pf-ws-mvp-sub').textContent=`${D.series||''} · ${D.stage||''} · series ${Object.entries(sp).map(([t,v])=>t+' '+Math.round(v*100)+'%').join(' / ')}`;
+  body.innerHTML=`<div style="overflow-x:auto"><table class="wsmvp-tbl"><thead><tr><th>Player</th><th>Model</th><th class="hm">At mkt series</th><th>Kalshi YES</th><th class="hm">Kalshi NO</th><th>Books</th><th class="hm">Books (no-vig)</th><th>Edge YES (Kalshi)</th><th>Edge NO (Kalshi)</th><th class="hm">EV YES (books)</th></tr></thead><tbody>${
+    P.map(x=>`<tr><td class="nm">${logo(x.team)}<span>${x.name}</span>${x.pitcher?'<span class="tag">P</span>':''}</td>
+      <td><span class="bar" style="width:${Math.max(2,Math.round(48*(x.p_model||0)/mx))}px"></span>${pc(x.p_model)}</td>
+      <td class="hm">${pc(x.p_model_mkt)}</td><td>${c(x.kalshi_yes)}</td><td class="hm">${c(x.kalshi_no)}</td>
+      <td>${am(x.book_odds)}</td><td class="hm">${pc(x.book_devig)}</td>
+      <td>${ed(x.edge_yes_kalshi,'pts')}</td><td>${ed(x.edge_no_kalshi,'pts')}</td><td class="hm">${ed(x.ev_yes_books,'ev')}</td></tr>`).join('')
+  }</tbody></table></div>
+  <div class="wsmvp-note">Model = P(team wins the series) × the player's share of his team's MVP chance. Since 1985 every WS MVP came from the winning team; the share is close to even across the nine regulars with a modest tilt toward the best bats, plus the two-start ace. "At mkt series" uses the market's series price (MIL ${Math.round((spm.MIL||0)*100)}%). Kalshi edges are in points after the fee at the ask; book EV is return per $1 at the consensus price. Updated ${D.generated_at?new Date(D.generated_at).toLocaleString():''}.</div>`;
+  try{ if(new URLSearchParams(location.search).get('market')==='ws-mvp'){ const tb=document.querySelector('#tab-player-futures .pf-toolbar'); if(tb) tb.style.display='none'; } }catch(e){}
+  try{ if(typeof sendHeight==='function') setTimeout(sendHeight,50); }catch(e){}
+}
 async function renderPlayerFuturesTab(){
   if(PLAYER_FUTURES_RENDERED){ return; }
+  try{ renderWsMvp(); }catch(e){ console.warn('WS MVP render failed',e); }
   const upd = document.getElementById('pf-updated');
   try{
     const resp = await fetch('data/player_futures.json',{cache:'no-store'});
