@@ -155,7 +155,7 @@ RETRACTABLE = DOMES - {"Tampa Bay Rays"}
 # source for them, if the roof state is unknown and the weather is mild & dry we
 # lean OPEN (compute the real outdoor number) rather than defaulting to closed-0.
 # Hot-climate retractables (HOU/TEX/ARI/MIA) stay closed-by-default (summer AC).
-LEAN_OPEN_PARKS = {"Toronto Blue Jays", "Milwaukee Brewers"}
+LEAN_OPEN_PARKS = set()   # 10/22 (Sean): retractables assume CLOSED unless confirmed open (MLB posted condition, roof schedule, or data/roof_overrides.json)
 def _likely_open(hour):
     """Heuristic: roof probably open when it's dry and comfortably mild."""
     if not hour:
@@ -346,7 +346,7 @@ def get_schedule_range(start_iso: str, end_iso: str):
     """Fetch all games between start_iso..end_iso (inclusive)."""
     d = fetch(
         f"https://statsapi.mlb.com/api/v1/schedule?sportId=1"
-        f"&startDate={start_iso}&endDate={end_iso}"
+        f"&startDate={start_iso}&endDate={end_iso}&hydrate=weather"
     )
     if not d or not d.get("dates"):
         return []
@@ -360,6 +360,9 @@ def get_schedule_range(start_iso: str, end_iso: str):
                 "game_time": g["gameDate"],
                 "venue": g.get("venue", {}).get("name", ""),
                 "status": g.get("status", {}).get("abstractGameState", ""),
+                # MLB's posted game-day condition ("Roof Closed", "Dome", "Clear"...). Posts
+                # close to first pitch; for a retractable park anything but Roof Closed/Dome = open.
+                "mlb_condition": (g.get("weather") or {}).get("condition") or "",
             }))
     return out
 
@@ -597,6 +600,22 @@ def main():
     year = datetime.date.today().year
     roof_by_team = load_all_roof_schedules(year)
 
+    # Manual roof calls (data/roof_overrides.json): {"Team Name": {"state": "closed"|"open",
+    # "from": "YYYY-MM-DD", "through": "YYYY-MM-DD"}}. Beats the schedule and the lean-open heuristic.
+    try:
+        _ROOF_OV = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "roof_overrides.json"))).get("teams", {})
+    except Exception:
+        _ROOF_OV = {}
+    def roof_override(home, game_date_iso):
+        o = _ROOF_OV.get(home)
+        if not o or not game_date_iso:
+            return None
+        if o.get("from") and game_date_iso < o["from"]:
+            return None
+        if o.get("through") and game_date_iso > o["through"]:
+            return None
+        return o.get("state")
+
     def is_roof_open(home, game_date_iso):
         sched = roof_by_team.get(home, {})
         return sched.get(game_date_iso) == "open"
@@ -681,6 +700,16 @@ def main():
         if home in LEAN_OPEN_PARKS and not roof_open:
             if _likely_open(extract_hour(forecasts.get(home), g["game_time"])):
                 roof_likely_open = True
+        # Confirmed open from MLB's posted game-day condition (retractable parks only).
+        _cond = (g.get("mlb_condition") or "").strip().lower()
+        mlb_confirmed_open = bool(home in RETRACTABLE and _cond and _cond not in ("roof closed", "dome"))
+        if mlb_confirmed_open:
+            roof_open = True
+        _ov = roof_override(home, gd_et)
+        if _ov == "closed":
+            roof_open = roof_likely_open = False
+        elif _ov == "open":
+            roof_open = True
         is_open = bool(roof_open or roof_likely_open)
         # Retractable park, roof closed/unknown -> headline 0, but still surface
         # the (correct, undamped) open-roof number for the dual readout.
@@ -694,7 +723,10 @@ def main():
                 "weather": None,
                 "note": "Dome / retractable roof — weather adjustment minimal",
             }
-            if home in RETRACTABLE and (home in NWS_GRIDS or home in OPENMETEO_PARKS):
+            if _ov == "closed":
+                entry["roof_state"] = "closed (manual)"
+                entry["note"] = "Roof closed (manual call), no weather adjustment"
+            elif home in RETRACTABLE and (home in NWS_GRIDS or home in OPENMETEO_PARKS):
                 ofc = forecasts.get(home)
                 ohour, ov8 = compute_open_v8(home, g, ofc)
                 if ov8 is not None:
