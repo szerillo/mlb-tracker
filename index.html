@@ -4590,13 +4590,31 @@ function fatigueBreakdown(days, format="days", labels=null) {
 // ============================================================================
 // MLB API
 // ============================================================================
+// Manual probable-SP fill (data/sp_overrides.json, keyed by gamePk). Only fills a side MLB
+// has left blank, so an official probable always wins.
+let _SP_OV = null;
+async function _applySpOverrides(games) {
+  try {
+    if (_SP_OV === null) _SP_OV = await fetch('data/sp_overrides.json?t=' + Date.now()).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+    const ov = (_SP_OV && _SP_OV.games) || {};
+    for (const g of games) {
+      const o = ov[String(g.gamePk)]; if (!o) continue;
+      for (const side of ['away', 'home']) {
+        const p = o[side];
+        if (p && g.teams?.[side] && !g.teams[side].probablePitcher)
+          g.teams[side].probablePitcher = { id: p.id, fullName: p.fullName, link: '/api/v1/people/' + p.id, _override: true };
+      }
+    }
+  } catch (e) {}
+  return games;
+}
 async function getSchedule(date) {
   // Retry transient statsapi failures ("Failed to fetch"): loadForDate fires ~14 of these in
   // parallel, and one dropped request used to reject the whole Promise.all -> empty slate
   // (shot mode showed "Game not found" with no screenshot buttons).
   const url = `${API}/schedule?sportId=1&date=${date}&hydrate=probablePitcher(stats(group=pitching,type=season)),seriesStatus`;
   for (let i = 0; i < 3; i++) {
-    try { const d = await fetchJSON(url); return d.dates?.[0]?.games || []; }
+    try { const d = await fetchJSON(url); return await _applySpOverrides(d.dates?.[0]?.games || []); }
     catch (e) { if (i === 2) { console.warn('schedule fetch failed', date, e); return []; } await new Promise(r => setTimeout(r, 600 * (i + 1))); }
   }
   return [];
