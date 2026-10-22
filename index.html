@@ -10662,7 +10662,7 @@ function _pfWireControls(){
   }));
   _PF_CTL_WIRED=true;
 }
-// World Series MVP board: data/ws_mvp.json (Sean's projections; P(MVP) = P(series win) x player share, Fable 10/20).
+// World Series MVP board: data/ws_mvp.json (Fable engine v2 blend, WS_MVP_FINAL_2026-10-21; P(MVP) = P(series win) x player share).
 // Embed: ?embed=player-futures&market=ws-mvp
 async function renderWsMvp(){
   const sec=document.getElementById('pf-ws-mvp'), body=document.getElementById('wsmvp-body'); if(!sec||!body) return;
@@ -10670,7 +10670,7 @@ async function renderWsMvp(){
   if(!D||!D.players||!D.players.length){ sec.style.display='none'; return; }
   sec.style.display='';
   const TID={MIL:158,TB:139,CLE:114,LAD:119}, logo=t=>`<img src="https://www.mlbstatic.com/team-logos/${TID[t]||0}.svg" alt="">`;
-  const am=o=>o==null?'–':(o>0?'+':'')+o.toLocaleString(), pc=v=>v==null?'–':(v*100).toFixed(1)+'%';
+  const am=o=>o==null?'–':(o>0?'+':'')+o, pc=v=>v==null?'–':(v*100).toFixed(1)+'%';
   const sp=D.series_p||{};
   document.getElementById('pf-ws-mvp-sub').textContent=`${D.series||''} · ${D.stage||''} · series ${Object.entries(sp).map(([t,v])=>t+' '+Math.round(v*100)+'%').join(' / ')}`;
   const draw=()=>{
@@ -10685,8 +10685,16 @@ async function renderWsMvp(){
         <td class="${cls}">${e==null?'–':(e>0?'+':'')+e.toFixed(1)}${st?'<span class="star">'+st+'</span>':''}</td></tr>`; };
     body.innerHTML=`<div style="overflow-x:auto"><table class="wsmvp-tbl"><thead><tr><th>Player</th><th>Model</th><th class="hm">Fair</th><th>Best price</th><th>Edge</th></tr></thead><tbody>${
       L.length?L.map(row).join(''):'<tr><td colspan="5" class="neg" style="text-align:center">No positive edges right now.</td></tr>'}</tbody></table></div>
+      ${(()=>{ const N=D.players.filter(x=>(x.no_edge_pts||0)>=1).sort((a,b)=>b.no_edge_pts-a.no_edge_pts);
+        if(!N.length) return '';
+        const nr=x=>{ const e=x.no_edge_pts, st=e>=4?' ★★':e>=2?' ★':'';
+          return `<tr><td class="nm">${logo(x.team)}<span>${x.name}</span>${x.pitcher?'<span class="tag">P</span>':''}</td>
+          <td>${pc(x.p_model)}</td><td class="hm">${pc(1-x.p_model)}</td><td>${Math.round(x.kalshi_no_ask*100)}¢ <span class="tag">Kalshi NO</span></td>
+          <td class="pos">+${e.toFixed(1)}${st?'<span class="star">'+st+'</span>':''}</td></tr>`; };
+        return `<div class="wsmvp-note" style="margin:12px 0 4px;font-weight:600">Kalshi NO edges</div>
+        <div style="overflow-x:auto"><table class="wsmvp-tbl"><thead><tr><th>Player</th><th>Model</th><th class="hm">Fair NO</th><th>NO price</th><th>Edge</th></tr></thead><tbody>${N.map(nr).join('')}</tbody></table></div>`; })()}
       <div class="wsmvp-foot"><button class="wsmvp-tog" type="button">${full?'Show edges only':'Show full board ('+D.players.length+')'}</button>
-      <span class="wsmvp-note">Edge = model % minus the best listed price's implied % (books FD/DK/CZR/BR, Kalshi live incl. fee). ★ 2+, ★★ 4+.</span></div>`;
+      <span class="wsmvp-note">Model = Fable engine v2 blend (pure + leader-prop lane). Edge = model % minus the best listed price's implied % (books FD/DK/CZR/BR, Kalshi live incl. fee). NO edge = (1 − model) minus Kalshi NO ask incl. fee. ★ 2+, ★★ 4+.</span></div>`;
     body.querySelector('.wsmvp-tog').onclick=()=>{ window.__wsmvpFull=!full; draw(); };
   };
   draw();
