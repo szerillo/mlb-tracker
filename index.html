@@ -10676,7 +10676,7 @@ async function renderWsMvp(){
   const draw=()=>{
     const full=!!window.__wsmvpFull;
     const all=D.players.filter(x=>x.best_odds!=null||full);
-    const pos=D.players.filter(x=>(x.edge_pts||0)>0).sort((a,b)=>b.edge_pts-a.edge_pts);
+    const pos=D.players.filter(x=>(x.edge_pts||0)>=0.5).sort((a,b)=>b.edge_pts-a.edge_pts);
     const L=full?D.players.slice().sort((a,b)=>b.p_model-a.p_model):pos;
     const row=x=>{ const e=x.edge_pts, cls=e==null?'neg':(e>0?'pos':'neg'), st=x.stars===2?' ★★':x.stars===1?' ★':'';
       return `<tr><td class="nm">${logo(x.team)}<span>${x.name}</span>${x.pitcher?'<span class="tag">P</span>':''}</td>
@@ -10684,17 +10684,8 @@ async function renderWsMvp(){
         <td>${x.best_odds!=null?am(x.best_odds)+` <span class="tag">${x.best_venue}</span>`:'–'}</td>
         <td class="${cls}">${e==null?'–':(e>0?'+':'')+e.toFixed(1)}${st?'<span class="star">'+st+'</span>':''}</td></tr>`; };
     body.innerHTML=`<div style="overflow-x:auto"><table class="wsmvp-tbl"><thead><tr><th>Player</th><th>Model</th><th class="hm">Fair</th><th>Best price</th><th>Edge</th></tr></thead><tbody>${
-      L.length?L.map(row).join(''):'<tr><td colspan="5" class="neg" style="text-align:center">No positive edges right now.</td></tr>'}</tbody></table></div>
-      ${(()=>{ const N=D.players.filter(x=>(x.no_edge_pts||0)>=1).sort((a,b)=>b.no_edge_pts-a.no_edge_pts);
-        if(!N.length) return '';
-        const nr=x=>{ const e=x.no_edge_pts, st=e>=4?' ★★':e>=2?' ★':'';
-          return `<tr><td class="nm">${logo(x.team)}<span>${x.name}</span>${x.pitcher?'<span class="tag">P</span>':''}</td>
-          <td>${pc(x.p_model)}</td><td class="hm">${pc(1-x.p_model)}</td><td>${Math.round(x.kalshi_no_ask*100)}¢ <span class="tag">Kalshi NO</span></td>
-          <td class="pos">+${e.toFixed(1)}${st?'<span class="star">'+st+'</span>':''}</td></tr>`; };
-        return `<div class="wsmvp-note" style="margin:12px 0 4px;font-weight:600">Kalshi NO edges</div>
-        <div style="overflow-x:auto"><table class="wsmvp-tbl"><thead><tr><th>Player</th><th>Model</th><th class="hm">Fair NO</th><th>NO price</th><th>Edge</th></tr></thead><tbody>${N.map(nr).join('')}</tbody></table></div>`; })()}
-      <div class="wsmvp-foot"><button class="wsmvp-tog" type="button">${full?'Show edges only':'Show full board ('+D.players.length+')'}</button>
-      <span class="wsmvp-note">Model = Fable engine v2 blend (pure + leader-prop lane). Edge = model % minus the best listed price's implied % (books FD/DK/CZR/BR, Kalshi live incl. fee). NO edge = (1 − model) minus Kalshi NO ask incl. fee. ★ 2+, ★★ 4+.</span></div>`;
+      L.length?L.map(row).join(''):'<tr><td colspan="5" class="neg" style="text-align:center">No edges of 0.5+ right now.</td></tr>'}</tbody></table></div>
+      <div class="wsmvp-foot"><button class="wsmvp-tog" type="button">${full?'Show edges only':'Show full board ('+D.players.length+')'}</button></div>`;
     body.querySelector('.wsmvp-tog').onclick=()=>{ window.__wsmvpFull=!full; draw(); };
   };
   draw();
