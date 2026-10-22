@@ -84,11 +84,13 @@ jobs:
         run: python scripts/refresh_series_odds.py
         continue-on-error: true
 
+      - name: World Series MVP board (Sean's model vs best book / live Kalshi)
+        run: python scripts/refresh_ws_mvp.py || true
       - name: Commit odds (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/team_futures.json data/team_futures_odds.json data/series_odds.json || true
+          git add data/odds.json data/lane2_series.json data/lane2_marginalized.json data/v2_marginalized.json data/team_futures.json data/team_futures_odds.json data/series_odds.json data/ws_mvp.json || true
           if git diff --cached --quiet; then
             echo "No odds change."
           else
