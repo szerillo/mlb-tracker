@@ -1,6 +1,6 @@
 {
- "updated_at": "2026-10-22T05:43:41+00:00",
- "source": "Sean's WS MVP projections (WS2026_MVP_PROJECTIONS_preG1.csv): P(MVP) = P(series win) x share",
+ "updated_at": "2026-10-22T06:31:40+00:00",
+ "source": "Fable engine v2 (WS_MVP_FINAL_2026-10-21): blend of pure (Sean 65%) and lane B (leader-prop-adjusted); P(MVP) = P(series win) x share",
  "series": "MIL vs TB",
  "stage": "pre-G1",
  "series_p": {
@@ -12,169 +12,393 @@
    "name": "Jackson Chourio",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.1213
+   "p_model": 0.1158,
+   "p_pure": 0.1125,
+   "p_laneB": 0.1191
   },
   {
    "name": "Brice Turang",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.09718
-  },
-  {
-   "name": "Drew Rasmussen",
-   "team": "TB",
-   "pitcher": true,
-   "p_model": 0.09707
-  },
-  {
-   "name": "William Contreras",
-   "team": "MIL",
-   "pitcher": false,
-   "p_model": 0.0897
+   "p_model": 0.0833,
+   "p_pure": 0.0886,
+   "p_laneB": 0.078
   },
   {
    "name": "Jake Bauers",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.07645
+   "p_model": 0.0811,
+   "p_pure": 0.0851,
+   "p_laneB": 0.0771
+  },
+  {
+   "name": "William Contreras",
+   "team": "MIL",
+   "pitcher": false,
+   "p_model": 0.0848,
+   "p_pure": 0.0809,
+   "p_laneB": 0.0888
+  },
+  {
+   "name": "Drew Rasmussen",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0656,
+   "p_pure": 0.0676,
+   "p_laneB": 0.0636
   },
   {
    "name": "Christian Yelich",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.06422
+   "p_model": 0.0771,
+   "p_pure": 0.0573,
+   "p_laneB": 0.0969
   },
   {
    "name": "Garrett Mitchell",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.04644
+   "p_model": 0.0474,
+   "p_pure": 0.0556,
+   "p_laneB": 0.0392
   },
   {
    "name": "Cooper Pratt",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.04388
-  },
-  {
-   "name": "Junior Caminero",
-   "team": "TB",
-   "pitcher": false,
-   "p_model": 0.03939
-  },
-  {
-   "name": "Jacob Misiorowski",
-   "team": "MIL",
-   "pitcher": true,
-   "p_model": 0.03726
-  },
-  {
-   "name": "Freddy Peralta",
-   "team": "TB",
-   "pitcher": true,
-   "p_model": 0.03707
-  },
-  {
-   "name": "Yandy D\u00edaz",
-   "team": "TB",
-   "pitcher": false,
-   "p_model": 0.03448
+   "p_model": 0.0385,
+   "p_pure": 0.0481,
+   "p_laneB": 0.029
   },
   {
    "name": "Sal Frelick",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.03286
+   "p_model": 0.0412,
+   "p_pure": 0.037,
+   "p_laneB": 0.0455
   },
   {
-   "name": "Jonathan Aranda",
+   "name": "Junior Caminero",
    "team": "TB",
    "pitcher": false,
-   "p_model": 0.02908
+   "p_model": 0.0495,
+   "p_pure": 0.0359,
+   "p_laneB": 0.063
+  },
+  {
+   "name": "Yandy D\u00edaz",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0344,
+   "p_pure": 0.0334,
+   "p_laneB": 0.0355
   },
   {
    "name": "David Hamilton",
    "team": "MIL",
    "pitcher": false,
-   "p_model": 0.02663
+   "p_model": 0.0258,
+   "p_pure": 0.0311,
+   "p_laneB": 0.0206
+  },
+  {
+   "name": "Jonathan Aranda",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0297,
+   "p_pure": 0.0303,
+   "p_laneB": 0.0291
+  },
+  {
+   "name": "Freddy Peralta",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0279,
+   "p_pure": 0.0282,
+   "p_laneB": 0.0277
   },
   {
    "name": "Liam Hicks",
    "team": "TB",
    "pitcher": false,
-   "p_model": 0.02281
+   "p_model": 0.022,
+   "p_pure": 0.0249,
+   "p_laneB": 0.019
   },
   {
-   "name": "Griffin Jax",
-   "team": "TB",
+   "name": "Jacob Misiorowski",
+   "team": "MIL",
    "pitcher": true,
-   "p_model": 0.01845
-  },
-  {
-   "name": "Chandler Simpson",
-   "team": "TB",
-   "pitcher": false,
-   "p_model": 0.01734
-  },
-  {
-   "name": "Victor Mesa Jr.",
-   "team": "TB",
-   "pitcher": false,
-   "p_model": 0.01444
+   "p_model": 0.0239,
+   "p_pure": 0.024,
+   "p_laneB": 0.0239
   },
   {
    "name": "Jonny DeLuca",
    "team": "TB",
    "pitcher": false,
-   "p_model": 0.01343
+   "p_model": 0.0169,
+   "p_pure": 0.0212,
+   "p_laneB": 0.0126
   },
   {
-   "name": "Richie Palacios",
+   "name": "Griffin Jax",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0162,
+   "p_pure": 0.0164,
+   "p_laneB": 0.016
+  },
+  {
+   "name": "Chandler Simpson",
    "team": "TB",
    "pitcher": false,
-   "p_model": 0.01057
+   "p_model": 0.0125,
+   "p_pure": 0.0155,
+   "p_laneB": 0.0096
   },
   {
    "name": "Logan Henderson",
    "team": "MIL",
    "pitcher": true,
-   "p_model": 0.01027
+   "p_model": 0.0105,
+   "p_pure": 0.0106,
+   "p_laneB": 0.0103
   },
   {
    "name": "Taylor Walls",
    "team": "TB",
    "pitcher": false,
-   "p_model": 0.00876
+   "p_model": 0.0073,
+   "p_pure": 0.0092,
+   "p_laneB": 0.0054
+  },
+  {
+   "name": "Victor Mesa Jr.",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0087,
+   "p_pure": 0.0088,
+   "p_laneB": 0.0087
   },
   {
    "name": "Nick Martinez",
    "team": "TB",
    "pitcher": true,
-   "p_model": 0.00666
-  },
-  {
-   "name": "Robert Gasser",
-   "team": "MIL",
-   "pitcher": true,
-   "p_model": 0.00281
-  },
-  {
-   "name": "Shane Drohan",
-   "team": "MIL",
-   "pitcher": true,
-   "p_model": 0.00099
+   "p_model": 0.0082,
+   "p_pure": 0.0085,
+   "p_laneB": 0.0079
   },
   {
    "name": "Bryan Baker",
    "team": "TB",
    "pitcher": true,
-   "p_model": 0.00041
+   "p_model": 0.0071,
+   "p_pure": 0.0073,
+   "p_laneB": 0.007
+  },
+  {
+   "name": "Kevin Kelly",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0068,
+   "p_pure": 0.0069,
+   "p_laneB": 0.0066
+  },
+  {
+   "name": "Richie Palacios",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0053,
+   "p_pure": 0.0062,
+   "p_laneB": 0.0044
+  },
+  {
+   "name": "Tyler Wells",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0059,
+   "p_pure": 0.0059,
+   "p_laneB": 0.0058
+  },
+  {
+   "name": "Ryan Vilade",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0076,
+   "p_pure": 0.0053,
+   "p_laneB": 0.01
+  },
+  {
+   "name": "Ian Seymour",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0044,
+   "p_pure": 0.0045,
+   "p_laneB": 0.0043
+  },
+  {
+   "name": "Robert Gasser",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0042,
+   "p_pure": 0.0042,
+   "p_laneB": 0.0041
+  },
+  {
+   "name": "Cam Booser",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0039,
+   "p_pure": 0.0039,
+   "p_laneB": 0.0039
+  },
+  {
+   "name": "Aaron Ashby",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0036,
+   "p_pure": 0.0037,
+   "p_laneB": 0.0036
+  },
+  {
+   "name": "Steven Matz",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0035,
+   "p_pure": 0.0035,
+   "p_laneB": 0.0034
+  },
+  {
+   "name": "Cole Sulser",
+   "team": "TB",
+   "pitcher": true,
+   "p_model": 0.0034,
+   "p_pure": 0.0035,
+   "p_laneB": 0.0033
+  },
+  {
+   "name": "Ben Williamson",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0044,
+   "p_pure": 0.0033,
+   "p_laneB": 0.0055
+  },
+  {
+   "name": "Shane Drohan",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0022,
+   "p_pure": 0.0023,
+   "p_laneB": 0.0022
   },
   {
    "name": "Trevor Megill",
    "team": "MIL",
    "pitcher": true,
-   "p_model": 5e-05
+   "p_model": 0.0017,
+   "p_pure": 0.0018,
+   "p_laneB": 0.0017
+  },
+  {
+   "name": "Chad Patrick",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0016,
+   "p_pure": 0.0016,
+   "p_laneB": 0.0016
+  },
+  {
+   "name": "Abner Uribe",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0015,
+   "p_pure": 0.0015,
+   "p_laneB": 0.0015
+  },
+  {
+   "name": "DL Hall",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0012,
+   "p_pure": 0.0012,
+   "p_laneB": 0.0012
+  },
+  {
+   "name": "JoJo Romero",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0009,
+   "p_pure": 0.0009,
+   "p_laneB": 0.0009
+  },
+  {
+   "name": "Antonio Senzatela",
+   "team": "MIL",
+   "pitcher": true,
+   "p_model": 0.0007,
+   "p_pure": 0.0006,
+   "p_laneB": 0.0007
+  },
+  {
+   "name": "Gary S\u00e1nchez",
+   "team": "MIL",
+   "pitcher": false,
+   "p_model": 0.0003,
+   "p_pure": 0.0003,
+   "p_laneB": 0.0004
+  },
+  {
+   "name": "Andrew Vaughn",
+   "team": "MIL",
+   "pitcher": false,
+   "p_model": 0.0003,
+   "p_pure": 0.0003,
+   "p_laneB": 0.0004
+  },
+  {
+   "name": "Joey Ortiz",
+   "team": "MIL",
+   "pitcher": false,
+   "p_model": 0.0003,
+   "p_pure": 0.0002,
+   "p_laneB": 0.0003
+  },
+  {
+   "name": "Luis Lara",
+   "team": "MIL",
+   "pitcher": false,
+   "p_model": 0.0003,
+   "p_pure": 0.0002,
+   "p_laneB": 0.0003
+  },
+  {
+   "name": "Nick Fortes",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0001,
+   "p_pure": 0.0001,
+   "p_laneB": 0.0001
+  },
+  {
+   "name": "Jorge Mateo",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0001,
+   "p_pure": 0.0001,
+   "p_laneB": 0.0001
+  },
+  {
+   "name": "Cedric Mullins",
+   "team": "TB",
+   "pitcher": false,
+   "p_model": 0.0001,
+   "p_pure": 0.0001,
+   "p_laneB": 0.0001
   }
  ]
 }
