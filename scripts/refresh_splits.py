@@ -47,9 +47,13 @@ def get_today_probables():
     if not d or not d.get("dates"):
         return []
     out = []
+    try:   # manual probable fill (data/sp_overrides.json); only where MLB has none
+        _ov = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "sp_overrides.json"))).get("games", {})
+    except Exception:
+        _ov = {}
     for g in d["dates"][0].get("games", []):
         for side in ("away", "home"):
-            pp = g["teams"][side].get("probablePitcher")
+            pp = g["teams"][side].get("probablePitcher") or (_ov.get(str(g["gamePk"])) or {}).get(side)
             if pp and pp.get("id"):
                 out.append({
                     "pid": pp["id"],
