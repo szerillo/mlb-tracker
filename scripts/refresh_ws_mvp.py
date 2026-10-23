@@ -14,8 +14,8 @@ stars: >= 2 pts one star, >= 4 pts two stars (same as the series cards). Read-on
 import json, os, re, unicodedata, urllib.request, datetime as dt
 HERE = os.path.dirname(os.path.abspath(__file__)); D = os.path.join(HERE, '..', 'data')
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXMLBWSMVP&status=open&limit=500"
-BOOKS = ['FanDuel', 'DraftKings', 'Caesars', 'BetRivers']          # BetMGM excluded from best price
-AB = {'FanDuel': 'FD', 'DraftKings': 'DK', 'Caesars': 'CZR', 'BetRivers': 'BR', 'Kalshi': 'Kalshi'}
+BOOKS = ['FanDuel', 'DraftKings', 'Caesars', 'BetRivers', 'BetOnline', 'Bookmaker']          # BetMGM excluded from best price
+AB = {'FanDuel': 'FD', 'DraftKings': 'DK', 'Caesars': 'CZR', 'BetRivers': 'BR', 'BetOnline': 'BOL', 'Bookmaker': 'BKM', 'Kalshi': 'Kalshi'}
 fee = lambda p: 0.07 * p * (1 - p)
 imp = lambda o: 100 / (o + 100) if o > 0 else -o / (-o + 100)
 def am(p):
