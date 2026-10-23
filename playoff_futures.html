@@ -451,7 +451,7 @@ function seriesRowHTML(s, mkt){
   // compare the model straight to what it costs to back each side (no de-vig -> each side has its own edge).
   const BUY=!!(window.__sodds&&window.__sodds.price_type==='buy');
   const [dva,dvb]=BUY?[impAm(mml_a),impAm(mml_b)]:devig2(mml_a,mml_b);
-  const BKAB={DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',bet365:'365',Fanatics:'FAN',BetRivers:'BR',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV'};
+  const BKAB={DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',bet365:'365',Fanatics:'FAN',BetRivers:'BR',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV',BetOnline:'BOL',Bookmaker:'BKM'};
   const line=(ab,seed,p,fairAm,mml,dv,isFav,side)=>{
     const bk=mkt&&(mkt['book_'+side]||mkt.book), all=mkt&&mkt.books&&mkt.books[side];
     const tip=all?Object.entries(all).map(([n,o])=>`${n} ${o>0?'+':''}${o}`).join(' · '):'';
@@ -490,7 +490,7 @@ function seriesRowHTML(s, mkt){
   // outcomes the series can no longer produce (e.g. trailing team -1.5g / 2-0) are hidden
   const _w=s.wins||{a:0,b:0};
   const possible=(side,w,l)=>{ const mine=side==='a'?_w.a:_w.b, theirs=side==='a'?_w.b:_w.a; return mine<=w && theirs<=l; };
-  const _bkl=b=>b?`<div class="sbk">${({DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV'})[b]||b}</div>`:'';
+  const _bkl=b=>b?`<div class="sbk">${({DraftKings:'DK',FanDuel:'FD',Caesars:'CZR',BetMGM:'MGM',Kalshi:'KAL',Pinnacle:'PIN',Bovada:'BOV',BetOnline:'BOL',Bookmaker:'BKM'})[b]||b}</div>`:'';
   const exRow=(lab,p,mk,pdv,col,bk)=>{
     if(!(p>0.0005) || p>=0.9995) return '';
     const ed=(pdv!=null)?(p-pdv)*100:null;
