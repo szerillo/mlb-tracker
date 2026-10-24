@@ -1868,8 +1868,9 @@ body.embed-mode .cf-tabs button{padding:5px 6px;font-size:11px}.apx-edgebar{disp
   .wsmvp-tbl th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
   .wsmvp-tbl th:first-child, .wsmvp-tbl td:first-child { text-align: left; }
   .wsmvp-tbl td { padding: 6px 8px; border-bottom: 1px solid rgba(127,127,127,.12); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .wsmvp-tbl td.nm { display: flex; align-items: center; gap: 7px; }
-  .wsmvp-tbl td.nm img { width: 20px; height: 20px; }
+  .wsmvp-tbl td.nm { white-space: normal; }
+  .wsmvp-tbl td.nm img { width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; }
+  .wsmvp-tbl td.nm .tag { margin-left: 4px; }
   .wsmvp-tbl .tag { font-size: .62rem; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
   .wsmvp-tbl .pos { color: #22c55e; font-weight: 700; } .wsmvp-tbl .neg { color: var(--muted); }
   .wsmvp-tbl .bar { display: inline-block; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; background: #3b82f6; opacity: .7; }
@@ -1877,7 +1878,17 @@ body.embed-mode .cf-tabs button{padding:5px 6px;font-size:11px}.apx-edgebar{disp
   .wsmvp-tog { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 10px; font: inherit; font-size: .75rem; cursor: pointer; }
   .wsmvp-note { font-size: .68rem; color: var(--muted); line-height: 1.4; }
   .wsmvp-tbl .star { color: #f5c542; margin-left: 2px; }
-  @media (max-width: 680px) { .wsmvp-tbl .hm { display: none; } }
+  @media (max-width: 680px) {
+    .wsmvp-tbl .hm { display: none; }
+    .wsmvp-sec { padding: 10px 8px; }
+    .wsmvp-tbl { font-size: .76rem; }
+    .wsmvp-tbl th, .wsmvp-tbl td { padding: 5px 4px; }
+    .wsmvp-tbl th { white-space: normal; font-size: .6rem; }
+    .wsmvp-tbl td.nm { line-height: 1.2; }
+    .wsmvp-tbl td.nm img { width: 16px; height: 16px; margin-right: 4px; }
+    .wsmvp-tbl td:nth-child(4) .tag { display: block; width: max-content; margin: 1px 0 0 auto; }
+    #pf-ws-mvp-sub { white-space: normal; }
+  }
   body.force-mobile .wsmvp-tbl .hm { display: none; }
   .pf-filter-note { font-size: 0.74rem; color: var(--muted); margin-top: 4px; text-align: center;
     line-height: 1.4; }
@@ -7080,6 +7091,7 @@ function renderWeatherDetail(wx, home_park_code, game) {
           </div>
         </div>`;
     }
+    if (wx.roof_state === 'closed (manual)') return `<div style="color:var(--muted);">🏟 Roof closed, no weather adjustment</div>`;
     return `<div style="color:var(--muted);">🏟 Dome / retractable roof</div>`;
   }
   if (!wx.weather) return `<div class="coming-soon">${wx.note || 'Forecast unavailable'}</div>`;
