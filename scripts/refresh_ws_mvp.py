@@ -41,7 +41,10 @@ def kalshi():
 def main():
     M = json.load(open(os.path.join(D, 'ws_mvp_model.json')))
     B = json.load(open(os.path.join(D, 'ws_mvp_books.json'))) if os.path.exists(os.path.join(D, 'ws_mvp_books.json')) else {'players': {}}
-    bk = {nz(k): v for k, v in B.get('players', {}).items()}
+    # Pasted book prices only count while the series score matches the paste (stale after a game).
+    books_live = (B.get('wins_at_paste') is None or M.get('wins') is None or B.get('wins_at_paste') == M.get('wins'))
+    bk = {nz(k): v for k, v in B.get('players', {}).items()} if books_live else {}
+    if not books_live: print('[ws_mvp] pasted book prices are from an earlier series score; Kalshi only until re-pasted')
     K = kalshi()
     rows = []
     for p in M['players']:
@@ -67,7 +70,7 @@ def main():
     rows.sort(key=lambda r: -r['p_model'])
     out = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'series': M.get('series'), 'stage': M.get('stage'),
            'series_p': M.get('series_p'), 'model_updated_at': M.get('updated_at'), 'books_pasted_at': B.get('pasted_at'),
-           'kalshi_live': bool(K), 'players': rows}
+           'kalshi_live': bool(K), 'books_live': books_live, 'players': rows}
     json.dump(out, open(os.path.join(D, 'ws_mvp.json'), 'w'), indent=1)
     pos = [r for r in rows if (r.get('edge_pts') or 0) > 0]
     neg = [r for r in rows if (r.get('no_edge_pts') or 0) > 0]
