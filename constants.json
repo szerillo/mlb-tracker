@@ -1,0 +1,283 @@
+{
+ "_doc": "PROCESS_RULES 10/14 rule 1: every named constant the prop scan uses. value, fit date, sample, refit trigger, doc. Owner Bartolo; Fable reviews the diff.",
+ "october_tb_under_offset_tb2": {
+  "value": 0.03,
+  "fit": "2026-10-14",
+  "sample": "2016-25 PS true drop 7.7 minus 2026 market discount 5.2; 29 PS games Kalshi",
+  "refit": "running TB 3+ line after fee < +1.5 over 10+ games -> TB 2+ to paper; TB 2+ negative alone over 10 games -> paper",
+  "doc": "FABLE_REPLY_october_TB_unders_2026-10-14 / REPLY_tb_unders_sweep_dig_rulings"
+ },
+ "october_tb_under_offset_tb3": {
+  "value": 0.025,
+  "fit": "2026-10-14",
+  "sample": "2016-25 PS true drop 6.0 (sd 1.0) minus discount 4.5; 2026 +5.4",
+  "refit": "running line negative -> both to paper",
+  "doc": "same"
+ },
+ "october_tb_under_spread_max": {
+  "value": 0.03,
+  "fit": "2026-10-11",
+  "sample": "quote tightness used in every PS test",
+  "refit": "none",
+  "doc": "HITTER_PROPS_PLAY_FILTER_2026-10-11"
+ },
+ "october_tb_size_per_game_u": {
+  "value": [
+   0.1,
+   0.15
+  ],
+  "fit": "2026-10-14",
+  "sample": "ruling",
+  "refit": "half weight when a game/TT under is on the card",
+  "doc": "REPLY_tb_unders_sweep_dig_rulings"
+ },
+ "f5_share_of_full_game": {
+  "value": 0.573,
+  "fit": "2026-10-03",
+  "sample": "RS 2026; PS 2016-25 .567, 2021-25 .587, 2026 .562",
+  "refit": "Fable 10/14: unchanged",
+  "doc": "OCTOBER_RULES row 21; REPLY_tb_unders_sweep_dig_rulings note 1"
+ },
+ "f5_nb_var_over_mean": {
+  "value": 2.0,
+  "fit": "2026-10-03",
+  "sample": "RS 2026",
+  "refit": "none",
+  "doc": "OCTOBER_RULES row 21"
+ },
+ "f5_share_top_quartile_cut": {
+  "value": 0.545,
+  "fit": "2026-10-14",
+  "sample": "634 RS games Aug 10-Sep 28, Kalshi F5 curve / full-game curve",
+  "refit": "grade live F5 OVER fills by quartile; size by quartile only at 100 fills",
+  "doc": "ALPHA_DIG_2026-10-14; ruling: tag only"
+ },
+ "october_f5_under_min_gap": {
+  "value": 0.03,
+  "fit": "2026-10-14",
+  "sample": "PS P(F5>=5) .430 vs market .512",
+  "refit": "30 graded rows",
+  "doc": "OTHER_MARKETS_SWEEP_2026-10-14"
+ },
+ "october_f7_tie_no_offset": {
+  "value": 0.03,
+  "fit": "2026-10-14",
+  "sample": "PS 2016-25 F7 tie .083 vs RS .109 vs market .128",
+  "refit": "30 graded rows",
+  "doc": "same"
+ },
+ "yrfi_curve": {
+  "value": {
+   "a": 1.92,
+   "b": -0.229,
+   "october_logit_shift": -0.15
+  },
+  "fit": "2026-10-03",
+  "sample": "NRFI logit on Kalshi fair total; October lift ~+3.5 pts YRFI",
+  "refit": "re-read after WS (OCTOBER_MIDPOINT_CHECK: -0.13 logit on 237 games, 1 sigma, not shipped)",
+  "doc": "OCTOBER_RULES row 19; OCTOBER_MIDPOINT_CHECK_2026-10-14"
+ },
+ "day_after_night_offset_tb2": {
+  "value": 0.03,
+  "fit": "2026-10-14",
+  "sample": "1,556 TB 2+ rungs RS Aug-Sep; result-own -4.2, mid-own -0.6",
+  "refit": "paper at 150 graded rows by month; team-level null 2024-26 (Fable) -> prior: fades",
+  "doc": "ALPHA_DIG; REPLY_to_FABLE_dan_check; NOTE_dan_team_level_recheck"
+ },
+ "day_after_night_offset_catcher_hits": {
+  "value": 0.06,
+  "fit": "2026-10-14",
+  "sample": "120 catcher rows",
+  "refit": "same",
+  "doc": "same"
+ },
+ "day_after_night_day_start_max_local": {
+  "value": 14.5,
+  "fit": "2026-10-14",
+  "sample": "definition",
+  "refit": "none",
+  "doc": "ALPHA_DIG"
+ },
+ "day_after_night_night_start_min_local": {
+  "value": 18.0,
+  "fit": "2026-10-14",
+  "sample": "definition",
+  "refit": "none",
+  "doc": "ALPHA_DIG"
+ },
+ "sub_risk_part_timer_ph_min": {
+  "value": 0.03,
+  "fit": "2026-10-10",
+  "sample": "7,233 PS starters 2016-26",
+  "refit": "none",
+  "doc": "PINCH_HIT_V2_PLATOON_STARTS_2026-10-10"
+ },
+ "sub_risk_part_timer_slotsub_min": {
+  "value": 0.25,
+  "fit": "2026-10-14",
+  "sample": "2026 RS slot-sub rate by opposing SP hand (sub_risk_2026.json)",
+  "refit": "after WS: refit P0V2 with the slot-sub input",
+  "doc": "PLOW_THROUGH_2026-10-14"
+ },
+ "sub_risk_min_starts": {
+  "value": 30,
+  "fit": "2026-10-10",
+  "sample": "same",
+  "refit": "none",
+  "doc": "PINCH_HIT_V2"
+ },
+ "sub_risk_lean_edge_min": {
+  "value": 0.03,
+  "fit": "2026-10-10",
+  "sample": "same",
+  "refit": "none",
+  "doc": "PINCH_HIT_V2"
+ },
+ "sub_risk_hpa_shrink_pa": {
+  "value": 200,
+  "fit": "2026-10-06",
+  "sample": "RS 2026",
+  "refit": "none",
+  "doc": "sub-risk v1"
+ },
+ "sub_risk_hpa_october_factor": {
+  "value": 0.95,
+  "fit": "2026-10-06",
+  "sample": "October contact drop",
+  "refit": "none",
+  "doc": "sub-risk v1"
+ },
+ "sub_risk_opener_min_ip_per_start": {
+  "value": 4.0,
+  "fit": "2026-10-10",
+  "sample": "definition",
+  "refit": "none",
+  "doc": "PINCH_HIT_V2"
+ },
+ "sub_risk_opener_min_starts": {
+  "value": 5,
+  "fit": "2026-10-10",
+  "sample": "definition",
+  "refit": "none",
+  "doc": "PINCH_HIT_V2"
+ },
+ "p0_v2": {
+  "value": {
+   "c": 0.069,
+   "old": 0.9467,
+   "platL": 0.0497,
+   "platR": 0.0085,
+   "oth": -0.0253,
+   "prx": 0.1138,
+   "has": -0.0214
+  },
+  "fit": "2026-10-10",
+  "sample": "PS 2016-25, 2026 OOS Brier .2489->.2452",
+  "refit": "after WS with slot-sub input",
+  "doc": "PINCH_HIT_V2"
+ },
+ "ph_mult_tiers": {
+  "value": [
+   [
+    0.03,
+    0.976
+   ],
+   [
+    0.1,
+    0.93
+   ],
+   [
+    0.2,
+    0.876
+   ],
+   [
+    1.01,
+    0.852
+   ]
+  ],
+  "fit": "2026-10-06",
+  "sample": "RS 2026 PA by PH-for tier",
+  "refit": "none",
+  "doc": "sub-risk v1"
+ },
+ "hr_attack_angle_min": {
+  "value": 13.0,
+  "fit": "2026-10-10",
+  "sample": "9,338 Kalshi HR rungs Aug-Sep; +1.06 pts/SD",
+  "refit": "paper; 200 rows",
+  "doc": "PITCH_SHAPE_MATCHUPS addendum"
+ },
+ "hr_attack_angle_slope_per_sd": {
+  "value": 0.0106,
+  "fit": "2026-10-10",
+  "sample": "same",
+  "refit": "same",
+  "doc": "same"
+ },
+ "hr_attack_angle_mean_sd": {
+  "value": [
+   9.49,
+   3.43
+  ],
+  "fit": "2026-10-10",
+  "sample": "Savant swing-path leaderboard 2026",
+  "refit": "same",
+  "doc": "same"
+ },
+ "walks_over_bb_pct_min": {
+  "value": 0.085,
+  "fit": "2026-10-06",
+  "sample": "Kalshi walks Aug-Sep",
+  "refit": "none",
+  "doc": "scan comments"
+ },
+ "walks_over_offset": {
+  "value": 0.04,
+  "fit": "2026-10-06",
+  "sample": "same",
+  "refit": "none",
+  "doc": "same"
+ },
+ "k_length_under_outs_gap": {
+  "value": -2.0,
+  "fit": "2026-10-03",
+  "sample": "Kalshi K/outs Aug-Sep",
+  "refit": "PS paper",
+  "doc": "OCTOBER_RULES"
+ },
+ "kalshi_fee": {
+  "value": "0.07*p*(1-p)",
+  "fit": "n/a",
+  "sample": "Kalshi fee schedule",
+  "refit": "when Kalshi changes it",
+  "doc": "n/a"
+ },
+ "october_k_under_offset": {
+  "value": 0.02,
+  "fit": "2026-10-24",
+  "sample": "448 Kalshi K rungs, 33 PS games 9/29-10/23 (res-mid -2.3, NO after fee +0.3 to +4.0 by rung)",
+  "refit": "after the World Series; promote only on a graded fill line",
+  "doc": "OCTOBER K UNDER (plain, paper): display offset over the mid; paper, graded by rung"
+ },
+ "rematch_k_under_offset": {
+  "value": 0.04,
+  "fit": "2026-10-24 (Fable rematch battery)",
+  "sample": "489 WS/LCS starters 1969-2026 with two starts vs the same lineup: -0.45 K (t -3.2)",
+  "refit": "RS same-opponent-within-a-week version with the K ladder joined, April",
+  "doc": "REMATCH K UNDER (paper): K ladder mean - 0.4 K, about 4 pts at the central rung"
+ },
+ "rematch_outs_under_offset": {
+  "value": 0.05,
+  "fit": "2026-10-24 (Fable rematch battery)",
+  "sample": "same 489 pairs: -1.0 outs (t -3.1), -4.4 pitches",
+  "refit": "April",
+  "doc": "REMATCH OUTS UNDER (paper): outs mean - 1.0, about 5 pts at the central rung; grade vs the Kalshi outs ladder"
+ },
+ "october_extras_no_offset": {
+  "value": 0.02,
+  "fit": "2026-10-24",
+  "sample": "PS extras rate .080 (2016-25) vs market .102; Oct 2026 1 in 34 games",
+  "refit": "back to paper the first time it runs negative over 20 games",
+  "doc": "OCTOBER EXTRAS NO (lean, Kalshi only, 0.05u)"
+ }
+}
