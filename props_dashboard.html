@@ -145,12 +145,16 @@ const ORDER={bet:0,pending:1,lead:2,lean:3,watch:4,missed:5,info:6,gone:7};
 const PLAIN={'K-LENGTH UNDER':'Short leash: outs market 2+ below his usual length','K-SEASON-ANCHOR UNDER':'K market 1+ below his season K/start',
   'VELO-DECLINE K UNDER (paper)':'Four-seam down 0.5+ mph over his last 3 starts','VELO-DECLINE (price too short)':'Velocity down, but price too short',
   'K-LENGTH OVER':'Long leash: outs market 2+ above his usual length','DEEP-SPOT OVERS':'K market above his season K/start',
-  'F5 OVER':'F5 total priced off the Kalshi game total','YRFI CURVE':'Kalshi RFI below what its own total implies','YRFI CURVE (Oct-adj only)':'Clears only with the October first-inning bump (pending Fable)','RFI INFO':'First-inning board',
+  'F5 OVER':'F5 total priced off the Kalshi game total (regular season only)','YRFI CURVE':'Kalshi RFI below what its own total implies','YRFI CURVE (Oct-adj only)':'Clears only with the October first-inning bump (pending Fable)','RFI INFO':'First-inning board',
   'WALKS OVER (lead)':'High-BB% starter: walk overs settle ~4 pts over the mid','WALKS OVER (info: low-BB% pitcher)':'Low-BB% starter: no edge',
   'PS SUB-RISK HIT UNDER (lean)':'Pinch-hit risk: fewer October PA','PS SUB-RISK (info)':'Pinch-hit risk (info)',
   'OCTOBER TB UNDER (lean)':'October TB 3+ under: NO at the mid, fair = mid + 2.5','OCTOBER TB UNDER (lean, lower priority)':'October TB 2+ under: NO at the mid, fair = mid + 3 (after TB 3+)',
   'HITTER UNDER vs SP (paper)':'Hitter vs a high-K starter (paper, log only)',
   'OCTOBER F5 UNDER (paper)':'October F5 under (paper, log only)','OCTOBER F7 TIE NO (paper)':'October tied after 7: NO (paper, log only)',
+  'OCTOBER F7 TIE NO (lean, Kalshi only)':'Tied after 7: NO at the mid (October tie rate .083 vs ~.12 priced), 0.05u Kalshi','OCTOBER EXTRAS NO (lean, Kalshi only)':'Extra innings: NO at the mid (October .080 vs ~.10 priced), 0.05u Kalshi',
+  'REMATCH K UNDER (paper)':'Second start vs the same lineup this series: K under (paper)','REMATCH OUTS UNDER (paper)':'Second start vs the same lineup this series: outs under (paper)',
+  'MANAGER LEASH K UNDER (paper)':'Short-leash manager: K under (paper; promotion bar 10 starter-games from WS G3, ex-Murphy also negative)','MANAGER LEASH (no tier, info)':'Manager under 8 PS starts: no leash tier (info)',
+  'HRR OVER vs short-leash opponent (paper)':'Facing a short-leash team: HRR over (paper, 30-row bar)','F5 OVER (suspended for the postseason, Fable 10/24)':'F5 over: suspended for the postseason (record only)',
   'F5 OVER: high F5 share (paper)':'High F5 share of the game total (paper, log only)','DAY-AFTER-NIGHT UNDER (paper)':'Day game after a night game: under (paper, log only)',
   'K-LENGTH UNDER (PS paper)':'Short leash K under (postseason paper)','K-SEASON-ANCHOR UNDER (PS paper)':'K under season anchor (postseason paper)',
   'HITTER UNDER vs SP (lean)':'Hitter vs a high-K starter: market under-prices the strikeout stuff','HR ATTACK-ANGLE YES (paper)':'Steep attack angle: HR 1+ slightly cheap (paper, log only)',
@@ -273,12 +277,13 @@ function venue(o){   // cheaper venue now: {txt, edge, target}
 }
 const edgeTd=e=>`<td class="num edge ${cls(e)}">${sgn(e)}</td>`;
 const badge=l=>`<span class="badge ${l}">${LVL_NAME[l]||l}</span>`;
-function betText(c){ const sw=sideWord(c); return `${esc(c.label)}${sw&&!/\b(u|o)\d/.test(c.label||'')?' <span class="mut">'+esc(sw)+'</span>':''}`; }
+function betText(c){ const sw=sideWord(c); const ml=c.manager_leash; return `${esc(c.label)}${sw&&!/\b(u|o)\d/.test(c.label||'')?' <span class="mut">'+esc(sw)+'</span>':''}${ml&&ml.tier?` <span class="chip" title="${esc(ml.manager)}: PS starters avg ${ml.mean_bf} BF, n ${ml.n}">${esc(ml.tier)} leash</span>`:''}`; }
 function detailRow(id,cols,c){ if(!state.open[id]) return '';
   const defs=(c.why||[]).map(w=>`<div class="whyl"><b>Why it flags:</b> ${esc(w.why)}</div>`).join('');
   const inp=c.inputs?Object.entries(c.inputs).filter(([k,v])=>v!=null).map(([k,v])=>`${k.replace(/_/g,' ')} ${v}`).join(' · '):'';
   const why=defs+(inp?`<div><b>Inputs:</b> ${esc(inp)}</div>`:'')+(c.notes||[]).map(n=>`<div><b>Scan note</b> (${esc(n.rule)}): ${esc(n.note)}</div>`).join('');
-  const extra=[c.status,c.locked_from?`Line moved: first fired on ${c.locked_from}; now ${c.now_label}`:null,(c.badges||[]).join(' · ')].filter(Boolean).map(x=>`<div>${esc(x)}</div>`).join('');
+  const ml=c.manager_leash; const mlTxt=ml?`Manager: ${ml.manager} (${ml.team}) · his PS starters avg ${ml.mean_bf} BF · n ${ml.n} · ${ml.tier?ml.tier+' leash':'no tier (under 8 starts)'}`:null;
+  const extra=[mlTxt,c.status,c.locked_from?`Line moved: first fired on ${c.locked_from}; now ${c.now_label}`:null,(c.badges||[]).join(' · ')].filter(Boolean).map(x=>`<div>${esc(x)}</div>`).join('');
   return `<tr class="det"><td colspan="${cols}">${extra}${why||'No notes.'}</td></tr>`; }
 
 // ---- flagged: everything the rules flag, grouped by call (highlighted, not a bet list) ----
@@ -301,7 +306,7 @@ function flaggedOf(cards){
   return F;
 }
 const AREA=c=>['K','OUTS','WALK','KOP'].includes(c.cat)?'P':(['HSP','HIT'].includes(c.cat)?'H':(c.cat==='EARLY'?'E':'G'));
-const AREAS=[['P','Pitchers','strikeouts, outs, walks'],['H','Hitters','TB and hits unders'],['E','YRFI / NRFI & F5','first inning and first five'],['G','Game lines','cross-venue lag (live test)']];
+const AREAS=[['P','Pitchers','strikeouts, outs, walks'],['H','Hitters','TB and hits unders'],['E','YRFI / NRFI & F5','first inning and first five'],['G','Game lines','tied after 7 / extras NO (0.05u), cross-venue lag (live test)']];
 function flaggedHTML(F){
   if(!F.length) return '<div class="empty2">Nothing flagged in the latest scan. Everything else is in the tabs below.</div>';
   let h='';
@@ -358,7 +363,7 @@ function gameHTML(E,G){
   const tab=pickTab('E',tabs);
   let inner;
   if(tab==='Y') inner=boardC(E.sort((a,b)=>new Date(a.first_pitch)-new Date(b.first_pitch)));
-  else if(tab==='G') inner=marketTable(G,'No game-line lag cards.',true);
+  else if(tab==='G') inner=marketTable(G,'No game-line cards.',true);
   else { const L=rows.filter(r=>tab==='ALL'||r.mk===tab).sort((a,b)=>(b.edge??-99)-(a.edge??-99));
     inner=!L.length?'<div class="empty2">No rows.</div>':`<div class="tw"><table class="L"><tr><th>Market</th><th class="hide-m">Game</th><th class="r">Kalshi ask</th><th class="r hide-m">Model</th><th class="r">Edge</th><th class="r hide-m">Buy at or less</th><th class="r hide-m">Window</th></tr>${L.map(r=>{const w=windowTxt(r.c.first_pitch); return `<tr><td>${esc(r.label)} <span class="mut">YES</span>${r.src?`<div class="g">${esc(r.src)}</div>`:''}<div class="g show-m">${esc(r.c.game)} · ${tShort(r.c.first_pitch)}</div></td><td class="hide-m">${gameCell(r.c)}</td><td class="num">${r.price!=null?(r.price*100).toFixed(0)+'¢':'–'}</td><td class="num hide-m">${pct(r.model)}</td>${edgeTd(r.edge)}<td class="num hide-m">${r.target!=null?r.target+'¢':'–'}</td><td class="r g hide-m">${esc(w.txt)}</td></tr>`;}).join('')}</table></div>
     <div class="foot">YES only. YRFI and every F5 rung in one game are one early-scoring position: take the best edge. Tier 1 needs +2 after fee inside the 120-minute window.</div>`; }
@@ -389,7 +394,7 @@ function infoHTML(list){
   list.sort((a,b)=>new Date(a.first_pitch||0)-new Date(b.first_pitch||0)||(a.rules[0]||'').localeCompare(b.rules[0]||''));
   return `<div class="tw"><table class="L"><tr><th>Item</th><th class="hide-m">Game</th><th>Why it is here</th><th class="r">Price</th></tr>${list.map(c=>{const id=c.key.replace(/\W/g,'_');
     const why=c.level==='gone'?'no longer firing':(c.level==='missed'?'price moved':((c.badges||[]).join(', ')||c.level));
-    return `<tr class="click" data-id="${id}"><td>${esc(c.label||c.rules[0])}<div class="g">${esc((c.rules||[]).map(r=>PLAIN[r]||r).join(' + '))}</div><div class="g show-m">${esc(c.game)} · ${tShort(c.first_pitch)}</div></td><td class="hide-m">${gameCell(c)}</td><td class="g">${esc(why)}</td><td class="num">${c.kalshi_px!=null?(c.kalshi_px*100).toFixed(0)+'¢':'–'}</td></tr>${detailRow(id,4,c)}`;}).join('')}</table></div>`;
+    return `<tr class="click" data-id="${id}"><td>${c.label?betText(c):esc(c.rules[0])}<div class="g">${esc((c.rules||[]).map(r=>PLAIN[r]||r).join(' + '))}</div><div class="g show-m">${esc(c.game)} · ${tShort(c.first_pitch)}</div></td><td class="hide-m">${gameCell(c)}</td><td class="g">${esc(why)}</td><td class="num">${c.kalshi_px!=null?(c.kalshi_px*100).toFixed(0)+'¢':'–'}</td></tr>${detailRow(id,4,c)}`;}).join('')}</table></div>`;
 }
 
 function render(){
@@ -413,7 +418,7 @@ function render(){
   const F=flaggedOf(cards);
   const K=cards.filter(c=>['K','OUTS'].includes(c.cat)&&!isInfo(c));
   const W=cards.filter(c=>c.cat==='WALK'&&!isInfo(c));
-  const G=cards.filter(c=>c.cat==='LAG'&&!isInfo(c));
+  const G=cards.filter(c=>['LAG','GTAIL'].includes(c.cat)&&!isInfo(c));
   const E=cards.filter(c=>c.cat==='EARLY');
   const Hn=(()=>{let n=0; cards.filter(c=>c.cat==='HSP').forEach(c=>n+=new Set(hspRungs(c).map(r=>r.player)).size); cards.filter(c=>c.cat==='HIT').forEach(c=>n+=(c.subs||[]).length); return n;})();
   const I=cards.filter(isInfo);

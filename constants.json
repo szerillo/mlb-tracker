@@ -257,7 +257,7 @@
   "fit": "2026-10-24",
   "sample": "448 Kalshi K rungs, 33 PS games 9/29-10/23 (res-mid -2.3, NO after fee +0.3 to +4.0 by rung)",
   "refit": "after the World Series; promote only on a graded fill line",
-  "doc": "OCTOBER K UNDER (plain, paper): display offset over the mid; paper, graded by rung"
+  "doc": "RETIRED 10/25 (Fable): OCTOBER K UNDER (plain) superseded by MANAGER LEASH K UNDER; kept for the ledger"
  },
  "rematch_k_under_offset": {
   "value": 0.04,
@@ -279,5 +279,53 @@
   "sample": "PS extras rate .080 (2016-25) vs market .102; Oct 2026 1 in 34 games",
   "refit": "back to paper the first time it runs negative over 20 games",
   "doc": "OCTOBER EXTRAS NO (lean, Kalshi only, 0.05u)"
+ },
+ "mgr_leash_k_offset": {
+  "value": 0.04,
+  "fit": "2026-10-25",
+  "sample": "20 short-leash starter-games, 2026 PS 9/29-10/23; residual on the rung nearest 50 -11.9 pts (clustered t -2.1); excluding Murphy -4.3 on 11",
+  "refit": "at promotion: 10 OOS short-leash starter-games from WS G3, positive after fee at the mid, and short-leash excluding Murphy negative vs mid",
+  "doc": "MANAGER LEASH K UNDER (paper): half the in-sample short-leash residual; fair = NO mid + offset; Kalshi mid fills only"
+ },
+ "hrr_short_leash_offset": {
+  "value": 0.03,
+  "fit": "2026-10-25",
+  "sample": "HRR 1+/2+ rungs vs short-leash opponents, 2026 PS: +6.0 / +6.2 vs mid (156 / 155 rungs), vs long-leash -4.3 / -5.7; t about 1.7",
+  "refit": "30 OOS rows; mechanism (more PAs vs the pen) must also show on TB/HR or the row dies",
+  "doc": "HRR OVER vs short-leash opponent (paper): half the in-sample residual; log only"
+ },
+ "mgr_hook_gasser": {
+  "value": {
+   "center": 17.5,
+   "scale": 1.5,
+   "cap": 95
+  },
+  "fit": "2026-10-25",
+  "sample": "HAND-SET, not fitted: Murphy 2024-26 PS starts n 17 (mean 17.2 BF, SD 4.3; 2026 n 8, 18.4 BF, SD 2.2, 0 of 17 past 18 outs)",
+  "refit": "v5 manager x score state x inning hazard, April; slate override for the 2026 World Series only",
+  "doc": "sim3 mgr hook for MIL starters; sim outs/K with the hook on are paper-grade for rule purposes"
+ },
+ "mgr_hook_peralta": {
+  "value": {
+   "center": 23.0,
+   "scale": 2.5,
+   "cap": 102,
+   "odds_mult": 0.35
+  },
+  "fit": "2026-10-25",
+  "sample": "HAND-SET, not fitted: Cash 2026 PS starts n 10 (mean 21.3 BF, SD 3.6; 50% reached 16 outs, 30% reached 18)",
+  "refit": "v5, April; slate override for the 2026 World Series only",
+  "doc": "sim3 mgr hook for TB starters; odds_mult scales the league exit odds down"
+ },
+ "manager_leash_tiers": {
+  "value": {
+   "short_max_bf": 18.5,
+   "long_min_bf": 20.0,
+   "min_starts": 8
+  },
+  "fit": "2026-10-25",
+  "sample": "postseason starts 2021-26 by the 2026 manager (manager_leash.json)",
+  "refit": "with the v5 fit",
+  "doc": "tier cutoffs for MANAGER LEASH rows; teams under min_starts get no tier and no row"
  }
 }
