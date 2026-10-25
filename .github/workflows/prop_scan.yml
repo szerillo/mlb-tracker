@@ -4,6 +4,8 @@ name: kalshi-prop-scan
 on:
   schedule:
     - cron: '5 1,14,17,20,22 * * *'
+    - cron: '0 15 * * *'    # 11 AM ET: Pinnacle pitcher specials log (leash note 10/25 item 6)
+    - cron: '40 23 * * *'   # ~first pitch (8 PM ET games; GitHub cron runs late): Pinnacle + Kalshi pregame log
   workflow_dispatch: {}
 permissions:
   contents: write
