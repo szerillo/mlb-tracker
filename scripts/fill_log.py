@@ -20,6 +20,11 @@ Usage
           e.g. python3 fill_log.py add 2026-10-14 MIL@LAD OUTS "Robert Gasser" over 11.5 DK -120 "to win 0.2u" "sim3 hazard v4"
   close:  python3 fill_log.py close            (fills close columns + result for every row whose game has started)
   void:   python3 fill_log.py void ROW_ID       (player did not play, etc.)
+  daily:  python3 fill_log.py daily [DATE]      (one line: rows logged / with ruler / after first pitch; PROCESS_RULES rule 4)
+
+Rule 4 (PROCESS_RULES 10/14): no ruler, no grade. `add` REFUSES a row with no mid at fill (no Kalshi bid/ask, no Pinnacle, no Novig) unless
+`--allow-no-ruler` is passed; such rows are stored with grade_eligible=0 and excluded from CLV and from every promotion / demotion rule.
+Rows logged after first pitch are stored with grade_eligible=0 as well.
 
 Ruler at fill:  Kalshi open market (best bid/ask on the rung), Pinnacle guest API (devigged), Novig public API (devigged best prices).
 Ruler at close: Kalshi last pregame candle (bid/ask), Pinnacle from pinnacle_log.jsonl (last snapshot before first pitch, written by prop_scan.py),
@@ -32,7 +37,7 @@ CSVF=os.path.join(ROOT,'data','fills.csv'); os.makedirs(os.path.dirname(CSVF),ex
 KAPI="https://api.elections.kalshi.com/trade-api/v2"; PA="https://guest.api.arcadia.pinnacle.com/0.1"; NA="https://api.novig.com/v3/public"; MLB="https://statsapi.mlb.com/api/v1"
 COLS=['id','date','game','market','player','side','line','book','book_price','stake','rule','note','fill_ts',
       'kalshi_ticker','kalshi_side','k_bid_fill','k_ask_fill','pin_fair_fill','pin_price_fill','novig_fair_fill','novig_price_fill',
-      'book_price_close','k_bid_close','k_ask_close','pin_fair_close','novig_fair_close','close_ts','result','actual','settled_by']
+      'book_price_close','k_bid_close','k_ask_close','pin_fair_close','novig_fair_close','close_ts','result','actual','settled_by','grade_eligible']
 nz=lambda s: unicodedata.normalize('NFKD',s or '').encode('ascii','ignore').decode().lower().replace('.','').replace(' jr','').replace("'",'').strip()
 def g(u,tries=4):
     for i in range(tries):
@@ -224,7 +229,7 @@ def box_actual(pk,market,player,game):
                 ip=pi['inningsPitched']; outs=int(ip.split('.')[0])*3+int(ip.split('.')[1])
                 return {'K':pi.get('strikeOuts'),'OUTS':outs,'HA':pi.get('hits'),'BB':pi.get('baseOnBalls')}[market]
             if not b.get('plateAppearances'): return 'DNP'
-            return {'H':b.get('hits'),'TB':b.get('totalBases'),'HR':b.get('homeRuns'),'RBI':b.get('rbi'),'HRR':(b.get('hits') or 0)+(b.get('runs') or 0)+(b.get('rbi') or 0)}[market]
+            return {'H':b.get('hits'),'TB':b.get('totalBases'),'HR':b.get('homeRuns'),'RBI':b.get('rbi'),'HRR':(b.get('hits') or 0)+(b.get('runs') or 0)+(b.get('rbi') or 0)}.get(market)
     return None
 def grade(side,line,actual):
     if actual in (None,'DNP'): return 'VOID' if actual=='DNP' else ''
@@ -233,6 +238,7 @@ def grade(side,line,actual):
     return 'WIN' if (a>L)==(side=='over') else 'LOSS'
 # ---------- commands ----------
 def cmd_add(a):
+    allow='--allow-no-ruler' in a; a=[x for x in a if x!='--allow-no-ruler']
     date,game,market,player,side,line,book,price,stake,rule=a[:10]; note=a[10] if len(a)>10 else ''
     market=market.upper(); side=side.lower(); rows=load()
     rid=f"{date}-{len(rows)+1:03d}"
@@ -269,7 +275,12 @@ def cmd_add(a):
         if nf is not None: row.update(novig_fair_fill=round(nf,4),novig_price_fill=round(np_,3)); print('Novig fair %.3f (ask %.3f)'%(nf,np_))
         else: print('Novig: not offered')
     except Exception as e: print('novig failed:',e)
-    rows.append(row); save(rows); print('logged',rid)
+    has_ruler=any(row.get(k) is not None for k in ('k_bid_fill','pin_fair_fill','novig_fair_fill'))
+    late='LATE: logged after first pitch' in (row.get('note') or '')
+    row['grade_eligible']=int(has_ruler and not late)
+    if not has_ruler and not allow:
+        print('REFUSED (rule 4: no ruler, no grade). No Kalshi / Pinnacle / Novig quote exists for this rung. Re-run with --allow-no-ruler to store it as grade_eligible=0 (book-close grade only).'); return
+    rows.append(row); save(rows); print('logged',rid,'grade_eligible=%d'%row['grade_eligible'])
 def cmd_close():
     rows=load(); n=0
     for r in rows:
@@ -288,7 +299,7 @@ def cmd_close():
         if pf is not None: r['pin_fair_close']=round(pf,4)
         nf=novig_close_from_log(r['player'],r['market'],r['side'],r['line'],st)
         if nf is not None: r['novig_fair_close']=round(nf,4)
-        if state=='Final':
+        if state=='Final' and r['market'] not in ('SERIES','MVP','FUT','FUTURE'):   # futures grade when the series ends, not at game close
             act=box_actual(pk,r['market'],r['player'],r['game']); r['actual']=act
             if not r.get('result'):
                 r['result']=grade(r['side'],r['line'],act) if r['market']!='ML' else ('WIN' if act==1 else 'LOSS'); r['settled_by']='box'
@@ -296,6 +307,10 @@ def cmd_close():
         r['close_ts']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'); n+=1
         print(r['id'],r['player'],r['market'],r['side'],r['line'],'| close K',r.get('k_bid_close'),r.get('k_ask_close'),'| pin',r.get('pin_fair_close'),'| novig',r.get('novig_fair_close'),'|',r.get('result'),r.get('actual'))
     save(rows); print('closed',n,'rows')
+def cmd_daily(d=None):
+    rows=load(); d=d or dt.date.today().isoformat(); X=[r for r in rows if r['date']==d]
+    ruler=sum(1 for r in X if any(r.get(k) for k in ('k_bid_fill','pin_fair_fill','novig_fair_fill'))); late=sum(1 for r in X if 'LATE' in (r.get('note') or ''))
+    print(f'[fills {d}] rows logged {len(X)} / with ruler {ruler} / after first pitch {late} / grade-eligible {sum(1 for r in X if str(r.get("grade_eligible"))=="1")}')
 def cmd_void(rid):
     rows=load()
     for r in rows:
@@ -303,7 +318,8 @@ def cmd_void(rid):
     save(rows)
 if __name__=='__main__':
     a=sys.argv[1:]
-    if not a or a[0] not in ('add','close','void'): print(__doc__); sys.exit(1)
+    if not a or a[0] not in ('add','close','void','daily'): print(__doc__); sys.exit(1)
     if a[0]=='add': cmd_add(a[1:])
-    elif a[0]=='close': cmd_close()
+    elif a[0]=='close': cmd_close(); cmd_daily()
+    elif a[0]=='daily': cmd_daily(a[1] if len(a)>1 else None)
     else: cmd_void(a[1])
