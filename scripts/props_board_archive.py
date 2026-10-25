@@ -41,6 +41,10 @@ RULE_TIER = {'K-LENGTH UNDER': 1, 'K-SEASON-ANCHOR UNDER': 1, 'F5 OVER': 1, 'YRF
              'HITTER UNDER vs SP (paper)': 4,
              'OCTOBER TB UNDER (lean)': 3, 'OCTOBER TB UNDER (lean, lower priority)': 3,
              'OCTOBER F5 UNDER (paper)': 4, 'OCTOBER F7 TIE NO (paper)': 4, 'F5 OVER: high F5 share (paper)': 4,
+             'OCTOBER F7 TIE NO (lean, Kalshi only)': 3, 'OCTOBER EXTRAS NO (lean, Kalshi only)': 3,
+             'REMATCH K UNDER (paper)': 4, 'REMATCH OUTS UNDER (paper)': 4,
+             'MANAGER LEASH K UNDER (paper)': 4, 'MANAGER LEASH (no tier, info)': 4, 'HRR OVER vs short-leash opponent (paper)': 4,
+             'F5 OVER (suspended for the postseason, Fable 10/24)': 4,
              'DAY-AFTER-NIGHT UNDER (paper)': 4,
              'K-LENGTH UNDER (PS paper)': 2, 'K-SEASON-ANCHOR UNDER (PS paper)': 2,
              'BIG TRADES (no backtested edge)': 4, 'PRICE MOVE': 4, 'DEPTH IMBALANCE (ungraded)': 4, 'VELO-DECLINE (price too short)': 4}
@@ -158,9 +162,12 @@ def pitcher_of(w):
     return m.group(1) if m else str(w or '').split(':')[0]
 
 # Retired row names (10/14): the old aggregated October hitter row and the dead "Oct TB (play)" branch. Dropped if an old scan emits them.
-RETIRED = ('OCTOBER HITTER UNDERS', 'HITTER UNDER vs SP: Oct TB (play)', 'OCTOBER YRFI YES (paper)')
+RETIRED = ('OCTOBER HITTER UNDERS', 'HITTER UNDER vs SP: Oct TB (play)', 'OCTOBER YRFI YES (paper)',
+           'K-LENGTH UNDER (PS paper)', 'K-SEASON-ANCHOR UNDER (PS paper)', 'OCTOBER F7 TIE NO (paper)',   # 10/24 Fable: folded / promoted
+           'OCTOBER K UNDER (plain)', 'F7 TIE NO (lean)', 'EXTRAS NO (lean)')   # 10/25: plain K under superseded by MANAGER LEASH K UNDER; lean names now from the research scan
 # Paper rules (log only, never a position): always the Info panel, whatever tier the scan gives them.
-PAPER_INFO = ('HITTER UNDER vs SP', 'OCTOBER F5 UNDER', 'OCTOBER F7 TIE NO', 'F5 OVER: high F5 share', 'DAY-AFTER-NIGHT UNDER', 'HR ATTACK-ANGLE YES')
+PAPER_INFO = ('HITTER UNDER vs SP', 'OCTOBER F5 UNDER', 'OCTOBER F7 TIE NO (paper)', 'F5 OVER: high F5 share', 'DAY-AFTER-NIGHT UNDER', 'HR ATTACK-ANGLE YES',
+              'REMATCH K UNDER', 'REMATCH OUTS UNDER', 'MANAGER LEASH', 'HRR OVER vs short-leash', 'F5 OVER (suspended')
 F5_SHARE_RE = re.compile(r'F5[ -]?share\s*(?:of\s+\w+\s*)?[:=]?\s*(0?\.\d+|\d{2}(?:\.\d+)?\s*%)', re.I)
 
 def f5_share_of(note):
@@ -177,7 +184,7 @@ RULE_WHY = {
  'K-SEASON-ANCHOR UNDER (PS paper)': 'Same as K-SEASON-ANCHOR UNDER, October paper.',
  'K-LENGTH OVER': 'Outs market 2+ outs over season average with the K line lagging.',
  'DEEP-SPOT OVERS': 'Outs market far above season norm (deep leash expected) and the K ladder has not moved with it.',
- 'F5 OVER': 'Kalshi prices the first 5 innings at about .53 of the full-game total; the real share is .56 to .57. Fair = 0.573 x Kalshi full-game fair total, negative binomial. Backtest +39% Aug-Sep.',
+ 'F5 OVER': 'Kalshi prices the first 5 innings at about .53 of the full-game total; the real share is .56 to .57. Fair = 0.573 x Kalshi full-game fair total, negative binomial. Backtest +39% Aug-Sep. Regular season only: suspended for the postseason (Fable 10/24).',
  'F5 OVER: high F5 share (paper)': 'Same mispricing, located: when Kalshi\'s own F5 curve is >= .545 of its full-game curve the F5 over settled +9 over the mid (both months). Paper; tag only on the live rule.',
  'YRFI CURVE': 'First-inning run probability from the empirical curve on Kalshi\'s own fair total (YRFI = 1 - 1/(1+e^-(1.92 - 0.229 T))), October lift +3.5. YES only, +2 after fee. Backtest n 65, +17%.',
  'YRFI CURVE (Oct-adj only)': 'YRFI clears the bar only with the October lift; lean.',
@@ -193,6 +200,14 @@ RULE_WHY = {
  'DAY-AFTER-NIGHT UNDER (paper)': 'Day game (<= 2:30 local) after a night game (>= 6 PM local) the day before: listed hitters settled 3 to 4 pts under their own rate and the market does not discount; catchers 7 to 8. Paper at 150 rows; Fable\'s team-level recheck is null, prior: fades.',
  'OCTOBER F5 UNDER (paper)': 'October F5 scoring drops half a run (P(F5>=5) .43 vs .51) while the F5 market sits at regular-season level. NO on 5+/6+ when the 0.573 x total model is 3+ pts under the mid. Paper.',
  'OCTOBER F7 TIE NO (paper)': 'First-7 ties run .083 in October vs .109 RS; the market prices ~.12. Fair = NO + 3. Paper.',
+ 'OCTOBER F7 TIE NO (lean, Kalshi only)': 'First-7 ties run .083 in October (2016-25) vs the market\'s ~.12. Fair = NO mid + 3. Lean, 0.05u, Kalshi only, NO at the mid (Fable 10/24). One of two tails out of nine families tested: back to paper the first time it runs negative over 20 games.',
+ 'OCTOBER EXTRAS NO (lean, Kalshi only)': 'Extra innings run .080 in October (2016-25) vs the market\'s ~.10. Fair = NO mid + 2. Lean, 0.05u, Kalshi only, NO at the mid (Fable 10/24). Back to paper the first time it runs negative over 20 games.',
+ 'MANAGER LEASH K UNDER (paper)': 'The starter\'s manager has a short postseason leash (mean BF < 18.5 since 2021: Murphy, Vogt, Counsell, Cora). 2026 PS K rungs for short-leash starters settled -11.9 vs mid (20 starter-games, t -2.1); excluding Murphy -4.3 (11 games). Fair = NO mid + 4. Paper. Promotion bar: 10 short-leash starter-games from WS G3 on, rung nearest 50 at the mid, positive after fee, and the set excluding Murphy also negative vs mid.',
+ 'MANAGER LEASH (no tier, info)': 'Manager has fewer than 8 postseason starts since 2021: no tier, no rule fires. Info only.',
+ 'HRR OVER vs short-leash opponent (paper)': 'Hitters facing a short-leash team\'s starter see more of the pen: 2026 PS HRR 1+ +6.0 vs mid (156 rungs), vs long-leash -4 to -6 (t ~1.7). Should also show on TB/HR and did not, so paper; one row per hitter-game, 30-row bar.',
+ 'F5 OVER (suspended for the postseason, Fable 10/24)': 'Shown only to record what the regular-season F5 rule would have done. October F5 3.5 settled -10.9 vs mid (35 games) and the 2016-25 prior runs under. Not a bet.',
+ 'REMATCH K UNDER (paper)': 'Starter\'s second start against the same lineup in one series: 489 WS+LCS pairs 1969-2026, -0.45 K (t -3.2), mostly a shorter start. Fair = Kalshi K ladder shifted -0.4 K. Paper; one position with REMATCH OUTS if both fire.',
+ 'REMATCH OUTS UNDER (paper)': 'Same pairs: the second start is about one out shorter (-1.0, t -3.1) at the same run rate (earlier hook). Fair = Kalshi outs ladder shifted -1.0. Paper; most likely already priced in the October outs line.',
  'BIG OUTS TRADE': 'A $1k+ print on an outs rung; the hazard sim predicts the open-to-close move but only a limit at the open mid works.',
  'BIG TRADES (no backtested edge)': 'Large prints; informational, no edge (RFI NO flow is normal retail).',
  'PRICE MOVE': 'Mid moved 5+ pts since the last scan; informational.',
@@ -222,8 +237,32 @@ def games_meta(cards, now):
     return out
 
 
+# Manager leash tiers (Fable 10/25): scripts/manager_leash.json, rebuilt after each Series game by the prop-model session; the board only reads it.
+try: MGR_LEASH = json.load(open(os.path.join(HERE, 'manager_leash.json'))).get('teams', {})
+except Exception: MGR_LEASH = {}
+_PITCH_TEAM = {}
+def mgr_of(pitcher, ev):
+    """{team, manager, mean_bf, n, tier} for the starter's team, via the MLB probables for the game date."""
+    if not pitcher or not ev or not MGR_LEASH: return None
+    try:
+        key = (ev['date'], pitcher)
+        if ev['date'] not in _PITCH_TEAM:
+            m = {}
+            d = json.load(urllib.request.urlopen(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={ev['date']}&hydrate=probablePitcher,team", timeout=20))
+            for dd in d.get('dates', []):
+                for gm in dd['games']:
+                    for sd in ('away', 'home'):
+                        p_ = gm['teams'][sd].get('probablePitcher')
+                        if p_: m[p_['fullName']] = gm['teams'][sd]['team'].get('abbreviation')
+            _PITCH_TEAM[ev['date']] = m
+        t = _PITCH_TEAM[ev['date']].get(pitcher)
+        x = MGR_LEASH.get(t) if t else None
+        return {'team': t, **{k: x.get(k) for k in ('manager', 'mean_bf', 'n', 'tier')}} if x else None
+    except Exception: return None
+
 def cat_of(rule):
     if rule.startswith(PAPER_INFO): return 'INFO'
+    if rule.startswith(('OCTOBER F7 TIE NO (lean', 'OCTOBER EXTRAS NO (lean')): return 'GTAIL'   # game-tail leans (Fable 10/24), Kalshi only
     if rule in ('F5 OVER',) or 'RFI' in rule: return 'EARLY'
     if rule.startswith('K-') or 'DEEP-SPOT' in rule or rule.startswith('VELO-DECLINE'): return 'K'
     if rule.startswith('WALKS'): return 'WALK'
@@ -497,6 +536,10 @@ def build(SL, PL, live, now):
                     c['level'] = 'missed'; c['size'] = 'none'; c['status'] = f"Price moved {mv:.0f}¢ from the print" if mv is not None else 'Price already moved'
                 else: c['level'] = 'lead'; c['size'] = '¼ unit'
                 c['panel'] = 'B'
+            elif cat == 'GTAIL':   # F7 TIE NO / EXTRAS NO leans (Fable 10/24): 0.05u, Kalshi only, NO at the mid
+                c['market'] = x.get('price'); c['market_src'] = 'Kalshi mid'; c['model'] = x.get('fair'); c['model_src'] = 'October prior (2016-25)'
+                c['level'] = 'lean'; c['size'] = '0.05u, Kalshi only, NO at the mid'; c['panel'] = 'D'
+                c['badges'].append('back to paper if negative over 20 games')
             elif cat == 'KOP':
                 c['market'] = x.get('fair'); c['market_src'] = 'Pinnacle no-vig'; c['model'] = x.get('fair'); c['model_src'] = 'Pinnacle no-vig'
                 c['level'] = 'watch'; c['size'] = 'paper'; c['badges'].append('ungraded'); c['panel'] = 'B'
@@ -511,6 +554,9 @@ def build(SL, PL, live, now):
         if not live_now:
             c['level'] = 'gone'; c['panel'] = 'E'; c['status'] = f"No longer firing (last seen {dt.datetime.fromisoformat(last_ts).astimezone(ET).strftime('%-I:%M %p')} ET)"
             c['positions'] = []
+        if cat in ('K', 'OUTS', 'WALK') or any(r.startswith(('MANAGER LEASH', 'REMATCH')) for r in rules):   # manager / leash on every pitcher card
+            ml = mgr_of(c.get('pitcher') or pitcher_of(c.get('label')), ev)
+            if ml: c['manager_leash'] = ml
         if cat not in ('EARLY', 'HIT'): pricing(c, live_g)
         for p in c.get('positions', []): pricing(p, live_g)
         cards.append(c)

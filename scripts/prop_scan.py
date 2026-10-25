@@ -62,7 +62,7 @@ def pregame(ev):
     if not m: return False
     t=dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone(dt.timedelta(hours=-4)))
     mf=_mlb_fp(ev)
-    if mf is not None and mf<t: t=mf
+    if mf is not None: t=mf          # MLB's scheduled first pitch is authoritative (games move earlier AND later; 10/16 G4 listed 6 PM, played 8 PM)
     return now < t - dt.timedelta(minutes=2)
 def series_markets(s):
     out=[];cur=''
@@ -108,14 +108,21 @@ pname=lambda r: r['title'].split(':')[0].strip()
 lad=collections.defaultdict(list)
 for r in R:
     if r['series'] in PSER and r['mid'] is not None: lad[(r['event'].split('-',1)[1],pname(r),PSER[r['series']])].append(r)
-pp={}
+pp={}; PTEAM={}
 for d in dates:
-    s=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher")
+    s=g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team")
     for dd in s.get('dates',[]):
         for gm in dd['games']:
             for side in ('away','home'):
                 p=gm['teams'][side].get('probablePitcher')
-                if p: pp[nz(p['fullName'])]=p['id']
+                if p: pp[nz(p['fullName'])]=p['id']; PTEAM[nz(p['fullName'])]=gm['teams'][side]['team'].get('abbreviation')
+# Fable 10/25: manager leash tiers (postseason starts 2021-26, mean BF by the 2026 manager; short < 18.5, long >= 20). Rebuilt by Bartolo after each Series game.
+MGR={}
+for _mp in (os.path.join(os.path.dirname(os.path.abspath(__file__)),'manager_leash.json'),os.path.join(HERE,'manager_leash.json')):   # scripts/ (next to sub_risk_2026.json) first; SCAN_DIR is data/prop_scan in CI
+    try: MGR=json.load(open(_mp))['teams']; break
+    except Exception: pass
+if not MGR: print('manager_leash.json missing: no MANAGER LEASH rows')
+def leash(team): return (MGR.get(team) or {}).get('tier')
 def season(pid):
     d=g(f"{MLB}/people/{pid}/stats?stats=season&group=pitching&season=2026&gameType=R")
     try: s=d['stats'][0]['splits'][0]['stat']
@@ -239,7 +246,7 @@ def _first_pitch_utc(ev):
     if not m or m.group(2) not in MON: return None
     t=dt.datetime(2000+int(m.group(1)),MON.index(m.group(2))+1,int(m.group(3)),int(m.group(4)),int(m.group(5)),tzinfo=dt.timezone.utc)+dt.timedelta(hours=4)
     mf=_mlb_fp(ev)
-    return mf if (mf is not None and mf<t) else t
+    return mf if mf is not None else t   # MLB time authoritative (Bartolo 10/16)
 _RM_CACHE={}
 def _rematch(ev,nm):
     """True when this starter already started against the same opponent earlier in this postseason series (Fable 10/24 rematch rows)."""
@@ -285,8 +292,17 @@ for (ev,nm),D in P.items():
         # hooks on baserunners, not pitch counts. Paper, no conditioning, graded by rung. The outs/season deviation is shown as information only.
         r=nearest50(K['rungs']); line=r['strike']; dev=(O['mean']-s['outs_gs']) if (O and O['mean'] is not None) else None
         _rm=_rematch(ev,nm)
-        add(4,'OCTOBER K UNDER (plain, paper)',ev,f"{nm} K u{line}",'NO',round(1-r['mid'],3),round(1-r['mid']+K_('october_k_under_offset',0.02),3),
-            f"paper at the mid {1-r['mid']:.3f}; K mkt {K['mean']:.2f} vs season {s['k_gs']:.2f}"+(f"; outs mkt {O['mean']:.1f} vs season {s['outs_gs']:.1f} ({dev:+.1f})" if dev is not None else "")+f"{small}; book u{line}: {best_book(nm,'K',line,'under')}; {pin_fair(nm,'K',line,'under')}"+("; REMATCH: second start vs this lineup in the series" if _rm else ""),r['ticker'])
+        # Fable 10/25: MANAGER LEASH K UNDER (paper) replaces OCTOBER K UNDER (plain), which is retired to DEAD.md as superseded (-2.3 pts, t -0.6, 448 rungs).
+        # 2026 PS 9/29-10/23 K rungs by the starter's manager: short-leash managers (mean PS BF < 18.5: Murphy, Vogt, Counsell, Cora) -11.9 pts vs mid,
+        # 20 starter-games, clustered t -2.1; long-leash (>= 20) +5.9. Excluding Murphy the short group is -4.3 (11 games, t -0.5): in-sample this is largely
+        # a Murphy row. Promotion bar (pre-registered): 10 short-leash starter-games from WS G3 on, rung nearest 50 at the mid, positive after fee, and the
+        # short-leash set excluding Murphy also negative vs mid. First fills are at the Kalshi mid only. Offset = half the in-sample residual.
+        _tier=leash(PTEAM.get(nz(nm))); _mg=(MGR.get(PTEAM.get(nz(nm))) or {})
+        if _tier=='short':
+            add(4,'MANAGER LEASH K UNDER (paper)',ev,f"{nm} K u{line}",'NO',round(1-r['mid'],3),round(1-r['mid']+K_('mgr_leash_k_offset',0.04),3),
+                f"paper at the mid {1-r['mid']:.3f}; {_mg.get('manager')} PS starters avg {_mg.get('mean_bf')} BF (n {_mg.get('n')}, short leash); K mkt {K['mean']:.2f} vs season {s['k_gs']:.2f}"+(f"; outs mkt {O['mean']:.1f} vs season {s['outs_gs']:.1f} ({dev:+.1f})" if dev is not None else "")+f"{small}; book u{line}: {best_book(nm,'K',line,'under')}; {pin_fair(nm,'K',line,'under')}"+("; REMATCH: second start vs this lineup in the series" if _rm else ""),r['ticker'])
+        elif _tier is None:
+            add(4,'MANAGER LEASH (no tier, info)',ev,f"{nm} K u{line}",'NO',round(1-r['mid'],3),round(1-r['mid'],3),f"INFO ONLY, not a fire: {PTEAM.get(nz(nm))} manager {_mg.get('manager','unknown')} has {_mg.get('n',0)} PS starts since 2021 (tier needs 8); K mkt {K['mean']:.2f} vs season {s['k_gs']:.2f}; no rule fires",r['ticker'])
         if _rm:
             # Fable 10/24 rematch battery (489 WS/LCS starters 1969-2026 with two starts vs the same lineup): second start -0.45 K (t -3.2), -1.0 outs (t -3.1),
             # -4.4 pitches, K per batter -1.2 pts; hits per batter +1.4 pts but hits-allowed count flat; walks/ER/HR unchanged in the modern era.
@@ -667,13 +683,14 @@ if SUBR and any(d.month>=10 for d in dates):
 # So: every flag is LOGGED as paper with tags for grading; only October TB 2+/3+ rows are a play (tier 3), sized as the October TB lean.
 HS_ON=True
 if HS_ON and HGL and PGL:
-    PROB={}
+    PROB={}; OPPT={}; HRR_LEASH_SEEN=set()
     for d in dates:
         for dd in g(f"{MLB}/schedule?sportId=1&date={d}&hydrate=probablePitcher,team").get('dates',[]):
             for gm in dd['games']:
                 for sd_,od in (('away','home'),('home','away')):
                     ab=gm['teams'][sd_]['team'].get('abbreviation'); pp_=gm['teams'][od].get('probablePitcher')
                     if ab and pp_: PROB[(str(d),ab)]=pp_['id']
+                    if ab: OPPT[(str(d),ab)]=gm['teams'][od]['team'].get('abbreviation')
     AB={'AZ':'ARI','WSH':'WSH','ATH':'ATH','CWS':'CWS','KC':'KC','SD':'SD','SF':'SF','TB':'TB'}
     for r in R:
         if r['series'] not in ('KXMLBHIT','KXMLBTB','KXMLBHRR') or r['mid'] is None or r['ask']-r['bid']>0.04: continue
@@ -683,6 +700,13 @@ if HS_ON and HGL and PGL:
         team=next((ab for (dd,ab) in PROB if dd==str(d0) and pl.startswith(ab) and (code[11:].startswith(ab) or code.endswith(ab))),None)
         h=HGLn.get(nz(pname(r)))
         if not team or not h: continue
+        # Fable 10/25: HRR OVER vs short-leash opponent (paper, 30-row bar). 2026 PS: hitters facing a short-leash team's starter ran +6.0 (HRR 1+, 156 rungs)
+        # and +6.2 (HRR 2+, 155) vs mid; vs long-leash opponents -4.3 / -5.7; difference about 11 pts, t about 1.7. Mechanism (more PAs vs the pen) should also
+        # show on TB and HR and did not, so paper only, one row per hitter-game (the lower rung), no action, no second hitter row from this family.
+        if PSEASON and r['series']=='KXMLBHRR' and leash(OPPT.get((str(d0),team)))=='short' and (nz(pname(r)),str(d0)) not in HRR_LEASH_SEEN:
+            HRR_LEASH_SEEN.add((nz(pname(r)),str(d0))); _om=MGR.get(OPPT.get((str(d0),team))) or {}
+            add(4,'HRR OVER vs short-leash opponent (paper)',r['event'],r['title'],'YES',round(r['mid'],3),round(r['mid']+K_('hrr_short_leash_offset',0.03),3),
+                f"paper at the mid {r['mid']:.3f}; opponent {_om.get('manager')} PS starters avg {_om.get('mean_bf')} BF (short leash, more PAs vs the pen); log only, 30-row bar",r['ticker'])
         hf=_hf(h,str(d0)); sf=_sf(PROB[(str(d0),team)],str(d0))
         if not hf or not sf or sf['sp_csw'] is None or hf['brl_l10'] is None: continue
         x={**hf,**sf}; sc=sum(HS['coef'][f]*(x[f]-HS['mu'][f])/HS['sd'][f] for f in HS['coef'])
