@@ -1,7 +1,7 @@
 {
 "meta": {
-"built": "2026-10-27T06:02:39.741395+00:00",
-"latest_scan": "2026-10-27T02:25:13.764124+00:00",
+"built": "2026-10-27T06:08:49.789916+00:00",
+"latest_scan": "2026-10-27T06:05:00.776712+00:00",
 "pinnacle_rows_latest": 0,
 "velo_logged": 0,
 "fable_review": {
@@ -60,10 +60,11 @@
 "away_logo": "https://www.mlbstatic.com/team-logos/158.svg",
 "home_logo": "https://www.mlbstatic.com/team-logos/139.svg",
 "started": false,
-"n_cards": 1,
-"n_positions": 1,
+"n_cards": 11,
+"n_positions": 3,
 "levels": {
-"lean": 1
+"lean": 2,
+"info": 9
 },
 "start_et": "8:00 PM ET",
 "start_local_day": "Tue 10/27"
@@ -85,12 +86,12 @@
 ],
 "live": true,
 "first_seen": "2026-10-27T02:25:13.764124+00:00",
-"last_seen": "2026-10-27T02:25:13.764124+00:00",
-"n_scans": 1,
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 2,
 "notes": [
 {
 "rule": "OCTOBER EXTRAS NO (lean, Kalshi only)",
-"note": "limit NO at the mid 0.905; PS extra-innings rate .080 (2016-25) vs the market's ~.10; October 2026: 1 in 34 games, NO +6.0 after fee; edge +1.4 after fee; 0.05u, Kalshi only (Fable 10/24); back to paper the first time it runs negative over 20 games"
+"note": "limit NO at the mid 0.885; PS extra-innings rate .080 (2016-25) vs the market's ~.10; October 2026: 1 in 34 games, NO +6.0 after fee; edge +1.3 after fee; 0.05u, Kalshi only (Fable 10/24); back to paper the first time it runs negative over 20 games"
 }
 ],
 "badges": [
@@ -108,9 +109,9 @@
 "ticker": "KXMLBEXTRAS-26OCT272000MILTB-EXTRAS",
 "kalshi_px": 0.89,
 "first_px": 0.905,
-"market": 0.905,
+"market": 0.885,
 "market_src": "Kalshi mid",
-"model": 0.925,
+"model": 0.905,
 "model_src": "October prior (2016-25)",
 "level": "lean",
 "size": "0.05u, Kalshi only, NO at the mid",
@@ -130,9 +131,9 @@
 "ticker": "KXMLBEXTRAS-26OCT272000MILTB-EXTRAS",
 "level": "lean",
 "size": "0.05u, Kalshi only, NO at the mid",
-"model": 0.925,
+"model": 0.905,
 "model_src": "October prior (2016-25)",
-"market": 0.905,
+"market": 0.885,
 "market_src": "Kalshi mid",
 "kalshi_px": 0.89,
 "first_seen": "2026-10-27T02:25:13.764124+00:00",
@@ -140,20 +141,590 @@
 "kalshi_mid_side": 0.885,
 "kalshi_cost": 0.8969,
 "kalshi_am": -869,
-"edge": 2.81,
-"edge_mkt": 0.81,
-"target_am": -953,
-"target_kalshi_cents": 89
+"edge": 0.81,
+"edge_mkt": -1.19,
+"target_am": -770,
+"target_kalshi_cents": 87
 }
 ],
 "price_src": "live",
 "kalshi_mid_side": 0.885,
 "kalshi_cost": 0.8969,
 "kalshi_am": -869,
-"edge": 2.81,
-"edge_mkt": 0.81,
-"target_am": -953,
-"target_kalshi_cents": 89
+"edge": 0.81,
+"edge_mkt": -1.19,
+"target_am": -770,
+"target_kalshi_cents": 87
+},
+{
+"key": "26OCT272000MILTB|EARLY",
+"cat": "EARLY",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"RFI INFO"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "RFI INFO",
+"note": "Kalshi total 7.10; YRFI curve 0.427 (Oct-adj 0.464); ask 0.44; edge -3.0 (Oct +0.7); taker $ 45% NRFI (normal is 74%)"
+}
+],
+"badges": [],
+"started": false,
+"why": [
+{
+"rule": "RFI INFO",
+"why": "YRFI curve vs the Kalshi ask, shown for every game; no edge at this price."
+}
+],
+"label": "Early scoring (YRFI / F5 overs)",
+"side": "YES",
+"yrfi": {
+"rule": "RFI INFO",
+"ticker": "KXMLBRFI-26OCT272000MILTB",
+"kalshi_px": 0.44,
+"model": 0.427,
+"model_src": "curve on Kalshi total",
+"curve": 0.427,
+"curve_oct": 0.464,
+"ktotal": 7.1,
+"market": null,
+"market_src": null,
+"nrfi_pct": 45,
+"side": "YES",
+"label": "YRFI",
+"cat": "RFI",
+"level": "info",
+"price_src": "live",
+"kalshi_mid_side": 0.435,
+"kalshi_cost": 0.4572,
+"kalshi_am": 119,
+"edge": -3.02,
+"edge_mkt": null,
+"target_am": 146,
+"target_kalshi_cents": 39
+},
+"f5": [],
+"level": "info",
+"size": "none",
+"panel": "C",
+"positions": [
+{
+"key": "26OCT272000MILTB|RFI",
+"cat": "RFI",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"rules": [
+"RFI INFO"
+],
+"rule": "RFI INFO",
+"label": "YRFI",
+"side": "YES",
+"ticker": "KXMLBRFI-26OCT272000MILTB",
+"level": "info",
+"size": "none",
+"model": 0.427,
+"model_src": "curve on Kalshi total",
+"kalshi_px": 0.44,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.435,
+"kalshi_cost": 0.4572,
+"kalshi_am": 119,
+"edge": -3.02,
+"edge_mkt": null,
+"target_am": 146,
+"target_kalshi_cents": 39
+}
+]
+},
+{
+"key": "26OCT272000MILTB|OCTOBER F7 TIE NO (lean, Kalshi only)|first 7 innings tie",
+"cat": "GTAIL",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 3,
+"rules": [
+"OCTOBER F7 TIE NO (lean, Kalshi only)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "OCTOBER F7 TIE NO (lean, Kalshi only)",
+"note": "limit NO at the mid 0.860; PS first-7 tie rate .083 (2016-25) vs the market's ~.12; October 2026: 1 tie in 34 games, NO +8.3 after fee; edge +2.2 after fee; 0.05u, Kalshi only (Fable 10/24); back to paper the first time it runs negative over 20 games"
+}
+],
+"badges": [
+"back to paper if negative over 20 games"
+],
+"started": false,
+"why": [
+{
+"rule": "OCTOBER F7 TIE NO (lean, Kalshi only)",
+"why": "First-7 ties run .083 in October (2016-25) vs the market's ~.12. Fair = NO mid + 3. Lean, 0.05u, Kalshi only, NO at the mid (Fable 10/24). One of two tails out of nine families tested: back to paper the first time it runs negative over 20 games."
+}
+],
+"label": "first 7 innings tie",
+"side": "NO",
+"ticker": "KXMLBF7-26OCT272000MILTB-TIE",
+"kalshi_px": 0.87,
+"first_px": 0.86,
+"market": 0.86,
+"market_src": "Kalshi mid",
+"model": 0.89,
+"model_src": "October prior (2016-25)",
+"level": "lean",
+"size": "0.05u, Kalshi only, NO at the mid",
+"panel": "D",
+"positions": [
+{
+"key": "26OCT272000MILTB|OCTOBER F7 TIE NO (lean, Kalshi only)|first 7 innings tie",
+"cat": "GTAIL",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"rules": [
+"OCTOBER F7 TIE NO (lean, Kalshi only)"
+],
+"label": "first 7 innings tie",
+"side": "NO",
+"ticker": "KXMLBF7-26OCT272000MILTB-TIE",
+"level": "lean",
+"size": "0.05u, Kalshi only, NO at the mid",
+"model": 0.89,
+"model_src": "October prior (2016-25)",
+"market": 0.86,
+"market_src": "Kalshi mid",
+"kalshi_px": 0.87,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"price_src": "live",
+"kalshi_mid_side": 0.86,
+"kalshi_cost": 0.8779,
+"kalshi_am": -719,
+"edge": 1.21,
+"edge_mkt": -1.79,
+"target_am": -669,
+"target_kalshi_cents": 86
+}
+],
+"price_src": "live",
+"kalshi_mid_side": 0.86,
+"kalshi_cost": 0.8779,
+"kalshi_am": -719,
+"edge": 1.21,
+"edge_mkt": -1.79,
+"target_am": -669,
+"target_kalshi_cents": 86
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Griffin Jax: 5+ strikeouts?",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $29 vs NO bids $1,170; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Griffin Jax: 5+ strikeouts?",
+"side": "NO",
+"ticker": "KXMLBKS-26OCT272000MILTB-TBGJAX22-5",
+"kalshi_px": 0.6799999999999999,
+"first_px": 0.33,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.6699999999999999,
+"kalshi_cost": 0.6952,
+"kalshi_am": -228,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Junior Caminero: 1+ hits?",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $1,548 vs NO bids $467; heavier bidders YES; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Junior Caminero: 1+ hits?",
+"side": "YES",
+"ticker": "KXMLBHIT-26OCT272000MILTB-TBJCAMINERO13-1",
+"kalshi_px": 0.65,
+"first_px": 0.62,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.62,
+"kalshi_cost": 0.6659,
+"kalshi_am": -199,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Over 4.5 runs scored",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $33,875 vs NO bids $8,804; heavier bidders YES; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 4.5 runs scored",
+"side": "YES",
+"ticker": "KXMLBTOTAL-26OCT272000MILTB-5",
+"kalshi_px": 0.79,
+"first_px": 0.78,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.78,
+"kalshi_cost": 0.8016,
+"kalshi_am": -404,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Over 10.5 runs scored",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $11,874 vs NO bids $73,641; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 10.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT272000MILTB-11",
+"kalshi_px": 0.8,
+"first_px": 0.21,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.79,
+"kalshi_cost": 0.8112,
+"kalshi_am": -430,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Over 9.5 runs scored",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $26,327 vs NO bids $82,990; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Over 9.5 runs scored",
+"side": "NO",
+"ticker": "KXMLBTOTAL-26OCT272000MILTB-10",
+"kalshi_px": 0.74,
+"first_px": 0.27,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.73,
+"kalshi_cost": 0.7535,
+"kalshi_am": -306,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|First 5 innings: Over 5.5 runs",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $860 vs NO bids $2,985; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "First 5 innings: Over 5.5 runs",
+"side": "NO",
+"ticker": "KXMLBF5TOTAL-26OCT272000MILTB-6",
+"kalshi_px": 0.74,
+"first_px": 0.275,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.725,
+"kalshi_cost": 0.7535,
+"kalshi_am": -306,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Tampa Bay first 7 innings winner",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $394 vs NO bids $1,370; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Tampa Bay first 7 innings winner",
+"side": "NO",
+"ticker": "KXMLBF7-26OCT272000MILTB-TB",
+"kalshi_px": 0.61,
+"first_px": 0.4,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.6,
+"kalshi_cost": 0.6267,
+"kalshi_am": -168,
+"edge": null,
+"edge_mkt": null
+},
+{
+"key": "26OCT272000MILTB|DEPTH IMBALANCE (ungraded)|Milwaukee first 7 innings winner",
+"cat": "INFO",
+"game": "MIL @ TB",
+"event": "26OCT272000MILTB",
+"date": "2026-10-27",
+"first_pitch": "2026-10-27T20:00:00-04:00",
+"away": "MIL",
+"home": "TB",
+"tier": 4,
+"rules": [
+"DEPTH IMBALANCE (ungraded)"
+],
+"live": true,
+"first_seen": "2026-10-27T06:05:00.776712+00:00",
+"last_seen": "2026-10-27T06:05:00.776712+00:00",
+"n_scans": 1,
+"notes": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"note": "resting within 3c: YES bids $304 vs NO bids $1,032; heavier bidders NO; logged for grading"
+}
+],
+"badges": [
+"no backtested edge"
+],
+"started": false,
+"why": [
+{
+"rule": "DEPTH IMBALANCE (ungraded)",
+"why": "Order-book depth skew; ungraded."
+}
+],
+"label": "Milwaukee first 7 innings winner",
+"side": "NO",
+"ticker": "KXMLBF7-26OCT272000MILTB-MIL",
+"kalshi_px": 0.55,
+"first_px": 0.46,
+"level": "info",
+"size": "none",
+"panel": "E",
+"positions": [],
+"price_src": "live",
+"kalshi_mid_side": 0.54,
+"kalshi_cost": 0.5673,
+"kalshi_am": -131,
+"edge": null,
+"edge_mkt": null
 }
 ],
 "tickets": [
