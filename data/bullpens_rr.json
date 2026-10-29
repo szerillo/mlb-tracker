@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-29T03:52:41Z",
+  "generated_at": "2026-10-29T10:20:45Z",
   "source": "MLB StatsAPI active rosters (recent-usage role model) + Bartolo fatigue",
-  "slate_date": "2026-10-28",
-  "fatigue_date": "2026-10-28",
+  "slate_date": "2026-10-29",
+  "fatigue_date": "2026-10-29",
   "n_teams": 30,
   "n_relievers": 439,
   "teams": {
@@ -1277,7 +1277,7 @@
         "num": 4,
         "player": "Tim Herrin",
         "mlbamid": 682120,
-        "role": "SU",
+        "role": "MID",
         "workload": false,
         "avail": 1.0,
         "state": "FRESH",
@@ -2137,26 +2137,6 @@
     "Dodgers": [
       {
         "num": 1,
-        "player": "Edwin Diaz",
-        "mlbamid": 621242,
-        "role": "CL",
-        "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
-        "fip": null
-      },
-      {
-        "num": 2,
-        "player": "Tanner Scott",
-        "mlbamid": 656945,
-        "role": "SU",
-        "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
-        "fip": 2.59
-      },
-      {
-        "num": 3,
         "player": "Alex Vesia",
         "mlbamid": 681911,
         "role": "MID",
@@ -2166,7 +2146,17 @@
         "fip": 2.69
       },
       {
-        "num": 4,
+        "num": 2,
+        "player": "Tanner Scott",
+        "mlbamid": 656945,
+        "role": "MID",
+        "workload": false,
+        "avail": 1.0,
+        "state": "FRESH",
+        "fip": 2.59
+      },
+      {
+        "num": 3,
         "player": "Evan Phillips",
         "mlbamid": 623465,
         "role": "MID",
@@ -2176,7 +2166,7 @@
         "fip": 2.83
       },
       {
-        "num": 5,
+        "num": 4,
         "player": "Blake Treinen",
         "mlbamid": 595014,
         "role": "MID",
@@ -2184,6 +2174,16 @@
         "avail": 1.0,
         "state": "FRESH",
         "fip": 3.19
+      },
+      {
+        "num": 5,
+        "player": "Edwin Diaz",
+        "mlbamid": 621242,
+        "role": "MID",
+        "workload": false,
+        "avail": 1.0,
+        "state": "FRESH",
+        "fip": null
       },
       {
         "num": 6,
@@ -2444,9 +2444,9 @@
         "player": "Trevor Megill",
         "mlbamid": 656730,
         "role": "CL",
-        "workload": false,
-        "avail": 0.94,
-        "state": "CAUTION",
+        "workload": true,
+        "avail": 0.07,
+        "state": "LIKELY_OUT",
         "fip": 2.81
       },
       {
@@ -2455,8 +2455,8 @@
         "mlbamid": 682842,
         "role": "SU",
         "workload": true,
-        "avail": 0.94,
-        "state": "CAUTION",
+        "avail": 0.07,
+        "state": "LIKELY_OUT",
         "fip": 3.05
       },
       {
@@ -2465,8 +2465,8 @@
         "mlbamid": 668941,
         "role": "MID",
         "workload": false,
-        "avail": 0.94,
-        "state": "CAUTION",
+        "avail": 0.07,
+        "state": "LIKELY_OUT",
         "fip": 3.7
       },
       {
@@ -2474,9 +2474,9 @@
         "player": "Antonio Senzatela",
         "mlbamid": 622608,
         "role": "MID",
-        "workload": true,
-        "avail": 0.07,
-        "state": "LIKELY_OUT",
+        "workload": false,
+        "avail": 0.57,
+        "state": "CAUTION",
         "fip": 4.02
       },
       {
@@ -2485,8 +2485,8 @@
         "mlbamid": 676879,
         "role": "LR",
         "workload": true,
-        "avail": 0.07,
-        "state": "LIKELY_OUT",
+        "avail": 1.0,
+        "state": "FRESH",
         "fip": 2.93
       },
       {
@@ -2495,8 +2495,8 @@
         "mlbamid": 669084,
         "role": "LR",
         "workload": false,
-        "avail": 0.52,
-        "state": "TIRED",
+        "avail": 1.0,
+        "state": "FRESH",
         "fip": 3.87
       }
     ],
@@ -2817,16 +2817,6 @@
       },
       {
         "num": 2,
-        "player": "David Bednar",
-        "mlbamid": 670280,
-        "role": "MID",
-        "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
-        "fip": 3.15
-      },
-      {
-        "num": 3,
         "player": "John Schreiber",
         "mlbamid": 670167,
         "role": "MID",
@@ -2834,6 +2824,16 @@
         "avail": 1.0,
         "state": "FRESH",
         "fip": 4.33
+      },
+      {
+        "num": 3,
+        "player": "David Bednar",
+        "mlbamid": 670280,
+        "role": "MID",
+        "workload": false,
+        "avail": 1.0,
+        "state": "FRESH",
+        "fip": 3.15
       },
       {
         "num": 4,
@@ -3263,16 +3263,6 @@
     "Padres": [
       {
         "num": 1,
-        "player": "Mason Miller",
-        "mlbamid": 695243,
-        "role": "MID",
-        "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
-        "fip": 2.19
-      },
-      {
-        "num": 2,
         "player": "Adrian Morejon",
         "mlbamid": 670970,
         "role": "MID",
@@ -3280,6 +3270,16 @@
         "avail": 1.0,
         "state": "FRESH",
         "fip": 2.43
+      },
+      {
+        "num": 2,
+        "player": "Mason Miller",
+        "mlbamid": 695243,
+        "role": "MID",
+        "workload": false,
+        "avail": 1.0,
+        "state": "FRESH",
+        "fip": 2.19
       },
       {
         "num": 3,
@@ -3323,16 +3323,6 @@
       },
       {
         "num": 7,
-        "player": "Joe Musgrove",
-        "mlbamid": 605397,
-        "role": "MID",
-        "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
-        "fip": null
-      },
-      {
-        "num": 8,
         "player": "Jhony Brito",
         "mlbamid": 666745,
         "role": "MID",
@@ -3342,9 +3332,19 @@
         "fip": null
       },
       {
-        "num": 9,
+        "num": 8,
         "player": "Hunter Stratton",
         "mlbamid": 676702,
+        "role": "MID",
+        "workload": false,
+        "avail": 1.0,
+        "state": "FRESH",
+        "fip": null
+      },
+      {
+        "num": 9,
+        "player": "Joe Musgrove",
+        "mlbamid": 605397,
         "role": "MID",
         "workload": false,
         "avail": 1.0,
@@ -3874,9 +3874,9 @@
         "player": "Bryan Baker",
         "mlbamid": 641329,
         "role": "CL",
-        "workload": false,
-        "avail": 0.52,
-        "state": "TIRED",
+        "workload": true,
+        "avail": 0.07,
+        "state": "LIKELY_OUT",
         "fip": 3.32
       },
       {
@@ -3884,9 +3884,9 @@
         "player": "Cam Booser",
         "mlbamid": 592155,
         "role": "SU",
-        "workload": true,
-        "avail": 0.07,
-        "state": "LIKELY_OUT",
+        "workload": false,
+        "avail": 0.57,
+        "state": "CAUTION",
         "fip": 3.42
       },
       {
@@ -3895,8 +3895,8 @@
         "mlbamid": 687330,
         "role": "SU",
         "workload": true,
-        "avail": 0.94,
-        "state": "CAUTION",
+        "avail": 0.07,
+        "state": "LIKELY_OUT",
         "fip": 3.22
       },
       {
@@ -3915,8 +3915,8 @@
         "mlbamid": 664076,
         "role": "MID",
         "workload": false,
-        "avail": 1.0,
-        "state": "FRESH",
+        "avail": 0.94,
+        "state": "CAUTION",
         "fip": 3.6
       },
       {
@@ -3934,9 +3934,9 @@
         "player": "Steven Matz",
         "mlbamid": 571927,
         "role": "LR",
-        "workload": true,
-        "avail": 1.0,
-        "state": "FRESH",
+        "workload": false,
+        "avail": 0.94,
+        "state": "CAUTION",
         "fip": 4.31
       },
       {
@@ -4469,7 +4469,7 @@
       "n_relievers": 20
     },
     "Braves": {
-      "eff_bullpen_fip": 3.162,
+      "eff_bullpen_fip": null,
       "n_available": 15,
       "n_relievers": 15
     },
@@ -4489,7 +4489,7 @@
       "n_relievers": 15
     },
     "White Sox": {
-      "eff_bullpen_fip": 3.85,
+      "eff_bullpen_fip": 3.873,
       "n_available": 15,
       "n_relievers": 15
     },
@@ -4499,7 +4499,7 @@
       "n_relievers": 15
     },
     "Guardians": {
-      "eff_bullpen_fip": 3.594,
+      "eff_bullpen_fip": 3.618,
       "n_available": 14,
       "n_relievers": 14
     },
@@ -4529,7 +4529,7 @@
       "n_relievers": 13
     },
     "Dodgers": {
-      "eff_bullpen_fip": 2.756,
+      "eff_bullpen_fip": 2.764,
       "n_available": 14,
       "n_relievers": 14
     },
@@ -4539,8 +4539,8 @@
       "n_relievers": 16
     },
     "Brewers": {
-      "eff_bullpen_fip": 3.232,
-      "n_available": 4,
+      "eff_bullpen_fip": 3.28,
+      "n_available": 3,
       "n_relievers": 6
     },
     "Twins": {
@@ -4554,7 +4554,7 @@
       "n_relievers": 17
     },
     "Yankees": {
-      "eff_bullpen_fip": 3.665,
+      "eff_bullpen_fip": null,
       "n_available": 13,
       "n_relievers": 13
     },
@@ -4569,7 +4569,7 @@
       "n_relievers": 16
     },
     "Padres": {
-      "eff_bullpen_fip": 3.297,
+      "eff_bullpen_fip": null,
       "n_available": 14,
       "n_relievers": 14
     },
@@ -4589,8 +4589,8 @@
       "n_relievers": 15
     },
     "Rays": {
-      "eff_bullpen_fip": 3.722,
-      "n_available": 5,
+      "eff_bullpen_fip": 3.92,
+      "n_available": 4,
       "n_relievers": 8
     },
     "Rangers": {
