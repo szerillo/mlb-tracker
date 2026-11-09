@@ -10748,7 +10748,7 @@ async function renderPlayerFuturesTab(){
     PF_DATA = await resp.json();
     if(upd && PF_DATA.generated_at){ const dt=new Date(PF_DATA.generated_at);
       upd.textContent = PF_DATA.frozen_eos ? ('Final award projections · frozen on end-of-season stats ('+(PF_DATA.regular_season_end||'')+')') : ('Model · updated '+dt.toLocaleString()); }
-    if(PF_DATA.frozen_eos){ const _n=document.querySelector('#tab-player-futures .pf-filter-note'); if(_n) _n.textContent='Top 10 by projected ballot points · 1st-place votes of 30 · no market comparison';
+    if(PF_DATA.frozen_eos){ const _n=document.querySelector('#tab-player-futures .pf-filter-note'); if(_n) _n.textContent='Top 10 by projected ballot points · 1st = projected first-place votes (of 30) · Share = points vs a unanimous winner';
       const _ph=document.getElementById('pfx-phase'); if(_ph) _ph.style.display='none'; }
     _pfRenderCards();
     _pfWireControls();
