@@ -10631,9 +10631,9 @@ function _pfCard(cand, rankTxt, isVal){
     +   (cand.proj_points!=null
         // Final (frozen end-of-season) board: projected BBWAA ballot, no market comparison
         ? '<div class="pfx-mets">'
-          + '<div class="pfx-met"><span class="pfx-k">1st-pl votes</span><span class="pfx-p">'+(cand.proj_first>=0.95?Math.round(cand.proj_first):(cand.proj_first>0?'<1':'0'))+'</span><span class="pfx-o">of 30</span></div>'
+          + '<div class="pfx-met"><span class="pfx-k">1st-pl votes</span><span class="pfx-p">'+(cand.proj_first_r!=null?cand.proj_first_r:(cand.proj_first>=0.95?Math.round(cand.proj_first):(cand.proj_first>0?'<1':'0')))+'</span><span class="pfx-o">of 30</span></div>'
           + '<div class="pfx-met mk"><span class="pfx-k">Points</span><span class="pfx-p">'+Math.round(cand.proj_points)+'</span><span class="pfx-o">'+(cand.war_final!=null?'':(cand.p_war!=null?cand.p_war.toFixed(1)+' WAR':''))+'</span></div>'
-          + '<div class="pfx-met"><span class="pfx-k">Vote share</span><span class="pfx-p">'+Math.round(cand.proj_vote_share*1000)/10+'%</span><span class="pfx-o">win '+_pfPc(mp)+'</span></div>'
+          + '<div class="pfx-met"><span class="pfx-k">Vote share</span><span class="pfx-p">'+Math.round(cand.proj_vote_share*1000)/10+'%</span><span class="pfx-o">'+(cand.finalist===false?'':cand.p_win!=null?'win '+_pfPc(cand.p_win)+(cand.p_win_mkt!=null?' · mkt '+_pfPc(cand.p_win_mkt):''):'win '+_pfPc(mp))+'</span></div>'
           + '</div>'
         : '<div class="pfx-mets">'
     +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(dp)+'</span><span class="pfx-o">'+_pfP2Odds(dp)+'</span></div>'
@@ -10675,7 +10675,7 @@ function _pfRenderCards(){
       const poolTxt = mkt.endsWith('_CY') ? 'qualified starters (IP≥120)'
                     : mkt.endsWith('_MVP') ? 'qualified hitters (PA≥400)'
                     : 'qualified regulars';
-      sub.textContent = FINAL ? 'Final projected vote · 30 BBWAA ballots · frozen on end-of-season stats'
+      sub.textContent = FINAL ? (payload.finalists ? 'Final projected vote · 30 BBWAA ballots · finalists '+payload.finalists.join(', ')+' · win % = model / market' : 'Final projected vote · 30 BBWAA ballots · frozen on end-of-season stats')
                               : (PF_PHASE==='cur'?'Current (YTD)':'Projected (EOS)')+' · percentiles vs '+poolTxt;
     }
   }
@@ -10696,6 +10696,8 @@ function _pfWireControls(){
 // Embed: ?embed=player-futures&market=ws-mvp
 async function renderWsMvp(){
   const sec=document.getElementById('pf-ws-mvp'), body=document.getElementById('wsmvp-body'); if(!sec||!body) return;
+  // 2026 World Series is final (MIL 4-1, Contreras MVP). Board stays available at ?market=ws-mvp or ?wsmvp=1, hidden otherwise.
+  try{ const q=new URLSearchParams(location.search); if(q.get('market')!=='ws-mvp' && q.get('wsmvp')!=='1'){ sec.style.display='none'; return; } }catch(e){ sec.style.display='none'; return; }
   let D=null; try{ const r=await fetch('data/ws_mvp.json?cb='+Date.now()); if(r.ok) D=await r.json(); }catch(e){}
   if(!D||!D.players||!D.players.length){ sec.style.display='none'; return; }
   sec.style.display='';
