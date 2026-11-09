@@ -1939,6 +1939,17 @@ body.embed-mode .cf-tabs button{padding:5px 6px;font-size:11px}.apx-edgebar{disp
   .pfx-mets { display:flex; align-items:center; gap:14px; margin-left:auto; }
   .pfx-met { display:flex; flex-direction:column; align-items:flex-end; line-height:1.1; min-width:54px; }
   .pfx-met.edge { min-width:60px; }
+  .pfx-mets.fin { display:grid; grid-template-columns:repeat(5,52px); gap:4px; margin-left:auto; align-items:center; }
+  .pfx-mets.fin > span { text-align:right; font-variant-numeric:tabular-nums; }
+  .pfx-mets.fin .pfx-p { font-weight:700; font-size:0.86rem; color:var(--text); font-family:var(--mono,monospace); }
+  .pfx-mets.fin .pfx-p.win { color:#e8692f; }
+  .pfx-mets.fin .pfx-p.mkt { color:#60a5fa; font-weight:600; }
+  .pfx-card.nf .pfx-name { color:var(--muted); font-weight:600; }
+  .pfx-card.nf .pfx-mets.fin .pfx-p { color:var(--muted); font-weight:600; }
+  .pfx-hdr { display:flex; align-items:center; gap:7px; padding:0 10px 4px; }
+  .pfx-hdr-l { flex:1; color:var(--muted); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.05em; }
+  .pfx-hdr .pfx-mets.fin > span { color:var(--muted); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; }
+  .pfx-hdr .pfx-mets.fin > span.win { color:#e8692f; } .pfx-hdr .pfx-mets.fin > span.mkt { color:#60a5fa; }
   .pfx-met .pfx-k { color:var(--muted); font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em; }
   .pfx-met .pfx-p { font-weight:700; font-variant-numeric:tabular-nums; font-size:0.86rem; color:var(--text); font-family:var(--mono,monospace); }
   .pfx-met.mk .pfx-p { color:var(--muted); }
@@ -1964,7 +1975,7 @@ body.embed-mode .cf-tabs button{padding:5px 6px;font-size:11px}.apx-edgebar{disp
   .pfx-fill { position:absolute; left:0; top:0; bottom:0; border-radius:6px; }
   .pfx-dot { position:absolute; top:50%; transform:translate(-50%,-50%); width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.56rem; font-weight:800; font-variant-numeric:tabular-nums; box-shadow:0 0 0 2px var(--panel); }
   .pfx-bval { width:44px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; font-size:0.76rem; flex:none; font-family:var(--mono,monospace); color:var(--text); }
-  @media (max-width:520px){ .pfx-mets{ gap:9px; width:100%; justify-content:space-between; margin-left:0; margin-top:3px; } .pfx-name{ flex:1; } .pfx-blab{ width:48px; } .pfx-bval{ width:38px; } }
+  @media (max-width:520px){ .pfx-mets.fin{ grid-template-columns:repeat(5,1fr); gap:2px; } .pfx-hdr .pfx-mets.fin{ width:100%; } .pfx-hdr{ flex-wrap:wrap; } .pfx-mets{ gap:9px; width:100%; justify-content:space-between; margin-left:0; margin-top:3px; } .pfx-name{ flex:1; } .pfx-blab{ width:48px; } .pfx-bval{ width:38px; } }
 
   /* ────────── Luck Ratings tab ────────── */
   .luck-header { padding: 0 1rem; }
@@ -10611,6 +10622,7 @@ function _pfBar(cat){
     + '<div class="pfx-fill" style="width:'+p+'%;background:'+col+'"></div>'
     + '<div class="pfx-dot" style="left:'+p+'%;background:'+col+'">'+p+'</div></div>'+val+'</div>';
 }
+function _pfWinPc(v){ return v>0.995?'>99%':(v<0.005?'<1%':Math.round(v*100)+'%'); }
 function _pfCard(cand, rankTxt, isVal){
   const mp = cand.model_p; const dp = cand.display_p ?? cand.model_p;
   const mktP = cand.best_odds!=null ? _pfImp(cand.best_odds) : cand.market_p;
@@ -10623,17 +10635,19 @@ function _pfCard(cand, rankTxt, isVal){
   const hasCats = (cand.cats||[]).length>0;
   const open = PF_DETAIL==='detailed';
   const chev = '<span class="pfx-chev'+(hasCats?'':' pfx-chev-off')+'">\u25B8</span>';
-  let h = '<div class="pfx-card'+(isVal?' val':'')+(hasCats?' has-prof':'')+(open?' open':'')+'">'
+  let h = '<div class="pfx-card'+(isVal?' val':'')+(hasCats?' has-prof':'')+(open?' open':'')+(cand.finalist===false?' nf':'')+'">'
     + '<div class="pfx-top">'
     +   '<span class="pfx-rk">'+rankTxt+'</span>'
     +   '<span class="pfx-logo">'+logo+'</span>'
     +   '<span class="pfx-name">'+cand.name+tw+'</span>'
     +   (cand.proj_points!=null
-        // Final (frozen end-of-season) board: projected BBWAA ballot, no market comparison
-        ? '<div class="pfx-mets">'
-          + '<div class="pfx-met"><span class="pfx-k">1st-pl votes</span><span class="pfx-p">'+(cand.proj_first_r!=null?cand.proj_first_r:(cand.proj_first>=0.95?Math.round(cand.proj_first):(cand.proj_first>0?'<1':'0')))+'</span><span class="pfx-o">of 30</span></div>'
-          + '<div class="pfx-met mk"><span class="pfx-k">Points</span><span class="pfx-p">'+Math.round(cand.proj_points)+'</span><span class="pfx-o">'+(cand.war_final!=null?'':(cand.p_war!=null?cand.p_war.toFixed(1)+' WAR':''))+'</span></div>'
-          + '<div class="pfx-met"><span class="pfx-k">Vote share</span><span class="pfx-p">'+Math.round(cand.proj_vote_share*1000)/10+'%</span><span class="pfx-o">'+(cand.finalist===false?'':cand.p_win!=null?'win '+_pfPc(cand.p_win)+(cand.p_win_mkt!=null?' · mkt '+_pfPc(cand.p_win_mkt):''):'win '+_pfPc(mp))+'</span></div>'
+        // Final board: fixed 5-column grid (labels live in one header row per list, see _pfRenderCards)
+        ? '<div class="pfx-mets fin">'
+          + '<span class="pfx-p">'+(cand.proj_first_r!=null?cand.proj_first_r:Math.round(cand.proj_first||0))+'</span>'
+          + '<span class="pfx-p">'+Math.round(cand.proj_points)+'</span>'
+          + '<span class="pfx-p">'+(Math.round(cand.proj_vote_share*1000)/10).toFixed(1)+'%</span>'
+          + '<span class="pfx-p win">'+(cand.finalist===false||cand.p_win==null?'–':_pfWinPc(cand.p_win))+'</span>'
+          + '<span class="pfx-p mkt">'+(cand.finalist===false||cand.p_win_mkt==null?'–':_pfWinPc(cand.p_win_mkt))+'</span>'
           + '</div>'
         : '<div class="pfx-mets">'
     +     '<div class="pfx-met"><span class="pfx-k">Model</span><span class="pfx-p">'+_pfPc(dp)+'</span><span class="pfx-o">'+_pfP2Odds(dp)+'</span></div>'
@@ -10659,7 +10673,8 @@ function _pfRenderCards(){
     const inMain = FINAL ? (c => c.rank!=null && c.rank<=10) : (c => c.model_p>=0.01 || (c.rank!=null && c.rank<=5));
     const cont = cands.filter(inMain);
     const val  = cands.filter(c=>!inMain(c));
-    let h = cont.map((c,i)=>_pfCard(c, '#'+(c.rank!=null?c.rank:(i+1)), false)).join('');
+    let h = (FINAL ? '<div class="pfx-hdr"><span class="pfx-hdr-l">Player</span><div class="pfx-mets fin"><span>1st</span><span>Pts</span><span>Share</span><span class="win">Win</span><span class="mkt">Mkt</span></div><span class="pfx-chev pfx-chev-off">\u25B8</span></div>' : '')
+          + cont.map((c,i)=>_pfCard(c, '#'+(c.rank!=null?c.rank:(i+1)), false)).join('');
     if(val.length && !FINAL){
       h += '<div class="pfx-vsec">Value · under 1% but +edge</div>';
       h += val.map(c=>_pfCard(c, '#'+(c.rank!=null?c.rank:'?'), true)).join('');
@@ -10675,7 +10690,7 @@ function _pfRenderCards(){
       const poolTxt = mkt.endsWith('_CY') ? 'qualified starters (IP≥120)'
                     : mkt.endsWith('_MVP') ? 'qualified hitters (PA≥400)'
                     : 'qualified regulars';
-      sub.textContent = FINAL ? (payload.finalists ? 'Final projected vote · 30 BBWAA ballots · finalists '+payload.finalists.join(', ')+' · win % = model / market' : 'Final projected vote · 30 BBWAA ballots · frozen on end-of-season stats')
+      sub.textContent = FINAL ? (payload.finalists ? 'Projected BBWAA vote · Win % = BARTOLO model vs market' : 'Final projected vote · 30 BBWAA ballots · frozen on end-of-season stats')
                               : (PF_PHASE==='cur'?'Current (YTD)':'Projected (EOS)')+' · percentiles vs '+poolTxt;
     }
   }
